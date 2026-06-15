@@ -32,8 +32,8 @@
 
 # Redirect HTTP → HTTPS (Netlify handles this by default, but explicit is safer)
 [[redirects]]
-  from = "http://shell-trade.netlify.app/*"
-  to   = "https://shell-trade.netlify.app/:splat"
+  from = "http://shell-trade-game.netlify.app/*"
+  to   = "https://shell-trade-game.netlify.app/:splat"
   status = 301
   force  = true
 

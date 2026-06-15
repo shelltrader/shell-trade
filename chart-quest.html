@@ -1275,7 +1275,7 @@ function maintainCandles(cameraX) {
     }
     pushCandle(last.x + last.w + gap, w, c.h, c.color, c.wick, c);
     last = candles[candles.length - 1];
-    // Spawn a coin on ~25% of candle tops (not on BOS/sweep candles — too chaotic)
+    // Spawn a shell on ~25% of candle tops (not on BOS/sweep candles — too chaotic)
     if (!c.bos && !c.sweep && Math.random() < 0.25) {
       const cx2 = last.x + last.w / 2;
       const cy2 = candleTop(last) - 12; // hover above the candle
@@ -1287,7 +1287,7 @@ function maintainCandles(cameraX) {
   while (candles.length && candles[0].x + candles[0].w < cameraX - 2500) {
     candles.shift();
   }
-  // Prune coins that are far behind
+  // Prune shells that are far behind
   for (let i = coins.length - 1; i >= 0; i--) {
     if (coins[i].x < cameraX - 2600) coins.splice(i, 1);
   }
@@ -1361,18 +1361,18 @@ const turtle = {
 };
 const rings = []; // expanding bounce-pad rings (world space)
 
-/* ---- Coins: collectible gold coins placed on candle tops.
-   Each coin is worth 10 SHELLS. Collected by walking over them. ---- */
+/* ---- Shells: collectible shells placed on candle tops.
+   Each shell is worth 10 SHELLS. Collected by walking over them. ---- */
 const coins = []; // { x, y, r, collected, bobT }
 
 /* ---- Combo system: consecutive actions (jumps, spins, trades) ---- */
 const combo = { count: 0, t: 0, maxT: 4.0 }; // decays if no action for 4s
 
-/* ---- Leverage system: coins unlock higher leverage tiers ---- */
+/* ---- Leverage system: shells unlock higher leverage tiers ---- */
 const leverage = {
   current: 1,       // active multiplier (1 = no leverage)
   unlocked: 1,      // highest tier unlocked (1/2/3/5)
-  coinsEarned: 0,   // lifetime coin count (never resets)
+  coinsEarned: 0,   // lifetime shell count (never resets)
   tiers: [
     { mult: 1,  coins: 0,   label: 'NO LEVERAGE' },
     { mult: 2,  coins: 50,  label: '2× LEVERAGE' },
@@ -2067,7 +2067,7 @@ const QUIZ_QUESTIONS = {
     { q:'Going SHORT means you profit when price…', answers:['Falls 📉','Rises 📈','Stays still','Gaps up'], correct:0 },
   ],
   what_is_sl: [
-    { q:'A stop loss is…', answers:['An exit if price goes against you','A coin you collect','A type of candle','The VWAP line'], correct:0 },
+    { q:'A stop loss is…', answers:['An exit if price goes against you','A shell you collect','A type of candle','The VWAP line'], correct:0 },
     { q:'Why use a stop loss?', answers:['Cap your losses before they grow','Maximize profits','Go short','Change timeframes'], correct:0 },
   ],
   candle_close: [
@@ -2175,7 +2175,7 @@ let lessonOpen = false, lessonGap = 0;
 
 /* teach() — curriculum-gated, throttled to 2 pop-ups per hour.
    Win/loss/realdata lessons bypass the gate (they're always contextual).
-   Leverage lessons also bypass (triggered by coin milestone, not the gate).
+   Leverage lessons also bypass (triggered by shell milestone, not the gate).
    Everything else must be in the current level's curriculum focus list. */
 const BYPASS_GATE = new Set(['win', 'loss', 'realdata', 'controls']);
 
@@ -2223,7 +2223,7 @@ function triggerLeverageLesson(tier) {
   const msgs = {
     2: ['2× LEVERAGE UNLOCKED 🔓',
       '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
-      '<li>You collected 50 coins — you\'ve EARNED the right to try leverage</li>' +
+      '<li>You collected 50 shells — you\'ve EARNED the right to try leverage</li>' +
       '<li>2× means: risk 100 SHELLS, WIN at 2R → you gain <b>400 SHELLS</b> (not 200)</li>' +
       '<li>BUT: if you hit your STOP → you lose <b>200 SHELLS</b> (not 100)</li>' +
       '<li>Leverage is a TOOL. Wrong direction = twice the pain.</li>' +
@@ -2231,14 +2231,14 @@ function triggerLeverageLesson(tier) {
       '</ul>'],
     3: ['3× LEVERAGE UNLOCKED 🔓',
       '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
-      '<li>150 coins collected — you\'ve proven consistency</li>' +
+      '<li>150 shells collected — you\'ve proven consistency</li>' +
       '<li>3× amplifies everything: wins are 3× bigger, losses are 3× bigger</li>' +
       '<li>Use 3× ONLY on A-grade setups with VWAP + trend alignment</li>' +
       '<li>One bad trade with 3× can wipe a week of gains — respect it.</li>' +
       '</ul>'],
     5: ['5× LEVERAGE UNLOCKED 🔓',
       '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
-      '<li>300 coins — you are now in elite prop-firm territory</li>' +
+      '<li>300 shells — you are now in elite prop-firm territory</li>' +
       '<li>5× leverage: a 1% market move = 5% gain OR 5% loss on your capital</li>' +
       '<li>Professional traders use 5× sparingly — only on the clearest setups</li>' +
       '<li>Always cut losses fast. At 5×, a runaway loss destroys accounts.</li>' +
@@ -4768,9 +4768,9 @@ function onCandleEntered(c) {
     // Intro flow checkpoints (first play only)
     if (introFlow.active && introFlow.phase === 'run') {
       introFlow.candleCount++;
-      if (introFlow.candleCount === 10) { triggerFlashQuiz(); return; }
-      if (introFlow.candleCount === 20) { triggerPredictionBet(); return; }
-      if (introFlow.candleCount === 30) { triggerIntroBoss(); return; }
+      if (introFlow.candleCount === 55) { triggerFlashQuiz(); return; }
+      if (introFlow.candleCount === 65) { triggerPredictionBet(); return; }
+      if (introFlow.candleCount === 75) { triggerIntroBoss(); return; }
     }
     if (session.startBal > 0 && player.shells <= session.startBal * (1 - session.failPct / 100)) return endHour();
     if (session.candles >= session.perHour) return endHour();
@@ -5196,7 +5196,7 @@ function update(dt) {
       combo.count++;
       combo.t = combo.maxT;
       addXP(5);
-      floaters.push({ text: '+' + earn + ' 🪙', color: '#ffd60a', y: turtle.y - 10, t: 1.2 });
+      floaters.push({ text: '+' + earn + ' 🐚', color: '#ffd60a', y: turtle.y - 10, t: 1.2 });
       if (combo.count >= 5 && combo.count % 5 === 0) {
         floaters.push({ text: combo.count + 'x COMBO! 🔥', color: '#ff9f43', y: turtle.y - 28, t: 1.8 });
       }
@@ -6157,20 +6157,20 @@ function render(cameraX) {
     if (sx < -30 || sx > W + 30) continue;
     const bob = Math.sin(coin.bobT) * 3;
     const sy = coin.y + bob;
-    // Glow
-    ctx.globalAlpha = 0.25;
-    ctx.fillStyle = '#ffd60a';
+    // Glow (teal shell colour)
+    ctx.globalAlpha = 0.28;
+    ctx.fillStyle = '#40e0d0';
     ctx.beginPath(); ctx.arc(sx, sy, coin.r + 4, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
-    // Body (slightly squashed for perspective)
-    ctx.fillStyle = '#ffd60a';
+    // Body
+    ctx.fillStyle = '#40e0d0';
     ctx.beginPath(); ctx.ellipse(sx, sy, coin.r, coin.r * 0.7, 0, 0, Math.PI * 2); ctx.fill();
     // Shine
-    ctx.fillStyle = 'rgba(255,255,200,0.55)';
+    ctx.fillStyle = 'rgba(220,255,252,0.6)';
     ctx.beginPath(); ctx.ellipse(sx - 1.5, sy - 1, coin.r * 0.35, coin.r * 0.2, -0.4, 0, Math.PI * 2); ctx.fill();
-    // $ mark
-    ctx.font = 'bold 6px ' + MONO; ctx.fillStyle = '#7a5200'; ctx.textAlign = 'center';
-    ctx.fillText('$', sx, sy + 2); ctx.textAlign = 'left';
+    // Shell spiral mark
+    ctx.font = 'bold 7px ' + MONO; ctx.fillStyle = '#006b63'; ctx.textAlign = 'center';
+    ctx.fillText('🐚', sx, sy + 3); ctx.textAlign = 'left';
   }
 
   // Combo counter (shown when combo >= 3)
@@ -7040,7 +7040,7 @@ function drawCandleAcademy() {
     ctx.fillStyle = '#ffd60a';
     ctx.font = '12px ' + FONT_UI;
     ctx.textAlign = 'center';
-    ctx.fillText('🪙 Collect coins on candle tops to unlock LEVERAGE!', cx, H * 0.82);
+    ctx.fillText('🐚 Collect shells on candle tops to unlock LEVERAGE!', cx, H * 0.82);
   }
 
   // --- Bottom prompt (tap to continue) ---

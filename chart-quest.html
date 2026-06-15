@@ -617,7 +617,7 @@
   background:rgba(4,6,12,0.97);
   font:12px var(--font-ui); color:#c7d1de;
   overflow-y:auto; -webkit-overflow-scrolling:touch; box-sizing:border-box;
-  display:flex; flex-direction:column; align-items:center;
+  flex-direction:column; align-items:center;
 ">
   <!-- drawn by drawIntermission() on <canvas id="imCanvas"> -->
   <canvas id="imCanvas" style="display:block;margin:0 auto;max-width:440px;"></canvas>
@@ -2952,7 +2952,7 @@ function openIntermission() {
   im._bonusGiven = false; // prevent double-award
 
   const imDiv = $('intermission');
-  imDiv.style.display = 'block';
+  imDiv.style.display = 'flex';
   $('imGuess').style.display = 'none';
   $('imResult').style.display = 'none';
   const imC = $('imCanvas');

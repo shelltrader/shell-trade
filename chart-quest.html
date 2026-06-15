@@ -914,6 +914,16 @@
     // First-launch: show faction picker if no coin chosen yet
     if (!localStorage.getItem('cq_faction')) {
       showFactionPicker();
+    } else {
+      // Faction already chosen — reset game state in case the loop ran & halted under the overlay
+      if (typeof initCandles === 'function') { initCandles(); prePopulateHTF(MARKET_DATA); spawnTurtle(); }
+      if (typeof turtle !== 'undefined') turtle.halt = false;
+      if (typeof bannerT !== 'undefined') bannerT = 0;
+      if (typeof setupCountdown !== 'undefined') setupCountdown = 10;
+      if (typeof pending !== 'undefined') pending = null;
+      if (typeof setupZone !== 'undefined') setupZone = null;
+      if (typeof portals !== 'undefined') portals.length = 0;
+      try { document.getElementById('setupBanner').style.display = 'none'; } catch(e) {}
     }
   }
 

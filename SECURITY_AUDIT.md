@@ -139,8 +139,8 @@ _Layer 2 — Edge Function with delta validation (deployed, ACTIVE):_
 **Fix applied:**
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"
-        integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
-        crossorigin="anonymous"></script>
+
+        ></script>
 ```
 
 **Note:** When upgrading the SDK version, recompute the hash:  

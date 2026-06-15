@@ -2,12 +2,10 @@
 # Security headers applied to every response.
 
 # ── Build pipeline ──────────────────────────────────────────────────────────
-# Every deploy: install the obfuscator, run build.js, serve the output.
-# build.js reads shell-trade.html and writes an obfuscated index.html.
-# The publish dir is "." so Netlify serves index.html directly.
+# No build step — serve index.html directly from repo root.
+# (Obfuscation build disabled; re-enable once build.js targets chart-quest.html)
 [build]
-  command     = "npm install javascript-obfuscator && node build.js"
-  publish     = "."
+  publish = "."
 
 [[headers]]
   for = "/*"

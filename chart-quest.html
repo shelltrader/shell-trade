@@ -6993,9 +6993,9 @@ function drawHUD() {
     ctx.save();
     const bw = 72, bh = 18, bx = 8, by = 8;
     ctx.fillStyle = fc.color + '18';
-    irr(bx, by, bw, bh, 5); ctx.fill();
+    rr(bx, by, bw, bh, 5); ctx.fill();
     ctx.strokeStyle = fc.color + '60'; ctx.lineWidth = 1;
-    irr(bx, by, bw, bh, 5); ctx.stroke();
+    rr(bx, by, bw, bh, 5); ctx.stroke();
     ctx.font = 'bold 9px ' + MONO; ctx.fillStyle = fc.color; ctx.textAlign = 'left';
     ctx.fillText(fc.emoji + ' ' + fc.ticker, bx + 7, by + 12);
     ctx.restore();

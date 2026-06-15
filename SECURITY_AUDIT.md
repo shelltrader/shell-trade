@@ -1,4 +1,4 @@
-# Shell Trade — Security Audit Report
+# Chart Quest — Security Audit Report
 **Date:** 2026-06-15  
 **Auditor:** Claude (Security Review)  
 **Scope:** All project files, Supabase project `ymxppzhczvmiuoncuqqu`, deployment configuration  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Shell Trade is a single-file HTML/JS browser game with a Supabase backend for authentication and cloud save. Two full audit passes were performed: a baseline audit (score 71/100) and a hardening pass targeting 95/100.
+Chart Quest is a single-file HTML/JS browser game with a Supabase backend for authentication and cloud save. Two full audit passes were performed: a baseline audit (score 71/100) and a hardening pass targeting 95/100.
 
 The original dominant risk — client-side game state written directly to the database with no server validation — has been fully resolved with a deployed Supabase Edge Function (`update-progress`) that validates progression deltas, enforces rate limits, and is domain-locked to the production hostname. A client-side domain lock, code-protection obfuscation pipeline, and operational hardening have also been applied.
 
@@ -335,7 +335,7 @@ A machine-readable copyright and trademark notice is embedded at the top of `she
 ```
 Copyright © 2024-2026 Dream Home Spotlight. All rights reserved.
 Unauthorised copying, modification, distribution, or use is strictly prohibited.
-"Shell Trade" and the turtle mascot are trademarks of Dream Home Spotlight.
+"Chart Quest" and the turtle mascot are trademarks of Dream Home Spotlight.
 ```
 
 ---

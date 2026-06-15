@@ -1,4 +1,4 @@
-# Shell Trade — Netlify deployment configuration
+# Chart Quest — Netlify deployment configuration
 # Security headers applied to every response.
 
 # ── Build pipeline ──────────────────────────────────────────────────────────
@@ -32,8 +32,8 @@
 
 # Redirect HTTP → HTTPS (Netlify handles this by default, but explicit is safer)
 [[redirects]]
-  from = "http://shell-trade-game.netlify.app/*"
-  to   = "https://shell-trade-game.netlify.app/:splat"
+  from = "http://chart-quest-game.netlify.app/*"
+  to   = "https://chart-quest-game.netlify.app/:splat"
   status = 301
   force  = true
 

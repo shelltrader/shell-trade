@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Shell Trade — Production Build Script
+ * Chart Quest — Production Build Script
  * ======================================
  * Obfuscates shell-trade.html for production deployment.
  *

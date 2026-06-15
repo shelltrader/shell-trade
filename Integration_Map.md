@@ -1,4 +1,4 @@
-# Shell Trade — Integration Map
+# Chart Quest — Integration Map
 
 ### How the progression blueprint maps onto the game you already built
 

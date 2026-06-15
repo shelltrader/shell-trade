@@ -1,4 +1,4 @@
-# Shell Trade — Progression Design
+# Chart Quest — Progression Design
 
 ### From Beginner to Trader in ~2 hours of core play
 

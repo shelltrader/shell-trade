@@ -1,5 +1,5 @@
 <!--
-  Shell Trade — Educational Crypto Trading Game
+  Chart Quest — Educational Crypto Trading Game
   Copyright © 2024-2026 Dream Home Spotlight. All rights reserved.
 
   This source code is proprietary and confidential.
@@ -7,7 +7,7 @@
   or in part — is strictly prohibited without express written permission
   from the copyright holder.
 
-  "Shell Trade" and the Shell Trade turtle mascot are trademarks of
+  "Chart Quest" and the Chart Quest turtle mascot are trademarks of
   Dream Home Spotlight.
 -->
 <!DOCTYPE html>
@@ -17,7 +17,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>Shell Trade</title>
+<title>Chart Quest</title>
 <style>
   /* Portrait stage, letterboxed on wide screens. The game + all overlays live
      inside #stage; the transform makes position:fixed overlays resolve to the
@@ -478,7 +478,7 @@
 <div id="authOverlay">
   <div id="authCard">
     <div id="authLogo">
-      <div class="name">🐢 SHELL TRADE</div>
+      <div class="name">🐢 CHART QUEST</div>
       <div class="sub">SIGN IN TO SAVE YOUR PROGRESS</div>
     </div>
     <div id="authTabs">
@@ -667,7 +667,7 @@
   // The service-role key is NEVER used here and must never be added to this file.
   // All data access is gated by Row Level Security in Supabase.
   // ---- Domain lock — game only runs on authorised hosts ----
-  const _ALLOWED_HOSTS = ['shell-trade-game.netlify.app', 'localhost', '127.0.0.1'];
+  const _ALLOWED_HOSTS = ['chart-quest-game.netlify.app', 'localhost', '127.0.0.1'];
   if (!_ALLOWED_HOSTS.includes(location.hostname)) {
     document.getElementById('authOverlay').innerHTML =
       '<div style="position:fixed;inset:0;background:#0a0e14;display:flex;align-items:center;' +
@@ -942,7 +942,7 @@
 })();
 
 /* =========================================================
-   SHELL TRADE — first scene
+   CHART QUEST — first scene
    A turtle walks along candlestick platforms.
    Tap / click / spacebar = jump. Gravity applies.
    Infinite scrolling with randomly generated candles.
@@ -1928,7 +1928,7 @@ const LESSONS = {
     '<li><b style="color:#16c784">LONG</b> = you think price will go UP → you buy</li>' +
     '<li><b style="color:#ea3943">SHORT</b> = you think price will go DOWN → you sell first, buy back cheaper</li>' +
     '<li>Both can make money — it depends on your <b>read of the market</b></li>' +
-    '<li>💡 In Shell Trade, tap the banner and choose ▲ LONG or ▼ SHORT</li>' +
+    '<li>💡 In Chart Quest, tap the banner and choose ▲ LONG or ▼ SHORT</li>' +
     '</ul>'],
   what_is_sl: ['STOP LOSS — YOUR SHIELD 🛡️',
     '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
@@ -6480,7 +6480,7 @@ function drawCandleAcademy() {
     // Title + subtitle
     ctx.font = 'bold 28px ' + FONT_UI;
     ctx.fillStyle = '#c9b3ff'; ctx.textAlign = 'center';
-    ctx.fillText('SHELL TRADE', cx, H * 0.68);
+    ctx.fillText('CHART QUEST', cx, H * 0.68);
     ctx.font = '15px ' + FONT_UI;
     ctx.fillStyle = '#7d8aa0';
     ctx.fillText('Learn crypto. One candle at a time.', cx, H * 0.74);
@@ -6782,7 +6782,7 @@ function drawCandleAcademy() {
     // Bottom tip
     ctx.font = '13px ' + FONT_UI;
     ctx.fillStyle = '#c9b3ff'; ctx.textAlign = 'center';
-    ctx.fillText('In Shell Trade, tap the banner to choose', cx, H * 0.84);
+    ctx.fillText('In Chart Quest, tap the banner to choose', cx, H * 0.84);
     ctx.fillText('your direction before every trade. 🐢', cx, H * 0.88);
 
   } else if (card === 5) {

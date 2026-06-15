@@ -18,6 +18,8 @@
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Chart Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* Portrait stage, letterboxed on wide screens. The game + all overlays live
      inside #stage; the transform makes position:fixed overlays resolve to the
@@ -32,7 +34,7 @@
   canvas { display: block; touch-action: none; }
 
   :root {
-    --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   }
 
@@ -379,9 +381,9 @@
   .jTab.active { color: #4cc3ff; border-bottom-color: #4cc3ff; }
   .jTerm, .jLesson, .jNoteItem { background: #0d1320; border: 1px solid #1c2737; border-radius: 10px; padding: 11px 13px; margin-bottom: 9px; }
   .jTerm b.t, .jLesson b.t { display: block; font-size: 13px; margin-bottom: 4px; }
-  .jTerm b.t { color: #e6edf3; } .jLesson b.t { color: #4cc3ff; }
-  .jTerm .d { color: #9aa7b6; font-size: 12px; line-height: 1.5; }
-  .jLesson .body { color: #9aa7b6; font-size: 12px; line-height: 1.55; margin-top: 2px; }
+  .jTerm b.t { color: #e6edf3; font-family: 'Inter', var(--font-ui); font-size: 14px; } .jLesson b.t { color: #4cc3ff; font-family: 'Inter', var(--font-ui); font-size: 14px; }
+  .jTerm .d { color: #9aa7b6; font-size: 13px; line-height: 1.6; font-family: 'Inter', var(--font-ui); }
+  .jLesson .body { color: #9aa7b6; font-size: 13px; line-height: 1.6; margin-top: 4px; font-family: 'Inter', var(--font-ui); }
   .jLesson .body ul { margin: 4px 0 0 16px; padding: 0; }
   .jFlash { animation: jflash 1.3s ease; }
   @keyframes jflash { 0%,100% { box-shadow: none; } 30% { box-shadow: 0 0 0 2px #4cc3ff inset; } }
@@ -661,18 +663,15 @@
 
   <div style="position:relative;z-index:1;">
     <!-- header -->
-    <div style="text-align:center;padding:36px 24px 20px;">
-      <div style="font-size:10px;color:#4cc3ff;letter-spacing:4px;font-weight:700;margin-bottom:8px;">
-        CHART QUEST — FIRST LAUNCH
-      </div>
-      <div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:1px;line-height:1.1;">
-        CHOOSE YOUR COIN
-      </div>
-      <div style="font-size:13px;color:#7d8aa0;max-width:380px;margin:10px auto 0;line-height:1.6;">
+    <div style="text-align:center;padding:28px 24px 16px;">
+      <img src="logo.png" alt="Chart Quest" style="width:200px;height:auto;display:block;margin:0 auto 10px;" onerror="this.style.display='none'">
+      <div style="width:40px;height:2px;background:linear-gradient(90deg,transparent,#86c210,transparent);margin:0 auto 14px;"></div>
+      <div style="font-size:13px;color:#7d8aa0;max-width:380px;margin:0 auto 6px;line-height:1.6;font-family:'Inter',sans-serif;">
         Your faction determines which <strong style="color:#c7d1de;">real live market</strong> you'll trade on.
         All charts, boss fights, and lessons will reflect your chosen coin.
-        <br><span style="color:#4cc3ff;font-size:11px;">You can change this later from your account.</span>
       </div>
+      <div style="font-size:11px;color:#16c784;letter-spacing:0.5px;margin-top:6px;">★ Recommended start: Bitcoin</div>
+      <div style="font-size:10px;color:#4a5a6a;margin-top:4px;">You can change this later from your account.</div>
     </div>
 
     <!-- cards grid -->
@@ -988,7 +987,17 @@
     // Build cards
     const container = document.getElementById('factionCards');
     if (container) {
-      container.innerHTML = Object.keys(FACTION_CONFIG).map(key => buildFactionCard(key, isChange)).join('');
+      const starterKeys = Object.keys(FACTION_CONFIG).filter(k => FACTION_META[k] && FACTION_META[k].starter);
+      const lockedKeys  = Object.keys(FACTION_CONFIG).filter(k => FACTION_META[k] && !FACTION_META[k].starter);
+      const divider = '<div style="width:100%;display:flex;align-items:center;gap:12px;margin:20px 0 16px;">' +
+        '<div style="flex:1;height:1px;background:#141e2c;"></div>' +
+        '<div style="font-size:8px;color:#2a3a4a;letter-spacing:3px;font-weight:700;white-space:nowrap;font-family:\'Courier New\',monospace;">UNLOCK LATER</div>' +
+        '<div style="flex:1;height:1px;background:#141e2c;"></div>' +
+        '</div>';
+      container.innerHTML =
+        starterKeys.map(k => buildFactionCard(k, isChange)).join('') +
+        divider +
+        lockedKeys.map(k => buildLockedFactionCard(k)).join('');
     }
 
     overlay.style.display = 'block';
@@ -996,92 +1005,90 @@
 
   function buildFactionCard(key, isChange) {
     const f = FACTION_CONFIG[key];
-    const stars  = '<span style="color:' + f.color + '">' + '★'.repeat(f.safetyStars)  + '</span>'
-                 + '<span style="color:#2a3442">'           + '★'.repeat(5 - f.safetyStars) + '</span>';
+    const meta = FACTION_META[key] || {};
+    const stars = '<span style="color:' + f.color + '">' + '★'.repeat(f.safetyStars) + '</span>'
+                + '<span style="color:#1e2a36">' + '★'.repeat(5 - f.safetyStars) + '</span>';
     const isCurrent = localStorage.getItem('cq_faction') === key;
-    const borderCol = isCurrent ? f.color : f.color + '40';
-    const shadowVal = isCurrent ? '0 0 28px ' + f.glow + ', inset 0 0 12px ' + f.glow : '';
-    return \`
+    const volPcts = {BTC:'34%',ETH:'54%',SOL:'82%',BNB:'60%',DOGE:'90%',XRP:'70%'};
+    const logoUrl = 'https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/' + f.ticker.toLowerCase() + '.svg';
+    const borderCol = isCurrent ? f.color : f.color + '42';
+    const shadowVal = isCurrent ? '0 0 28px ' + f.glow : '';
+    const recBadge = meta.recommended ? '<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#16c784;color:#032515;font-size:7.5px;font-weight:700;letter-spacing:1.5px;padding:3px 10px;border-radius:20px;white-space:nowrap;z-index:2;">★ RECOMMENDED</div>' : '';
+    return `
 <div style="
-  width:220px; min-height:420px; display:flex; flex-direction:column;
-  background:\${f.gradient};
-  border:2px solid \${borderCol};
-  border-radius:18px; overflow:hidden;
-  box-shadow:\${shadowVal};
-  transition:transform 0.18s, border-color 0.18s, box-shadow 0.18s;
-  cursor:pointer; font-family:var(--font-ui);
-" onclick="window._confirmFaction('\${key}')"
-   onmouseover="this.style.borderColor='\${f.color}';this.style.boxShadow='0 0 28px \${f.glow}';this.style.transform='translateY(-6px) scale(1.02)'"
-   onmouseout="this.style.borderColor='\${borderCol}';this.style.boxShadow='\${shadowVal}';this.style.transform=''">
-
-  <!-- TOP / HERO SECTION -->
-  <div style="
-    padding:26px 20px 18px;
-    background:linear-gradient(180deg,\${f.color}20 0%,transparent 100%);
-    border-bottom:1px solid \${f.color}22; text-align:center;
-  ">
-    <div style="
-      display:inline-flex; align-items:center; justify-content:center;
-      width:68px; height:68px; border-radius:50%;
-      background:\${f.color}18; border:2px solid \${f.color}55;
-      font-size:36px; font-weight:900; color:\${f.color};
-      margin-bottom:10px; box-shadow:0 0 20px \${f.glow};
-    ">\${f.emoji}</div>
-    <div style="font-size:17px;font-weight:900;color:#fff;letter-spacing:0.5px;">\${f.name}</div>
-    <div style="font-size:10px;color:\${f.color};letter-spacing:3px;font-weight:700;margin-top:2px;">\${f.ticker}</div>
-    <div style="font-size:10px;color:#606880;margin-top:5px;font-style:italic;">\${f.tagline}</div>
-  </div>
-
-  <!-- STATS -->
-  <div style="padding:14px 16px 12px;border-bottom:1px solid \${f.color}15;flex-shrink:0;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div>
-        <div style="font-size:8px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;">MKT CAP</div>
-        <div style="font-size:11px;color:#d0d8e8;font-weight:600;margin-top:3px;">\${f.marketCap}</div>
-      </div>
-      <div>
-        <div style="font-size:8px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;">SUPPLY</div>
-        <div style="font-size:11px;color:#d0d8e8;font-weight:600;margin-top:3px;">\${f.supply}</div>
-      </div>
-      <div>
-        <div style="font-size:8px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;">SAFETY</div>
-        <div style="font-size:14px;margin-top:3px;">\${stars}</div>
-      </div>
-      <div>
-        <div style="font-size:8px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;">DIFFICULTY</div>
-        <div style="font-size:10px;color:#d0d8e8;font-weight:600;margin-top:3px;">\${f.difficulty}</div>
-      </div>
+  width:200px;min-height:380px;display:flex;flex-direction:column;position:relative;
+  background:${f.gradient};border:2px solid ${borderCol};border-radius:16px;overflow:hidden;
+  box-shadow:${shadowVal};transition:transform 0.18s,border-color 0.18s,box-shadow 0.18s;
+  cursor:pointer;font-family:'Inter',-apple-system,sans-serif;
+" onclick="window._confirmFaction('${key}')"
+   onmouseover="this.style.borderColor='${f.color}';this.style.boxShadow='0 0 26px ${f.glow}';this.style.transform='translateY(-6px)'"
+   onmouseout="this.style.borderColor='${borderCol}';this.style.boxShadow='${shadowVal}';this.style.transform=''">
+  ${recBadge}
+  <div style="padding:${meta.recommended ? 36 : 26}px 16px 14px;text-align:center;background:linear-gradient(180deg,${f.color}1c 0%,transparent 100%);border-bottom:1px solid ${f.color}18;">
+    <div style="width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;border:2px solid ${f.color}44;background:#ffffff08;overflow:hidden;">
+      <img src="${logoUrl}" alt="${f.name}" width="46" height="46" style="object-fit:contain;"
+           onerror="this.outerHTML='<span style=\'font-size:24px;font-weight:900;color:${f.color}\'>${f.emoji}</span>'">
     </div>
-    <div style="margin-top:10px;">
-      <div style="font-size:8px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;margin-bottom:3px;">VOLATILITY</div>
-      <div style="
-        height:5px;border-radius:3px;
-        background:linear-gradient(90deg,\${f.color},\${f.color}40);
-        width:\${ {BTC:'40%',ETH:'55%',SOL:'72%',XRP:'70%',DOGE:'90%'}[key] };
-      "></div>
-      <div style="font-size:10px;color:#9ab0c8;margin-top:3px;">\${f.volatility}</div>
+    <div style="font-size:14px;font-weight:700;color:#fff;letter-spacing:0.3px;">${f.name}</div>
+    <div style="font-size:8px;color:${f.color};letter-spacing:3px;font-weight:700;margin-top:2px;">${f.ticker}</div>
+    <div style="font-size:9px;color:#606880;margin-top:4px;">${f.tagline}</div>
+  </div>
+  <div style="padding:10px 14px;border-bottom:1px solid ${f.color}12;display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+    <div>
+      <div style="font-size:7px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;margin-bottom:3px;">SUPPLY</div>
+      <div style="font-size:9.5px;color:#c8d4e0;font-weight:600;">${f.supply}</div>
+    </div>
+    <div>
+      <div style="font-size:7px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;margin-bottom:3px;">SAFETY</div>
+      <div style="font-size:12px;margin-top:1px;">${stars}</div>
+    </div>
+    <div>
+      <div style="font-size:7px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;margin-bottom:3px;">LEVEL</div>
+      <div style="font-size:9.5px;color:#c8d4e0;font-weight:600;">${f.difficulty.replace(/ .*$/,'')}</div>
+    </div>
+    <div style="grid-column:1/-1;">
+      <div style="font-size:7px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;margin-bottom:3px;">VOLATILITY — ${f.volatility}</div>
+      <div style="height:4px;border-radius:3px;background:${f.color};opacity:.75;width:${volPcts[key]||'50%'};"></div>
     </div>
   </div>
-
-  <!-- DESCRIPTION -->
-  <div style="padding:13px 16px;font-size:10.5px;color:#8a9ab8;line-height:1.55;flex:1;">
-    \${f.description}
-  </div>
-
-  <!-- SELECT BUTTON -->
-  <div style="padding:0 16px 18px;">
+  <div style="padding:10px 14px 12px;font-size:11px;color:#7a8a9e;line-height:1.56;flex:1;">${f.description}</div>
+  <div style="padding:0 14px 15px;">
     <button style="
-      width:100%; padding:11px 0; font-size:11px; font-weight:800; letter-spacing:2px;
-      background:\${f.color}18; border:2px solid \${f.color}; color:\${f.color};
-      border-radius:9px; cursor:pointer; font-family:var(--font-ui);
-    " onmouseover="this.style.background='\${f.color}33'"
-       onmouseout="this.style.background='\${f.color}18'">
-      \${isCurrent ? '✓ CURRENT FACTION' : 'SELECT ' + f.ticker}
+      width:100%;padding:11px 0;font-size:9.5px;font-weight:800;letter-spacing:2px;
+      background:${f.color}18;border:2px solid ${f.color};color:${f.color};
+      border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;
+    " onmouseover="this.style.background='${f.color}30'" onmouseout="this.style.background='${f.color}18'">
+      ${isCurrent ? '✓ CURRENT FACTION' : 'SELECT ' + f.ticker}
     </button>
   </div>
-</div>\`;
+</div>`;
   }
 
+  function buildLockedFactionCard(key) {
+    const f  = FACTION_CONFIG[key];
+    const meta = FACTION_META[key] || {};
+    const logoUrl = 'https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/' + f.ticker.toLowerCase() + '.svg';
+    return `
+<div style="
+  width:173px;border-radius:13px;overflow:hidden;opacity:0.45;
+  border:1px solid #141e2a;background:#08090f;
+  font-family:'Inter',-apple-system,sans-serif;
+">
+  <div style="padding:16px 14px 12px;text-align:center;background:#08090f;border-bottom:1px solid #141e2a;">
+    <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 7px;border:1px solid #1e2a36;overflow:hidden;">
+      <img src="${logoUrl}" alt="${f.name}" width="32" height="32" style="object-fit:contain;filter:grayscale(1) brightness(.7);"
+           onerror="this.outerHTML='<span style=\'font-size:17px;color:#3a4858\'>${f.emoji}</span>'">
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#3a4858;">${f.name}</div>
+    <div style="font-size:7.5px;letter-spacing:2.5px;color:#2a3848;margin-top:2px;">${f.ticker}</div>
+  </div>
+  <div style="padding:9px 12px 11px;background:#060810;font-size:8.5px;color:#2e3d4e;line-height:1.55;text-align:center;">
+    🔒 Locked<br><b style="color:#3e5060;">Level ${meta.unlockLevel} · ${(meta.unlockCost||0).toLocaleString()} 🐚 shells</b>
+  </div>
+</div>`;
+  }
+
+  window._confirmFaction = function(key) {
   window._confirmFaction = function(key) {
     const f = FACTION_CONFIG[key];
     if (!f) return;
@@ -1377,9 +1384,9 @@ const FACTION_CONFIG = {
   SOL: {
     symbol: 'SOLUSDT', ticker: 'SOL', name: 'Solana',
     emoji: '◎',
-    color: '#14f195', colorDark: '#003a24',
-    gradient: 'linear-gradient(160deg,#020d08 0%,#051f12 60%,#010a05 100%)',
-    glow: 'rgba(20,241,149,0.28)',
+    color: '#8b5cf6', colorDark: '#2d1060',
+    gradient: 'linear-gradient(160deg,#0a0214 0%,#140830 60%,#060110 100%)',
+    glow: 'rgba(139,92,246,0.3)',
     marketCap: '~$80 Billion',
     supply: '~600M (inflationary)',
     safetyStars: 3, safetyLabel: 'Moderate',
@@ -1413,6 +1420,29 @@ const FACTION_CONFIG = {
     tagline: 'Meme Legend · Pure Chaos',
     description: 'Started as a joke in 2013 based on a Shiba Inu meme — now a $25B asset. No hard supply cap; 5 billion new coins mint every year. Driven by community, celebrity tweets, and pure sentiment. Its wild swings make it the ultimate platform for learning to read volatile price action.',
   },
+  BNB: {
+    symbol: 'BNBUSDT', ticker: 'BNB', name: 'BNB',
+    emoji: 'B',
+    color: '#F3BA2F', colorDark: '#7a5a00',
+    gradient: 'linear-gradient(160deg,#120e00 0%,#241a00 60%,#0a0800 100%)',
+    glow: 'rgba(243,186,47,0.3)',
+    marketCap: '~$90 Billion',
+    supply: '~145M (deflationary burns)',
+    safetyStars: 4, safetyLabel: 'Safe',
+    volatility: 'Moderate–High', difficulty: 'Intermediate 🟡',
+    tagline: 'Exchange Coin · DeFi Power',
+    description: 'The native token of the world\'s largest crypto exchange. Used for trading fee discounts, DeFi on BNB Chain, and dozens of apps. Deflationary through periodic burns. Tracks BTC closely but has its own volatility spikes.',
+  },
+};
+
+// Faction metadata: starter coins (selectable at start) vs locked (unlock by level/shells)
+const FACTION_META = {
+  BTC:  { starter: true,  unlockLevel: 0,  unlockCost: 0,     recommended: true },
+  ETH:  { starter: true,  unlockLevel: 0,  unlockCost: 0 },
+  SOL:  { starter: true,  unlockLevel: 0,  unlockCost: 0 },
+  BNB:  { starter: false, unlockLevel: 5,  unlockCost: 5000 },
+  DOGE: { starter: false, unlockLevel: 10, unlockCost: 10000 },
+  XRP:  { starter: false, unlockLevel: 15, unlockCost: 15000 },
 };
 
 // Read saved faction from localStorage (default BTC for new players)
@@ -2633,6 +2663,43 @@ function logJournalTrade(t) {
 }
 loadJournal();
 
+/* ---- Lesson Progress tracking ---- */
+const LESSON_PROG_KEY = 'cq_lessonProg_v1';
+let lessonProgress = {};
+function loadLessonProgress() {
+  try { lessonProgress = JSON.parse(localStorage.getItem(LESSON_PROG_KEY) || '{}'); } catch(e) {}
+}
+function saveLessonProgress() {
+  try { localStorage.setItem(LESSON_PROG_KEY, JSON.stringify(lessonProgress)); } catch(e) {}
+}
+function markLessonRead(key) {
+  if (!key || lessonProgress[key]) return;
+  lessonProgress[key] = Date.now();
+  saveLessonProgress();
+  renderJournalSection();
+  // Check all-complete bonus (one-time)
+  const total = LESSON_LIBRARY.length;
+  const done  = LESSON_LIBRARY.filter(k => lessonProgress[k]).length;
+  if (done === total && !lessonProgress.__bonusGiven) {
+    lessonProgress.__bonusGiven = 1;
+    saveLessonProgress();
+    player.shells += 5000;
+    saveJournal();
+    floaters.push({ text: '🏆 ALL LESSONS COMPLETE! +5,000 🐚', color: '#16c784', y: 80, t: 4 });
+  }
+}
+// Unlock level for each lesson (player must reach this level to see it)
+const LESSON_UNLOCK = {
+  candles_intro:1, what_is_doji:1, long_vs_short:1,
+  what_is_sl:2, what_is_trend:2,
+  support_resist:3, bos:3,
+  ob:4, sweep:4,
+  vwap:5, vwap_trade:5,
+  htf:6, htf_align:6,
+  leverage_intro:8, risk_reward:8
+};
+loadLessonProgress();
+
 /* ---- Journal Section 1: Terms Glossary (always available reference) ---- */
 const TERMS = [
   { key: 'candle',     term: 'Candle',                def: 'One bar of price for a time period. Body = open→close; green closed up, red closed down.' },
@@ -3340,6 +3407,13 @@ function showBanner(type) {
   bannerEl.style.borderColor = q ? qc[q] : '#7c4dff';
   bannerEl.style.display = 'flex';
   turtle.halt = true; // Shell stops at the setup: take your time, read it
+  // Spawn a portal above the highlighted setup so the player can fly in for the full chart
+  spawnPortal('CHART SETUP', '⬆ FLY IN TO EXPLORE', function() {
+    var idx2 = lastSetupIdx >= 0 ? lastSetupIdx : candles.length - 1;
+    $('cfLegend').classList.remove('on');
+    $('cfChart').innerHTML = setupChartSVGFull(idx2);
+    $('chartFull').classList.add('open');
+  });
 }
 function hideBanner() {
   bannerT = 0;
@@ -4426,13 +4500,62 @@ function renderTerms() {
     '<div class="d">' + esc(t.def) + '</div></div>'
   ).join('');
 }
-// Section 2 — Lessons library (the curriculum lessons, reviewable any time)
+// Section 2 — Lessons library with progress tracking and unlock gating
 function renderLessons() {
-  return LESSON_LIBRARY.filter(k => LESSONS[k]).map(k => {
-    const l = LESSONS[k]; // [title, bodyHTML, optionalSVG]
-    return '<div class="jLesson" data-key="' + k + '"><b class="t">' + l[0] + '</b>' +
-           '<div class="body">' + (l[1] || '') + '</div></div>';
-  }).join('');
+  const total = LESSON_LIBRARY.length;
+  const done  = LESSON_LIBRARY.filter(k => lessonProgress[k]).length;
+  const pct   = Math.round(done / total * 100);
+  const TIER  = {1:'BEGINNER',2:'INTERMEDIATE',3:'INTERMEDIATE',4:'ADVANCED',5:'ADVANCED',6:'EXPERT',8:'EXPERT'};
+
+  let html = '<div style="padding:4px 2px 14px;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#5a6880;margin-bottom:6px;letter-spacing:.5px;">' +
+    '<span style="font-family:var(--font-mono);">LESSON PROGRESS</span>' +
+    '<span style="color:#c0d0e0;font-weight:600;font-family:\'Inter\',sans-serif;">' + done + ' / ' + total + '</span></div>' +
+    '<div style="height:5px;background:#0d1520;border-radius:3px;overflow:hidden;">' +
+    '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#16c784,#4cc3ff);border-radius:3px;"></div>' +
+    '</div></div>';
+
+  let lastLv = -1;
+  LESSON_LIBRARY.filter(k => LESSONS[k]).forEach(function(k) {
+    const l        = LESSONS[k];
+    const lv       = LESSON_UNLOCK[k] || 1;
+    const isRead   = !!lessonProgress[k];
+    const unlocked = (typeof session !== 'undefined' ? session.level : 1) >= lv;
+
+    if (lv !== lastLv) {
+      if (lastLv !== -1) html += '</div>';
+      lastLv = lv;
+      html += '<div style="margin-bottom:14px;">' +
+        '<div style="font-size:8px;color:#2e3e50;letter-spacing:2px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #0d1520;font-family:var(--font-mono);">' +
+        (TIER[lv]||'ADVANCED') + ' · LEVEL ' + lv + '+</div>';
+    }
+
+    const statusHtml = isRead
+      ? '<span style="color:#16c784;font-size:18px;line-height:1;">✓</span>'
+      : !unlocked
+        ? '<span style="font-size:14px;">🔒</span>'
+        : '<span style="background:#16c78414;color:#16c784;font-size:9px;letter-spacing:.5px;padding:3px 8px;border-radius:10px;border:1px solid #16c78428;font-family:var(--font-mono);">READ</span>';
+
+    const dimStyle = !unlocked ? 'opacity:0.38;pointer-events:none;' : 'cursor:pointer;';
+
+    html += '<div class="jLesson" data-key="' + k + '" style="' + dimStyle + '">' +
+      '<div style="display:flex;align-items:flex-start;gap:10px;">' +
+      '<div style="flex:1;"><b class="t">' + l[0] + '</b>' +
+      '<div class="body">' + (l[1] || '') + '</div></div>' +
+      '<div style="flex-shrink:0;padding-top:3px;">' + statusHtml + '</div>' +
+      '</div></div>';
+  });
+  if (lastLv !== -1) html += '</div>';
+
+  if (done === total) {
+    html += '<div style="padding:14px;background:linear-gradient(135deg,#0a1e0e,#061218);border:1px solid #16c78440;border-radius:10px;text-align:center;margin-top:8px;">' +
+      '<div style="font-size:15px;color:#16c784;font-weight:700;margin-bottom:4px;font-family:\'Inter\',sans-serif;">🏆 All Lessons Complete!</div>' +
+      '<div style="font-size:12px;color:#4a7a5a;margin-bottom:10px;line-height:1.5;font-family:\'Inter\',sans-serif;">You\'ve mastered the fundamentals of technical analysis.</div>' +
+      '<div style="font-size:24px;color:#f7c948;font-weight:700;">+ 5,000 🐚</div>' +
+      '<div style="font-size:9px;color:#8a7a3a;letter-spacing:2px;margin-top:3px;font-family:var(--font-mono);">SHELLS AWARDED</div>' +
+      '</div>';
+  }
+  return html;
 }
 // Section 3 — Trade History (existing stats + list)
 // Section 4 — Notes (free-form, linkable to a term / lesson / trade)
@@ -4552,6 +4675,9 @@ $('jList').addEventListener('click', (e) => {
   if (del) { journalNotes = journalNotes.filter(n => n.id !== +del.getAttribute('data-noteid')); saveNotes(); renderJournalSection(); return; }
   const link = tgt.closest ? tgt.closest('.jLink') : null;
   if (link) { openJournalLink(link.getAttribute('data-linktype'), link.getAttribute('data-linkref')); return; }
+  // Lesson card click: mark as read
+  const lessonEl = tgt.closest ? tgt.closest('.jLesson[data-key]') : null;
+  if (lessonEl) { markLessonRead(lessonEl.getAttribute('data-key')); return; }
 });
 $('journalBtn').addEventListener('click', () => openJournal());
 $('jClose').addEventListener('click', closeJournal);

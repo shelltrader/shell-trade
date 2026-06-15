@@ -995,9 +995,13 @@
         '<div style="flex:1;height:1px;background:#141e2c;"></div>' +
         '</div>';
       container.innerHTML =
-        starterKeys.map(k => buildFactionCard(k, isChange)).join('') +
+        '<div style="display:flex;flex-wrap:nowrap;justify-content:center;gap:12px;width:100%;">' +
+          starterKeys.map(k => buildFactionCard(k, isChange)).join('') +
+        '</div>' +
         divider +
-        lockedKeys.map(k => buildLockedFactionCard(k)).join('');
+        '<div style="display:flex;flex-wrap:nowrap;justify-content:center;gap:10px;width:100%;">' +
+          lockedKeys.map(k => buildLockedFactionCard(k)).join('') +
+        '</div>';
     }
 
     overlay.style.display = 'block';
@@ -1010,13 +1014,13 @@
                 + '<span style="color:#1e2a36">' + '★'.repeat(5 - f.safetyStars) + '</span>';
     const isCurrent = localStorage.getItem('cq_faction') === key;
     const volPcts = {BTC:'34%',ETH:'54%',SOL:'82%',BNB:'60%',DOGE:'90%',XRP:'70%'};
-    const logoUrl = 'https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/' + f.ticker.toLowerCase() + '.svg';
+    const logoUrl = 'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/' + f.ticker.toLowerCase() + '.svg';
     const borderCol = isCurrent ? f.color : f.color + '42';
     const shadowVal = isCurrent ? '0 0 28px ' + f.glow : '';
     const recBadge = meta.recommended ? '<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#16c784;color:#032515;font-size:7.5px;font-weight:700;letter-spacing:1.5px;padding:3px 10px;border-radius:20px;white-space:nowrap;z-index:2;">★ RECOMMENDED</div>' : '';
     return `
 <div style="
-  width:200px;min-height:380px;display:flex;flex-direction:column;position:relative;
+  flex:1 1 150px;min-width:130px;max-width:200px;min-height:380px;display:flex;flex-direction:column;position:relative;
   background:${f.gradient};border:2px solid ${borderCol};border-radius:16px;overflow:hidden;
   box-shadow:${shadowVal};transition:transform 0.18s,border-color 0.18s,box-shadow 0.18s;
   cursor:pointer;font-family:'Inter',-apple-system,sans-serif;
@@ -1067,10 +1071,10 @@
   function buildLockedFactionCard(key) {
     const f  = FACTION_CONFIG[key];
     const meta = FACTION_META[key] || {};
-    const logoUrl = 'https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/' + f.ticker.toLowerCase() + '.svg';
+    const logoUrl = 'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/' + f.ticker.toLowerCase() + '.svg';
     return `
 <div style="
-  width:173px;border-radius:13px;overflow:hidden;opacity:0.45;
+  flex:1 1 110px;min-width:100px;max-width:173px;border-radius:13px;overflow:hidden;opacity:0.45;
   border:1px solid #141e2a;background:#08090f;
   font-family:'Inter',-apple-system,sans-serif;
 ">
@@ -1101,10 +1105,17 @@
     // Hide picker
     const overlay = document.getElementById('factionOverlay');
     if (overlay) overlay.style.display = 'none';
-    // Mark intro so it shows for new players
-    if (!localStorage.getItem('cq_played')) {
-      // intro will run normally
+    // Reset game to clean start state (the game loop may have run under the overlay,
+    // triggered banners and halted the turtle — reinitialise so the player starts fresh)
+    if (typeof initCandles === 'function') {
+      initCandles();
+      prePopulateHTF(MARKET_DATA);
+      spawnTurtle();
     }
+    if (typeof turtle !== 'undefined') turtle.halt = false;
+    if (typeof bannerT !== 'undefined') bannerT = 0;
+    try { document.getElementById('setupBanner').style.display = 'none'; } catch(e) {}
+    if (typeof portals !== 'undefined') portals.length = 0;
   };
   window.showFactionPicker = showFactionPicker; // expose for account panel
   // ─── END FACTION PICKER ────────────────────────────────────────

@@ -1297,7 +1297,7 @@ function maintainCandles(cameraX) {
    risk% × R:R, teaching risk math through repetition. XP/levels will
    gate indicator unlocks later. */
 const player = {
-  shells: 10000,  // starting balance
+  shells: 0,      // starting balance — earn from scratch
   level:  1,
   xp:     0,
   xpNeeded: 100,  // XP required to reach the next level
@@ -2260,7 +2260,7 @@ const stats = { trades: 0, wins: 0, net: 0 };
 const session = {
   level: 1,
   candles: 0, perHour: 60,
-  startBal: 10000,
+  startBal: 0,
   targetPct: 2, failPct: 5,
   trades: 0, wins: 0, net: 0,
   inModal: false,
@@ -2360,8 +2360,10 @@ function endHour() {
   session.inModal = true;
   if (trade) resolveTrade('manual'); // hour close: positions close at market
   hideBanner();
-  const target = session.startBal * (1 + session.targetPct / 100);
-  session.cleared = player.shells >= target;
+  const target = session.startBal > 0
+    ? session.startBal * (1 + session.targetPct / 100)
+    : 1; // can't clear by % when starting at 0 — just pass on hour end
+  session.cleared = session.startBal > 0 ? player.shells >= target : true;
   paused = true;
   openIntermission();
 }
@@ -4769,7 +4771,7 @@ function onCandleEntered(c) {
       if (introFlow.candleCount === 20) { triggerPredictionBet(); return; }
       if (introFlow.candleCount === 30) { triggerIntroBoss(); return; }
     }
-    if (player.shells <= session.startBal * (1 - session.failPct / 100)) return endHour();
+    if (session.startBal > 0 && player.shells <= session.startBal * (1 - session.failPct / 100)) return endHour();
     if (session.candles >= session.perHour) return endHour();
   }
   // VWAP update (resets per hour — mirrors how VWAP works on real charts)

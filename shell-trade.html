@@ -4344,6 +4344,61 @@ const BOSSES = {
       { q: 'A great setup just lost. That means…', options: ["It's normal — even A-grade setups lose sometimes", 'You made a mistake', 'Stop using stop losses'], correct: 0, explain: 'Outcome ≠ decision quality. Good setups lose ~1 in 3. Keep taking them.' },
     ],
   },
+  3: {
+    name: 'THE STRUCTURE SHARK', emoji: '🦈',
+    reward: { shells: 400, xp: 160 },
+    bossHP: 5, playerHP: 3,
+    rounds: [
+      { q: 'What does a bullish BOS (Break of Structure) confirm?', options: ['Price broke above the last swing high — buyers are in control', 'Price broke below the last swing low', 'The chart is going sideways'], correct: 0, explain: 'BOS UP = price makes a new swing high, confirming the uptrend. Each BOS is the market saying: buyers are still winning.' },
+      { candles: [{ o: 20, c: 45, up: 5, lo: 3 }, { o: 45, c: 32, up: 4, lo: 3 }, { o: 32, c: 70, up: 5, lo: 4 }], q: 'The third candle closes above the previous swing high. What just happened?', options: ['Bullish BOS — the uptrend is confirmed', 'Change of Character (ChoCh)', 'A failed breakout'], correct: 0, explain: "Third bar closed above the previous high — that's a bullish BOS. The market printed a new higher high, confirming buyers are in charge." },
+      { q: 'An Order Block (OB) is best described as…', options: ['The last opposing candle before a strong breakout move', 'Any unusually large candle', 'The highest-volume candle of the session'], correct: 0, explain: "The OB is the final bearish candle before a bullish explosion (or final bullish candle before a bearish crash). Smart money left limit orders there — that's why price snaps back to it." },
+      { candles: [{ o: 30, c: 58, up: 5, lo: 3 }, { o: 58, c: 75, up: 5, lo: 4 }, { o: 75, c: 22, up: 3, lo: 2 }], q: 'Two higher highs, then a massive crash to a new low. What is this pattern called?', options: ['Change of Character (ChoCh) — possible trend reversal', 'Another bullish BOS', 'A normal pullback'], correct: 0, explain: 'ChoCh = the market breaks structure in the OPPOSITE direction. Two higher highs then a new low is the first sign the uptrend may be ending. Treat it as a warning.' },
+      { candles: [{ o: 62, c: 50, up: 4, lo: 3 }, { o: 50, c: 40, up: 3, lo: 3 }, { o: 40, c: 78, up: 5, lo: 3 }], q: 'Price explodes up from those two red candles. Where is the Order Block entry zone?', options: ['The last red candle before the launch', 'The first red candle', 'The big green candle'], correct: 0, explain: 'The OB is the LAST bearish candle before the bullish move — that's where institutional buy orders are resting. A pullback into it offers the lowest-risk entry.' },
+      { q: 'After a bullish BOS, smart money often waits for price to return to the OB before entering long. Why?', options: ['The OB offers a high R:R entry — tight stop below, big target above', 'Entering right at the BOS candle is too risky', 'They are trying to confuse retail traders'], correct: 0, explain: 'Waiting for the OB retrace lets you put your stop just below the OB (small risk) and target the next structure high (large reward). Patience = precision.' },
+    ],
+  },
+  4: {
+    name: 'THE VWAP PHANTOM', emoji: '👻',
+    reward: { shells: 450, xp: 180 },
+    bossHP: 5, playerHP: 3,
+    rounds: [
+      { q: 'When price is trading ABOVE VWAP, who has the edge?', options: ['Buyers — the market is above institutional "fair value"', 'Sellers — price is overbought', 'Nobody — VWAP is just a decoration'], correct: 0, explain: 'Institutions benchmark against VWAP. Price above it = buyers are willing to pay above fair value. That's bullish pressure.' },
+      { q: 'Price has been above VWAP all session and now pulls back to touch it. This is typically a…', options: ['Long opportunity — VWAP acting as dynamic support', 'Short signal — VWAP attracts reversals', 'Random event, ignore it'], correct: 0, explain: 'A VWAP retest during an uptrend is like price returning to the "fair value" floor. Buyers often step back in here, making it a continuation long setup.' },
+      { q: 'You want to enter a long trade, but price is currently far BELOW VWAP. What should you do?', options: ['Wait — entering a long far below VWAP fights the institutional flow', 'Buy immediately — the gap to VWAP creates upside momentum', 'Switch to a higher timeframe chart only'], correct: 0, explain: 'Far below VWAP means sellers have dominated the session. Longs here put you against the trend. Wait for a VWAP reclaim before considering longs.' },
+      { q: 'Price attempts to reclaim VWAP three times and fails each time. What does this signal?', options: ['Sellers are defending VWAP — bearish pressure is strong', 'Buyers are accumulating below VWAP', 'VWAP is broken and unreliable today'], correct: 0, explain: 'Three failed reclaim attempts confirm VWAP is acting as resistance. The bears keep rejecting every rally. Bias shifts to shorts until structure changes.' },
+      { q: 'VWAP is most useful as a reference during which condition?', options: ['Active sessions with high volume (e.g. NY open)', 'Weekends or low-liquidity hours', 'Any time — it's equally accurate 24/7'], correct: 0, explain: 'VWAP is volume-weighted — it needs real volume to be meaningful. During peak trading hours, institutions are actively using it. In thin markets, it becomes noisy and unreliable.' },
+    ],
+  },
+  5: {
+    name: 'THE TIMEFRAME TITAN', emoji: '🌊',
+    reward: { shells: 500, xp: 200 },
+    bossHP: 6, playerHP: 3,
+    rounds: [
+      { q: 'Why do professionals check the Daily chart BEFORE trading the 15-minute?', options: ['To trade WITH the dominant trend, not against it', 'Because daily candles are more accurate than 15m candles', 'To find more trade setups'], correct: 0, explain: 'The daily chart sets the macro bias. If the daily is in a downtrend, longing on the 15m means fighting institutional momentum — a low-probability game.' },
+      { q: 'The 4-hour chart shows a strong downtrend. Your 5-minute chart shows a perfect buy setup. Best move?', options: ['Skip it or size very small — counter-trend LTF longs have lower win rates', 'Take it — 5-minute setups are more precise', 'Double your size since you spotted it first'], correct: 0, explain: 'Counter-trend trades on lower timeframes fail more often. The 4H downtrend is a freight train. Your 5m setup is a stepping stone on the tracks.' },
+      { q: '"Top-down analysis" in trading means…', options: ['Start at the highest timeframe for bias, then drill down for entry', 'Look for setups on the smallest chart first, then confirm on higher ones', 'Only trade using daily candles'], correct: 0, explain: 'Top-down: Weekly/Daily sets direction → 4H/1H finds the zone → 15m/5m triggers the entry. Never reverse this order or you'll be chasing noise.' },
+      { q: 'Your 1H shows a bullish OB. The 4H is bullish. The Daily is bullish. This is called…', options: ['Multi-timeframe confluence — the highest-probability scenario', 'A coincidence — three charts can't all be right', 'Overcomplication — just use one chart'], correct: 0, explain: 'When all timeframes align, you have institutional, swing, and intraday traders all pushing the same direction. That's the strongest possible setup.' },
+      { q: 'A major HTF (4H) resistance sits just above your LTF (5m) bullish breakout. You should…', options: ['Be cautious — HTF resistance can crush LTF momentum', 'Trust the LTF breakout 100%', 'Ignore the HTF level and focus on your setup'], correct: 0, explain: 'Major HTF resistance zones have rejected thousands of traders before. A 5m breakout into a 4H wall often stalls or reverses. Wait for a confirmed 4H break first.' },
+      { q: 'A 1-hour trader calls the 15-minute their "execution timeframe." What do they call the 4-hour?', options: ['Higher Timeframe (HTF) — it sets the directional bias', 'Lower Timeframe (LTF) — it's used for entries', 'The same timeframe — they're close enough to be interchangeable'], correct: 0, explain: 'For a 1H trader, the 4H and Daily are HTF (context and bias). The 15m and 5m are LTF (execution and entry). Each timeframe has its role.' },
+    ],
+  },
+  6: {
+    name: 'THE LEVERAGE KING', emoji: '👑',
+    reward: { shells: 600, xp: 250 },
+    bossHP: 7, playerHP: 3,
+    rounds: [
+      { q: 'You open a trade with 10× leverage. Price moves 10% against you. What happens?', options: ['You lose 100% of your margin — liquidated', 'You lose 10% of your account', 'You lose 1% of your account'], correct: 0, explain: '10× leverage × 10% adverse move = 100% margin loss. Liquidation happens at (100% ÷ leverage) price movement. At 10×, that's only 10%. Handle leverage with extreme respect.' },
+      { q: 'Account: $1,000. You risk 1% per trade. What is your maximum loss per trade?', options: ['$10', '$100', '$1,000'], correct: 0, explain: '1% of $1,000 = $10 max risk per trade. Boring? Yes. That's the point. No single loss can ever destroy your account at 1% risk.' },
+      { q: 'Entry: $100. Stop Loss: $95. Take Profit: $115. What is your risk-to-reward ratio?', options: ['1:3 — risk $5 to make $15', '1:1 — risk $5 to make $5', '1:2 — risk $5 to make $10'], correct: 0, explain: 'Risk = $100 − $95 = $5. Reward = $115 − $100 = $15. R:R = 5:15 = 1:3. You must find at least 1:2 setups — anything below that and the math works against you.' },
+      { q: 'With a 1:2 R:R, what is the minimum win rate needed to profit over time?', options: ['34% — 1 win (+2R) covers 2 losses (−2R) and leaves profit', '50%', '66%'], correct: 0, explain: 'At 1:2 R:R, expectancy = (win% × 2R) − (loss% × 1R). Break-even is ~33.3% wins. Win 34% of the time and you're profitable.' },
+      { q: 'You use 5× leverage and risk 2% of your account. How much does price need to move against you to trigger liquidation?', options: ['20% — because 5× leverage × 20% = 100% margin loss', '5% price move', '10% price move'], correct: 0, explain: 'Liquidation distance = 100% ÷ leverage. At 5×: 100% ÷ 5 = 20%. Always know this number before entering.' },
+      { q: 'Win rate: 40%. Average winner: 3R. Average loser: 1R. What is your expectancy per trade?', options: ['+0.6R — this strategy is profitable long-term', '−0.2R — you're losing money over time', '+1.2R — only the winners matter'], correct: 0, explain: 'Expectancy = (0.40 × 3R) − (0.60 × 1R) = 1.2R − 0.6R = +0.6R per trade. You can lose 60% of the time and still grow your account if your winners are big enough.' },
+      { q: 'Which approach to leverage is the SAFEST?', options: ['Low leverage (2–3×), strict stop loss, never risk more than 2% per trade', 'High leverage (50×) with a very tight stop to "limit" the loss', 'Maximum leverage to maximize returns when your setup looks perfect'], correct: 0, explain: 'Low leverage survives volatility and gaps. A 50× tight stop gets wiped by a single wick or slippage event. High leverage for a "perfect setup" is how accounts get zeroed.' },
+    ],
+  },
+};
+    ],
+  },
 };
 let bfState = null;
 const bossesDone = new Set();

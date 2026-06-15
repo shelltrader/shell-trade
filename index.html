@@ -1114,6 +1114,10 @@
     if (typeof bannerT !== 'undefined') bannerT = 0;
     try { document.getElementById('setupBanner').style.display = 'none'; } catch(e) {}
     if (typeof portals !== 'undefined') portals.length = 0;
+    // Reset setup state so the game doesn't immediately re-halt on the first candle
+    if (typeof setupCountdown !== 'undefined') setupCountdown = 10;
+    if (typeof pending !== 'undefined') pending = null;
+    if (typeof setupZone !== 'undefined') setupZone = null;
   };
   window.showFactionPicker = showFactionPicker; // expose for account panel
   // ─── END FACTION PICKER ────────────────────────────────────────

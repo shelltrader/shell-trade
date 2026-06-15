@@ -1,0 +1,472 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart Quest — Change Preview: Trade Replay</title>
+<style>
+ :root{--font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--font-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;}
+ body{margin:0;background:#060910;color:#c7d1de;font:14px/1.6 var(--font-ui);padding:28px 20px 60px;}
+ .wrap{max-width:1000px;margin:0 auto;}
+ .crumb{font-size:11px;letter-spacing:2px;color:#4cc3ff;font-weight:bold;}
+ h1{font-size:23px;margin:6px 0 4px;color:#e6edf3;} .sub{color:#7d8aa0;margin:0 0 24px;}
+ .tag{display:inline-block;background:rgba(22,199,132,0.15);border:1px solid #16c784;color:#16c784;font-size:10px;font-weight:bold;letter-spacing:1px;padding:3px 9px;border-radius:20px;vertical-align:middle;margin-left:8px;}
+ h2{font-size:13px;letter-spacing:1.5px;color:#7d8aa0;text-transform:uppercase;margin:30px 0 12px;border-bottom:1px solid #1c2737;padding-bottom:8px;}
+ .ba{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+ .card{background:#0d1320;border:1px solid #1c2737;border-radius:12px;padding:16px 18px;}
+ .card.before{border-left:3px solid #5a6b82;}.card.after{border-left:3px solid #16c784;}
+ .card h3{margin:0 0 10px;font-size:12px;letter-spacing:1.5px;}.before h3{color:#7d8aa0;}.after h3{color:#16c784;}
+ .card ul{margin:0;padding-left:18px;}.card li{margin-bottom:7px;color:#aeb9c8;}.card li b{color:#e6edf3;}
+ .note{background:rgba(76,195,255,0.07);border:1px solid rgba(76,195,255,0.3);border-radius:10px;padding:12px 15px;font-size:13px;color:#9fc8e0;margin:14px 0 0;}
+ .charts{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;}
+ .frame{width:380px;max-width:100%;background:#080c12;border:8px solid #161c26;border-radius:18px;overflow:hidden;}
+ .frame .cap{font-size:11px;text-align:center;padding:7px;font-weight:bold;}
+ .bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:8px;background:rgba(8,12,18,0.9);border-bottom:1px solid #1c2737;}
+ .bar button{font:bold 10px var(--font-ui);padding:7px 11px;border-radius:16px;cursor:pointer;border:1px solid #2a3d55;background:#0d1320;color:#4a5666;}
+ .frame svg{display:block;width:100%;}
+ .foot{margin-top:34px;color:#4a5666;font-size:12px;border-top:1px solid #1c2737;padding-top:14px;}
+ @media(max-width:760px){.ba{grid-template-columns:1fr;}}
+</style></head><body><div class="wrap">
+ <div class="crumb">CHART QUEST &middot; CHANGE PREVIEW</div>
+ <h1>Trade Replay — watch it play out <span class="tag">NEW</span></h1>
+ <p class="sub">Opening a trade in the journal or at intermission now plays a mini “video”: the entry screen, then the candles reveal one by one until the trade hits its Take Profit or Stop Loss.</p>
+ <h2>What changed</h2>
+ <div class="ba">
+  <div class="card before"><h3>● BEFORE</h3><ul>
+   <li>The review showed a single <b>static</b> snapshot of the setup.</li>
+   <li>You couldn't see <b>how</b> the trade played out — only the final outcome in text.</li>
+  </ul></div>
+  <div class="card after"><h3>● AFTER</h3><ul>
+   <li>The trade <b>animates</b> from entry to exit — candles reveal toward your SL / TP lines.</li>
+   <li>It ends on the result (<b>✓ TAKE PROFIT</b> or <b>✗ STOPPED OUT</b>) with the P&amp;L.</li>
+   <li>Controls: <b>▶ REPLAY</b> to re-watch, <b>📊 DETAILS</b> for the full annotated breakdown + toggles.</li>
+   <li>Every trade records its own path live, so the replay is the <b>real</b> price action.</li>
+  </ul></div>
+ </div>
+ <div class="note">The two examples below auto-play on load. Tap <b>▶ REPLAY</b> to watch again, or <b>📊 DETAILS</b> to switch to the static annotated view (with the overlay toggles).</div>
+
+ <h2>Live — a winning long &amp; a losing short</h2>
+ <div class="charts">
+  <div class="frame"><div class="cap" style="color:#16c784">WIN — long to Take Profit</div><div class="bar" id="bar1"></div><div id="rp1"></div></div>
+  <div class="frame"><div class="cap" style="color:#ea3943">LOSS — short stopped out</div><div class="bar" id="bar2"></div><div id="rp2"></div></div>
+ </div>
+ <div class="foot">Preview pattern: every change ships with a <code>preview-*.html</code>. Uses the live <code>tradeReplaySVG()</code> and <code>tradeChartSVGFull()</code>.</div>
+</div>
+<script>
+const fmt=(n)=>Math.round(n).toLocaleString('en-US');
+function tradeReplaySVG(entry, n) {
+  const R = entry.replay;
+  if (!R || !R.candles || !R.candles.length) return '';
+  const cs = R.candles, total = cs.length, entryIdx = R.entryIdx;
+  const nShown = Math.max(1, Math.min(Math.round(n), total));
+  const isLong = entry.dir === 'long', isWin = entry.result === 'win';
+  const done = nShown >= total;
+
+  // Fixed price range over ALL candles + levels (no mid-replay rescale)
+  let lo = Infinity, hi = -Infinity;
+  for (const c of cs) { lo = Math.min(lo, Math.min(c.open, c.h)); hi = Math.max(hi, Math.max(c.open, c.h)); }
+  [entry.slH, entry.tpH, entry.entryH].forEach(v => { if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
+  const bRng = Math.max(1, hi - lo);
+  for (const c of cs) {
+    lo = Math.min(lo, Math.min(c.open, c.h) - Math.min(c.wick2 || 0, bRng * 0.4 + 2));
+    hi = Math.max(hi, Math.max(c.open, c.h) + Math.min(c.wick  || 0, bRng * 0.4 + 2));
+  }
+  const pad = (hi - lo) * 0.08; lo -= pad; hi += pad; const range = Math.max(1, hi - lo);
+
+  const VW = 390, VH = 560, chartX = 10, chartW = VW - 20, chartTop = 64, chartBot = 522, chartH = chartBot - chartTop;
+  const xw = chartW / total;
+  const Y = (v) => chartTop + (1 - (v - lo) / range) * chartH;
+  const cw = Math.max(2, xw - (xw > 6 ? 4 : 1)), off = xw > 6 ? 2 : 0.5;
+
+  let s = '<svg viewBox="0 0 ' + VW + ' ' + VH + '" xmlns="http://www.w3.org/2000/svg">';
+  s += '<rect width="' + VW + '" height="' + VH + '" fill="#080c12"/>';
+  s += '<rect width="' + VW + '" height="56" fill="#0d1420"/>';
+  s += '<text x="' + (VW/2) + '" y="20" fill="#4cc3ff" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">▶ TRADE REPLAY — ' + (isLong ? '▲ LONG' : '▼ SHORT') + '</text>';
+  let status, statusCol;
+  if (!done) { status = 'In the trade… watching price'; statusCol = '#7d8aa0'; }
+  else { status = (isWin ? '✓ TAKE PROFIT HIT  ' : '✗ STOPPED OUT  ') + (entry.delta > 0 ? '+' : '−') + fmt(Math.abs(entry.delta)) + ' 🐚'; statusCol = isWin ? '#16c784' : '#ea3943'; }
+  s += '<text x="' + (VW/2) + '" y="42" fill="' + statusCol + '" font-size="12" font-weight="bold" font-family="monospace" text-anchor="middle">' + status + '</text>';
+
+  // Chart frame + grid
+  s += '<rect x="' + chartX + '" y="' + chartTop + '" width="' + chartW + '" height="' + chartH + '" fill="rgba(255,255,255,0.015)" stroke="#1c2737" rx="4"/>';
+  for (let gi = 1; gi <= 3; gi++) { const gy = chartTop + gi/4*chartH; s += '<line x1="' + chartX + '" y1="' + gy + '" x2="' + (chartX+chartW) + '" y2="' + gy + '" stroke="#1c2737" stroke-width="0.5" stroke-dasharray="4 4"/>'; }
+
+  // SL / TP / Entry lines — the plan, always visible
+  [['tpH','#16c784','TAKE PROFIT'],['entryH','#ffd60a','ENTRY'],['slH','#ea3943','STOP LOSS']].forEach(function (a) {
+    const v = entry[a[0]]; if (v == null) return; const ly = Y(v); if (ly < chartTop || ly > chartBot) return;
+    s += '<line x1="' + chartX + '" y1="' + ly + '" x2="' + (chartX+chartW) + '" y2="' + ly + '" stroke="' + a[1] + '" stroke-width="1.1" stroke-dasharray="6 4" opacity="0.6"/>';
+    s += '<text x="' + (chartX+4) + '" y="' + (ly-3) + '" fill="' + a[1] + '" font-size="8.5" font-weight="bold" font-family="monospace" opacity="0.85">' + a[2] + '</text>';
+  });
+  // Entry vertical marker
+  const exL = chartX + (entryIdx + 1) * xw;
+  s += '<line x1="' + exL + '" y1="' + chartTop + '" x2="' + exL + '" y2="' + chartBot + '" stroke="#ffd60a" stroke-width="1" stroke-dasharray="3 3" opacity="0.45"/>';
+
+  // VWAP up to the revealed point (clamped into the chart)
+  const clampY = (v) => Math.max(chartTop + 1, Math.min(chartBot - 1, Y(v)));
+  let vp = '';
+  for (let i = 0; i < nShown; i++) { const c = cs[i]; if (!c.vwap) continue; const vx = chartX + i * xw + xw/2; vp += (vp ? ' L' : 'M') + vx.toFixed(1) + ',' + clampY(c.vwap).toFixed(1); }
+  if (vp) s += '<path d="' + vp + '" fill="none" stroke="#ff9f43" stroke-width="2" opacity="0.8"/>';
+
+  // Candles (fixed x positions so they never shift as more reveal)
+  for (let i = 0; i < nShown; i++) {
+    const c = cs[i], bx = chartX + i * xw + off;
+    const yO = Y(c.open), yC = Y(c.h), top = Math.min(yO, yC), bh = Math.max(2, Math.abs(yO - yC));
+    const col = c.color === 'green' ? '#16c784' : '#ea3943', cxm = bx + cw/2;
+    if (c.wick  > 1) s += '<line x1="' + cxm + '" y1="' + top + '" x2="' + cxm + '" y2="' + Y(Math.max(c.open,c.h)+c.wick) + '" stroke="#8b98a8" stroke-width="1.5"/>';
+    if (c.wick2 > 1) s += '<line x1="' + cxm + '" y1="' + (top+bh) + '" x2="' + cxm + '" y2="' + Y(Math.min(c.open,c.h)-c.wick2) + '" stroke="#8b98a8" stroke-width="1.5"/>';
+    s += '<rect x="' + bx + '" y="' + top + '" width="' + cw + '" height="' + bh + '" fill="' + col + '" rx="1"/>';
+    if (i <= entryIdx) {
+      if (c.ob) s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (cw+4) + '" height="' + (bh+6) + '" fill="rgba(168,85,247,0.18)" stroke="#a855f7" stroke-width="1.2" stroke-dasharray="3 2" rx="2"/>';
+      if (c.bos) { const bc = c.choch ? '#ff9f43' : '#4cc3ff'; s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (cw+4) + '" height="' + (bh+6) + '" fill="' + (c.choch?'rgba(255,159,67,0.14)':'rgba(76,195,255,0.13)') + '" stroke="' + bc + '" stroke-width="1.2" rx="2"/>'; }
+    }
+  }
+  // Turtle on the latest revealed candle
+  const li = nShown - 1, lc = cs[li], lcm = chartX + li * xw + off + cw/2;
+  const lty = Math.max(chartTop + 18, Math.min(Y(lc.open), Y(lc.h)) - 16);
+  s += '<text x="' + lcm + '" y="' + lty + '" font-size="17" text-anchor="middle">🐢</text>';
+
+  // Progress bar (entry → exit)
+  const denom = Math.max(1, total - (entryIdx + 1));
+  const prog = Math.max(0, Math.min(1, (nShown - (entryIdx + 1)) / denom));
+  s += '<rect x="10" y="' + (VH-14) + '" width="' + (VW-20) + '" height="4" rx="2" fill="#1c2737"/>';
+  s += '<rect x="10" y="' + (VH-14) + '" width="' + ((VW-20) * prog).toFixed(1) + '" height="4" rx="2" fill="' + (done ? statusCol : '#4cc3ff') + '"/>';
+  s += '</svg>';
+  return s;
+}
+function tradeChartSVGFull(t, opts) {
+  if (!t || !t.candleSnap || !t.candleSnap.length) return '';
+  // Toggle which overlays render (legend on the review screen). Default: all on.
+  const O = Object.assign({ vwap: true, structure: true, ob: true, levels: true }, opts || {});
+  const cs = t.candleSnap;
+  const sType = t.setupType || 'bos';
+  const isLong = t.dir === 'long';
+  const isWin  = t.result === 'win';
+  // Is the structure break a reversal (ChoCh) rather than a continuation (BOS)?
+  const isChoch = sType === 'choch' || cs.some(c => c.choch);
+
+  // Pass 1: body prices + SL/TP/entry — must all be visible
+  let lo = Infinity, hi = -Infinity;
+  for (const c of cs) {
+    lo = Math.min(lo, Math.min(c.open, c.h));
+    hi = Math.max(hi, Math.max(c.open, c.h));
+  }
+  if (t.slH    !== undefined) { lo = Math.min(lo, t.slH);    hi = Math.max(hi, t.slH); }
+  if (t.tpH    !== undefined) { lo = Math.min(lo, t.tpH);    hi = Math.max(hi, t.tpH); }
+  if (t.entryH !== undefined) { lo = Math.min(lo, t.entryH); hi = Math.max(hi, t.entryH); }
+  // VWAP is shown on EVERY trade now. Expand the range to fit it, but cap the
+  // expansion (≤60% of the current span on each side) so a far-off session VWAP
+  // can't squash the candles — if it's beyond, the line rides the chart edge.
+  if (O.vwap) {
+    const vwVals = cs.map(c => c.vwap).filter(v => v > 0);
+    if (vwVals.length) {
+      const span = Math.max(1, hi - lo);
+      lo = Math.min(lo, Math.max(Math.min(...vwVals), lo - span * 0.6));
+      hi = Math.max(hi, Math.min(Math.max(...vwVals), hi + span * 0.6));
+    }
+  }
+  const bodyRng2 = Math.max(1, hi - lo);
+  // Pass 2: include wicks, capped at 40% of body range so spikes don't dominate
+  for (const c of cs) {
+    lo = Math.min(lo, Math.min(c.open, c.h) - Math.min(c.wick2 || 0, bodyRng2 * 0.4 + 2));
+    hi = Math.max(hi, Math.max(c.open, c.h) + Math.min(c.wick  || 0, bodyRng2 * 0.4 + 2));
+  }
+  const pad = (hi - lo) * 0.10;
+  lo -= pad; hi += pad;
+  const range = Math.max(1, hi - lo);
+
+  const VW = 390, VH = 760;
+  const chartX = 10, chartW = VW - 20;
+  const chartTop = 68, chartBot = 480;
+  const chartH = chartBot - chartTop;
+  const nC = cs.length;
+  const xw = chartW / nC;
+  const Y = lvl => chartTop + (1 - (lvl - lo) / range) * chartH;
+
+  const typeLabel = sType === 'vwap_bounce' ? 'VWAP BOUNCE'
+                  : sType === 'trend_break'  ? 'TREND BREAK'
+                  : isChoch                  ? 'CHANGE OF CHARACTER'
+                  : 'ORDER BLOCK + BOS';
+  const resultCol = isWin ? '#16c784' : '#ea3943';
+  const dirLabel  = isLong ? '▲ LONG' : '▼ SHORT';
+  const dSign     = t.delta > 0 ? '+' : '−';
+
+  let s = '<svg viewBox="0 0 ' + VW + ' ' + VH + '" xmlns="http://www.w3.org/2000/svg">';
+  s += '<rect width="' + VW + '" height="' + VH + '" fill="#080c12"/>';
+
+  // Defs — arrow markers
+  s += '<defs>'
+     + '<marker id="tr_arrDn" markerWidth="8" markerHeight="8" refX="4" refY="8" orient="auto"><path d="M0,0 L4,8 L8,0 Z" fill="#d8b4fe"/></marker>'
+     + '<marker id="tr_arrDnC" markerWidth="8" markerHeight="8" refX="4" refY="8" orient="auto"><path d="M0,0 L4,8 L8,0 Z" fill="#4cc3ff"/></marker>'
+     + '</defs>';
+
+  // Title bar
+  s += '<rect width="' + VW + '" height="60" fill="#0d1420"/>';
+  s += '<text x="' + (VW/2) + '" y="19" fill="#4cc3ff" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">' + typeLabel + ' — ' + dirLabel + '</text>';
+  // Result badge
+  s += '<rect x="' + (VW/2 - 70) + '" y="27" width="140" height="25" rx="5" fill="' + resultCol + '22"/>';
+  s += '<text x="' + (VW/2) + '" y="44" fill="' + resultCol + '" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">'
+     + (isWin ? '✓ WIN' : '✗ LOSS') + '  ' + dSign + fmt(Math.abs(t.delta)) + ' 🐚</text>';
+
+  // Chart area
+  s += '<rect x="' + chartX + '" y="' + chartTop + '" width="' + chartW + '" height="' + chartH
+     + '" fill="rgba(255,255,255,0.015)" stroke="#1c2737" stroke-width="1" rx="4"/>';
+  for (let gi = 1; gi <= 3; gi++) {
+    const gy = chartTop + (gi/4) * chartH;
+    s += '<line x1="' + chartX + '" y1="' + gy + '" x2="' + (chartX+chartW) + '" y2="' + gy
+       + '" stroke="#1c2737" stroke-width="0.5" stroke-dasharray="4 4"/>';
+  }
+
+  // ── VWAP curve — drawn on EVERY trade review (toggleable). Points are
+  //    clamped into the chart so a far-off VWAP rides the edge with its label. ──
+  if (O.vwap) {
+    const clampY = (v) => Math.max(chartTop + 1, Math.min(chartBot - 1, Y(v)));
+    const vwapPts = cs.map((c, i) => c.vwap ? { i, v: c.vwap } : null).filter(Boolean);
+    if (vwapPts.length >= 2) {
+      let vPath = '';
+      vwapPts.forEach(({ i, v }) => {
+        const vx = chartX + i * xw + xw / 2;
+        const vy = clampY(v);
+        vPath += (vPath ? ' L' : 'M') + vx.toFixed(1) + ',' + vy.toFixed(1);
+      });
+      s += '<path d="' + vPath + '" fill="none" stroke="#ff9f43" stroke-width="2.5" opacity="0.9"/>';
+      const last = vwapPts[vwapPts.length - 1];
+      const lvx = chartX + last.i * xw + xw / 2;
+      const lvy = Math.max(chartTop + 12, Math.min(chartBot - 6, clampY(last.v)));
+      s += '<rect x="' + (lvx - 26) + '" y="' + (lvy - 13) + '" width="52" height="15" rx="3" fill="rgba(255,159,67,0.22)" stroke="#ff9f43" stroke-width="0.8"/>';
+      s += '<text x="' + lvx + '" y="' + (lvy - 2) + '" fill="#ff9f43" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">VWAP</text>';
+    }
+  }
+
+  // ── SWING LEVEL (trend_break only) ─────────────────────────────────────
+  if (O.structure && sType === 'trend_break') {
+    // Mirror game logic: swingHigh/Low uses body prices only (no wicks), last 7 candles before break
+    const nCs = cs.length;
+    const prevCs = cs.slice(Math.max(0, nCs - 8), nCs - 1);
+    let swingLevel;
+    if (isLong) {
+      // Bull break: close exceeded max BODY high of prior candles
+      swingLevel = prevCs.reduce((m, c) => Math.max(m, Math.max(c.open, c.h)), -Infinity);
+    } else {
+      // Bear break: close fell below min BODY low of prior candles
+      swingLevel = prevCs.reduce((m, c) => Math.min(m, Math.min(c.open, c.h)), Infinity);
+    }
+    if (isFinite(swingLevel)) {
+      const sy = Y(swingLevel);
+      // Yellow dashed swing level line
+      s += '<line x1="' + chartX + '" y1="' + sy + '" x2="' + (chartX + chartW) + '" y2="' + sy
+         + '" stroke="#ffd60a" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.9"/>';
+      // Pill label
+      const swingLbl = isLong ? 'SWING HIGH — BROKEN ↑' : 'SWING LOW — BROKEN ↓';
+      const pillW = 148, pillH = 16, pillX = chartX + chartW - pillW - 4;
+      const pillY = Math.max(chartTop + 4, sy - pillH - 2);
+      s += '<rect x="' + pillX + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH
+         + '" rx="3" fill="rgba(255,214,10,0.18)" stroke="#ffd60a" stroke-width="0.8"/>';
+      s += '<text x="' + (pillX + pillW / 2) + '" y="' + (pillY + 11) + '" fill="#ffd60a"'
+         + ' font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">' + swingLbl + '</text>';
+      // Yellow dashed circle on the last candle (the break candle)
+      const breakIdx = nC - 1;
+      const bc = cs[breakIdx];
+      const bcX = chartX + breakIdx * xw + xw / 2;
+      const bcYtop = Y(Math.max(bc.open, bc.h) + (bc.wick || 0));
+      const bcYbot = Y(Math.min(bc.open, bc.h) - (bc.wick2 || 0));
+      const bcCy = (bcYtop + bcYbot) / 2;
+      const bcR = Math.max(12, (bcYbot - bcYtop) / 2 + 8);
+      s += '<circle cx="' + bcX + '" cy="' + bcCy + '" r="' + bcR
+         + '" fill="none" stroke="#ffd60a" stroke-width="2" stroke-dasharray="4 3" opacity="0.85"/>';
+    }
+  }
+
+  // ── STRUCTURE LEVEL (Order Block + BOS / ChoCh) — the exact level the break
+  //    cleared. ChoCh (reversal) is drawn ORANGE; BOS (continuation) BLUE. ──
+  if (O.structure && sType !== 'trend_break' && sType !== 'vwap_bounce') {
+    const bosI = cs.findIndex(c => c.bos);
+    if (bosI > 0) {
+      const bull = cs[bosI].color === 'green';
+      let lvl = bull ? -Infinity : Infinity;
+      for (let i = 0; i < bosI; i++) {
+        const ext = bull ? Math.max(cs[i].open, cs[i].h) + (cs[i].wick || 0)
+                         : Math.min(cs[i].open, cs[i].h) - (cs[i].wick2 || 0);
+        lvl = bull ? Math.max(lvl, ext) : Math.min(lvl, ext);
+      }
+      if (isFinite(lvl)) {
+        const sy = Y(lvl);
+        const rayCol = isChoch ? '#ff9f43' : '#4cc3ff';
+        s += '<line x1="' + chartX + '" y1="' + sy + '" x2="' + (chartX + chartW) + '" y2="' + sy
+           + '" stroke="' + rayCol + '" stroke-width="1.6" stroke-dasharray="7 4" opacity="0.85"/>';
+        const lbl = isChoch
+          ? (bull ? 'CHANGE OF CHARACTER — FLIP UP ↑' : 'CHANGE OF CHARACTER — FLIP DOWN ↓')
+          : (bull ? 'STRUCTURE HIGH — BROKEN ↑' : 'STRUCTURE LOW — BROKEN ↓');
+        const pillW = isChoch ? 224 : 184, pillH = 16, pillX = chartX + 4;
+        const pillY = Math.max(chartTop + 4, Math.min(chartBot - pillH - 4, bull ? sy + 4 : sy - pillH - 4));
+        s += '<rect x="' + pillX + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH
+           + '" rx="3" fill="' + (isChoch ? 'rgba(255,159,67,0.18)' : 'rgba(76,195,255,0.18)') + '" stroke="' + rayCol + '" stroke-width="0.8"/>';
+        s += '<text x="' + (pillX + pillW / 2) + '" y="' + (pillY + 11) + '" fill="' + rayCol + '"'
+           + ' font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">' + lbl + '</text>';
+      }
+    }
+  }
+
+  // SL / TP / Entry level lines (drawn before candles so they're beneath)
+  if (O.levels) [
+    { h: t.tpH,    col: '#16c784', lbl: 'TAKE PROFIT' },
+    { h: t.entryH, col: '#ffd60a', lbl: 'ENTRY' },
+    { h: t.slH,    col: '#ea3943', lbl: 'STOP LOSS' },
+  ].forEach(({ h, col, lbl }) => {
+    if (h === undefined) return;
+    const ly = Y(h);
+    if (ly < chartTop - 2 || ly > chartBot + 2) return;
+    s += '<line x1="' + chartX + '" y1="' + ly + '" x2="' + (chartX+chartW) + '" y2="' + ly
+       + '" stroke="' + col + '" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.65"/>';
+    s += '<text x="' + (chartX + 5) + '" y="' + (ly - 3) + '" fill="' + col
+       + '" font-size="9" font-weight="bold" font-family="monospace" opacity="0.85">' + lbl + '</text>';
+  });
+
+  // Candles
+  for (let i = 0; i < nC; i++) {
+    const c   = cs[i];
+    const bx  = chartX + i * xw + 5, bw2 = xw - 10;
+    const yO  = Y(c.open), yC = Y(c.h);
+    const top = Math.min(yO, yC), bh = Math.max(3, Math.abs(yO - yC));
+    const col = c.color === 'green' ? '#16c784' : '#ea3943';
+    const cxm = bx + bw2 / 2;
+    if (c.wick  > 1) s += '<line x1="' + cxm + '" y1="' + top + '" x2="' + cxm + '" y2="' + Y(Math.max(c.open,c.h)+c.wick) + '" stroke="#8b98a8" stroke-width="2"/>';
+    if (c.wick2 > 1) s += '<line x1="' + cxm + '" y1="' + (top+bh) + '" x2="' + cxm + '" y2="' + Y(Math.min(c.open,c.h)-c.wick2) + '" stroke="#8b98a8" stroke-width="2"/>';
+    s += '<rect x="' + bx + '" y="' + top + '" width="' + bw2 + '" height="' + bh + '" fill="' + col + '" rx="1"/>';
+    // OB annotation
+    if (c.ob && O.ob) {
+      s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (bw2+4) + '" height="' + (bh+6)
+         + '" fill="rgba(168,85,247,0.22)" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="3 2" rx="2"/>';
+      const arrowTipOB = top - 5;
+      if (arrowTipOB - 24 > chartTop)
+        s += '<line x1="' + cxm + '" y1="' + (arrowTipOB-22) + '" x2="' + cxm + '" y2="' + arrowTipOB
+           + '" stroke="#d8b4fe" stroke-width="1.5" marker-end="url(#tr_arrDn)"/>';
+      s += '<text x="' + cxm + '" y="' + Math.max(chartTop+14, arrowTipOB-26) + '" fill="#d8b4fe" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ORDER BLOCK</text>';
+    }
+    // BOS / ChoCh annotation — ChoCh (reversal) is orange, BOS (continuation) blue
+    if (c.bos && O.structure) {
+      const ch = c.choch;
+      const bc = ch ? '#ff9f43' : '#4cc3ff';
+      s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (bw2+4) + '" height="' + (bh+6)
+         + '" fill="' + (ch ? 'rgba(255,159,67,0.16)' : 'rgba(76,195,255,0.15)') + '" stroke="' + bc + '" stroke-width="1.5" rx="2"/>';
+      s += '<text x="' + cxm + '" y="' + Math.max(chartTop+14, top-8) + '" fill="' + bc + '" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">' + (ch ? 'ChoCh 🔄' : 'BOS ⚡') + '</text>';
+    }
+    // Turtle on last candle
+    if (i === nC - 1) {
+      const turtleYt = Math.max(chartTop + 28, top - 22);
+      s += '<text x="' + (bx+bw2/2) + '" y="' + turtleYt + '" font-size="20" text-anchor="middle">🐢</text>';
+    }
+  }
+
+  // Divider
+  s += '<line x1="10" y1="490" x2="380" y2="490" stroke="#1c2737" stroke-width="1"/>';
+
+  // ── WHY THIS SETUP? ────────────────────────────────────────────────────────
+  const whyLines = sType === 'vwap_bounce' ? [
+    { t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' },
+    { t: 'VWAP = average price of all trades today.', c: '#ff9f43' },
+    { t: 'Price always returns to VWAP like a magnet.', c: '#c7d1de' },
+    { t: isLong ? 'Price bounced UP off VWAP → bulls defending it.' : 'Price got pushed DOWN from VWAP → bears rejecting it.', c: isLong ? '#16c784' : '#ea3943' },
+  ] : sType === 'trend_break' ? [
+    { t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' },
+    { t: isLong ? 'See the yellow line? That was KEY RESISTANCE.' : 'See the yellow line? That was KEY SUPPORT.', c: '#ffd60a' },
+    { t: isLong ? 'Price broke ABOVE it → buyers took over.' : 'Price broke BELOW it → sellers took over.', c: isLong ? '#16c784' : '#ea3943' },
+    { t: isLong ? 'Old ceiling = new floor. Ride the UP move.' : 'Old floor = new ceiling. Ride the DOWN move.', c: '#c7d1de' },
+  ] : (function () {
+    const hasOB  = cs.some(c => c.ob);
+    const hasBOS = cs.some(c => c.bos);
+    const lines = [{ t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' }];
+    if (hasOB) {
+      lines.push({ t: '🟣 ORDER BLOCK — the last ' + (isLong ? 'red' : 'green') + ' candle before the break.', c: '#d8b4fe' });
+      lines.push({ t: '   Price often returns here before continuing.', c: '#c7d1de' });
+    }
+    if (hasBOS && isChoch) {
+      lines.push({ t: '🔄 ChoCh — price broke structure the OTHER way.', c: '#ff9f43' });
+      lines.push({ t: '   The trend may be FLIPPING — a reversal, not continuation.', c: '#c7d1de' });
+    } else if (hasBOS) {
+      lines.push({ t: '⚡ BOS — price broke the blue structure ' + (isLong ? 'high' : 'low') + '.', c: '#4cc3ff' });
+      lines.push({ t: '   ' + (isLong ? 'A close above it = buyers in control.' : 'A close below it = sellers in control.'), c: '#c7d1de' });
+    }
+    return lines;
+  })();
+  let wyY = 507;
+  whyLines.forEach(({ t: lt, b, c: lc }) => {
+    s += '<text x="14" y="' + wyY + '" fill="' + lc + '" font-size="11" font-family="monospace"'
+       + (b ? ' font-weight="bold"' : '') + '>' + lt + '</text>';
+    wyY += 18;
+  });
+
+  // ── WHAT HAPPENED? — outcome × setup-quality.
+  //    The key trading-psychology lesson: outcome ≠ decision quality. A great
+  //    setup can still lose (variance); a weak setup can still win (luck). We
+  //    teach the player to judge the SETUP, not the result. ──────────────────
+  s += '<line x1="10" y1="590" x2="380" y2="590" stroke="#1c2737" stroke-width="1"/>';
+  const grade = (t.quality || 'C').toUpperCase();
+  const goodSetup = grade === 'A' || grade === 'B';
+  const whatLines = [
+    { t: 'WHAT HAPPENED?', b: true, c: '#4cc3ff' },
+    { t: isWin
+        ? (isLong ? '✓ Price went UP and hit your Take Profit.' : '✓ Price went DOWN and hit your Take Profit.')
+        : (isLong ? '✗ Price went DOWN and hit your Stop Loss.' : '✗ Price went UP and hit your Stop Loss.'),
+      c: isWin ? '#16c784' : '#ea3943' },
+  ];
+  if (isWin && goodSetup) {
+    whatLines.push({ t: 'A Grade ' + grade + ' setup that paid off. This is your edge —', c: '#c7d1de' });
+    whatLines.push({ t: 'high-probability setups win MORE often, over time.', c: '#4a5a70' });
+  } else if (isWin && !goodSetup) {
+    whatLines.push({ t: 'It won — but this was a LOW-probability (Grade ' + grade + ') setup.', c: '#ffd60a' });
+    whatLines.push({ t: "Don't let a lucky win teach a bad habit. Judge the setup,", c: '#9aa7b6' });
+    whatLines.push({ t: 'not the result. Next time, wait for A-grade confluence.', c: '#4a5a70' });
+  } else if (!isWin && goodSetup) {
+    whatLines.push({ t: 'This was a Grade ' + grade + ' setup — you did the right thing.', c: '#9fc8e0' });
+    whatLines.push({ t: 'Even great setups lose ~1 in 3. This was NOT a mistake —', c: '#9fc8e0' });
+    whatLines.push({ t: "the market just didn't follow through. On to the next.", c: '#6a7e94' });
+  } else {
+    whatLines.push({ t: 'A low-probability (Grade ' + grade + ') setup that didn\'t work out.', c: '#c7d1de' });
+    whatLines.push({ t: 'Be patient — wait for A-grade confluence. The stop kept', c: '#9aa7b6' });
+    whatLines.push({ t: 'the loss small, exactly as risk management should.', c: '#4a5a70' });
+  }
+  let whY2 = 607;
+  whatLines.forEach(({ t: lt, b, c: lc }) => {
+    s += '<text x="14" y="' + whY2 + '" fill="' + lc + '" font-size="11" font-family="monospace"'
+       + (b ? ' font-weight="bold"' : '') + '>' + lt + '</text>';
+    whY2 += 18;
+  });
+  // R:R line
+  if (t.rr) {
+    const riskAmt = t.rr > 0.01 ? Math.abs(t.delta) / t.rr : 0;
+    s += '<text x="14" y="' + whY2 + '" fill="#4a5a70" font-size="10" font-family="monospace">R:R = '
+       + t.rr.toFixed(1) + ':1  ·  risked ' + fmt(riskAmt) + ' 🐚  ·  '
+       + (isWin ? 'won' : 'lost') + ' ' + fmt(Math.abs(t.delta)) + ' 🐚</text>';
+  }
+
+  s += '<text x="' + (VW/2) + '" y="' + (VH-10) + '" fill="#242e3e" font-size="11" font-family="monospace" text-anchor="middle">TAP ANYWHERE TO CLOSE</text>';
+  s += '</svg>';
+  return s;
+}
+// Build an accurate setup + an outcome path that reaches TP (win) or SL (loss)
+function makeTrade(dir,result){
+ const up=dir==='long';
+ const setup=[];let lvl=320;
+ for(const d of (up?[5,-4,3,-6]:[-5,4,-3,6])){const o=lvl;lvl+=d;setup.push({open:o,h:lvl,wick:5,wick2:4,color:lvl>=o?'green':'red',ob:false,bos:false,choch:false,vwap:lvl-(up?28:-28)});}
+ // last opposing candle = OB, then the BOS impulse
+ setup[setup.length-1].ob=true;
+ {const o=lvl;lvl+=up?34:-34;setup.push({open:o,h:lvl,wick:6,wick2:4,color:lvl>=o?'green':'red',ob:false,bos:true,choch:false,vwap:lvl-(up?28:-28)});}
+ const entryH=lvl;
+ const sl=up?entryH-38:entryH+38, risk=Math.abs(entryH-sl), tp=up?entryH+2*risk:entryH-2*risk;
+ // path: drift toward target (win) or stop (loss), with wiggle
+ const target=result==='win'?tp:sl; const steps=9; const path=[];let p=entryH;
+ for(let i=0;i<steps;i++){const frac=(i+1)/steps;const goal=entryH+(target-entryH)*frac;const wig=(i%2?-1:1)*4;const o=p;p=goal+wig;path.push({open:o,h:p,wick:4,wick2:3,color:p>=o?'green':'red',ob:false,bos:false,choch:false,vwap:p-(up?28:-28)});}
+ const delta=result==='win'?Math.round(risk*2):-Math.round(risk);
+ return {dir,result,delta,rr:2,quality:'A',setupType:'bos',entryH,slH:sl,tpH:tp,
+   candleSnap:setup.slice(),replay:{candles:setup.concat(path),entryIdx:setup.length-1}};
+}
+// A tiny replay player bound to a container + control bar
+function Player(rpId,barId,entry){
+ const opts={vwap:true,structure:true,ob:true,levels:true};let mode='replay',timer=null;
+ const ITEMS=[['vwap','VWAP','#ff9f43'],['structure','STRUCTURE','#4cc3ff'],['ob','ORDER BLOCK','#a855f7'],['levels','SL / TP','#16c784']];
+ function stop(){if(timer){clearInterval(timer);timer=null;}}
+ function bar(){let h='';if(mode==='details'){h+=ITEMS.map(([k,l,c])=>{const on=opts[k];const st=on?'border-color:'+c+';color:'+c+';background:'+c+'22;':'border-color:#2a3d55;color:#4a5666;';return '<button data-a="t" data-k="'+k+'" style="'+st+'">'+(on?'●':'○')+' '+l+'</button>';}).join('');h+='<button data-a="r" style="border-color:#4cc3ff;color:#4cc3ff">▶ REPLAY</button>';}else{h+='<button data-a="r" style="border-color:#4cc3ff;color:#4cc3ff">▶ REPLAY</button><button data-a="d" style="border-color:#7d8aa0;color:#c7d1de">📊 DETAILS</button>';}document.getElementById(barId).innerHTML=h;}
+ function details(){stop();mode='details';document.getElementById(rpId).innerHTML=tradeChartSVGFull(entry,opts);bar();}
+ function play(){stop();mode='replay';bar();const total=entry.replay.candles.length;let n=entry.replay.entryIdx+1;document.getElementById(rpId).innerHTML=tradeReplaySVG(entry,n);let first=true;timer=setInterval(()=>{if(first){first=false;return;}if(n>=total){stop();return;}n++;document.getElementById(rpId).innerHTML=tradeReplaySVG(entry,n);},240);}
+ document.getElementById(barId).addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button[data-a]');if(!b)return;const a=b.getAttribute('data-a');if(a==='r')play();else if(a==='d')details();else if(a==='t'){const k=b.getAttribute('data-k');opts[k]=!opts[k];bar();document.getElementById(rpId).innerHTML=tradeChartSVGFull(entry,opts);}});
+ play();
+}
+Player('rp1','bar1',makeTrade('long','win'));
+Player('rp2','bar2',makeTrade('short','loss'));
+</script></body></html>

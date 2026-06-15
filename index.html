@@ -703,7 +703,7 @@
   // The service-role key is NEVER used here and must never be added to this file.
   // All data access is gated by Row Level Security in Supabase.
   // ---- Domain lock — game only runs on authorised hosts ----
-  const _ALLOWED_HOSTS = ['chart-quest-game.netlify.app', 'localhost', '127.0.0.1'];
+  const _ALLOWED_HOSTS = ['chart-quest-game.netlify.app', 'localhost', '127.0.0.1', 'shelltrader.github.io'];
   if (!_ALLOWED_HOSTS.includes(location.hostname)) {
     document.getElementById('authOverlay').innerHTML =
       '<div style="position:fixed;inset:0;background:#0a0e14;display:flex;align-items:center;' +

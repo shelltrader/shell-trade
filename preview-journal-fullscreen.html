@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart Quest — Change Preview: Journal Full-Screen Review</title>
+<style>
+  :root{--font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--font-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;}
+  body{margin:0;background:#060910;color:#c7d1de;font:14px/1.6 var(--font-ui);padding:28px 20px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  .crumb{font-size:11px;letter-spacing:2px;color:#4cc3ff;font-weight:bold;}
+  h1{font-size:24px;margin:6px 0 4px;color:#e6edf3;}
+  .sub{color:#7d8aa0;margin:0 0 26px;}
+  .tag-new{display:inline-block;background:rgba(22,199,132,0.15);border:1px solid #16c784;color:#16c784;font-size:10px;font-weight:bold;letter-spacing:1px;padding:3px 9px;border-radius:20px;vertical-align:middle;margin-left:8px;}
+  h2{font-size:13px;letter-spacing:1.5px;color:#7d8aa0;text-transform:uppercase;margin:30px 0 12px;border-bottom:1px solid #1c2737;padding-bottom:8px;}
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .ba .card{background:#0d1320;border:1px solid #1c2737;border-radius:12px;padding:16px 18px;}
+  .ba .card.before{border-left:3px solid #5a6b82;}.ba .card.after{border-left:3px solid #16c784;}
+  .ba h3{margin:0 0 10px;font-size:12px;letter-spacing:1.5px;}
+  .ba .before h3{color:#7d8aa0;}.ba .after h3{color:#16c784;}
+  .ba ul{margin:0;padding-left:18px;}.ba li{margin-bottom:7px;color:#aeb9c8;}.ba li b{color:#e6edf3;}
+  .note{background:rgba(76,195,255,0.07);border:1px solid rgba(76,195,255,0.3);border-radius:10px;padding:12px 15px;font-size:13px;color:#9fc8e0;margin-top:14px;}
+  .row{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+  .colcap{font-size:11px;letter-spacing:1px;color:#7d8aa0;text-align:center;margin:0 0 8px;}
+  .phone{width:390px;max-width:100%;height:740px;position:relative;background:#080c12;border:10px solid #161c26;border-radius:30px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.6);}
+  /* journal list styles (identical to game) */
+  #jPanel{position:absolute;inset:0;display:flex;flex-direction:column;background:#080c12;}
+  #jHeader{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid #1c2737;flex-shrink:0;}
+  #jHeader .jt{font-weight:bold;font-size:14px;letter-spacing:2px;color:#e6edf3;}
+  #jClose{background:none;border:1px solid #2a3442;border-radius:7px;color:#7d8aa0;font:bold 13px var(--font-ui);padding:7px 13px;cursor:pointer;}
+  #jStats{display:flex;flex-wrap:wrap;gap:8px;padding:12px 18px;border-bottom:1px solid #1c2737;flex-shrink:0;}
+  .jStat{flex:1;min-width:84px;background:#0d1320;border:1px solid #1c2737;border-radius:9px;padding:9px 11px;}
+  .jStat .k{font-size:9px;letter-spacing:1px;color:#7d8aa0;}.jStat .v{font-size:17px;font-weight:bold;margin-top:3px;color:#e6edf3;}
+  #jList{flex:1;overflow-y:auto;padding:12px 14px 28px;}
+  .jEntry{background:#0d1320;border:1px solid #1c2737;border-left-width:3px;border-radius:10px;padding:11px 13px;margin-bottom:10px;}
+  .jEntry.win{border-left-color:#16c784;}.jEntry.loss{border-left-color:#ea3943;}
+  .jRow1{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .jDir{font-weight:bold;font-size:13px;}.jDir.long{color:#16c784;}.jDir.short{color:#ea3943;}
+  .jDelta{font-weight:bold;font-size:14px;font-family:var(--font-mono);}.jDelta.up{color:#16c784;}.jDelta.down{color:#ea3943;}
+  .jMeta{margin-top:6px;font-size:10px;color:#7d8aa0;font-family:var(--font-mono);}
+  .jMeta .tag{display:inline-block;padding:2px 6px;border-radius:5px;margin-right:5px;background:rgba(124,77,255,0.14);border:1px solid rgba(124,77,255,0.4);color:#c9b3ff;}
+  .jView{margin-top:9px;width:100%;padding:9px 0;cursor:pointer;background:#14222f;border:1px solid #2a3d55;border-radius:7px;color:#4cc3ff;font:bold 11px var(--font-ui);letter-spacing:.5px;}
+  .jView:hover{border-color:#4cc3ff;background:#16283a;}
+  .jNote{width:100%;box-sizing:border-box;margin-top:9px;resize:vertical;min-height:34px;background:#0a0e14;border:1px solid #2a3442;border-radius:7px;color:#c7d1de;font:12px var(--font-ui);padding:7px 9px;line-height:1.5;}
+  /* full screen review overlay inside the phone */
+  #cf,#cf2{display:none;position:absolute;inset:0;z-index:9;background:#080c12;}
+  #cf.open,#cf2.open{display:block;}
+  #cf svg,#cf2 svg{width:100%;height:100%;display:block;}
+  /* trade panel mock */
+  #tp{position:absolute;inset:0;background:rgba(4,6,10,0.62);display:flex;align-items:center;justify-content:center;}
+  .tpcard{width:330px;background:#0d1320;border:1px solid #2a3442;border-radius:14px;padding:18px;font:13px var(--font-ui);color:#c7d1de;}
+  .tpTitle{text-align:center;font-weight:bold;font-size:11px;letter-spacing:2px;color:#7d8aa0;margin-bottom:12px;}
+  #tpHistory{margin:0 0 12px;padding:8px 10px;border-radius:7px;font-size:11px;background:rgba(76,195,255,0.06);border:1px solid rgba(76,195,255,0.22);color:#9fc8e0;line-height:1.5;text-align:center;}
+  #tpHistory b{color:#e6edf3;}
+  #tpJournalBtn{display:block;width:100%;margin:0 0 12px;padding:8px 0;cursor:pointer;background:transparent;border:1px dashed #2a3d55;border-radius:7px;color:#7d8aa0;font:bold 11px var(--font-ui);letter-spacing:.5px;}
+  .tprow{display:flex;gap:10px;margin-bottom:12px;}
+  .tprow button{flex:1;padding:11px 0;font-weight:bold;border-radius:6px;background:transparent;border:1px solid #2a3442;color:#7d8aa0;}
+  .tprow .lg{border-color:#16c784;color:#16c784;background:rgba(22,199,132,0.13);}
+  .foot{margin-top:34px;color:#4a5666;font-size:12px;border-top:1px solid #1c2737;padding-top:14px;}
+  @media(max-width:720px){.ba{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb">CHART QUEST · CHANGE PREVIEW</div>
+  <h1>Journal Full-Screen Review + Entry Points <span class="tag-new">NEW</span></h1>
+  <p class="sub">Every journal trade now opens full-screen with entry / SL / TP and a why-this-setup &amp; what-happened breakdown. The journal is now reachable from the intermission and the trade ticket, which also shows your record on the setup.</p>
+
+  <h2>What changed</h2>
+  <div class="ba">
+    <div class="card before">
+      <h3>● BEFORE</h3>
+      <ul>
+        <li>Journal entries showed a <b>summary row only</b> — no chart.</li>
+        <li>The full-screen trade review existed, but <b>only</b> for the per-hour intermission history (wiped each hour).</li>
+        <li>The journal was reachable <b>only</b> from the in-game HUD button.</li>
+        <li>Nothing surfaced your <b>past record</b> when deciding on a trade.</li>
+      </ul>
+    </div>
+    <div class="card after">
+      <h3>● AFTER</h3>
+      <ul>
+        <li>Each entry has a <b>🔍 VIEW FULL CHART</b> button → annotated review (entry/SL/TP, OB/BOS, VWAP, why &amp; what-happened).</li>
+        <li>Every logged trade now <b>carries its chart snapshot</b>, so even old trades replay full-screen.</li>
+        <li><b>📓 JOURNAL</b> button added to the <b>intermission</b> screen and the <b>trade ticket</b>.</li>
+        <li>The trade ticket shows a <b>similar-trades hint</b>: your win rate on this exact setup.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note">Core runner, physics, and curriculum untouched. Uses the game's existing <code>tradeChartSVGFull()</code> renderer — the journal entries were simply enriched to feed it.</div>
+
+  <h2>Live preview — tap “VIEW FULL CHART” on any trade</h2>
+  <div class="row">
+    <div>
+      <p class="colcap">THE JOURNAL — each entry opens full-screen</p>
+      <div class="phone">
+        <div id="jPanel">
+          <div id="jHeader"><span class="jt">📓 TRADING JOURNAL</span><button id="jClose">CLOSE ✕</button></div>
+          <div id="jStats"></div>
+          <div id="jList"></div>
+        </div>
+        <div id="cf"><div id="cfChart"></div></div>
+      </div>
+    </div>
+    <div>
+      <p class="colcap">THE TRADE TICKET — journal + your record on this setup</p>
+      <div class="phone">
+        <div id="tp"><div class="tpcard">
+          <div class="tpTitle">TRADE SETUP</div>
+          <div id="tpHistory"></div>
+          <button id="tpJournalBtn">📓 CHECK YOUR JOURNAL FIRST</button>
+          <div class="tprow"><button class="lg">▲ LONG</button><button>▼ SHORT</button></div>
+          <div style="text-align:center;color:#4a5666;font-size:11px;margin-top:8px">…risk / stop / take-profit controls…</div>
+        </div></div>
+        <div id="cf2"><div id="cfChart2"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">Preview pattern: every change ships with a <code>preview-*.html</code> like this — before/after plus a live, interactive view — so you can approve without restarting the game.</div>
+</div>
+
+<script>
+const fmt=(n)=>Math.round(n).toLocaleString('en-US');
+const SETUP_LABEL={bos:'Break of Structure',ob:'Order Block',vwap:'VWAP',sweep:'Liquidity Sweep',vwap_bounce:'VWAP Bounce',trend_break:'Trend Break'};
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function jTimeAgo(ts){const s=Math.floor((Date.now()-ts)/1000);if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+
+/* === GAME FUNCTION (verbatim) === */
+function tradeChartSVGFull(t) {
+  if (!t || !t.candleSnap || !t.candleSnap.length) return '';
+  const cs = t.candleSnap;
+  const sType = t.setupType || 'bos';
+  const isLong = t.dir === 'long';
+  const isWin  = t.result === 'win';
+
+  // Pass 1: body prices + SL/TP/entry — must all be visible
+  let lo = Infinity, hi = -Infinity;
+  for (const c of cs) {
+    lo = Math.min(lo, Math.min(c.open, c.h));
+    hi = Math.max(hi, Math.max(c.open, c.h));
+  }
+  if (t.slH    !== undefined) { lo = Math.min(lo, t.slH);    hi = Math.max(hi, t.slH); }
+  if (t.tpH    !== undefined) { lo = Math.min(lo, t.tpH);    hi = Math.max(hi, t.tpH); }
+  if (t.entryH !== undefined) { lo = Math.min(lo, t.entryH); hi = Math.max(hi, t.entryH); }
+  // For VWAP trades, ensure the VWAP curve is always visible
+  if (sType === 'vwap_bounce') {
+    for (const c of cs) { if (c.vwap) { lo = Math.min(lo, c.vwap); hi = Math.max(hi, c.vwap); } }
+  }
+  const bodyRng2 = Math.max(1, hi - lo);
+  // Pass 2: include wicks, capped at 40% of body range so spikes don't dominate
+  for (const c of cs) {
+    lo = Math.min(lo, Math.min(c.open, c.h) - Math.min(c.wick2 || 0, bodyRng2 * 0.4 + 2));
+    hi = Math.max(hi, Math.max(c.open, c.h) + Math.min(c.wick  || 0, bodyRng2 * 0.4 + 2));
+  }
+  const pad = (hi - lo) * 0.10;
+  lo -= pad; hi += pad;
+  const range = Math.max(1, hi - lo);
+
+  const VW = 390, VH = 760;
+  const chartX = 10, chartW = VW - 20;
+  const chartTop = 68, chartBot = 480;
+  const chartH = chartBot - chartTop;
+  const nC = cs.length;
+  const xw = chartW / nC;
+  const Y = lvl => chartTop + (1 - (lvl - lo) / range) * chartH;
+
+  const typeLabel = sType === 'vwap_bounce' ? 'VWAP BOUNCE'
+                  : sType === 'trend_break'  ? 'TREND BREAK'
+                  : 'ORDER BLOCK + BOS';
+  const resultCol = isWin ? '#16c784' : '#ea3943';
+  const dirLabel  = isLong ? '▲ LONG' : '▼ SHORT';
+  const dSign     = t.delta > 0 ? '+' : '−';
+
+  let s = '<svg viewBox="0 0 ' + VW + ' ' + VH + '" xmlns="http://www.w3.org/2000/svg">';
+  s += '<rect width="' + VW + '" height="' + VH + '" fill="#080c12"/>';
+
+  // Defs — arrow markers
+  s += '<defs>'
+     + '<marker id="tr_arrDn" markerWidth="8" markerHeight="8" refX="4" refY="8" orient="auto"><path d="M0,0 L4,8 L8,0 Z" fill="#d8b4fe"/></marker>'
+     + '<marker id="tr_arrDnC" markerWidth="8" markerHeight="8" refX="4" refY="8" orient="auto"><path d="M0,0 L4,8 L8,0 Z" fill="#4cc3ff"/></marker>'
+     + '</defs>';
+
+  // Title bar
+  s += '<rect width="' + VW + '" height="60" fill="#0d1420"/>';
+  s += '<text x="' + (VW/2) + '" y="19" fill="#4cc3ff" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">' + typeLabel + ' — ' + dirLabel + '</text>';
+  // Result badge
+  s += '<rect x="' + (VW/2 - 70) + '" y="27" width="140" height="25" rx="5" fill="' + resultCol + '22"/>';
+  s += '<text x="' + (VW/2) + '" y="44" fill="' + resultCol + '" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">'
+     + (isWin ? '✓ WIN' : '✗ LOSS') + '  ' + dSign + fmt(Math.abs(t.delta)) + ' 🐚</text>';
+
+  // Chart area
+  s += '<rect x="' + chartX + '" y="' + chartTop + '" width="' + chartW + '" height="' + chartH
+     + '" fill="rgba(255,255,255,0.015)" stroke="#1c2737" stroke-width="1" rx="4"/>';
+  for (let gi = 1; gi <= 3; gi++) {
+    const gy = chartTop + (gi/4) * chartH;
+    s += '<line x1="' + chartX + '" y1="' + gy + '" x2="' + (chartX+chartW) + '" y2="' + gy
+       + '" stroke="#1c2737" stroke-width="0.5" stroke-dasharray="4 4"/>';
+  }
+
+  // ── VWAP curve (vwap_bounce trades only) ──────────────────────────────
+  if (sType === 'vwap_bounce') {
+    const vwapPts = cs.map((c, i) => c.vwap ? { i, v: c.vwap } : null).filter(Boolean);
+    if (vwapPts.length >= 2) {
+      let vPath = '';
+      vwapPts.forEach(({ i, v }) => {
+        const vx = chartX + i * xw + xw / 2;
+        const vy = Y(v);
+        vPath += (vPath ? ' L' : 'M') + vx.toFixed(1) + ',' + vy.toFixed(1);
+      });
+      s += '<path d="' + vPath + '" fill="none" stroke="#ff9f43" stroke-width="2.5" opacity="0.9"/>';
+      // Label at the right end
+      const last = vwapPts[vwapPts.length - 1];
+      const lvx = chartX + last.i * xw + xw / 2;
+      const lvy = Math.max(chartTop + 12, Math.min(chartBot - 6, Y(last.v)));
+      s += '<rect x="' + (lvx - 26) + '" y="' + (lvy - 13) + '" width="52" height="15" rx="3" fill="rgba(255,159,67,0.22)" stroke="#ff9f43" stroke-width="0.8"/>';
+      s += '<text x="' + lvx + '" y="' + (lvy - 2) + '" fill="#ff9f43" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">VWAP</text>';
+    }
+  }
+
+  // ── SWING LEVEL (trend_break only) ─────────────────────────────────────
+  if (sType === 'trend_break') {
+    // Mirror game logic: swingHigh/Low uses body prices only (no wicks), last 7 candles before break
+    const nCs = cs.length;
+    const prevCs = cs.slice(Math.max(0, nCs - 8), nCs - 1);
+    let swingLevel;
+    if (isLong) {
+      // Bull break: close exceeded max BODY high of prior candles
+      swingLevel = prevCs.reduce((m, c) => Math.max(m, Math.max(c.open, c.h)), -Infinity);
+    } else {
+      // Bear break: close fell below min BODY low of prior candles
+      swingLevel = prevCs.reduce((m, c) => Math.min(m, Math.min(c.open, c.h)), Infinity);
+    }
+    if (isFinite(swingLevel)) {
+      const sy = Y(swingLevel);
+      // Yellow dashed swing level line
+      s += '<line x1="' + chartX + '" y1="' + sy + '" x2="' + (chartX + chartW) + '" y2="' + sy
+         + '" stroke="#ffd60a" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.9"/>';
+      // Pill label
+      const swingLbl = isLong ? 'SWING HIGH — BROKEN ↑' : 'SWING LOW — BROKEN ↓';
+      const pillW = 148, pillH = 16, pillX = chartX + chartW - pillW - 4;
+      const pillY = Math.max(chartTop + 4, sy - pillH - 2);
+      s += '<rect x="' + pillX + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH
+         + '" rx="3" fill="rgba(255,214,10,0.18)" stroke="#ffd60a" stroke-width="0.8"/>';
+      s += '<text x="' + (pillX + pillW / 2) + '" y="' + (pillY + 11) + '" fill="#ffd60a"'
+         + ' font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">' + swingLbl + '</text>';
+      // Yellow dashed circle on the last candle (the break candle)
+      const breakIdx = nC - 1;
+      const bc = cs[breakIdx];
+      const bcX = chartX + breakIdx * xw + xw / 2;
+      const bcYtop = Y(Math.max(bc.open, bc.h) + (bc.wick || 0));
+      const bcYbot = Y(Math.min(bc.open, bc.h) - (bc.wick2 || 0));
+      const bcCy = (bcYtop + bcYbot) / 2;
+      const bcR = Math.max(12, (bcYbot - bcYtop) / 2 + 8);
+      s += '<circle cx="' + bcX + '" cy="' + bcCy + '" r="' + bcR
+         + '" fill="none" stroke="#ffd60a" stroke-width="2" stroke-dasharray="4 3" opacity="0.85"/>';
+    }
+  }
+
+  // SL / TP / Entry level lines (drawn before candles so they're beneath)
+  [
+    { h: t.tpH,    col: '#16c784', lbl: 'TAKE PROFIT' },
+    { h: t.entryH, col: '#ffd60a', lbl: 'ENTRY' },
+    { h: t.slH,    col: '#ea3943', lbl: 'STOP LOSS' },
+  ].forEach(({ h, col, lbl }) => {
+    if (h === undefined) return;
+    const ly = Y(h);
+    if (ly < chartTop - 2 || ly > chartBot + 2) return;
+    s += '<line x1="' + chartX + '" y1="' + ly + '" x2="' + (chartX+chartW) + '" y2="' + ly
+       + '" stroke="' + col + '" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.65"/>';
+    s += '<text x="' + (chartX + 5) + '" y="' + (ly - 3) + '" fill="' + col
+       + '" font-size="9" font-weight="bold" font-family="monospace" opacity="0.85">' + lbl + '</text>';
+  });
+
+  // Candles
+  for (let i = 0; i < nC; i++) {
+    const c   = cs[i];
+    const bx  = chartX + i * xw + 5, bw2 = xw - 10;
+    const yO  = Y(c.open), yC = Y(c.h);
+    const top = Math.min(yO, yC), bh = Math.max(3, Math.abs(yO - yC));
+    const col = c.color === 'green' ? '#16c784' : '#ea3943';
+    const cxm = bx + bw2 / 2;
+    if (c.wick  > 1) s += '<line x1="' + cxm + '" y1="' + top + '" x2="' + cxm + '" y2="' + Y(Math.max(c.open,c.h)+c.wick) + '" stroke="#8b98a8" stroke-width="2"/>';
+    if (c.wick2 > 1) s += '<line x1="' + cxm + '" y1="' + (top+bh) + '" x2="' + cxm + '" y2="' + Y(Math.min(c.open,c.h)-c.wick2) + '" stroke="#8b98a8" stroke-width="2"/>';
+    s += '<rect x="' + bx + '" y="' + top + '" width="' + bw2 + '" height="' + bh + '" fill="' + col + '" rx="1"/>';
+    // OB annotation
+    if (c.ob) {
+      s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (bw2+4) + '" height="' + (bh+6)
+         + '" fill="rgba(168,85,247,0.22)" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="3 2" rx="2"/>';
+      const arrowTipOB = top - 5;
+      if (arrowTipOB - 24 > chartTop)
+        s += '<line x1="' + cxm + '" y1="' + (arrowTipOB-22) + '" x2="' + cxm + '" y2="' + arrowTipOB
+           + '" stroke="#d8b4fe" stroke-width="1.5" marker-end="url(#tr_arrDn)"/>';
+      s += '<text x="' + cxm + '" y="' + Math.max(chartTop+14, arrowTipOB-26) + '" fill="#d8b4fe" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ORDER BLOCK</text>';
+    }
+    // BOS annotation
+    if (c.bos) {
+      s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (bw2+4) + '" height="' + (bh+6)
+         + '" fill="rgba(76,195,255,0.15)" stroke="#4cc3ff" stroke-width="1.5" rx="2"/>';
+      s += '<text x="' + cxm + '" y="' + Math.max(chartTop+14, top-8) + '" fill="#4cc3ff" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">BOS ⚡</text>';
+    }
+    // Turtle on last candle
+    if (i === nC - 1) {
+      const turtleYt = Math.max(chartTop + 28, top - 22);
+      s += '<text x="' + (bx+bw2/2) + '" y="' + turtleYt + '" font-size="20" text-anchor="middle">🐢</text>';
+    }
+  }
+
+  // Divider
+  s += '<line x1="10" y1="490" x2="380" y2="490" stroke="#1c2737" stroke-width="1"/>';
+
+  // ── WHY THIS SETUP? ────────────────────────────────────────────────────────
+  const whyLines = sType === 'vwap_bounce' ? [
+    { t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' },
+    { t: 'VWAP = average price of all trades today.', c: '#ff9f43' },
+    { t: 'Price always returns to VWAP like a magnet.', c: '#c7d1de' },
+    { t: isLong ? 'Price bounced UP off VWAP → bulls defending it.' : 'Price got pushed DOWN from VWAP → bears rejecting it.', c: isLong ? '#16c784' : '#ea3943' },
+  ] : sType === 'trend_break' ? [
+    { t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' },
+    { t: isLong ? 'See the yellow line? That was KEY RESISTANCE.' : 'See the yellow line? That was KEY SUPPORT.', c: '#ffd60a' },
+    { t: isLong ? 'Price broke ABOVE it → buyers took over.' : 'Price broke BELOW it → sellers took over.', c: isLong ? '#16c784' : '#ea3943' },
+    { t: isLong ? 'Old ceiling = new floor. Ride the UP move.' : 'Old floor = new ceiling. Ride the DOWN move.', c: '#c7d1de' },
+  ] : [
+    { t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' },
+    { t: '🟣 ORDER BLOCK — big banks hid orders in this candle.', c: '#d8b4fe' },
+    { t: '   Price returned to fill those orders. Classic.', c: '#c7d1de' },
+    { t: '⚡ BOS — price cleared a key level. Trade confirmed!', c: '#4cc3ff' },
+  ];
+  let wyY = 507;
+  whyLines.forEach(({ t: lt, b, c: lc }) => {
+    s += '<text x="14" y="' + wyY + '" fill="' + lc + '" font-size="11" font-family="monospace"'
+       + (b ? ' font-weight="bold"' : '') + '>' + lt + '</text>';
+    wyY += 18;
+  });
+
+  // ── WHAT HAPPENED? ─────────────────────────────────────────────────────────
+  s += '<line x1="10" y1="590" x2="380" y2="590" stroke="#1c2737" stroke-width="1"/>';
+  const whatLines = [
+    { t: 'WHAT HAPPENED?', b: true, c: '#4cc3ff' },
+    { t: isWin
+        ? (isLong ? '✓ Price went UP and hit your Take Profit. You won!' : '✓ Price went DOWN and hit your Take Profit. You won!')
+        : (isLong ? '✗ Price went DOWN and hit your Stop Loss.' : '✗ Price went UP and hit your Stop Loss.'),
+      c: isWin ? '#16c784' : '#ea3943' },
+    { t: isWin
+        ? 'Great read! The setup played out exactly as planned.'
+        : 'Even perfect setups lose sometimes. That\'s trading.',
+      c: isWin ? '#c7d1de' : '#6a7e94' },
+    { t: isWin
+        ? 'Keep spotting quality setups and the money follows.'
+        : 'The Stop Loss SAVED you from a bigger loss. Good risk mgmt!',
+      c: '#4a5a70' },
+  ];
+  let whY2 = 607;
+  whatLines.forEach(({ t: lt, b, c: lc }) => {
+    s += '<text x="14" y="' + whY2 + '" fill="' + lc + '" font-size="11" font-family="monospace"'
+       + (b ? ' font-weight="bold"' : '') + '>' + lt + '</text>';
+    whY2 += 18;
+  });
+  // R:R line
+  if (t.rr) {
+    const riskAmt = t.rr > 0.01 ? Math.abs(t.delta) / t.rr : 0;
+    s += '<text x="14" y="' + whY2 + '" fill="#4a5a70" font-size="10" font-family="monospace">R:R = '
+       + t.rr.toFixed(1) + ':1  ·  risked ' + fmt(riskAmt) + ' 🐚  ·  '
+       + (isWin ? 'won' : 'lost') + ' ' + fmt(Math.abs(t.delta)) + ' 🐚</text>';
+  }
+
+  s += '<text x="' + (VW/2) + '" y="' + (VH-10) + '" fill="#242e3e" font-size="11" font-family="monospace" text-anchor="middle">TAP ANYWHERE TO CLOSE</text>';
+  s += '</svg>';
+  return s;
+}
+/* === end game function === */
+
+// helper to build a synthetic candle snapshot
+// Build an ACCURATE OB+BOS snapshot like the game: the OB is auto-flagged as
+// the LAST opposing-colour candle before the impulse — never hand-placed.
+function buildSetupSnap(dir,start){
+  const up=dir==='long';
+  const pat=up?[5,-4,3,-5,4,-6,-5]:[-5,4,-3,5,-4,6,5];
+  let lvl=start; const cs=[];
+  for(const d of pat){const o=lvl;lvl+=d;cs.push({open:o,h:lvl,wick:5,wick2:4,color:lvl>=o?'green':'red',ob:false,bos:false,vwap:0});}
+  const o=lvl;lvl+=up?42:-42;cs.push({open:o,h:lvl,wick:6,wick2:4,color:lvl>=o?'green':'red',ob:false,bos:true,vwap:0});
+  const bosI=cs.length-1, want=up?'red':'green';
+  for(let i=bosI-1;i>=0&&bosI-i<=5;i--){if(cs[i].color===want){cs[i].ob=true;break;}}
+  return cs;
+}
+function mkEntry(o){
+  const cs=buildSetupSnap(o.dir,o.start); const up=o.dir==='long';
+  const entryH=cs[cs.length-1].h;
+  const slH=up?Math.min(...cs.map(c=>c.h))-6:Math.max(...cs.map(c=>c.h))+6;
+  const risk=Math.abs(entryH-slH); const tpH=up?entryH+2*risk:entryH-2*risk;
+  return {id:o.id,ts:o.ts,dir:o.dir,result:o.result,delta:o.delta,balanceAfter:o.bal,
+    rr:2,setupType:'bos',quality:o.quality,hour:o.hour,note:o.note||'',entryH,slH,tpH,candleSnap:cs};
+}
+let journal=[
+ mkEntry({id:4,ts:Date.now()-90*1000,  dir:'long', result:'win', delta:1840,bal:13120,quality:'A',hour:3,start:300}),
+ mkEntry({id:3,ts:Date.now()-7*60*1000,dir:'short',result:'loss',delta:-620,bal:11280,quality:'B',hour:3,start:360,note:'Took it against the 15m trend — should have skipped.'}),
+ mkEntry({id:2,ts:Date.now()-40*60*1000,dir:'long',result:'win', delta:980, bal:10800,quality:'A',hour:2,start:280}),
+];
+
+function renderStats(){const n=journal.length;const wins=journal.filter(e=>e.delta>0).length;const net=journal.reduce((a,e)=>a+e.delta,0);const winRate=n?Math.round(wins/n*100):0;const winsNet=journal.filter(e=>e.delta>0).reduce((a,e)=>a+e.delta,0);const lossNet=journal.filter(e=>e.delta<0).reduce((a,e)=>a+e.delta,0);const avgWin=wins?winsNet/wins:0;const lc=journal.filter(e=>e.delta<0).length;const avgLoss=lc?Math.abs(lossNet/lc):0;const st=(k,v,c)=>'<div class="jStat"><div class="k">'+k+'</div><div class="v"'+(c?' style="color:'+c+'"':'')+'>'+v+'</div></div>';return st('TRADES',n)+st('WIN RATE',winRate+'%',winRate>=50?'#16c784':'#e6edf3')+st('NET P&amp;L',(net>=0?'+':'−')+fmt(Math.abs(net)),net>=0?'#16c784':'#ea3943')+st('AVG WIN','+'+fmt(avgWin),'#16c784')+st('AVG LOSS','−'+fmt(avgLoss),'#ea3943');}
+function renderList(){return journal.map(e=>{const cls=e.delta>0?'win':'loss';const dcls=e.delta>0?'up':'down';const dsign=e.delta>0?'+':'−';const dirTxt=e.dir==='long'?'▲ LONG':'▼ SHORT';const setup=SETUP_LABEL[e.setupType]||e.setupType;return '<div class="jEntry '+cls+'"><div class="jRow1"><span class="jDir '+e.dir+'">'+dirTxt+'</span><span class="jDelta '+dcls+'">'+dsign+fmt(Math.abs(e.delta))+' SHELLS</span></div><div class="jMeta"><span class="tag">'+esc(setup)+'</span><span class="tag">Grade '+esc(e.quality)+'</span>R:R '+e.rr.toFixed(1)+' · Bal '+fmt(e.balanceAfter)+' · Hr '+e.hour+' · '+jTimeAgo(e.ts)+'</div><button class="jView" data-id="'+e.id+'">🔍 VIEW FULL CHART</button><textarea class="jNote" placeholder="Add a note…">'+esc(e.note||'')+'</textarea></div>';}).join('');}
+document.getElementById('jStats').innerHTML=renderStats();
+document.getElementById('jList').innerHTML=renderList();
+document.getElementById('jList').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.jView');if(!b)return;const en=journal.find(x=>x.id===+b.getAttribute('data-id'));document.getElementById('cfChart').innerHTML=tradeChartSVGFull(en);document.getElementById('cf').classList.add('open');});
+document.getElementById('cf').addEventListener('click',()=>document.getElementById('cf').classList.remove('open'));
+document.getElementById('jClose').addEventListener('click',()=>alert('In-game: closes the journal and resumes play.'));
+
+// trade ticket: similar-trades hint (record on this setup type = bos here)
+(function(){const past=journal.filter(e=>e.setupType==='bos');const wins=past.filter(e=>e.delta>0).length;const wr=Math.round(wins/past.length*100);const verdict=wr>=60?'You read these well — trust it.':wr>=40?'Mixed results — pick your spot.':'Tough setup for you — be extra selective.';document.getElementById('tpHistory').innerHTML='Your record on <b>Break of Structure</b>: <b>'+wins+'W–'+(past.length-wins)+'L</b> ('+wr+'%). '+verdict;})();
+document.getElementById('tpJournalBtn').addEventListener('click',()=>{const en=journal[0];document.getElementById('cfChart2').innerHTML=tradeChartSVGFull(en);document.getElementById('cf2').classList.add('open');});
+document.getElementById('cf2').addEventListener('click',()=>document.getElementById('cf2').classList.remove('open'));
+</script>
+</body>
+</html>

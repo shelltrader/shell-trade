@@ -2,7 +2,7 @@
 /**
  * Chart Quest — Production Build Script
  * ======================================
- * Obfuscates shell-trade.html for production deployment.
+ * Obfuscates chart-quest.html for production deployment.
  *
  * REQUIREMENTS (run once):
  *   npm install javascript-obfuscator
@@ -11,7 +11,7 @@
  *   node build.js
  *
  * OUTPUT:
- *   shell-trade.min.html  — obfuscated production build
+ *   chart-quest.min.html  — obfuscated production build
  *   index.html            — same file mirrored (Netlify root)
  *
  * The script extracts the inline <script> block, obfuscates the
@@ -25,8 +25,8 @@ const fs              = require('fs');
 const path            = require('path');
 const JavaScriptObfuscator = require('javascript-obfuscator');
 
-const SRC  = path.join(__dirname, 'shell-trade.html');
-const OUT  = path.join(__dirname, 'shell-trade.min.html');
+const SRC  = path.join(__dirname, 'chart-quest.html');
+const OUT  = path.join(__dirname, 'chart-quest.min.html');
 const MIRROR = path.join(__dirname, 'index.html');
 
 // ---------------------------------------------------------------------------

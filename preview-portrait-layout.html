@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart Quest — Change Preview: Portrait Lock</title>
+<style>
+ :root{--font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+ body{margin:0;background:#060910;color:#c7d1de;font:14px/1.6 var(--font-ui);padding:28px 20px 60px;}
+ .wrap{max-width:980px;margin:0 auto;}
+ .crumb{font-size:11px;letter-spacing:2px;color:#4cc3ff;font-weight:bold;}
+ h1{font-size:23px;margin:6px 0 4px;color:#e6edf3;} .sub{color:#7d8aa0;margin:0 0 24px;}
+ .tag{display:inline-block;background:rgba(22,199,132,0.15);border:1px solid #16c784;color:#16c784;font-size:10px;font-weight:bold;letter-spacing:1px;padding:3px 9px;border-radius:20px;vertical-align:middle;margin-left:8px;}
+ h2{font-size:13px;letter-spacing:1.5px;color:#7d8aa0;text-transform:uppercase;margin:30px 0 12px;border-bottom:1px solid #1c2737;padding-bottom:8px;}
+ .note{background:rgba(76,195,255,0.07);border:1px solid rgba(76,195,255,0.3);border-radius:10px;padding:12px 15px;font-size:13px;color:#9fc8e0;margin:14px 0;}
+ .row{display:flex;gap:30px;flex-wrap:wrap;justify-content:center;align-items:flex-end;}
+ .cap{text-align:center;font-size:12px;color:#7d8aa0;margin-top:8px;letter-spacing:1px;}
+ /* MacBook mock */
+ .mac{width:460px;max-width:100%;}
+ .screen{position:relative;height:280px;background:#000;border:2px solid #2a3442;border-radius:10px 10px 0 0;display:flex;align-items:stretch;justify-content:center;overflow:hidden;}
+ .bar{flex:1;background:repeating-linear-gradient(45deg,#0a0a0a,#0a0a0a 8px,#0e0e0e 8px,#0e0e0e 16px);}
+ .col{width:162px;background:linear-gradient(#0d1320,#0a0e14);display:flex;flex-direction:column;box-shadow:0 0 0 1px #1c2737;}
+ .base{height:14px;background:#1a1f29;border:2px solid #2a3442;border-top:none;border-radius:0 0 14px 14px;width:78%;margin:0 auto;}
+ /* Phone mock */
+ .phone{width:150px;height:300px;background:linear-gradient(#0d1320,#0a0e14);border:8px solid #161c26;border-radius:24px;display:flex;flex-direction:column;box-shadow:0 0 0 1px #1c2737;}
+ /* game-ish content */
+ .hud{height:22px;background:rgba(10,14,20,.92);border-bottom:1px solid #2a3442;display:flex;align-items:center;justify-content:space-between;padding:0 8px;font:bold 8px var(--font-ui);}
+ .hud .a{color:#ff9f43}.hud .b{color:#4cc3ff}.hud .c{color:#16c784}
+ .chart{flex:1;position:relative;overflow:hidden;}
+ .candle{position:absolute;bottom:32%;width:9px;border-radius:1px;}
+ .turtle{position:absolute;bottom:46%;font-size:13px;}
+ .btm{position:absolute;left:6px;bottom:6px;font-size:7px;color:#ff9f43;border:1px solid #ff9f43;border-radius:4px;padding:2px 4px;}
+ .lbl{font-weight:bold;color:#e6edf3;}
+ .foot{margin-top:34px;color:#4a5666;font-size:12px;border-top:1px solid #1c2737;padding-top:14px;}
+ table{border-collapse:collapse;font-size:12px;margin-top:6px;} td,th{border:1px solid #1c2737;padding:6px 10px;text-align:left;} th{color:#7d8aa0;}
+</style></head><body><div class="wrap">
+ <div class="crumb">CHART QUEST · CHANGE PREVIEW</div>
+ <h1>Portrait Lock <span class="tag">NEW</span></h1>
+ <p class="sub">The whole game (play area + every overlay) now renders in a single portrait frame. On a phone it fills the screen; on a wide screen it's a centered portrait column with letterbox bars — so the ratio is always correct and nothing stretches.</p>
+ <div class="note">This is a visual mock of the framing. To actually play it, open <b>shell-trade.html</b> on your MacBook and on your phone.</div>
+ <div class="row">
+  <div class="mac"><div class="screen">
+    <div class="bar"></div>
+    <div class="col" id="colA"></div>
+    <div class="bar"></div>
+  </div><div class="base"></div><div class="cap"><span class="lbl">MacBook</span> — centered portrait, letterboxed</div></div>
+  <div><div class="phone" id="colB"></div><div class="cap"><span class="lbl">Phone</span> — fills the screen</div></div>
+ </div>
+
+ <h2>What the math does</h2>
+ <table>
+  <tr><th>Device</th><th>Window</th><th>Play area</th><th>Result</th></tr>
+  <tr><td>MacBook 13&Prime;</td><td>1440 × 900</td><td>522 × 900</td><td>centered, side bars</td></tr>
+  <tr><td>iPhone (tall)</td><td>390 × 844</td><td>390 × 844</td><td>fills screen</td></tr>
+  <tr><td>16:9 phone</td><td>360 × 640</td><td>360 × 640</td><td>fills screen</td></tr>
+  <tr><td>iPad portrait</td><td>820 × 1180</td><td>684 × 1180</td><td>slight side bars</td></tr>
+  <tr><td>Phone rotated</td><td>844 × 390</td><td>226 × 390</td><td>stays portrait (locked)</td></tr>
+ </table>
+ <div class="foot">Preview pattern: every change ships with a <code>preview-*.html</code>. This one is a static mock — the real test is the game file on each device.</div>
+</div>
+<script>
+function fill(el,phone){
+  const cols=['#16c784','#ea3943','#16c784','#16c784','#ea3943','#16c784','#16c784','#ea3943'];
+  const hud='<div class="hud"><span class="a">🔥</span><span class="b">LVL 3 🦀</span><span class="c">12,480</span></div>';
+  let chart='<div class="chart">';
+  const W=phone?134:162, n=7, step=(W-16)/n;
+  let h=[40,55,48,70,60,82,72];
+  for(let i=0;i<n;i++){const hh=30+h[i];chart+='<div class="candle" style="left:'+(8+i*step)+'px;height:'+hh+'px;background:'+cols[i]+';"></div>';}
+  chart+='<div class="turtle" style="left:'+(8+5*step-4)+'px;">🐢</div>';
+  chart+='<div class="btm">🔥 DAILY</div></div>';
+  el.innerHTML=hud+chart;
+}
+fill(document.getElementById('colA'),false);
+fill(document.getElementById('colB'),true);
+</script></body></html>

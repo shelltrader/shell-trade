@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart Quest — Change Preview: Rank Ladder</title>
+<style>
+  :root{--font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--font-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;}
+  body{margin:0;background:#060910;color:#c7d1de;font:14px/1.6 var(--font-ui);padding:28px 20px 60px;}
+  .wrap{max-width:980px;margin:0 auto;}
+  .crumb{font-size:11px;letter-spacing:2px;color:#4cc3ff;font-weight:bold;}
+  h1{font-size:24px;margin:6px 0 4px;color:#e6edf3;}
+  .sub{color:#7d8aa0;margin:0 0 26px;}
+  .tag-new{display:inline-block;background:rgba(22,199,132,0.15);border:1px solid #16c784;color:#16c784;font-size:10px;font-weight:bold;letter-spacing:1px;padding:3px 9px;border-radius:20px;vertical-align:middle;margin-left:8px;}
+  h2{font-size:13px;letter-spacing:1.5px;color:#7d8aa0;text-transform:uppercase;margin:30px 0 12px;border-bottom:1px solid #1c2737;padding-bottom:8px;}
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .ba .card{background:#0d1320;border:1px solid #1c2737;border-radius:12px;padding:16px 18px;}
+  .ba .card.before{border-left:3px solid #5a6b82;}.ba .card.after{border-left:3px solid #16c784;}
+  .ba h3{margin:0 0 10px;font-size:12px;letter-spacing:1.5px;}.ba .before h3{color:#7d8aa0;}.ba .after h3{color:#16c784;}
+  .ba ul{margin:0;padding-left:18px;}.ba li{margin-bottom:7px;color:#aeb9c8;}.ba li b{color:#e6edf3;}
+  .note{background:rgba(76,195,255,0.07);border:1px solid rgba(76,195,255,0.3);border-radius:10px;padding:12px 15px;font-size:13px;color:#9fc8e0;margin-top:14px;}
+  /* HUD mock */
+  .hud{position:relative;height:46px;background:rgba(10,14,20,0.95);border:1px solid #2a3442;border-radius:8px;max-width:390px;margin:0 auto;overflow:hidden;font-family:var(--font-mono);}
+  .hud .fuel{position:absolute;left:12px;top:6px;font-size:9px;color:#7d8aa0;}
+  .hud .bar{position:absolute;height:7px;border-radius:3px;background:#1c2737;}
+  .hud .fill{height:100%;border-radius:3px;}
+  .hud .ctr{position:absolute;left:42%;top:5px;}
+  .hud .lvl{font-size:9px;color:#7d8aa0;}.hud .lvlN{font-size:12px;font-weight:bold;color:#e6edf3;margin-left:5px;}
+  .hud .rank{font-family:var(--font-ui);font-size:10px;font-weight:bold;margin-left:8px;}
+  .hud .shells{position:absolute;right:12px;top:5px;text-align:right;}
+  .hud .shells .k{font-size:10px;color:#7d8aa0;}.hud .shells .v{font-size:17px;font-weight:bold;color:#16c784;}
+  .controls{text-align:center;margin:16px 0;}
+  .controls button{padding:10px 18px;margin:0 5px;border-radius:8px;cursor:pointer;font:bold 12px var(--font-ui);background:#14222f;border:1px solid #4cc3ff;color:#4cc3ff;}
+  .toast{max-width:390px;margin:10px auto 0;text-align:center;height:24px;font-weight:bold;font-size:14px;transition:opacity .3s;opacity:0;}
+  /* ladder */
+  .ladder{display:flex;flex-direction:column;gap:8px;max-width:520px;margin:0 auto;}
+  .rung{display:flex;align-items:center;gap:12px;background:#0d1320;border:1px solid #1c2737;border-left-width:4px;border-radius:10px;padding:11px 14px;opacity:.55;transition:all .25s;}
+  .rung.reached{opacity:1;}
+  .rung.current{opacity:1;box-shadow:0 0 0 1px #4cc3ff,0 8px 24px rgba(0,0,0,.4);transform:scale(1.015);}
+  .rung .em{font-size:24px;width:30px;text-align:center;}
+  .rung .nm{font-weight:bold;font-size:14px;letter-spacing:1px;}
+  .rung .bl{font-size:11px;color:#7d8aa0;}
+  .rung .lv{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:#7d8aa0;}
+  .rung .you{margin-left:auto;font-family:var(--font-ui);font-size:9px;font-weight:bold;color:#4cc3ff;border:1px solid #4cc3ff;border-radius:20px;padding:2px 8px;}
+  .foot{margin-top:34px;color:#4a5666;font-size:12px;border-top:1px solid #1c2737;padding-top:14px;}
+  @media(max-width:720px){.ba{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb">CHART QUEST · CHANGE PREVIEW</div>
+  <h1>Rank Ladder — Beginner → Trader <span class="tag-new">NEW</span></h1>
+  <p class="sub">A named identity that climbs as you level up — from a drifting plankton to a crowned TRADER. It layers over the existing level system; the XP bar now fills toward your next rank.</p>
+
+  <h2>What changed</h2>
+  <div class="ba">
+    <div class="card before"><h3>● BEFORE</h3><ul>
+      <li>The HUD showed a bare <b>“LVL 3”</b> number.</li>
+      <li>Leveling up popped a plain <b>“LEVEL 3!”</b> with no identity or sense of journey.</li>
+      <li>No through-line from <b>beginner</b> to <b>trader</b>.</li>
+    </ul></div>
+    <div class="card after"><h3>● AFTER</h3><ul>
+      <li>The HUD shows your <b>rank</b> (🦀 CRAB) beside the level, in the rank’s colour.</li>
+      <li>Crossing a tier triggers a <b>“RANK UP — CRAB!”</b> celebration + screen flash.</li>
+      <li>A clear <b>10-tier ladder</b> from Drifter to TRADER gives players something to chase.</li>
+    </ul></div>
+  </div>
+  <div class="note">Pure presentation over <code>player.level</code> — one rank per level, capped at TRADER. The XP bar already shows progress to the next rank, so no new meters needed.</div>
+
+  <h2>Live preview — the HUD & a rank-up</h2>
+  <div class="hud" id="hud"></div>
+  <div class="toast" id="toast"></div>
+  <div class="controls">
+    <button id="lvlUp">+1 LEVEL ▲</button>
+    <button id="reset">Reset</button>
+  </div>
+
+  <h2>The full ladder</h2>
+  <div class="ladder" id="ladder"></div>
+
+  <div class="foot">Preview pattern: every change ships with a <code>preview-*.html</code> — before/after plus a live, interactive view.</div>
+</div>
+
+<script>
+// RANKS — identical to the in-game data
+const RANKS = [
+  { name:'DRIFTER',    emoji:'🌊', color:'#7d8aa0', blurb:'Washed ashore — learning to read the chart.' },
+  { name:'PLANKTON',   emoji:'🦠', color:'#8fd3ff', blurb:'Can read a candle.' },
+  { name:'MINNOW',     emoji:'🐟', color:'#6fd6c0', blurb:'Sees structure & levels.' },
+  { name:'CRAB',       emoji:'🦀', color:'#ff9f6b', blurb:'Reads the trend.' },
+  { name:'PUFFERFISH', emoji:'🐡', color:'#ffd166', blurb:'Spots setups & order blocks.' },
+  { name:'OCTOPUS',    emoji:'🐙', color:'#c9a0ff', blurb:'Understands liquidity & VWAP.' },
+  { name:'DOLPHIN',    emoji:'🐬', color:'#7cc4ff', blurb:'Manages risk like a pro.' },
+  { name:'SHARK',      emoji:'🦈', color:'#9fb4c9', blurb:'Stacks confluence across timeframes.' },
+  { name:'WHALE',      emoji:'🐋', color:'#5ad1ff', blurb:'Trades a full plan.' },
+  { name:'TRADER',     emoji:'👑', color:'#16c784', blurb:'Graduated. The market is yours to read.' },
+];
+function rankForLevel(lvl){const idx=Math.max(0,Math.min(RANKS.length-1,lvl-1));const r=RANKS[idx];return{idx,...r};}
+
+let level=1, xpFrac=0.35;
+function drawHUD(){
+  const r=rankForLevel(level);
+  document.getElementById('hud').innerHTML =
+    '<div class="fuel">FUEL</div><div class="bar" style="left:12px;top:24px;width:88px"><div class="fill" style="width:70%;background:#ff9f43"></div></div>'+
+    '<div class="ctr"><span class="lvl">LVL</span><span class="lvlN">'+level+'</span>'+
+      '<span class="rank" style="color:'+r.color+'">'+r.emoji+' '+r.name+'</span>'+
+      '<div class="bar" style="left:0;top:19px;width:90px"><div class="fill" style="width:'+Math.round(xpFrac*100)+'%;background:'+r.color+'"></div></div></div>'+
+    '<div class="shells"><div class="k">SHELLS</div><div class="v">12,480</div></div>';
+}
+function drawLadder(){
+  const cur=rankForLevel(level).idx;
+  document.getElementById('ladder').innerHTML = RANKS.map((r,i)=>{
+    const cls = i===cur?'rung current':i<cur?'rung reached':'rung';
+    return '<div class="'+cls+'" style="border-left-color:'+r.color+'">'+
+      '<span class="em">'+r.emoji+'</span>'+
+      '<span><div class="nm" style="color:'+r.color+'">'+r.name+'</div><div class="bl">'+r.blurb+'</div></span>'+
+      (i===cur?'<span class="you">YOU · LVL '+level+'</span>':'<span class="lv">LVL '+(i+1)+'</span>')+
+    '</div>';
+  }).join('');
+}
+function toast(msg,color){const t=document.getElementById('toast');t.textContent=msg;t.style.color=color;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,1600);}
+document.getElementById('lvlUp').addEventListener('click',()=>{
+  if(level>=RANKS.length){toast('Already at the top 👑','#16c784');return;}
+  const prev=rankForLevel(level).idx; level++; const now=rankForLevel(level);
+  if(now.idx!==prev) toast(now.emoji+' RANK UP — '+now.name+'!',now.color);
+  else toast('LEVEL '+level+'!','#4cc3ff');
+  drawHUD();drawLadder();
+});
+document.getElementById('reset').addEventListener('click',()=>{level=1;drawHUD();drawLadder();});
+drawHUD();drawLadder();
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart Quest — Change Preview: Boss Fights</title>
+<style>
+ :root{--font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--font-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;}
+ body{margin:0;background:#060910;color:#c7d1de;font:14px/1.6 var(--font-ui);padding:28px 20px 60px;}
+ .wrap{max-width:980px;margin:0 auto;} .crumb{font-size:11px;letter-spacing:2px;color:#ff5d6c;font-weight:bold;}
+ h1{font-size:23px;margin:6px 0 4px;color:#e6edf3;} .sub{color:#7d8aa0;margin:0 0 24px;}
+ .tag{display:inline-block;background:rgba(22,199,132,0.15);border:1px solid #16c784;color:#16c784;font-size:10px;font-weight:bold;letter-spacing:1px;padding:3px 9px;border-radius:20px;vertical-align:middle;margin-left:8px;}
+ h2{font-size:13px;letter-spacing:1.5px;color:#7d8aa0;text-transform:uppercase;margin:30px 0 12px;border-bottom:1px solid #1c2737;padding-bottom:8px;}
+ .ba{display:grid;grid-template-columns:1fr 1fr;gap:14px;} .card{background:#0d1320;border:1px solid #1c2737;border-radius:12px;padding:16px 18px;}
+ .card.before{border-left:3px solid #5a6b82;}.card.after{border-left:3px solid #ff5d6c;}
+ .card h3{margin:0 0 10px;font-size:12px;letter-spacing:1.5px;}.before h3{color:#7d8aa0;}.after h3{color:#ff5d6c;}
+ .card ul{margin:0;padding-left:18px;}.card li{margin-bottom:7px;color:#aeb9c8;}.card li b{color:#e6edf3;}
+ .note{background:rgba(255,93,108,0.08);border:1px solid rgba(255,93,108,0.3);border-radius:10px;padding:12px 15px;font-size:13px;color:#ffb3bb;margin:14px 0;}
+ .pick{display:flex;gap:8px;justify-content:center;margin-bottom:12px;}
+ .pick button{padding:9px 16px;border-radius:8px;cursor:pointer;font:bold 11px var(--font-ui);background:#0d1320;border:1px solid #ff5d6c;color:#ff5d6c;}
+ .stage{display:flex;justify-content:center;}
+ .phone{width:380px;max-width:100%;height:660px;position:relative;background:#0a0610;border:8px solid #161c26;border-radius:22px;overflow:hidden;display:flex;flex-direction:column;font:13px var(--font-ui);color:#c7d1de;}
+ #bfHeader{text-align:center;padding:18px 16px 8px;} #bfHeader .em{font-size:42px;} #bfHeader .nm{font-weight:bold;font-size:18px;letter-spacing:2px;color:#ff5d6c;margin-top:2px;} #bfHeader .tg{font-size:10px;letter-spacing:3px;color:#7d8aa0;}
+ #bfHP{display:flex;gap:4px;justify-content:center;padding:0 16px 7px;} #bfHP .seg{width:34px;height:9px;border-radius:3px;background:#2a1420;border:1px solid #5a2433;} #bfHP .seg.full{background:#ff5d6c;border-color:#ff5d6c;box-shadow:0 0 8px rgba(255,93,108,.5);}
+ #bfHearts{text-align:center;font-size:15px;letter-spacing:3px;padding-bottom:9px;}
+ #bfBody{flex:1;overflow-y:auto;padding:8px 16px 24px;border-top:1px solid #2a1420;}
+ #bfChart svg{width:100%;display:block;background:#0a0e14;border:1px solid #1c2737;border-radius:8px;margin-bottom:12px;}
+ .bfQ{font-size:15px;font-weight:bold;color:#e6edf3;text-align:center;line-height:1.4;margin:6px 0 12px;}
+ .bfOpt{display:block;width:100%;box-sizing:border-box;margin-bottom:9px;padding:13px 14px;cursor:pointer;border-radius:9px;background:#0d1320;border:1px solid #2a3442;color:#c7d1de;font:13px var(--font-ui);text-align:left;}
+ .bfOpt.correct{border-color:#16c784;background:rgba(22,199,132,.13);color:#16c784;} .bfOpt.wrong{border-color:#ea3943;background:rgba(234,57,67,.13);color:#ea3943;} .bfOpt.dim{opacity:.5;}
+ #bfFeedback{text-align:center;font-size:12px;margin-top:8px;min-height:18px;line-height:1.5;color:#9aa7b6;}
+ #bfNext,#bfClaim{margin-top:14px;width:100%;padding:14px 0;font:bold 14px var(--font-ui);background:#14222f;border:1px solid #4cc3ff;color:#4cc3ff;border-radius:8px;cursor:pointer;}
+ .bfBtnRow{display:flex;gap:10px;margin-top:16px;} .bfBtnRow button{flex:1;padding:13px 0;font:bold 13px var(--font-ui);border-radius:8px;cursor:pointer;}
+ .bfRetry{background:#14222f;border:1px solid #ff9f43;color:#ff9f43;} .bfSkip{background:transparent;border:1px solid #2a3442;color:#7d8aa0;}
+ #bfResult{text-align:center;padding:24px 10px;} #bfResult .big{font-size:46px;} #bfResult .ttl{font-size:20px;font-weight:bold;margin:8px 0;} #bfResult .earn{color:#ffd60a;font-weight:bold;font-family:var(--font-mono);margin:8px 0;} #bfResult .sub{color:#7d8aa0;font-size:13px;}
+ .foot{margin-top:34px;color:#4a5666;font-size:12px;border-top:1px solid #1c2737;padding-top:14px;}
+ @media(max-width:760px){.ba{grid-template-columns:1fr;}}
+</style></head><body><div class="wrap">
+ <div class="crumb">CHART QUEST &middot; CHANGE PREVIEW</div>
+ <h1>Boss Fights <span class="tag">NEW</span></h1>
+ <p class="sub">A challenge at the end of each hour that gates the advance to the next. Read the candles, damage the boss, don't lose your hearts. Retry-friendly — losing just re-reads the lesson.</p>
+ <h2>What changed</h2>
+ <div class="ba">
+  <div class="card before"><h3>● BEFORE</h3><ul><li>Clearing an hour just advanced you — no milestone moment.</li><li>No test that you'd actually <b>learned</b> the hour's lesson.</li></ul></div>
+  <div class="card after"><h3>● AFTER</h3><ul>
+   <li>Each hour ends with a themed <b>boss</b> (Hour 1: 🎭 <b>The Fakeout</b>, Hour 2: 💀 <b>The Liquidator</b>).</li>
+   <li><b>Boss HP</b> vs your <b>3 hearts</b>: a correct read damages the boss, a wrong one costs a heart.</li>
+   <li>Beat it for a <b>big Shell + XP reward</b> and the advance. Lose? <b>Retry</b> (or skip).</li>
+   <li>Data-driven — adding a boss for any hour is just one more entry.</li>
+  </ul></div>
+ </div>
+ <div class="note">Pick a boss and fight it. The Fakeout teaches reading the WHOLE candle (body + wicks); The Liquidator drills risk management.</div>
+ <div class="pick" id="pick"><button data-lvl="1">🎭 Fight The Fakeout</button><button data-lvl="2">💀 Fight The Liquidator</button></div>
+ <div class="stage"><div class="phone" id="bossFight">
+   <div id="bfHeader"></div><div id="bfHP"></div><div id="bfHearts"></div><div id="bfBody"></div>
+ </div></div>
+ <div class="foot">Preview pattern: every change ships with a <code>preview-*.html</code>. Uses the live boss engine &amp; candle renderer.</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+const player={shells:10000}; const floaters=[]; function addXP(){}
+let bfState=null; const bossesDone=new Set();
+const BOSSES = {
+  1: {
+    name: 'THE FAKEOUT', emoji: '🎭',
+    reward: { shells: 300, xp: 120 },
+    bossHP: 5, playerHP: 3,
+    rounds: [
+      { candles: [{ o: 25, c: 75, up: 0, lo: 0 }], q: "Who's in control of this candle?", options: ['Buyers', 'Sellers', 'Nobody'], correct: 0, explain: 'Tall green body, no wicks — buyers dominated start to finish.' },
+      { candles: [{ o: 75, c: 25, up: 0, lo: 0 }], q: "Who's in control here?", options: ['Sellers', 'Buyers', 'Nobody'], correct: 0, explain: 'Tall red body, no wicks — sellers were fully in charge.' },
+      { candles: [{ o: 35, c: 52, up: 38, lo: 2 }], q: 'Is this as bullish as it looks?', options: ['No — sellers rejected the highs', 'Yes, very bullish', "It's nothing"], correct: 0, explain: 'A green body, but that long upper wick means price was pushed back down. Read the WHOLE candle.' },
+      { candles: [{ o: 55, c: 44, up: 2, lo: 38 }], q: 'Is this as bearish as it looks?', options: ['No — buyers defended the lows', 'Yes, very bearish', 'Guaranteed crash'], correct: 0, explain: 'A red body, but the long lower wick (a hammer) shows buyers stepped in. Rejection of lower prices.' },
+      { candles: [{ o: 50, c: 51, up: 20, lo: 20 }], q: 'Tiny body, two long wicks — what is this?', options: ['Indecision — a balanced fight', 'A strong uptrend', 'A guaranteed reversal'], correct: 0, explain: 'A doji: buyers and sellers cancelled out. The market is undecided.' },
+      { candles: [{ o: 40, c: 47, up: 32, lo: 3 }], q: 'How strong is this green candle, really?', options: ['Weak — it gave back most of its gains', 'Very strong', "It's actually red"], correct: 0, explain: 'It closed green, but the big upper wick means it surrendered most of the move. A weak candle.' },
+      { candles: [{ o: 22, c: 68, up: 4, lo: 2 }, { o: 68, c: 56, up: 32, lo: 2 }], q: "Two candles: big green, then this. What's the real story?", options: ['Reversal — buyers tried, sellers took over', 'The uptrend continues strong', 'Nothing changed'], correct: 0, explain: 'The second candle spiked up then closed red with a long upper wick — sellers seized control. A reversal.' },
+    ],
+  },
+  2: {
+    name: 'THE LIQUIDATOR', emoji: '💀',
+    reward: { shells: 350, xp: 140 },
+    bossHP: 4, playerHP: 3,
+    rounds: [
+      { q: 'Before EVERY trade you must set a…', options: ['Stop loss', 'Bigger leverage', 'Profit target only'], correct: 0, explain: 'The stop loss caps your loss. Rule #1 — never trade without one.' },
+      { q: 'You should risk about how much of your balance per trade?', options: ['1–2%', '50%', '100% to win faster'], correct: 0, explain: 'Small, fixed risk keeps one bad trade from ever ruining you.' },
+      { q: 'A 1:2 risk-to-reward means…', options: ['Risk 1 to make 2', 'Risk 2 to make 1', 'No stop needed'], correct: 0, explain: 'Aim for 2R+. Then you can be wrong often and still profit.' },
+      { q: '10× leverage turns a 1% move into…', options: ['A 10% gain OR loss', 'A 0.1% move', 'A guaranteed win'], correct: 0, explain: 'Leverage multiplies losses exactly as much as gains. Handle with care.' },
+      { q: 'A great setup just lost. That means…', options: ["It's normal — even A-grade setups lose sometimes", 'You made a mistake', 'Stop using stop losses'], correct: 0, explain: 'Outcome ≠ decision quality. Good setups lose ~1 in 3. Keep taking them.' },
+    ],
+  },
+};
+function bossCandleSVG(cands) {
+  const VW = 300, VH = 150, pad = 16, n = cands.length;
+  const Y = (v) => pad + (1 - v / 100) * (VH - 2 * pad);
+  const slotW = (VW - 2 * pad) / n;
+  let s = '<svg viewBox="0 0 ' + VW + ' ' + VH + '" xmlns="http://www.w3.org/2000/svg">';
+  cands.forEach((c, i) => {
+    const cx = pad + slotW * (i + 0.5), bw = Math.min(46, slotW * 0.5);
+    const bodyTop = Y(Math.max(c.o, c.c)), bodyBot = Y(Math.min(c.o, c.c));
+    const col = c.c >= c.o ? '#16c784' : '#ea3943';
+    if (c.up > 0) s += '<line x1="' + cx + '" y1="' + bodyTop + '" x2="' + cx + '" y2="' + Y(Math.max(c.o, c.c) + c.up) + '" stroke="#c9d1d9" stroke-width="2.5"/>';
+    if (c.lo > 0) s += '<line x1="' + cx + '" y1="' + bodyBot + '" x2="' + cx + '" y2="' + Y(Math.min(c.o, c.c) - c.lo) + '" stroke="#c9d1d9" stroke-width="2.5"/>';
+    s += '<rect x="' + (cx - bw/2) + '" y="' + bodyTop + '" width="' + bw + '" height="' + Math.max(3, bodyBot - bodyTop) + '" fill="' + col + '" rx="1.5"/>';
+  });
+  s += '</svg>'; return s;
+}
+function renderBossHUD() {
+  const b = bfState.boss;
+  $('bfHeader').innerHTML = '<div class="em">' + b.emoji + '</div><div class="nm">' + b.name + '</div><div class="tg">⚔ BOSS — HOUR ' + bfState.level + '</div>';
+  let hp = ''; for (let i = 0; i < b.bossHP; i++) hp += '<div class="seg' + (i < bfState.bossHP ? ' full' : '') + '"></div>';
+  $('bfHP').innerHTML = hp;
+  let hearts = ''; for (let i = 0; i < b.playerHP; i++) hearts += (i < bfState.playerHP ? '❤️' : '🖤');
+  $('bfHearts').innerHTML = hearts;
+}
+function renderBossRound() {
+  const r = bfState.boss.rounds[bfState.idx];
+  let html = '';
+  if (r.candles) html += '<div id="bfChart">' + bossCandleSVG(r.candles) + '</div>';
+  html += '<div class="bfQ">' + r.q + '</div>';
+  html += r.options.map((o, i) => '<button class="bfOpt" data-i="' + i + '">' + esc(o) + '</button>').join('');
+  html += '<div id="bfFeedback"></div>';
+  $('bfBody').innerHTML = html;
+}
+function bfAnswer(i) {
+  if (bfState.answered) return; bfState.answered = true;
+  const r = bfState.boss.rounds[bfState.idx], ok = i === r.correct;
+  $('bfBody').querySelectorAll('.bfOpt').forEach((o, j) => { if (j === r.correct) o.classList.add('correct'); else if (j === i) o.classList.add('wrong'); else o.classList.add('dim'); });
+  if (ok) bfState.bossHP--; else bfState.playerHP--;
+  renderBossHUD();
+  $('bfFeedback').innerHTML = '<b style="color:' + (ok ? '#16c784' : '#ea3943') + '">' + (ok ? '✓ HIT! Boss takes damage.' : '✗ You took a hit.') + '</b><br>' + r.explain;
+  $('bfBody').insertAdjacentHTML('beforeend', '<button id="bfNext">CONTINUE →</button>');
+}
+function bfNext() {
+  if (bfState.bossHP <= 0) return bossWin();
+  if (bfState.playerHP <= 0) return bossLose();
+  bfState.idx++;
+  if (bfState.idx >= bfState.boss.rounds.length) { return bfState.bossHP <= 0 ? bossWin() : bossLose(); }
+  bfState.answered = false; renderBossRound();
+}
+function bossWin() {
+  const b = bfState.boss; bossesDone.add(bfState.level);
+  player.shells += b.reward.shells; addXP(b.reward.xp);
+  floaters.push({ text: '⚔ ' + b.name + ' DEFEATED!', color: '#16c784', y: 100, t: 3 });
+  $('bfBody').innerHTML = '<div id="bfResult"><div class="big">🏆</div><div class="ttl" style="color:#16c784">BOSS DEFEATED!</div>' +
+    '<div class="earn">+' + fmt(b.reward.shells) + ' 🐚  ·  +' + b.reward.xp + ' XP</div>' +
+    '<div class="sub">You read the whole picture, not just the colour.</div>' +
+    '<button id="bfClaim">CLAIM &amp; ADVANCE →</button></div>';
+}
+function bossLose() {
+  $('bfBody').innerHTML = '<div id="bfResult"><div class="big">💥</div><div class="ttl" style="color:#ea3943">THE BOSS GOT YOU</div>' +
+    '<div class="sub">No worry — re-read the candles and try again.</div>' +
+    '<div class="bfBtnRow"><button class="bfRetry" id="bfRetry">↻ RETRY</button><button class="bfSkip" id="bfSkip">SKIP →</button></div></div>';
+}
+function openBoss(level) {
+  const boss = BOSSES[level]; if (!boss) { closeIntermission(true); return; }
+  bfState = { boss, level, idx: 0, bossHP: boss.bossHP, playerHP: boss.playerHP, answered: false };
+  $('bossFight').classList.add('open');
+  renderBossHUD(); renderBossRound();
+}
+function bossRetry() { bfState.idx = 0; bfState.bossHP = bfState.boss.bossHP; bfState.playerHP = bfState.boss.playerHP; bfState.answered = false; renderBossHUD(); renderBossRound(); }
+// preview version of finish (in-game this advances the hour)
+function bossFinish(){$('bfBody').innerHTML='<div id="bfResult"><div class="big">✅</div><div class="ttl" style="color:#16c784">Hour advanced!</div><div class="sub">In the game, you now move to the next hour with your reward.</div></div>';}
+$('bfBody').addEventListener('click',e=>{const t=e.target;
+ if(t.id==='bfNext'){bfNext();return;} if(t.id==='bfClaim'){bossFinish();return;}
+ if(t.id==='bfRetry'){bossRetry();return;} if(t.id==='bfSkip'){bossFinish();return;}
+ const o=t.closest&&t.closest('.bfOpt'); if(o&&bfState&&!bfState.answered)bfAnswer(+o.getAttribute('data-i'));});
+$('pick').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button[data-lvl]');if(!b)return;openBoss(+b.getAttribute('data-lvl'));});
+openBoss(1);
+</script></body></html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart Quest — Change Preview: Trading Journal</title>
+<style>
+  :root {
+    --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  }
+  body {
+    margin: 0; background: #060910; color: #c7d1de;
+    font: 14px/1.6 var(--font-ui); padding: 28px 20px 60px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .crumb { font-size: 11px; letter-spacing: 2px; color: #4cc3ff; font-weight: bold; }
+  h1 { font-size: 24px; margin: 6px 0 4px; color: #e6edf3; }
+  .sub { color: #7d8aa0; margin: 0 0 26px; }
+  .tag-new { display:inline-block; background:rgba(22,199,132,0.15); border:1px solid #16c784;
+    color:#16c784; font-size:10px; font-weight:bold; letter-spacing:1px; padding:3px 9px; border-radius:20px; vertical-align:middle; margin-left:8px; }
+  h2 { font-size: 13px; letter-spacing: 1.5px; color: #7d8aa0; text-transform: uppercase;
+       margin: 30px 0 12px; border-bottom: 1px solid #1c2737; padding-bottom: 8px; }
+  /* before/after */
+  .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .ba .card { background: #0d1320; border: 1px solid #1c2737; border-radius: 12px; padding: 16px 18px; }
+  .ba .card.before { border-left: 3px solid #5a6b82; }
+  .ba .card.after  { border-left: 3px solid #16c784; }
+  .ba h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: 1.5px; }
+  .ba .before h3 { color: #7d8aa0; } .ba .after h3 { color: #16c784; }
+  .ba ul { margin: 0; padding-left: 18px; } .ba li { margin-bottom: 7px; color: #aeb9c8; }
+  .ba li b { color: #e6edf3; }
+  .note { background: rgba(76,195,255,0.07); border: 1px solid rgba(76,195,255,0.3);
+    border-radius: 10px; padding: 12px 15px; font-size: 13px; color: #9fc8e0; margin-top: 14px; }
+  /* device frame holding the live journal */
+  .stage { display: flex; justify-content: center; margin-top: 6px; }
+  .phone {
+    width: 380px; max-width: 100%; height: 720px; position: relative;
+    background: #080c12; border: 10px solid #161c26; border-radius: 30px; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+  }
+  .phone .hudhint {
+    position:absolute; bottom:14px; left:12px; z-index:5;
+    font: bold 11px var(--font-ui); padding: 9px 13px; border-radius: 8px;
+    background: #0d1320; border: 1px solid #4cc3ff; color: #4cc3ff;
+    box-shadow: 0 0 12px rgba(76,195,255,0.18); pointer-events:none; opacity:.55;
+  }
+
+  /* ===== Journal styles (identical to the in-game CSS) ===== */
+  #journalPanel { position: absolute; inset: 0; z-index: 70;
+    background: #080c12; display: flex; flex-direction: column; font: 13px var(--font-ui); color: #c7d1de; }
+  #jHeader { display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px 12px; border-bottom: 1px solid #1c2737; flex-shrink: 0; }
+  #jHeader .jt { font-weight: bold; font-size: 14px; letter-spacing: 2px; color: #e6edf3; }
+  #jClose { background: none; border: 1px solid #2a3442; border-radius: 7px;
+    color: #7d8aa0; font: bold 13px var(--font-ui); padding: 7px 13px; cursor: pointer; }
+  #jStats { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 18px;
+    border-bottom: 1px solid #1c2737; flex-shrink: 0; }
+  .jStat { flex: 1; min-width: 84px; background: #0d1320; border: 1px solid #1c2737;
+    border-radius: 9px; padding: 9px 11px; }
+  .jStat .k { font-size: 9px; letter-spacing: 1px; color: #7d8aa0; }
+  .jStat .v { font-size: 17px; font-weight: bold; margin-top: 3px; color: #e6edf3; }
+  #jList { flex: 1; overflow-y: auto; padding: 12px 14px 28px; }
+  .jEntry { background: #0d1320; border: 1px solid #1c2737; border-left-width: 3px;
+    border-radius: 10px; padding: 11px 13px; margin-bottom: 10px; }
+  .jEntry.win { border-left-color: #16c784; }
+  .jEntry.loss { border-left-color: #ea3943; }
+  .jEntry.flat { border-left-color: #7d8aa0; }
+  .jRow1 { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .jDir { font-weight: bold; font-size: 13px; }
+  .jDir.long { color: #16c784; } .jDir.short { color: #ea3943; }
+  .jDelta { font-weight: bold; font-size: 14px; font-family: var(--font-mono); }
+  .jDelta.up { color: #16c784; } .jDelta.down { color: #ea3943; } .jDelta.flat { color: #7d8aa0; }
+  .jMeta { margin-top: 6px; font-size: 10px; color: #7d8aa0; font-family: var(--font-mono); }
+  .jMeta .tag { display: inline-block; padding: 2px 6px; border-radius: 5px; margin-right: 5px;
+    background: rgba(124,77,255,0.14); border: 1px solid rgba(124,77,255,0.4); color: #c9b3ff; }
+  .jNote { width: 100%; box-sizing: border-box; margin-top: 9px; resize: vertical;
+    min-height: 34px; background: #0a0e14; border: 1px solid #2a3442; border-radius: 7px;
+    color: #c7d1de; font: 12px var(--font-ui); padding: 7px 9px; line-height: 1.5; }
+  .jNote::placeholder { color: #4a5666; }
+  .jNote:focus { outline: none; border-color: #4cc3ff; }
+  .foot { margin-top: 34px; color: #4a5666; font-size: 12px; border-top: 1px solid #1c2737; padding-top: 14px; }
+  @media (max-width: 720px) { .ba { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb">CHART QUEST · CHANGE PREVIEW</div>
+  <h1>Trading Journal <span class="tag-new">NEW</span></h1>
+  <p class="sub">A persistent, player-facing log of every trade — with stats and editable notes. Review without replaying the game.</p>
+
+  <h2>What changed</h2>
+  <div class="ba">
+    <div class="card before">
+      <h3>● BEFORE</h3>
+      <ul>
+        <li>Trades only updated the running <b>win/loss counter</b>.</li>
+        <li>The per-hour <code>tradeLog</code> was capped at 10 and <b>wiped every hour</b>.</li>
+        <li>No way for the player to <b>review past trades</b> or take notes.</li>
+        <li>Nothing survived a page reload.</li>
+      </ul>
+    </div>
+    <div class="card after">
+      <h3>● AFTER</h3>
+      <ul>
+        <li>A <b>📓 JOURNAL</b> button (bottom-left) opens a full review screen.</li>
+        <li><b>Every</b> trade is logged — direction, P&amp;L, setup, grade, R:R, balance, hour.</li>
+        <li>Summary stats: trades, win rate, net P&amp;L, avg win, avg loss.</li>
+        <li>An <b>editable note</b> per trade, saved instantly and <b>persisted</b> across reloads (localStorage).</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note">No changes to the core runner, the trade ticket, or the curriculum. The journal reads data the game was already capturing in <code>resolveTrade()</code> — this is purely additive.</div>
+
+  <h2>Live preview — the actual screen (sample data)</h2>
+  <p class="sub" style="margin-bottom:14px">This is the real Journal UI and code, populated with example trades. Try editing a note — it behaves exactly as it will in-game.</p>
+  <div class="stage">
+    <div class="phone">
+      <div class="hudhint">📓 JOURNAL</div>
+      <div id="journalPanel">
+        <div id="jHeader">
+          <span class="jt">📓 TRADING JOURNAL</span>
+          <button id="jClose">CLOSE ✕</button>
+        </div>
+        <div id="jStats"></div>
+        <div id="jList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    Preview pattern: from here on, every game change ships with a <code>preview-*.html</code> like this one — a before/after summary plus a live, interactive view of the new UI — so you can approve changes without restarting the game.
+  </div>
+</div>
+
+<script>
+/* The render functions below are copied verbatim from the in-game code,
+   so this preview is faithful to what ships. */
+const fmt = (n) => Math.round(n).toLocaleString('en-US');
+const SETUP_LABEL = { bos: 'Break of Structure', ob: 'Order Block', vwap: 'VWAP', sweep: 'Liquidity Sweep' };
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function jTimeAgo(ts){const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+
+// Sample journal — mirrors the real entry shape
+let journal = [
+  { id:6, ts:Date.now()-90*1000,   dir:'long',  result:'win',  delta:1840, balanceAfter:13120, rr:2.4, setupType:'bos',   quality:'A', hour:3, note:'' },
+  { id:5, ts:Date.now()-7*60*1000, dir:'short', result:'loss', delta:-620, balanceAfter:11280, rr:2.0, setupType:'vwap',  quality:'B', hour:3, note:'Took it against the 15m trend — should have skipped. Lesson learned.' },
+  { id:4, ts:Date.now()-22*60*1000,dir:'long',  result:'win',  delta:1100, balanceAfter:11900, rr:1.8, setupType:'ob',    quality:'B', hour:2, note:'' },
+  { id:3, ts:Date.now()-40*60*1000,dir:'long',  result:'win',  delta:980,  balanceAfter:10800, rr:2.1, setupType:'bos',   quality:'A', hour:2, note:'Clean break + order block reload. Textbook.' },
+  { id:2, ts:Date.now()-3600*1000, dir:'short', result:'loss', delta:-500, balanceAfter:9820,  rr:2.0, setupType:'sweep', quality:'C', hour:1, note:'' },
+  { id:1, ts:Date.now()-3*3600*1000,dir:'long', result:'win',  delta:760,  balanceAfter:10320, rr:1.6, setupType:'bos',   quality:'B', hour:1, note:'' },
+];
+
+function renderJournalStats(){
+  const n=journal.length;
+  const wins=journal.filter(e=>e.delta>0).length;
+  const net=journal.reduce((a,e)=>a+e.delta,0);
+  const winRate=n?Math.round(wins/n*100):0;
+  const winsNet=journal.filter(e=>e.delta>0).reduce((a,e)=>a+e.delta,0);
+  const lossNet=journal.filter(e=>e.delta<0).reduce((a,e)=>a+e.delta,0);
+  const avgWin=wins?winsNet/wins:0;
+  const lossCount=journal.filter(e=>e.delta<0).length;
+  const avgLoss=lossCount?Math.abs(lossNet/lossCount):0;
+  const stat=(k,v,color)=>'<div class="jStat"><div class="k">'+k+'</div><div class="v"'+(color?' style="color:'+color+'"':'')+'>'+v+'</div></div>';
+  return stat('TRADES',n)+
+    stat('WIN RATE',winRate+'%',winRate>=50?'#16c784':'#e6edf3')+
+    stat('NET P&amp;L',(net>=0?'+':'−')+fmt(Math.abs(net)),net>=0?'#16c784':'#ea3943')+
+    stat('AVG WIN','+'+fmt(avgWin),'#16c784')+
+    stat('AVG LOSS','−'+fmt(avgLoss),'#ea3943');
+}
+function renderJournalList(){
+  if(!journal.length)return'<div style="text-align:center;color:#4a5666;padding:60px 20px">No trades yet.</div>';
+  return journal.map(e=>{
+    const cls=e.delta>0?'win':e.delta<0?'loss':'flat';
+    const dcls=e.delta>0?'up':e.delta<0?'down':'flat';
+    const dsign=e.delta>0?'+':e.delta<0?'−':'';
+    const dirTxt=e.dir==='long'?'▲ LONG':'▼ SHORT';
+    const setup=SETUP_LABEL[e.setupType]||(e.setupType||'—');
+    return '<div class="jEntry '+cls+'">'+
+      '<div class="jRow1">'+
+        '<span class="jDir '+e.dir+'">'+dirTxt+'</span>'+
+        '<span class="jDelta '+dcls+'">'+dsign+fmt(Math.abs(e.delta))+' SHELLS</span>'+
+      '</div>'+
+      '<div class="jMeta">'+
+        '<span class="tag">'+esc(setup)+'</span>'+
+        '<span class="tag">Grade '+esc(e.quality||'C')+'</span>'+
+        'R:R '+(e.rr?e.rr.toFixed(1):'—')+' · Bal '+fmt(e.balanceAfter)+
+        ' · Hr '+(e.hour||'?')+' · '+jTimeAgo(e.ts)+
+      '</div>'+
+      '<textarea class="jNote" data-id="'+e.id+'" placeholder="Add a note — why did you take this trade? What did you learn?">'+esc(e.note||'')+'</textarea>'+
+    '</div>';
+  }).join('');
+}
+document.getElementById('jStats').innerHTML=renderJournalStats();
+document.getElementById('jList').innerHTML=renderJournalList();
+document.getElementById('jList').addEventListener('input',e=>{
+  const ta=e.target; if(!ta.classList||!ta.classList.contains('jNote'))return;
+  const id=+ta.getAttribute('data-id'); const en=journal.find(x=>x.id===id);
+  if(en)en.note=ta.value; // (in-game this also calls saveJournal())
+});
+document.getElementById('jClose').addEventListener('click',()=>alert('In-game: this closes the journal and resumes play.'));
+</script>
+</body>
+</html>

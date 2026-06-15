@@ -1,0 +1,355 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart Quest — Change Preview: Setup Accuracy</title>
+<style>
+ :root{--font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--font-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;}
+ body{margin:0;background:#060910;color:#c7d1de;font:14px/1.6 var(--font-ui);padding:28px 20px 60px;}
+ .wrap{max-width:1000px;margin:0 auto;}
+ .crumb{font-size:11px;letter-spacing:2px;color:#4cc3ff;font-weight:bold;}
+ h1{font-size:23px;margin:6px 0 4px;color:#e6edf3;} .sub{color:#7d8aa0;margin:0 0 24px;}
+ .tag{display:inline-block;background:rgba(22,199,132,0.15);border:1px solid #16c784;color:#16c784;font-size:10px;font-weight:bold;letter-spacing:1px;padding:3px 9px;border-radius:20px;vertical-align:middle;margin-left:8px;}
+ h2{font-size:13px;letter-spacing:1.5px;color:#7d8aa0;text-transform:uppercase;margin:30px 0 12px;border-bottom:1px solid #1c2737;padding-bottom:8px;}
+ .ba{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+ .card{background:#0d1320;border:1px solid #1c2737;border-radius:12px;padding:16px 18px;}
+ .card.before{border-left:3px solid #ea3943;}.card.after{border-left:3px solid #16c784;}
+ .card h3{margin:0 0 10px;font-size:12px;letter-spacing:1.5px;}.before h3{color:#ea3943;}.after h3{color:#16c784;}
+ .card ul{margin:0;padding-left:18px;}.card li{margin-bottom:7px;color:#aeb9c8;}.card li b{color:#e6edf3;}
+ .note{background:rgba(76,195,255,0.07);border:1px solid rgba(76,195,255,0.3);border-radius:10px;padding:12px 15px;font-size:13px;color:#9fc8e0;margin-top:14px;}
+ .def{background:#0d1320;border:1px solid #1c2737;border-radius:12px;padding:16px 18px;margin-bottom:12px;}
+ .def b{color:#e6edf3;} .def .term{color:#4cc3ff;font-weight:bold;letter-spacing:1px;}
+ .charts{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;}
+ .frame{width:390px;max-width:100%;background:#080c12;border:8px solid #161c26;border-radius:20px;overflow:hidden;}
+ .frame .cap{font-size:11px;color:#7d8aa0;text-align:center;padding:8px;letter-spacing:1px;}
+ .frame svg{display:block;width:100%;}
+ .foot{margin-top:34px;color:#4a5666;font-size:12px;border-top:1px solid #1c2737;padding-top:14px;}
+ @media(max-width:720px){.ba{grid-template-columns:1fr;}}
+</style></head><body><div class="wrap">
+ <div class="crumb">CHART QUEST &middot; CHANGE PREVIEW</div>
+ <h1>Setup Accuracy &mdash; Order Block &amp; BOS <span class="tag">FIXED</span></h1>
+ <p class="sub">The journal review now shows the <b>real</b> setup that triggered each trade, the Order Block is only labelled when it genuinely is one, and a blue <b>structure ray</b> shows exactly what the BOS broke.</p>
+
+ <h2>What was wrong &rarr; what changed</h2>
+ <div class="ba">
+  <div class="card before"><h3>&#9679; BEFORE (bugs you caught)</h3><ul>
+   <li>The review snapshot was taken at the <b>exit</b>, so it boxed whatever OB flag sat near the close &mdash; often <b>unrelated to your trade</b>.</li>
+   <li>If no opposing candle existed, the code still flagged the <b>nearest candle</b> as an OB &mdash; even a same-colour one. <b>Not an order block.</b></li>
+   <li>BOS had <b>no structure line</b> in the review, so the break wasn't visible.</li>
+   <li>The <b>ENTRY line</b> never drew (a wrong field name).</li>
+  </ul></div>
+  <div class="card after"><h3>&#9679; AFTER</h3><ul>
+   <li>Snapshot is captured at <b>entry</b> &mdash; the review always shows the OB + BOS that actually triggered the trade.</li>
+   <li>An OB is flagged <b>only</b> when a genuine opposing-colour candle precedes the break (searched 5 back); otherwise none is shown.</li>
+   <li>A blue dashed <b>STRUCTURE HIGH/LOW &mdash; BROKEN</b> ray marks the exact level the BOS cleared.</li>
+   <li>ENTRY / SL / TP lines all render correctly.</li>
+  </ul></div>
+ </div>
+ <div class="note">Below are real renders from the fixed <code>tradeChartSVGFull()</code> &mdash; a bullish OB+BOS win and a bearish one. Note the blue structure ray and the accurate &ldquo;last red/green candle before the break&rdquo; wording.</div>
+
+ <h2>The corrected trade review</h2>
+ <div class="charts">
+  <div class="frame"><div class="cap">BULLISH &mdash; ORDER BLOCK + BOS (WIN)</div><div id="c1"></div></div>
+  <div class="frame"><div class="cap">BEARISH &mdash; ORDER BLOCK + BOS (LOSS)</div><div id="c2"></div></div>
+ </div>
+
+ <h2>Your question: is the BOS definition right?</h2>
+ <div class="def"><span class="term">YOUR TAKE</span> &mdash; &ldquo;Price cleared a key level, trade confirmed.&rdquo; <b>Essentially correct</b>, with three refinements:</div>
+ <div class="def">1. The &ldquo;key level&rdquo; is specifically the most recent <b>swing high</b> (for a bullish BOS) or <b>swing low</b> (bearish) &mdash; now drawn as the blue ray.</div>
+ <div class="def">2. A true BOS needs a <b>candle CLOSE beyond</b> the level. A wick that pokes through and closes back is a <b>fake-out / liquidity sweep</b>, not a BOS.</div>
+ <div class="def">3. A BOS is <b>continuation</b> (same direction as the trend). The <b>first</b> break the other way is a <b>Change of Character (ChoCh)</b> &mdash; a reversal signal, a different thing.</div>
+ <div class="def"><span class="term">ORDER BLOCK</span> &mdash; the last opposing-colour candle right before that break (last red before a bullish break / last green before a bearish one). The glossary entries in the game now say exactly this.</div>
+
+ <div class="foot">Preview pattern: every change ships with a <code>preview-*.html</code> &mdash; before/after plus a live render.</div>
+</div>
+<script>
+const fmt=(n)=>Math.round(n).toLocaleString('en-US');
+function tradeChartSVGFull(t) {
+  if (!t || !t.candleSnap || !t.candleSnap.length) return '';
+  const cs = t.candleSnap;
+  const sType = t.setupType || 'bos';
+  const isLong = t.dir === 'long';
+  const isWin  = t.result === 'win';
+
+  // Pass 1: body prices + SL/TP/entry — must all be visible
+  let lo = Infinity, hi = -Infinity;
+  for (const c of cs) {
+    lo = Math.min(lo, Math.min(c.open, c.h));
+    hi = Math.max(hi, Math.max(c.open, c.h));
+  }
+  if (t.slH    !== undefined) { lo = Math.min(lo, t.slH);    hi = Math.max(hi, t.slH); }
+  if (t.tpH    !== undefined) { lo = Math.min(lo, t.tpH);    hi = Math.max(hi, t.tpH); }
+  if (t.entryH !== undefined) { lo = Math.min(lo, t.entryH); hi = Math.max(hi, t.entryH); }
+  // For VWAP trades, ensure the VWAP curve is always visible
+  if (sType === 'vwap_bounce') {
+    for (const c of cs) { if (c.vwap) { lo = Math.min(lo, c.vwap); hi = Math.max(hi, c.vwap); } }
+  }
+  const bodyRng2 = Math.max(1, hi - lo);
+  // Pass 2: include wicks, capped at 40% of body range so spikes don't dominate
+  for (const c of cs) {
+    lo = Math.min(lo, Math.min(c.open, c.h) - Math.min(c.wick2 || 0, bodyRng2 * 0.4 + 2));
+    hi = Math.max(hi, Math.max(c.open, c.h) + Math.min(c.wick  || 0, bodyRng2 * 0.4 + 2));
+  }
+  const pad = (hi - lo) * 0.10;
+  lo -= pad; hi += pad;
+  const range = Math.max(1, hi - lo);
+
+  const VW = 390, VH = 760;
+  const chartX = 10, chartW = VW - 20;
+  const chartTop = 68, chartBot = 480;
+  const chartH = chartBot - chartTop;
+  const nC = cs.length;
+  const xw = chartW / nC;
+  const Y = lvl => chartTop + (1 - (lvl - lo) / range) * chartH;
+
+  const typeLabel = sType === 'vwap_bounce' ? 'VWAP BOUNCE'
+                  : sType === 'trend_break'  ? 'TREND BREAK'
+                  : 'ORDER BLOCK + BOS';
+  const resultCol = isWin ? '#16c784' : '#ea3943';
+  const dirLabel  = isLong ? '▲ LONG' : '▼ SHORT';
+  const dSign     = t.delta > 0 ? '+' : '−';
+
+  let s = '<svg viewBox="0 0 ' + VW + ' ' + VH + '" xmlns="http://www.w3.org/2000/svg">';
+  s += '<rect width="' + VW + '" height="' + VH + '" fill="#080c12"/>';
+
+  // Defs — arrow markers
+  s += '<defs>'
+     + '<marker id="tr_arrDn" markerWidth="8" markerHeight="8" refX="4" refY="8" orient="auto"><path d="M0,0 L4,8 L8,0 Z" fill="#d8b4fe"/></marker>'
+     + '<marker id="tr_arrDnC" markerWidth="8" markerHeight="8" refX="4" refY="8" orient="auto"><path d="M0,0 L4,8 L8,0 Z" fill="#4cc3ff"/></marker>'
+     + '</defs>';
+
+  // Title bar
+  s += '<rect width="' + VW + '" height="60" fill="#0d1420"/>';
+  s += '<text x="' + (VW/2) + '" y="19" fill="#4cc3ff" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">' + typeLabel + ' — ' + dirLabel + '</text>';
+  // Result badge
+  s += '<rect x="' + (VW/2 - 70) + '" y="27" width="140" height="25" rx="5" fill="' + resultCol + '22"/>';
+  s += '<text x="' + (VW/2) + '" y="44" fill="' + resultCol + '" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">'
+     + (isWin ? '✓ WIN' : '✗ LOSS') + '  ' + dSign + fmt(Math.abs(t.delta)) + ' 🐚</text>';
+
+  // Chart area
+  s += '<rect x="' + chartX + '" y="' + chartTop + '" width="' + chartW + '" height="' + chartH
+     + '" fill="rgba(255,255,255,0.015)" stroke="#1c2737" stroke-width="1" rx="4"/>';
+  for (let gi = 1; gi <= 3; gi++) {
+    const gy = chartTop + (gi/4) * chartH;
+    s += '<line x1="' + chartX + '" y1="' + gy + '" x2="' + (chartX+chartW) + '" y2="' + gy
+       + '" stroke="#1c2737" stroke-width="0.5" stroke-dasharray="4 4"/>';
+  }
+
+  // ── VWAP curve (vwap_bounce trades only) ──────────────────────────────
+  if (sType === 'vwap_bounce') {
+    const vwapPts = cs.map((c, i) => c.vwap ? { i, v: c.vwap } : null).filter(Boolean);
+    if (vwapPts.length >= 2) {
+      let vPath = '';
+      vwapPts.forEach(({ i, v }) => {
+        const vx = chartX + i * xw + xw / 2;
+        const vy = Y(v);
+        vPath += (vPath ? ' L' : 'M') + vx.toFixed(1) + ',' + vy.toFixed(1);
+      });
+      s += '<path d="' + vPath + '" fill="none" stroke="#ff9f43" stroke-width="2.5" opacity="0.9"/>';
+      // Label at the right end
+      const last = vwapPts[vwapPts.length - 1];
+      const lvx = chartX + last.i * xw + xw / 2;
+      const lvy = Math.max(chartTop + 12, Math.min(chartBot - 6, Y(last.v)));
+      s += '<rect x="' + (lvx - 26) + '" y="' + (lvy - 13) + '" width="52" height="15" rx="3" fill="rgba(255,159,67,0.22)" stroke="#ff9f43" stroke-width="0.8"/>';
+      s += '<text x="' + lvx + '" y="' + (lvy - 2) + '" fill="#ff9f43" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">VWAP</text>';
+    }
+  }
+
+  // ── SWING LEVEL (trend_break only) ─────────────────────────────────────
+  if (sType === 'trend_break') {
+    // Mirror game logic: swingHigh/Low uses body prices only (no wicks), last 7 candles before break
+    const nCs = cs.length;
+    const prevCs = cs.slice(Math.max(0, nCs - 8), nCs - 1);
+    let swingLevel;
+    if (isLong) {
+      // Bull break: close exceeded max BODY high of prior candles
+      swingLevel = prevCs.reduce((m, c) => Math.max(m, Math.max(c.open, c.h)), -Infinity);
+    } else {
+      // Bear break: close fell below min BODY low of prior candles
+      swingLevel = prevCs.reduce((m, c) => Math.min(m, Math.min(c.open, c.h)), Infinity);
+    }
+    if (isFinite(swingLevel)) {
+      const sy = Y(swingLevel);
+      // Yellow dashed swing level line
+      s += '<line x1="' + chartX + '" y1="' + sy + '" x2="' + (chartX + chartW) + '" y2="' + sy
+         + '" stroke="#ffd60a" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.9"/>';
+      // Pill label
+      const swingLbl = isLong ? 'SWING HIGH — BROKEN ↑' : 'SWING LOW — BROKEN ↓';
+      const pillW = 148, pillH = 16, pillX = chartX + chartW - pillW - 4;
+      const pillY = Math.max(chartTop + 4, sy - pillH - 2);
+      s += '<rect x="' + pillX + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH
+         + '" rx="3" fill="rgba(255,214,10,0.18)" stroke="#ffd60a" stroke-width="0.8"/>';
+      s += '<text x="' + (pillX + pillW / 2) + '" y="' + (pillY + 11) + '" fill="#ffd60a"'
+         + ' font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">' + swingLbl + '</text>';
+      // Yellow dashed circle on the last candle (the break candle)
+      const breakIdx = nC - 1;
+      const bc = cs[breakIdx];
+      const bcX = chartX + breakIdx * xw + xw / 2;
+      const bcYtop = Y(Math.max(bc.open, bc.h) + (bc.wick || 0));
+      const bcYbot = Y(Math.min(bc.open, bc.h) - (bc.wick2 || 0));
+      const bcCy = (bcYtop + bcYbot) / 2;
+      const bcR = Math.max(12, (bcYbot - bcYtop) / 2 + 8);
+      s += '<circle cx="' + bcX + '" cy="' + bcCy + '" r="' + bcR
+         + '" fill="none" stroke="#ffd60a" stroke-width="2" stroke-dasharray="4 3" opacity="0.85"/>';
+    }
+  }
+
+  // ── STRUCTURE LEVEL (Order Block + BOS setups) — the exact level the BOS broke.
+  //    A horizontal ray at the prior swing high/low, so the break is visible. ──
+  if (sType !== 'trend_break' && sType !== 'vwap_bounce') {
+    const bosI = cs.findIndex(c => c.bos);
+    if (bosI > 0) {
+      const bull = cs[bosI].color === 'green';
+      let lvl = bull ? -Infinity : Infinity;
+      for (let i = 0; i < bosI; i++) {
+        const ext = bull ? Math.max(cs[i].open, cs[i].h) + (cs[i].wick || 0)
+                         : Math.min(cs[i].open, cs[i].h) - (cs[i].wick2 || 0);
+        lvl = bull ? Math.max(lvl, ext) : Math.min(lvl, ext);
+      }
+      if (isFinite(lvl)) {
+        const sy = Y(lvl);
+        s += '<line x1="' + chartX + '" y1="' + sy + '" x2="' + (chartX + chartW) + '" y2="' + sy
+           + '" stroke="#4cc3ff" stroke-width="1.6" stroke-dasharray="7 4" opacity="0.85"/>';
+        const lbl = bull ? 'STRUCTURE HIGH — BROKEN ↑' : 'STRUCTURE LOW — BROKEN ↓';
+        const pillW = 184, pillH = 16, pillX = chartX + 4;
+        const pillY = Math.max(chartTop + 4, Math.min(chartBot - pillH - 4, bull ? sy + 4 : sy - pillH - 4));
+        s += '<rect x="' + pillX + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH
+           + '" rx="3" fill="rgba(76,195,255,0.18)" stroke="#4cc3ff" stroke-width="0.8"/>';
+        s += '<text x="' + (pillX + pillW / 2) + '" y="' + (pillY + 11) + '" fill="#4cc3ff"'
+           + ' font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">' + lbl + '</text>';
+      }
+    }
+  }
+
+  // SL / TP / Entry level lines (drawn before candles so they're beneath)
+  [
+    { h: t.tpH,    col: '#16c784', lbl: 'TAKE PROFIT' },
+    { h: t.entryH, col: '#ffd60a', lbl: 'ENTRY' },
+    { h: t.slH,    col: '#ea3943', lbl: 'STOP LOSS' },
+  ].forEach(({ h, col, lbl }) => {
+    if (h === undefined) return;
+    const ly = Y(h);
+    if (ly < chartTop - 2 || ly > chartBot + 2) return;
+    s += '<line x1="' + chartX + '" y1="' + ly + '" x2="' + (chartX+chartW) + '" y2="' + ly
+       + '" stroke="' + col + '" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.65"/>';
+    s += '<text x="' + (chartX + 5) + '" y="' + (ly - 3) + '" fill="' + col
+       + '" font-size="9" font-weight="bold" font-family="monospace" opacity="0.85">' + lbl + '</text>';
+  });
+
+  // Candles
+  for (let i = 0; i < nC; i++) {
+    const c   = cs[i];
+    const bx  = chartX + i * xw + 5, bw2 = xw - 10;
+    const yO  = Y(c.open), yC = Y(c.h);
+    const top = Math.min(yO, yC), bh = Math.max(3, Math.abs(yO - yC));
+    const col = c.color === 'green' ? '#16c784' : '#ea3943';
+    const cxm = bx + bw2 / 2;
+    if (c.wick  > 1) s += '<line x1="' + cxm + '" y1="' + top + '" x2="' + cxm + '" y2="' + Y(Math.max(c.open,c.h)+c.wick) + '" stroke="#8b98a8" stroke-width="2"/>';
+    if (c.wick2 > 1) s += '<line x1="' + cxm + '" y1="' + (top+bh) + '" x2="' + cxm + '" y2="' + Y(Math.min(c.open,c.h)-c.wick2) + '" stroke="#8b98a8" stroke-width="2"/>';
+    s += '<rect x="' + bx + '" y="' + top + '" width="' + bw2 + '" height="' + bh + '" fill="' + col + '" rx="1"/>';
+    // OB annotation
+    if (c.ob) {
+      s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (bw2+4) + '" height="' + (bh+6)
+         + '" fill="rgba(168,85,247,0.22)" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="3 2" rx="2"/>';
+      const arrowTipOB = top - 5;
+      if (arrowTipOB - 24 > chartTop)
+        s += '<line x1="' + cxm + '" y1="' + (arrowTipOB-22) + '" x2="' + cxm + '" y2="' + arrowTipOB
+           + '" stroke="#d8b4fe" stroke-width="1.5" marker-end="url(#tr_arrDn)"/>';
+      s += '<text x="' + cxm + '" y="' + Math.max(chartTop+14, arrowTipOB-26) + '" fill="#d8b4fe" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ORDER BLOCK</text>';
+    }
+    // BOS annotation
+    if (c.bos) {
+      s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (bw2+4) + '" height="' + (bh+6)
+         + '" fill="rgba(76,195,255,0.15)" stroke="#4cc3ff" stroke-width="1.5" rx="2"/>';
+      s += '<text x="' + cxm + '" y="' + Math.max(chartTop+14, top-8) + '" fill="#4cc3ff" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">BOS ⚡</text>';
+    }
+    // Turtle on last candle
+    if (i === nC - 1) {
+      const turtleYt = Math.max(chartTop + 28, top - 22);
+      s += '<text x="' + (bx+bw2/2) + '" y="' + turtleYt + '" font-size="20" text-anchor="middle">🐢</text>';
+    }
+  }
+
+  // Divider
+  s += '<line x1="10" y1="490" x2="380" y2="490" stroke="#1c2737" stroke-width="1"/>';
+
+  // ── WHY THIS SETUP? ────────────────────────────────────────────────────────
+  const whyLines = sType === 'vwap_bounce' ? [
+    { t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' },
+    { t: 'VWAP = average price of all trades today.', c: '#ff9f43' },
+    { t: 'Price always returns to VWAP like a magnet.', c: '#c7d1de' },
+    { t: isLong ? 'Price bounced UP off VWAP → bulls defending it.' : 'Price got pushed DOWN from VWAP → bears rejecting it.', c: isLong ? '#16c784' : '#ea3943' },
+  ] : sType === 'trend_break' ? [
+    { t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' },
+    { t: isLong ? 'See the yellow line? That was KEY RESISTANCE.' : 'See the yellow line? That was KEY SUPPORT.', c: '#ffd60a' },
+    { t: isLong ? 'Price broke ABOVE it → buyers took over.' : 'Price broke BELOW it → sellers took over.', c: isLong ? '#16c784' : '#ea3943' },
+    { t: isLong ? 'Old ceiling = new floor. Ride the UP move.' : 'Old floor = new ceiling. Ride the DOWN move.', c: '#c7d1de' },
+  ] : (function () {
+    const hasOB = cs.some(c => c.ob);
+    const lines = [{ t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' }];
+    if (hasOB) {
+      lines.push({ t: '🟣 ORDER BLOCK — the last ' + (isLong ? 'red' : 'green') + ' candle before the break.', c: '#d8b4fe' });
+      lines.push({ t: '   Price often returns here before continuing.', c: '#c7d1de' });
+    }
+    lines.push({ t: '⚡ BOS — price broke the blue structure ' + (isLong ? 'high' : 'low') + '.', c: '#4cc3ff' });
+    lines.push({ t: '   ' + (isLong ? 'A close above it = buyers in control.' : 'A close below it = sellers in control.'), c: '#c7d1de' });
+    return lines;
+  })();
+  let wyY = 507;
+  whyLines.forEach(({ t: lt, b, c: lc }) => {
+    s += '<text x="14" y="' + wyY + '" fill="' + lc + '" font-size="11" font-family="monospace"'
+       + (b ? ' font-weight="bold"' : '') + '>' + lt + '</text>';
+    wyY += 18;
+  });
+
+  // ── WHAT HAPPENED? ─────────────────────────────────────────────────────────
+  s += '<line x1="10" y1="590" x2="380" y2="590" stroke="#1c2737" stroke-width="1"/>';
+  const whatLines = [
+    { t: 'WHAT HAPPENED?', b: true, c: '#4cc3ff' },
+    { t: isWin
+        ? (isLong ? '✓ Price went UP and hit your Take Profit. You won!' : '✓ Price went DOWN and hit your Take Profit. You won!')
+        : (isLong ? '✗ Price went DOWN and hit your Stop Loss.' : '✗ Price went UP and hit your Stop Loss.'),
+      c: isWin ? '#16c784' : '#ea3943' },
+    { t: isWin
+        ? 'Great read! The setup played out exactly as planned.'
+        : 'Even perfect setups lose sometimes. That\'s trading.',
+      c: isWin ? '#c7d1de' : '#6a7e94' },
+    { t: isWin
+        ? 'Keep spotting quality setups and the money follows.'
+        : 'The Stop Loss SAVED you from a bigger loss. Good risk mgmt!',
+      c: '#4a5a70' },
+  ];
+  let whY2 = 607;
+  whatLines.forEach(({ t: lt, b, c: lc }) => {
+    s += '<text x="14" y="' + whY2 + '" fill="' + lc + '" font-size="11" font-family="monospace"'
+       + (b ? ' font-weight="bold"' : '') + '>' + lt + '</text>';
+    whY2 += 18;
+  });
+  // R:R line
+  if (t.rr) {
+    const riskAmt = t.rr > 0.01 ? Math.abs(t.delta) / t.rr : 0;
+    s += '<text x="14" y="' + whY2 + '" fill="#4a5a70" font-size="10" font-family="monospace">R:R = '
+       + t.rr.toFixed(1) + ':1  ·  risked ' + fmt(riskAmt) + ' 🐚  ·  '
+       + (isWin ? 'won' : 'lost') + ' ' + fmt(Math.abs(t.delta)) + ' 🐚</text>';
+  }
+
+  s += '<text x="' + (VW/2) + '" y="' + (VH-10) + '" fill="#242e3e" font-size="11" font-family="monospace" text-anchor="middle">TAP ANYWHERE TO CLOSE</text>';
+  s += '</svg>';
+  return s;
+}
+// Bullish OB+BOS win
+const bull=[
+ {open:300,h:308,wick:4,wick2:3,color:"green",ob:false,bos:false,vwap:0},
+ {open:308,h:302,wick:5,wick2:4,color:"red",ob:false,bos:false,vwap:0},
+ {open:302,h:296,wick:4,wick2:5,color:"red",ob:false,bos:false,vwap:0},
+ {open:296,h:289,wick:4,wick2:6,color:"red",ob:true,bos:false,vwap:0},
+ {open:289,h:332,wick:6,wick2:3,color:"green",ob:false,bos:true,vwap:0},
+];
+document.getElementById('c1').innerHTML=tradeChartSVGFull({dir:"long",result:"win",delta:1500,rr:2.2,setupType:"bos",quality:"A",entryH:332,slH:285,tpH:386,candleSnap:bull});
+// Bearish OB+BOS loss
+const bear=[
+ {open:300,h:292,wick:3,wick2:4,color:"red",ob:false,bos:false,vwap:0},
+ {open:292,h:298,wick:4,wick2:5,color:"green",ob:false,bos:false,vwap:0},
+ {open:298,h:304,wick:5,wick2:4,color:"green",ob:false,bos:false,vwap:0},
+ {open:304,h:311,wick:6,wick2:4,color:"green",ob:true,bos:false,vwap:0},
+ {open:311,h:270,wick:3,wick2:6,color:"red",ob:false,bos:true,vwap:0},
+];
+document.getElementById('c2').innerHTML=tradeChartSVGFull({dir:"short",result:"loss",delta:-620,rr:2.0,setupType:"bos",quality:"B",entryH:270,slH:316,tpH:228,candleSnap:bear});
+</script></body></html>

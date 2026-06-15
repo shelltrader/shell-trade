@@ -1,0 +1,180 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart Quest — Change Preview: Daily Drill</title>
+<style>
+ :root{--font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--font-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;}
+ body{margin:0;background:#060910;color:#c7d1de;font:14px/1.6 var(--font-ui);padding:28px 20px 60px;}
+ .wrap{max-width:980px;margin:0 auto;} .crumb{font-size:11px;letter-spacing:2px;color:#ff9f43;font-weight:bold;}
+ h1{font-size:23px;margin:6px 0 4px;color:#e6edf3;} .sub{color:#7d8aa0;margin:0 0 24px;}
+ .tag{display:inline-block;background:rgba(22,199,132,0.15);border:1px solid #16c784;color:#16c784;font-size:10px;font-weight:bold;letter-spacing:1px;padding:3px 9px;border-radius:20px;vertical-align:middle;margin-left:8px;}
+ h2{font-size:13px;letter-spacing:1.5px;color:#7d8aa0;text-transform:uppercase;margin:30px 0 12px;border-bottom:1px solid #1c2737;padding-bottom:8px;}
+ .ba{display:grid;grid-template-columns:1fr 1fr;gap:14px;} .card{background:#0d1320;border:1px solid #1c2737;border-radius:12px;padding:16px 18px;}
+ .card.before{border-left:3px solid #5a6b82;}.card.after{border-left:3px solid #ff9f43;}
+ .card h3{margin:0 0 10px;font-size:12px;letter-spacing:1.5px;}.before h3{color:#7d8aa0;}.after h3{color:#ff9f43;}
+ .card ul{margin:0;padding-left:18px;}.card li{margin-bottom:7px;color:#aeb9c8;}.card li b{color:#e6edf3;}
+ .note{background:rgba(255,159,67,0.08);border:1px solid rgba(255,159,67,0.3);border-radius:10px;padding:12px 15px;font-size:13px;color:#ffce9e;margin:14px 0;}
+ .demo{display:flex;gap:8px;justify-content:center;margin-bottom:12px;}
+ .demo button{padding:8px 14px;border-radius:8px;cursor:pointer;font:bold 11px var(--font-ui);background:#0d1320;border:1px solid #2a3d55;color:#7d8aa0;}
+ .demo button.on{border-color:#ff9f43;color:#ff9f43;}
+ .stage{display:flex;justify-content:center;}
+ .phone{width:380px;max-width:100%;height:620px;position:relative;background:#080c12;border:8px solid #161c26;border-radius:22px;overflow:hidden;display:flex;flex-direction:column;font:13px var(--font-ui);}
+ #ddHeader{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid #1c2737;}
+ #ddHeader .ddt{font-weight:bold;font-size:14px;letter-spacing:2px;color:#ff9f43;}
+ #ddStreakBar{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid #1c2737;font-family:var(--font-mono);}
+ #ddStreakBar .flame{color:#ff9f43;font-weight:bold;font-size:14px;} #ddStreakBar .mult{color:#16c784;font-weight:bold;}
+ #ddBody{flex:1;overflow-y:auto;padding:18px 16px;}
+ #ddProgress{font-size:11px;color:#7d8aa0;letter-spacing:1px;margin-bottom:10px;font-family:var(--font-mono);}
+ .ddQ{font-size:15px;font-weight:bold;color:#e6edf3;line-height:1.4;margin-bottom:14px;}
+ #ddChart svg{width:100%;display:block;background:#0a0e14;border:1px solid #1c2737;border-radius:8px;}
+ .ddOpt{display:block;width:100%;text-align:left;box-sizing:border-box;margin-bottom:9px;padding:13px 14px;cursor:pointer;border-radius:9px;background:#0d1320;border:1px solid #2a3442;color:#c7d1de;font:13px var(--font-ui);}
+ .ddOpt.correct{border-color:#16c784;background:rgba(22,199,132,0.13);color:#16c784;} .ddOpt.wrong{border-color:#ea3943;background:rgba(234,57,67,0.13);color:#ea3943;} .ddOpt.dim{opacity:.5;}
+ .ddGuessRow{display:flex;gap:12px;margin-top:6px;} .ddGuess{flex:1;padding:16px 0;font:bold 15px var(--font-ui);border-radius:10px;cursor:pointer;}
+ .ddGuess.up{background:rgba(22,199,132,0.12);border:2px solid #16c784;color:#16c784;} .ddGuess.down{background:rgba(234,57,67,0.12);border:2px solid #ea3943;color:#ea3943;}
+ #ddFeedback{margin-top:12px;font-size:13px;font-weight:bold;min-height:20px;}
+ #ddNext{margin-top:16px;width:100%;padding:14px 0;font:bold 14px var(--font-ui);background:#14222f;border:1px solid #4cc3ff;color:#4cc3ff;border-radius:8px;cursor:pointer;}
+ #ddResult{text-align:center;padding:24px 16px;} #ddResult .big{font-size:40px;} #ddResult .score{font-size:22px;font-weight:bold;color:#e6edf3;margin:8px 0;}
+ #ddResult .earn{font-size:16px;color:#ffd60a;font-weight:bold;margin:10px 0;font-family:var(--font-mono);} #ddResult .sk{font-size:15px;color:#ff9f43;font-weight:bold;margin:14px 0 4px;} #ddResult .sub{color:#7d8aa0;font-size:13px;}
+ .foot{margin-top:34px;color:#4a5666;font-size:12px;border-top:1px solid #1c2737;padding-top:14px;}
+ @media(max-width:760px){.ba{grid-template-columns:1fr;}}
+</style></head><body><div class="wrap">
+ <div class="crumb">CHART QUEST &middot; CHANGE PREVIEW</div>
+ <h1>Daily Drill + Streak <span class="tag">NEW</span></h1>
+ <p class="sub">A fresh challenge every day, with a streak that multiplies your Shell reward — the loop that brings players back daily (the lever for paid-ads retention).</p>
+ <h2>What changed</h2>
+ <div class="ba">
+  <div class="card before"><h3>● BEFORE</h3><ul><li>No reason to return on a given day.</li><li>Learning only happened mid-run.</li><li>No habit loop or streak.</li></ul></div>
+  <div class="card after"><h3>● AFTER</h3><ul>
+   <li>A <b>🔥 DAILY DRILL</b> button — one challenge per day (2 quiz + 1 guess-the-direction).</li>
+   <li>Finishing builds a <b>day streak</b>; the streak <b>multiplies Shells</b> (×1 → ×3 by day 9).</li>
+   <li>Same daily for everyone (seeded by date), stable if reopened; locks until tomorrow once done.</li>
+   <li>Reuses the existing quiz pool (32 questions) — no new content needed.</li>
+  </ul></div>
+ </div>
+ <div class="note">Pick a streak to see the reward multiplier, then play the drill. (In-game the streak is earned by playing on consecutive days.)</div>
+ <div class="demo" id="demo"></div>
+ <div class="stage"><div class="phone">
+   <div id="ddHeader"><span class="ddt">🔥 DAILY DRILL</span><button id="ddClose" style="background:none;border:1px solid #2a3442;border-radius:7px;color:#7d8aa0;font:bold 13px var(--font-ui);padding:7px 13px;cursor:pointer">RESTART ↻</button></div>
+   <div id="ddStreakBar"><span class="flame" id="ddStreakLbl"></span><span class="mult" id="ddMultLbl"></span></div>
+   <div id="ddBody"></div>
+ </div></div>
+ <div class="foot">Preview pattern: every change ships with a <code>preview-*.html</code>. Uses the live drill builder &amp; chart renderer.</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+function ddToday(){return '2026-06-15';}
+const QUIZ_QUESTIONS = {
+  candles_intro: [
+    { q:'A GREEN candle means price…', answers:['Went UP 📈','Went DOWN 📉','Stayed flat','Gapped open'], correct:0 },
+    { q:'What does the WICK show?', answers:['Highest & lowest price hit','Opening price','Closing price','Volume'], correct:0 },
+    { q:'A 5-minute candle covers how long?', answers:['5 minutes of trading','5 hours','5 days','5 seconds'], correct:0 },
+  ],
+  what_is_doji: [
+    { q:'A Doji candle means…', answers:['Open ≈ Close — indecision','Big bullish move','Big bearish move','High volume'], correct:0 },
+    { q:'When you see a Doji, it signals…', answers:['Buyers and sellers are balanced','Price will go up','Price will crash','Strong trend'], correct:0 },
+  ],
+  long_vs_short: [
+    { q:'Going LONG means you bet price will…', answers:['Go UP 📈','Go DOWN 📉','Stay flat','Gap open'], correct:0 },
+    { q:'Going SHORT means you profit when price…', answers:['Falls 📉','Rises 📈','Stays still','Gaps up'], correct:0 },
+  ],
+  what_is_sl: [
+    { q:'A stop loss is…', answers:['An exit if price goes against you','A coin you collect','A type of candle','The VWAP line'], correct:0 },
+    { q:'Why use a stop loss?', answers:['Cap your losses before they grow','Maximize profits','Go short','Change timeframes'], correct:0 },
+  ],
+  candle_close: [
+    { q:'When is a candle\'s signal final?', answers:['When it CLOSES','When the wick first touches','Halfway through','It never matters'], correct:0 },
+    { q:'A break that only WICKS through a level but closes back is…', answers:['A fake-out — not confirmed','A confirmed break','Always a win','A stop loss'], correct:0 },
+  ],
+  what_is_trend: [
+    { q:'An UPTREND has…', answers:['Higher highs AND higher lows','Lower highs and lower lows','Flat price','Random moves'], correct:0 },
+    { q:'In a downtrend the smart trade is…', answers:['SHORT — ride the fall','LONG — buy the dip','Hold forever','Use 100× leverage'], correct:0 },
+  ],
+  support_resist: [
+    { q:'SUPPORT is a level where…', answers:['Buyers defend against further drops','Sellers take control','Price always bounces up','Volume is zero'], correct:0 },
+    { q:'RESISTANCE is where…', answers:['Sellers push price back down','Buyers push price up','VWAP sits','Doji always forms'], correct:0 },
+  ],
+  bos: [
+    { q:'BOS stands for…', answers:['Break of Structure','Buy or Sell','Base of Support','Big Orange Signal'], correct:0 },
+    { q:'A BULLISH BOS happens when price…', answers:['Breaks above a prior high','Breaks below a prior low','Touches VWAP','Forms a Doji'], correct:0 },
+  ],
+  choch: [
+    { q:'A Change of Character (ChoCh) signals…', answers:['The trend may be reversing','The trend continuing','A guaranteed win','Nothing at all'], correct:0 },
+    { q:'How is a BOS different from a ChoCh?', answers:['BOS continues the trend; ChoCh breaks against it','They are identical','BOS is a stop loss','ChoCh is a candle colour'], correct:0 },
+  ],
+  ob: [
+    { q:'An ORDER BLOCK is…', answers:['The last candle before a big move','A stop loss level','The VWAP line','A leverage tool'], correct:0 },
+    { q:'Traders watch Order Blocks because…', answers:['Price often returns to "reload" there','They mark trend tops','They predict Dojis','They show leverage'], correct:0 },
+  ],
+  setup: [
+    { q:'A strong trade setup combines…', answers:['BOS + Order Block alignment','Any green candle','Random entry','Just a Doji'], correct:0 },
+  ],
+  vwap: [
+    { q:'VWAP stands for…', answers:['Volume Weighted Average Price','Very Wide Average Price','Volatile Wick And Price','Volume With Added Position'], correct:0 },
+    { q:'The VWAP line acts as a…', answers:['Magnet — price is drawn back to it','Hard resistance always','Stop loss marker','Leverage multiplier'], correct:0 },
+  ],
+  vwap_trade: [
+    { q:'A VWAP bounce trade means…', answers:['Enter when price touches VWAP and bounces','Sell every time price hits VWAP','Ignore VWAP','Trade only above VWAP'], correct:0 },
+  ],
+  htf: [
+    { q:'HTF stands for…', answers:['Higher Time Frame','High Trade Frequency','Horizontal Trend Following','Hold The Formation'], correct:0 },
+    { q:'Checking a higher TF before trading helps you…', answers:['See the bigger trend and avoid fighting it','Find shorter moves','Reset the VWAP','Add leverage'], correct:0 },
+  ],
+  htf_align: [
+    { q:'The HTF Alignment Rule says…', answers:['Only trade in the direction the bigger TF trend points','Always trade against the trend','Ignore the 1m chart','Go long always'], correct:0 },
+  ],
+  leverage_intro: [
+    { q:'10× leverage turns a 1% move into…', answers:['A 10% gain or loss','A 0.1% move','A 100% gain','No change'], correct:0 },
+    { q:'Leverage is dangerous because…', answers:['Losses are multiplied the same way gains are','It only amplifies wins','It reduces risk','It ignores stops'], correct:0 },
+  ],
+  risk_reward: [
+    { q:'A 1:2 Risk:Reward ratio means…', answers:['Risk $1 to make $2','Risk $2 to make $1','Equal risk and reward','No stop loss needed'], correct:0 },
+    { q:'Good R:R means you can be wrong often and still…', answers:['Profit overall','Lose everything','Need 90% win rate','Use max leverage'], correct:0 },
+  ],
+};
+function ddSeed(s) { let h = 2166136261; for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function ddRng(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a>>>15, 1|a); t = t + Math.imul(t ^ t>>>7, 61|t) ^ t; return ((t ^ t>>>14) >>> 0) / 4294967296; }; }
+function ddQuizPool() { const out = []; for (const k in QUIZ_QUESTIONS) for (const q of QUIZ_QUESTIONS[k]) out.push(q); return out; }
+function ddGuessRound(rnd) {
+  const up = rnd() < 0.5; const cs = []; let lvl = 50;
+  for (let i = 0; i < 7; i++) { const drift = (up ? 1 : -1) * (2 + rnd() * 5); const o = lvl; lvl = Math.max(10, Math.min(90, lvl + drift + (rnd()-0.5)*3)); cs.push({ open: o, h: lvl, color: lvl >= o ? 'green' : 'red' }); }
+  return { type: 'guess', candles: cs, answer: up ? 'up' : 'down' };
+}
+function ddBuild() {
+  const rnd = ddRng(ddSeed(ddToday()));
+  const pool = ddQuizPool(); const picks = []; const used = new Set();
+  while (picks.length < 2 && used.size < pool.length) { const i = Math.floor(rnd() * pool.length); if (used.has(i)) continue; used.add(i); picks.push(pool[i]); }
+  const rounds = picks.map(q => ({ type: 'quiz', q: q.q, answers: q.answers, correct: q.correct }));
+  rounds.push(ddGuessRound(rnd));
+  return { rounds, idx: 0, correct: 0, answered: false };
+}
+function ddMultiplier(streak) { return Math.min(3, 1 + 0.25 * Math.max(0, streak - 1)); }
+function ddGuessChartSVG(cs) {
+  const VW = 300, VH = 120, pad = 12; let lo = Infinity, hi = -Infinity;
+  for (const c of cs) { lo = Math.min(lo, c.open, c.h); hi = Math.max(hi, c.open, c.h); }
+  const rng = Math.max(1, hi - lo); const xw = (VW - 2*pad) / (cs.length + 1);
+  const Y = (v) => pad + (1 - (v - lo) / rng) * (VH - 2*pad);
+  let s = '<svg viewBox="0 0 ' + VW + ' ' + VH + '" xmlns="http://www.w3.org/2000/svg">';
+  for (let i = 0; i < cs.length; i++) { const c = cs[i], bx = pad + i*xw + xw*0.2, bw = xw*0.6; const yO = Y(c.open), yC = Y(c.h), top = Math.min(yO,yC), bh = Math.max(2, Math.abs(yO-yC)); s += '<rect x="' + bx + '" y="' + top + '" width="' + bw + '" height="' + bh + '" fill="' + (c.color === 'green' ? '#16c784' : '#ea3943') + '" rx="1"/>'; }
+  const qx = pad + cs.length*xw + xw*0.2;
+  s += '<rect x="' + qx + '" y="' + pad + '" width="' + (xw*0.6) + '" height="' + (VH-2*pad) + '" fill="rgba(76,195,255,0.08)" stroke="#4cc3ff" stroke-dasharray="3 2"/>';
+  s += '<text x="' + (qx + xw*0.3) + '" y="' + (VH/2 + 5) + '" fill="#4cc3ff" font-size="16" font-weight="bold" text-anchor="middle" font-family="monospace">?</text>';
+  s += '</svg>'; return s;
+}
+let demoStreak=3, ddState=null;
+function bar(){$('ddStreakLbl').innerHTML='🔥 '+demoStreak+' day streak';$('ddMultLbl').innerHTML='×'+ddMultiplier(demoStreak).toFixed(2)+' Shells';}
+function renderRound(){const st=ddState,r=st.rounds[st.idx];let h='<div id="ddProgress">CHALLENGE '+(st.idx+1)+' / '+st.rounds.length+'</div>';
+ if(r.type==='quiz'){h+='<div class="ddQ">'+r.q+'</div>'+r.answers.map((a,i)=>'<button class="ddOpt" data-i="'+i+'">'+esc(a)+'</button>').join('');}
+ else{h+='<div class="ddQ">The trend is moving — where does price go next?</div><div id="ddChart">'+ddGuessChartSVG(r.candles)+'</div><div class="ddGuessRow"><button class="ddGuess up" data-g="up">📈 UP</button><button class="ddGuess down" data-g="down">📉 DOWN</button></div>';}
+ h+='<div id="ddFeedback"></div>';$('ddBody').innerHTML=h;}
+function reveal(ok,note){ddState.answered=true;if(ok)ddState.correct++;$('ddFeedback').innerHTML='<span style="color:'+(ok?'#16c784':'#ea3943')+'">'+(ok?'✓ Correct!':'✗ Not quite.')+'</span>'+(note?' <span style="color:#7d8aa0;font-weight:normal">'+note+'</span>':'');$('ddBody').insertAdjacentHTML('beforeend','<button id="ddNext">'+(ddState.idx<ddState.rounds.length-1?'NEXT →':'SEE RESULTS →')+'</button>');}
+function result(){const mult=ddMultiplier(demoStreak),earned=Math.round(ddState.correct*50*mult);bar();$('ddBody').innerHTML='<div id="ddResult"><div class="big">'+(ddState.correct>=2?'🎉':'💪')+'</div><div class="score">'+ddState.correct+' / '+ddState.rounds.length+' correct</div><div class="earn">+'+fmt(earned)+' 🐚  (×'+mult.toFixed(2)+' streak bonus)</div><div class="sk">🔥 '+demoStreak+' day streak</div><div class="sub">Come back tomorrow to keep it going.</div></div>';}
+$('ddBody').addEventListener('click',e=>{const t=e.target;if(t.id==='ddNext'){if(ddState.idx<ddState.rounds.length-1){ddState.idx++;ddState.answered=false;renderRound();}else result();return;}
+ if(ddState&&!ddState.answered){const o=t.closest&&t.closest('.ddOpt');if(o){const r=ddState.rounds[ddState.idx];$('ddBody').querySelectorAll('.ddOpt').forEach((b,j)=>{if(j===r.correct)b.classList.add('correct');else if(j===+o.getAttribute('data-i'))b.classList.add('wrong');else b.classList.add('dim');});reveal(+o.getAttribute('data-i')===r.correct,'');return;}
+  const g=t.closest&&t.closest('.ddGuess');if(g){const r=ddState.rounds[ddState.idx];$('ddBody').querySelectorAll('.ddGuess').forEach(b=>{if(b.getAttribute('data-g')===r.answer)b.classList.add('correct');});reveal(g.getAttribute('data-g')===r.answer,'Trade WITH the trend.');return;}}});
+function restart(){ddState=ddBuild();renderRound();bar();}
+$('ddClose').addEventListener('click',restart);
+$('demo').innerHTML=[1,3,7].map(s=>'<button data-s="'+s+'">Day '+s+' (×'+ddMultiplier(s).toFixed(2)+')</button>').join('');
+$('demo').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button[data-s]');if(!b)return;demoStreak=+b.getAttribute('data-s');[...document.querySelectorAll('#demo button')].forEach(x=>x.classList.toggle('on',x===b));bar();});
+[...document.querySelectorAll('#demo button')][1].classList.add('on');
+restart();
+</script></body></html>

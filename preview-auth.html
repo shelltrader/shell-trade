@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview: Auth & Accounts</title>
+<style>
+  body { margin: 0; background: #060a10; color: #c7d1de; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  :root { --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+
+  h1 { font-size: 13px; letter-spacing: 3px; color: #4cc3ff; padding: 20px 24px 6px; margin: 0; }
+  .subtitle { font-size: 11px; color: #7d8aa0; padding: 0 24px 20px; }
+
+  .row { display: flex; gap: 24px; padding: 0 20px 32px; flex-wrap: wrap; align-items: flex-start; }
+  .panel { background: #0d1320; border: 1px solid #2a3442; border-radius: 14px; padding: 18px; min-width: 220px; }
+  .panel h2 { font-size: 10px; letter-spacing: 2px; color: #7d8aa0; margin: 0 0 14px; }
+
+  /* ---- Auth card ---- */
+  #authCard { width: min(280px, 88vw); }
+  #authLogo { text-align: center; margin-bottom: 18px; }
+  #authLogo .name { font-size: 18px; font-weight: 900; letter-spacing: 3px; color: #4cc3ff; }
+  #authLogo .sub  { font-size: 10px; letter-spacing: 2px; color: #7d8aa0; margin-top: 3px; }
+  #authTabs { display: flex; margin-bottom: 16px; border-radius: 7px; overflow: hidden; border: 1px solid #2a3442; }
+  #authTabs button { flex: 1; padding: 8px 0; font: bold 11px var(--font-ui); letter-spacing: 1px;
+    background: transparent; border: none; color: #7d8aa0; cursor: pointer; }
+  #authTabs button.active { background: #14222f; color: #4cc3ff; }
+  .auth-title { font: bold 13px var(--font-ui); color: #e6edf3; margin-bottom: 14px; text-align: center; }
+  .auth-input { width: 100%; box-sizing: border-box; padding: 10px 12px;
+    background: #080c12; border: 1px solid #2a3442; border-radius: 7px;
+    color: #e6edf3; font: 13px var(--font-ui); margin-bottom: 10px; outline: none; display: block; }
+  .auth-input:focus { border-color: #4cc3ff; }
+  .auth-submit { width: 100%; padding: 12px 0; font: bold 12px var(--font-ui); letter-spacing: 1.5px;
+    background: #14222f; border: 1px solid #4cc3ff; border-radius: 7px;
+    color: #4cc3ff; cursor: pointer; margin-bottom: 8px; }
+  .auth-error { color: #ea3943; font-size: 11px; margin: 0 0 8px; text-align: center; }
+  .auth-guest { width: 100%; padding: 9px 0; font: 11px var(--font-ui);
+    background: none; border: 1px solid #2a3442; border-radius: 7px;
+    color: #7d8aa0; cursor: pointer; margin-top: 4px; }
+
+  /* ---- Account panel ---- */
+  .account-card { width: 240px; }
+  .ap-email { font-size: 14px; color: #e6edf3; font-weight: bold; margin-bottom: 4px; }
+  .ap-rank  { font-size: 12px; color: #4cc3ff; margin-bottom: 18px; }
+  .ap-btn   { width: 100%; padding: 11px 0; font: bold 11px var(--font-ui); letter-spacing: 1px;
+    border-radius: 7px; cursor: pointer; margin-bottom: 8px; display: block; }
+  .ap-sync    { background: #14222f; border: 1px solid #16c784; color: #16c784; }
+  .ap-signout { background: #14222f; border: 1px solid #ea3943; color: #ea3943; }
+  .ap-close   { background: none; border: 1px solid #2a3442; color: #7d8aa0; }
+
+  /* ---- Account button (HUD) ---- */
+  .hud-demo { position: relative; width: 300px; height: 120px; background: #0a0e14;
+    border: 1px solid #1c2737; border-radius: 10px; overflow: hidden; }
+  .hud-demo canvas-placeholder { display: block; width: 100%; height: 100%; background: #0a0e14; }
+  .account-btn {
+    position: absolute; right: 12px; bottom: 14px;
+    font: bold 11px var(--font-ui); letter-spacing: 0.5px;
+    padding: 9px 13px; border-radius: 8px; white-space: nowrap;
+    background: #0d1320; border: 1px solid #7c4dff; color: #c9b3ff;
+    box-shadow: 0 0 10px rgba(124,77,255,0.15);
+  }
+
+  /* ---- What's new list ---- */
+  .changes { width: 280px; }
+  .changes li { margin-bottom: 10px; line-height: 1.5; font-size: 12px; color: #c7d1de; }
+  .changes li strong { color: #4cc3ff; }
+  .changes li .tag { font-size: 9px; letter-spacing: 1px; font-weight: bold;
+    background: #14222f; border: 1px solid; border-radius: 4px; padding: 2px 5px; margin-left: 4px; vertical-align: middle; }
+  .tag.new { color: #16c784; border-color: #16c784; }
+  .tag.sync { color: #ff9f43; border-color: #ff9f43; }
+
+  /* ---- Tab demo ---- */
+  #demoTabs button { padding: 6px 12px; font: bold 10px var(--font-ui); letter-spacing: 0.8px;
+    border-radius: 6px; border: 1px solid #2a3442; background: transparent; color: #7d8aa0; cursor: pointer; margin-right: 6px; }
+  #demoTabs button.active { background: #14222f; color: #4cc3ff; border-color: #4cc3ff; }
+  #demoError { display: none; }
+</style>
+</head>
+<body>
+
+<h1>PREVIEW — ACCOUNTS & AUTH</h1>
+<div class="subtitle">Sign in / Sign up overlay · Account panel · Cloud sync hooks</div>
+
+<div class="row">
+
+  <!-- Sign In card -->
+  <div class="panel" id="authCard">
+    <div id="authLogo">
+      <div class="name">🐢 CHART QUEST</div>
+      <div class="sub">SIGN IN TO SAVE YOUR PROGRESS</div>
+    </div>
+    <div id="authTabs">
+      <button id="tab-signin" class="active" onclick="switchTab('signin')">SIGN IN</button>
+      <button id="tab-signup" onclick="switchTab('signup')">SIGN UP</button>
+    </div>
+    <div class="auth-title" id="demoTitle">Welcome back</div>
+    <input class="auth-input" type="email" placeholder="Email" value="trader@example.com">
+    <input class="auth-input" type="password" placeholder="Password" value="••••••••">
+    <div class="auth-error" id="demoError">Incorrect email or password.</div>
+    <button class="auth-submit" id="demoSubmit">SIGN IN</button>
+    <button class="auth-guest" onclick="alert('Plays as guest — no cloud save.')">Play as Guest (progress won't save)</button>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button style="flex:1;padding:7px;font:10px var(--font-ui);background:#14222f;border:1px solid #2a3442;border-radius:6px;color:#4cc3ff;cursor:pointer" onclick="showError()">→ Show error state</button>
+      <button style="flex:1;padding:7px;font:10px var(--font-ui);background:#14222f;border:1px solid #2a3442;border-radius:6px;color:#16c784;cursor:pointer" onclick="hideError()">→ Hide error</button>
+    </div>
+  </div>
+
+  <!-- Account panel -->
+  <div class="panel account-card">
+    <h2>ACCOUNT PANEL (after sign-in)</h2>
+    <div class="ap-email">trader@example.com</div>
+    <div class="ap-rank">🐟 MINNOW</div>
+    <button class="ap-btn ap-sync" onclick="this.textContent='Synced ✓';setTimeout(()=>this.textContent='Sync now',2000)">Sync now</button>
+    <button class="ap-btn ap-signout">Sign out</button>
+    <button class="ap-btn ap-close">Close</button>
+  </div>
+
+  <!-- HUD account button demo -->
+  <div>
+    <div class="panel" style="padding:14px 16px;margin-bottom:16px">
+      <h2>ACCOUNT BUTTON (bottom-right HUD)</h2>
+      <div class="hud-demo">
+        <div style="position:absolute;top:8px;left:10px;font:bold 10px var(--font-ui);color:#4a5666;letter-spacing:1px">HOUR 2 · MIN 18/60</div>
+        <div class="account-btn">👤 T</div>
+      </div>
+      <div style="font-size:10px;color:#7d8aa0;margin-top:10px">Shows first letter of email when signed in, "SIGN IN" when guest.</div>
+    </div>
+  </div>
+
+  <!-- What's new -->
+  <div class="panel changes">
+    <h2>WHAT WAS ADDED</h2>
+    <ul style="margin:0;padding:0 0 0 16px">
+      <li><strong>Supabase SDK</strong> loaded from CDN <span class="tag new">NEW</span></li>
+      <li><strong>Auth overlay</strong> — appears before Candle Academy; sign in / sign up / play as guest <span class="tag new">NEW</span></li>
+      <li><strong>Sign up</strong> — creates account + uploads local journal, notes, streak &amp; progress to cloud <span class="tag new">NEW</span></li>
+      <li><strong>Sign in</strong> — cloud wins: pulls profile, trades, notes &amp; streak; overwrites local state <span class="tag new">NEW</span></li>
+      <li><strong>Guest mode</strong> — skips auth; localStorage-only, same as before <span class="tag new">NEW</span></li>
+      <li><strong>Account button</strong> bottom-right during gameplay; opens account panel <span class="tag new">NEW</span></li>
+      <li><strong>Account panel</strong> — shows email, rank, manual sync, sign out <span class="tag new">NEW</span></li>
+      <li><strong>Trade sync</strong> — each closed trade pushed to <code>journal_trades</code> <span class="tag sync">SYNC</span></li>
+      <li><strong>Notes sync</strong> — on every note save, pushes to <code>journal_notes</code> <span class="tag sync">SYNC</span></li>
+      <li><strong>Streak sync</strong> — daily drill completion pushes to <code>daily_streak</code> <span class="tag sync">SYNC</span></li>
+      <li><strong>Progress sync</strong> — on every XP gain / level-up, pushes to <code>profiles</code> <span class="tag sync">SYNC</span></li>
+      <li><strong>Auto-login</strong> — returning users skip the auth overlay (session persists) <span class="tag new">NEW</span></li>
+      <li><strong>4 Supabase tables</strong> created with RLS: <code>profiles</code>, <code>journal_trades</code>, <code>journal_notes</code>, <code>daily_streak</code></li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+function switchTab(mode) {
+  document.getElementById('tab-signin').classList.toggle('active', mode==='signin');
+  document.getElementById('tab-signup').classList.toggle('active', mode==='signup');
+  document.getElementById('demoTitle').textContent = mode === 'signin' ? 'Welcome back' : 'Create your account';
+  document.getElementById('demoSubmit').textContent = mode === 'signin' ? 'SIGN IN' : 'CREATE ACCOUNT';
+  document.getElementById('demoError').style.display = 'none';
+}
+function showError() {
+  document.getElementById('demoError').style.display = 'block';
+}
+function hideError() {
+  document.getElementById('demoError').style.display = 'none';
+}
+</script>
+</body>
+</html>

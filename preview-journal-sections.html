@@ -1,0 +1,704 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart Quest — Change Preview: Journal Sections</title>
+<style>
+  :root{--font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--font-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;}
+  body{margin:0;background:#060910;color:#c7d1de;font:14px/1.6 var(--font-ui);padding:28px 20px 60px;}
+  .wrap{max-width:980px;margin:0 auto;}
+  .crumb{font-size:11px;letter-spacing:2px;color:#4cc3ff;font-weight:bold;}
+  h1{font-size:24px;margin:6px 0 4px;color:#e6edf3;}
+  .sub{color:#7d8aa0;margin:0 0 26px;}
+  .tag-new{display:inline-block;background:rgba(22,199,132,0.15);border:1px solid #16c784;color:#16c784;font-size:10px;font-weight:bold;letter-spacing:1px;padding:3px 9px;border-radius:20px;vertical-align:middle;margin-left:8px;}
+  h2{font-size:13px;letter-spacing:1.5px;color:#7d8aa0;text-transform:uppercase;margin:30px 0 12px;border-bottom:1px solid #1c2737;padding-bottom:8px;}
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .ba .card{background:#0d1320;border:1px solid #1c2737;border-radius:12px;padding:16px 18px;}
+  .ba .card.before{border-left:3px solid #5a6b82;}.ba .card.after{border-left:3px solid #16c784;}
+  .ba h3{margin:0 0 10px;font-size:12px;letter-spacing:1.5px;}.ba .before h3{color:#7d8aa0;}.ba .after h3{color:#16c784;}
+  .ba ul{margin:0;padding-left:18px;}.ba li{margin-bottom:7px;color:#aeb9c8;}.ba li b{color:#e6edf3;}
+  .note{background:rgba(76,195,255,0.07);border:1px solid rgba(76,195,255,0.3);border-radius:10px;padding:12px 15px;font-size:13px;color:#9fc8e0;margin-top:14px;}
+  .stage{display:flex;justify-content:center;margin-top:6px;}
+  .phone{width:390px;max-width:100%;height:760px;position:relative;background:#080c12;border:10px solid #161c26;border-radius:30px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.6);}
+  #journalPanel{position:absolute;inset:0;display:flex;flex-direction:column;background:#080c12;font:13px var(--font-ui);color:#c7d1de;}
+  #jHeader{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid #1c2737;}
+  #jHeader .jt{font-weight:bold;font-size:14px;letter-spacing:2px;color:#e6edf3;}
+  #jClose{background:none;border:1px solid #2a3442;border-radius:7px;color:#7d8aa0;font:bold 13px var(--font-ui);padding:7px 13px;cursor:pointer;}
+  #jTabs{display:flex;gap:2px;padding:8px 10px 0;border-bottom:1px solid #1c2737;}
+  .jTab{flex:1;padding:9px 2px;cursor:pointer;background:transparent;border:none;border-bottom:2px solid transparent;color:#7d8aa0;font:bold 10px var(--font-ui);letter-spacing:.3px;}
+  .jTab.active{color:#4cc3ff;border-bottom-color:#4cc3ff;}
+  #jStats{display:flex;flex-wrap:wrap;gap:8px;padding:12px 18px;border-bottom:1px solid #1c2737;}
+  .jStat{flex:1;min-width:84px;background:#0d1320;border:1px solid #1c2737;border-radius:9px;padding:9px 11px;}
+  .jStat .k{font-size:9px;letter-spacing:1px;color:#7d8aa0;}.jStat .v{font-size:17px;font-weight:bold;margin-top:3px;color:#e6edf3;}
+  #jList{flex:1;overflow-y:auto;padding:12px 14px 28px;}
+  .jEntry{background:#0d1320;border:1px solid #1c2737;border-left-width:3px;border-radius:10px;padding:11px 13px;margin-bottom:10px;}
+  .jEntry.win{border-left-color:#16c784;}.jEntry.loss{border-left-color:#ea3943;}
+  .jRow1{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .jDir{font-weight:bold;font-size:13px;}.jDir.long{color:#16c784;}.jDir.short{color:#ea3943;}
+  .jDelta{font-weight:bold;font-size:14px;font-family:var(--font-mono);}.jDelta.up{color:#16c784;}.jDelta.down{color:#ea3943;}
+  .jMeta{margin-top:6px;font-size:10px;color:#7d8aa0;font-family:var(--font-mono);}
+  .jMeta .tag{display:inline-block;padding:2px 6px;border-radius:5px;margin-right:5px;background:rgba(124,77,255,0.14);border:1px solid rgba(124,77,255,0.4);color:#c9b3ff;}
+  .jView{margin-top:9px;width:100%;padding:9px 0;cursor:pointer;background:#14222f;border:1px solid #2a3d55;border-radius:7px;color:#4cc3ff;font:bold 11px var(--font-ui);}
+  .jNote{width:100%;box-sizing:border-box;margin-top:9px;resize:vertical;min-height:34px;background:#0a0e14;border:1px solid #2a3442;border-radius:7px;color:#c7d1de;font:12px var(--font-ui);padding:7px 9px;}
+  .jTerm,.jLesson,.jNoteItem{background:#0d1320;border:1px solid #1c2737;border-radius:10px;padding:11px 13px;margin-bottom:9px;}
+  .jTerm b.t,.jLesson b.t{display:block;font-size:13px;margin-bottom:4px;}.jTerm b.t{color:#e6edf3;}.jLesson b.t{color:#4cc3ff;}
+  .jTerm .d{color:#9aa7b6;font-size:12px;line-height:1.5;}
+  .jLesson .body{color:#9aa7b6;font-size:12px;line-height:1.55;}.jLesson .body ul{margin:4px 0 0 16px;padding:0;}
+  .jFlash{animation:jflash 1.3s ease;}@keyframes jflash{0%,100%{box-shadow:none;}30%{box-shadow:0 0 0 2px #4cc3ff inset;}}
+  #jNoteComposer{background:#0d1320;border:1px solid #2a3d55;border-radius:10px;padding:11px 13px;margin-bottom:12px;}
+  #jNoteComposer textarea{width:100%;box-sizing:border-box;min-height:46px;resize:vertical;background:#0a0e14;border:1px solid #2a3442;border-radius:7px;color:#c7d1de;font:12px var(--font-ui);padding:7px 9px;}
+  #jNoteComposer .crow{display:flex;gap:6px;margin-top:8px;align-items:center;}
+  #jNoteComposer select{flex:1;min-width:0;background:#0a0e14;border:1px solid #2a3442;border-radius:6px;color:#c7d1de;font:11px var(--font-ui);padding:6px;}
+  #jNoteComposer .add{padding:7px 14px;background:#14222f;border:1px solid #4cc3ff;border-radius:6px;color:#4cc3ff;font:bold 11px var(--font-ui);cursor:pointer;}
+  .jNoteItem .txt{color:#d6dee8;font-size:12px;line-height:1.5;white-space:pre-wrap;}
+  .jNoteItem .meta{margin-top:6px;font-size:10px;color:#7d8aa0;font-family:var(--font-mono);}
+  .jLink{display:inline-block;margin-top:8px;padding:3px 9px;border-radius:5px;cursor:pointer;font-size:10px;font-weight:bold;background:rgba(76,195,255,0.12);border:1px solid rgba(76,195,255,0.4);color:#4cc3ff;}
+  .jNoteDel{float:right;background:none;border:none;color:#4a5666;cursor:pointer;font-size:14px;}
+  #jEmpty{text-align:center;color:#4a5666;padding:40px 20px;line-height:1.7;}
+  #chartFull{display:none;position:absolute;inset:0;z-index:9;background:#080c12;}#chartFull.open{display:block;}#chartFull svg{width:100%;height:100%;display:block;}
+  .foot{margin-top:34px;color:#4a5666;font-size:12px;border-top:1px solid #1c2737;padding-top:14px;}
+  @media(max-width:720px){.ba{grid-template-columns:1fr;}}
+</style></head><body><div class="wrap">
+  <div class="crumb">CHART QUEST &middot; CHANGE PREVIEW</div>
+  <h1>Trading Journal &mdash; 4 Sections <span class="tag-new">NEW</span></h1>
+  <p class="sub">The journal is now tabbed: <b>Terms</b> (glossary), <b>Lessons</b> (the full curriculum, reviewable any time), <b>Trades</b> (your complete history), and <b>Notes</b> (free-form, linkable to any term, lesson, or trade).</p>
+  <h2>What changed</h2>
+  <div class="ba">
+    <div class="card before"><h3>&#9679; BEFORE</h3><ul>
+      <li>The journal was a <b>single list</b> of trades.</li>
+      <li>No reference material &mdash; terms and lessons lived only in fleeting pop-ups.</li>
+      <li>Notes were tied to one trade only; no general notebook.</li>
+    </ul></div>
+    <div class="card after"><h3>&#9679; AFTER</h3><ul>
+      <li><b>Terms</b> &mdash; a 17-term glossary, always available.</li>
+      <li><b>Lessons</b> &mdash; the entire curriculum, re-readable on demand.</li>
+      <li><b>Trades</b> &mdash; full persistent history (every trade, any time).</li>
+      <li><b>Notes</b> &mdash; write takeaways and <b>link</b> them to a term, lesson, or trade (tap the &#128279; chip to jump).</li>
+    </ul></div>
+  </div>
+  <div class="note">Tap the tabs. In <b>Notes</b>, add a note and link it &mdash; then tap its &#128279; chip to jump to the term/lesson, or open the trade full-screen.</div>
+  <h2>Live preview &mdash; tap the tabs</h2>
+  <div class="stage"><div class="phone">
+    <div id="journalPanel">
+      <div id="jHeader"><span class="jt">&#128214; TRADING JOURNAL</span><button id="jClose">CLOSE &times;</button></div>
+      <div id="jTabs">
+        <button class="jTab" data-tab="terms">&#128214; TERMS</button>
+        <button class="jTab" data-tab="lessons">&#127891; LESSONS</button>
+        <button class="jTab active" data-tab="history">&#128202; TRADES</button>
+        <button class="jTab" data-tab="notes">&#128221; NOTES</button>
+      </div>
+      <div id="jStats"></div><div id="jList"></div>
+    </div>
+    <div id="chartFull"><div id="cfChart"></div></div>
+  </div></div>
+  <div class="foot">Preview pattern: every change ships with a <code>preview-*.html</code> &mdash; before/after plus a live, interactive view.</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=(n)=>Math.round(n).toLocaleString('en-US');
+const esc=(s)=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function saveJournal(){}function saveNotes(){}
+// Build an ACCURATE Order-Block + BOS snapshot the same way the game does:
+// consolidation candles, then an impulse (BOS) — and the OB is auto-flagged as
+// the LAST opposing-colour candle before the break. No hand-placed flags.
+function buildSetupSnap(dir,start){
+  const up=dir==='long';
+  const pat=up?[5,-4,3,-5,4,-6,-5]:[-5,4,-3,5,-4,6,5];
+  let lvl=start; const cs=[];
+  for(const d of pat){const o=lvl;lvl+=d;cs.push({open:o,h:lvl,wick:5,wick2:4,color:lvl>=o?'green':'red',ob:false,bos:false,vwap:0});}
+  const o=lvl;lvl+=up?42:-42;cs.push({open:o,h:lvl,wick:6,wick2:4,color:lvl>=o?'green':'red',ob:false,bos:true,vwap:0});
+  const bosI=cs.length-1, want=up?'red':'green';
+  for(let i=bosI-1;i>=0&&bosI-i<=5;i--){if(cs[i].color===want){cs[i].ob=true;break;}}
+  return cs;
+}
+// Build a journal entry with levels derived from the snapshot (so SL/TP make sense)
+function mkEntry(o){
+  const cs=buildSetupSnap(o.dir,o.start); const up=o.dir==='long';
+  const entryH=cs[cs.length-1].h;
+  const slH=up?Math.min(...cs.map(c=>c.h))-6:Math.max(...cs.map(c=>c.h))+6;
+  const risk=Math.abs(entryH-slH); const tpH=up?entryH+2*risk:entryH-2*risk;
+  return {id:o.id,ts:o.ts,dir:o.dir,result:o.result,delta:o.delta,balanceAfter:o.bal,
+    rr:2,setupType:'bos',quality:o.quality,hour:o.hour,note:o.note||'',
+    entryH,slH,tpH,candleSnap:cs};
+}
+let journal=[
+ mkEntry({id:3,ts:Date.now()-90*1000,  dir:'long', result:'win', delta:1840,bal:13120,quality:'A',hour:3,start:300}),
+ mkEntry({id:2,ts:Date.now()-7*60*1000,dir:'short',result:'loss',delta:-620,bal:11280,quality:'B',hour:3,start:360,note:'Against the 15m trend.'}),
+ mkEntry({id:1,ts:Date.now()-40*60*1000,dir:'long',result:'win', delta:980, bal:10800,quality:'A',hour:2,start:280}),
+];
+let journalNotes=[
+ {id:2,ts:Date.now()-120*1000,text:'When the 15m disagrees with my 1m setup, SKIP. My short loss came from ignoring this.',linkType:'lesson',linkRef:'htf_align'},
+ {id:1,ts:Date.now()-3600*1000,text:'Order Blocks have been my best setup. Be patient and wait for price to return to the box.',linkType:'term',linkRef:'ob'},
+];
+let noteSeq=2;
+let journalTab='history';
+
+/* ===== GAME CODE (verbatim) ===== */
+const SVG_OB='', SVG_BOS='', SVG_SWEEP=''; // lesson infographics aren't needed in this preview
+const TERMS = [
+  { key: 'candle',     term: 'Candle',                def: 'One bar of price for a time period. Body = open→close; green closed up, red closed down.' },
+  { key: 'wick',       term: 'Wick (Shadow)',         def: 'The thin line above/below the body — the highest and lowest price reached. A long wick = rejection.' },
+  { key: 'doji',       term: 'Doji',                  def: 'A candle that opens and closes at nearly the same price. Signals indecision — a possible turning point.' },
+  { key: 'long',       term: 'Long',                  def: 'A bet that price will go UP. You buy, aiming to sell higher.' },
+  { key: 'short',      term: 'Short',                 def: 'A bet that price will go DOWN. You sell first, aiming to buy back cheaper.' },
+  { key: 'sl',         term: 'Stop Loss (SL)',        def: 'A preset exit if the trade goes against you. Caps your loss. Rule #1: never trade without one.' },
+  { key: 'tp',         term: 'Take Profit (TP)',      def: 'A preset exit that locks in your gain when price reaches your target.' },
+  { key: 'support',    term: 'Support',               def: 'A price floor where buyers keep stepping in. Price tends to bounce up from it.' },
+  { key: 'resistance', term: 'Resistance',            def: 'A price ceiling where sellers keep pushing price down. Breaks become new support.' },
+  { key: 'trend',      term: 'Trend',                 def: 'The market’s direction. Uptrend = higher highs + higher lows. Downtrend = the reverse.' },
+  { key: 'bos',        term: 'Break of Structure',    def: 'Price breaks a prior high or low — structure shifts. Often the start of a new directional move.' },
+  { key: 'ob',         term: 'Order Block',           def: 'The last opposing candle before a big move — where big orders sit. Price often returns to it.' },
+  { key: 'sweep',      term: 'Liquidity Sweep',       def: 'A spike that grabs traders’ stop losses then snaps back. A trap, not a real breakout.' },
+  { key: 'vwap',       term: 'VWAP',                  def: 'Volume Weighted Average Price — the day’s average price. Acts like a magnet; price returns to it.' },
+  { key: 'htf',        term: 'Higher Time Frame',     def: 'A larger chart (15m, 1h). Shows the bigger trend. Never trade a 1m setup against the HTF.' },
+  { key: 'leverage',   term: 'Leverage',              def: 'Borrowed size that multiplies BOTH gains and losses. Powerful and dangerous — use sparingly.' },
+  { key: 'rr',         term: 'Risk : Reward (R:R)',   def: 'How much you can win vs. lose. Aim for 2R+ — then you can be wrong often and still profit.' },
+];
+const TERM_BY_KEY=Object.fromEntries(TERMS.map(t=>[t.key,t]));
+const LESSONS = {
+  controls: ['CONTROLS 🎮',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li><b>TAP</b> → Jump</li>' +
+    '<li><b>SWIPE UP</b> → Jetpack boost</li>' +
+    '<li><b>SWIPE DOWN</b> → Shell tuck (fast drop)</li>' +
+    '<li><b>SWIPE LEFT / RIGHT</b> → Turn around</li>' +
+    '</ul>' +
+    '<div style="margin-top:8px;color:#4cc3ff">The chart IS the level — candle tops are the price!</div>'],
+  goal:     ['YOUR MISSION 🎯',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li>Each level = <b>1 hour</b> of market time (60 candles)</li>' +
+    '<li>Grow your <b>SHELLS</b> balance to the GOAL number</li>' +
+    '<li>If you drop too far, the hour resets</li>' +
+    '<li>💡 <b>Tip:</b> Skipping a bad setup is ALWAYS a smart move</li>' +
+    '</ul>'],
+  bos:      ['BREAK OF STRUCTURE 🚀',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li>The big glowing candle <b>broke through</b> the recent high or low</li>' +
+    '<li>When structure breaks → price usually keeps moving that way</li>' +
+    '<li><b>In the game:</b> Jetpack UP over it, or tuck DOWN through it</li>' +
+    '</ul>', SVG_BOS],
+  ob:       ['ORDER BLOCK 💜',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li>The <b>purple zone</b> is the last candle that moved against the breakout</li>' +
+    '<li>Example: the final red candle <i>right before</i> a huge green one</li>' +
+    '<li>Markets come back here and bounce — in the game it <b>launches you!</b></li>' +
+    '</ul>', SVG_OB],
+  sweep:    ['LIQUIDITY SWEEP ⚡',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li>That <b>orange spike</b> grabbed traders\' stop losses, then snapped back</li>' +
+    '<li>It\'s a <b>TRAP</b>, not a real breakout</li>' +
+    '<li>Walk into it → lose SHELLS. Hit it <b>in the air</b> → epic spin move!</li>' +
+    '</ul>', SVG_SWEEP],
+  spin:     ['WICK SPIN 🌀',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li>Cyan wicks = price got <b>rejected</b> — it went up and got slapped back down</li>' +
+    '<li>Jump into a wick mid-air → Shell grabs it like a pole and <b>SPINS!</b></li>' +
+    '<li>Spin release gives you a speed boost 🏃</li>' +
+    '</ul>'],
+  setup:    ['SETUP DETECTED! ⚡',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li>Shell stops walking — a real trade setup just appeared</li>' +
+    '<li>The <b>boxed candles</b> show exactly why: OB + Break of Structure</li>' +
+    '<li><b>Tap the banner</b> to open the trade ticket</li>' +
+    '<li><b>Jump</b> to skip it and keep walking</li>' +
+    '</ul>'],
+  htf:      ['HIGHER TIME FRAMES 🔭',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li>The panel <b>top-right</b> shows 5m, 15m and 1h candles</li>' +
+    '<li><b>Tap any row</b> to zoom in and see the bigger picture</li>' +
+    '<li>Before taking a trade: check if the HTF agrees with your direction</li>' +
+    '<li>💡 <b>Rule:</b> All 3 timeframes pointing the same way = safest setup</li>' +
+    '</ul>'],
+  vwap:     ['VWAP — THE MAGNET 🧲',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li>The <b>yellow line</b> = Volume Weighted Average Price</li>' +
+    '<li>Price <b>above VWAP</b> = buyers in control → look for LONGS</li>' +
+    '<li>Price <b>below VWAP</b> = sellers in control → look for SHORTS</li>' +
+    '<li>💡 Price acts like a magnet — it tends to return to VWAP</li>' +
+    '</ul>'],
+  win:      ['TRADE WON! 🏆',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li>Your <b>take profit</b> was hit — you got paid!</li>' +
+    '<li>Notice: you risked a <b>small</b> amount and won a <b>bigger</b> amount</li>' +
+    '<li>💡 Big wins + small losses = the whole secret to trading</li>' +
+    '</ul>'],
+  loss:     ['STOPPED OUT 📉',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li>You lost exactly the SHELLS you risked — <b>nothing more</b></li>' +
+    '<li>That\'s the <b>stop loss doing its job</b></li>' +
+    '<li>💡 One bad trade can never ruin you if you use a stop loss every time</li>' +
+    '</ul>'],
+  realdata: ['REAL CHART LOADED 📡',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
+    '<li>These candles are <b>real BTC/USDT</b> 1-minute data from Binance</li>' +
+    '<li>You are literally walking on a <b>real market</b> right now!</li>' +
+    '</ul>'],
+
+  /* ── BEGINNER FOUNDATION (Level 1) ─────────────────────── */
+  candles_intro: ['WHAT IS A CANDLE? 🕯️',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li>Each candle = <b>1 minute</b> of price action</li>' +
+    '<li><b style="color:#16c784">GREEN</b> = price closed <b>higher</b> than it opened — bulls won</li>' +
+    '<li><b style="color:#ea3943">RED</b> = price closed <b>lower</b> — bears won</li>' +
+    '<li>The thin lines above/below = <b>wicks</b> (how far price ventured)</li>' +
+    '</ul>'],
+  what_is_doji: ['WHAT IS A DOJI? 🤔',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li>A doji is a candle where open ≈ close — almost <b>no body</b></li>' +
+    '<li>It means the market is <b>undecided</b> — bulls and bears are tied</li>' +
+    '<li>After a doji, price often <b>changes direction</b></li>' +
+    '<li>💡 Think of it as the market taking a breath before the next move</li>' +
+    '</ul>'],
+  long_vs_short: ['LONG vs SHORT 🎯',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li><b style="color:#16c784">LONG</b> = you think price will go UP → you buy</li>' +
+    '<li><b style="color:#ea3943">SHORT</b> = you think price will go DOWN → you sell first, buy back cheaper</li>' +
+    '<li>Both can make money — it depends on your <b>read of the market</b></li>' +
+    '<li>💡 In Chart Quest, tap the banner and choose ▲ LONG or ▼ SHORT</li>' +
+    '</ul>'],
+  what_is_sl: ['STOP LOSS — YOUR SHIELD 🛡️',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li>A stop loss is a price where you <b>automatically exit</b> if you\'re wrong</li>' +
+    '<li>It <b>caps your loss</b> before it becomes a disaster</li>' +
+    '<li>Rule #1: <b>NEVER trade without a stop loss</b></li>' +
+    '<li>💡 Even pros lose trades — the stop loss is what keeps them in the game</li>' +
+    '</ul>'],
+
+  /* ── STRUCTURE (Level 2) ────────────────────────────────── */
+  what_is_trend: ['WHAT IS A TREND? 📈',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li><b style="color:#16c784">UPTREND</b> = higher highs + higher lows (staircase up)</li>' +
+    '<li><b style="color:#ea3943">DOWNTREND</b> = lower highs + lower lows (staircase down)</li>' +
+    '<li>Sideways = <b>consolidation</b> — the market is resting</li>' +
+    '<li>💡 Always trade <b>WITH</b> the trend, not against it</li>' +
+    '</ul>'],
+  support_resist: ['SUPPORT & RESISTANCE 🧱',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li><b>Support</b> = a price floor — buyers keep stepping in here</li>' +
+    '<li><b>Resistance</b> = a price ceiling — sellers keep pushing price down here</li>' +
+    '<li>When resistance breaks → it becomes the new support</li>' +
+    '<li>💡 These zones are where the best trades happen</li>' +
+    '</ul>'],
+
+  /* ── VWAP (Level 3) ─────────────────────────────────────── */
+  vwap_trade: ['TRADING WITH VWAP 🧲',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li>Price dips to VWAP and bounces UP → look for a <b style="color:#16c784">LONG</b></li>' +
+    '<li>Price rallies to VWAP and gets rejected DOWN → look for a <b style="color:#ea3943">SHORT</b></li>' +
+    '<li>Price <b>holding above VWAP</b> all session = strong bullish trend</li>' +
+    '</ul>'],
+
+  /* ── HTF (Level 4) ──────────────────────────────────────── */
+  htf_align: ['THE HTF RULE 🔭',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li>Never take a 1m setup <b>against</b> the 15m trend</li>' +
+    '<li>15m bearish → only take <b style="color:#ea3943">SHORTS</b> on 1m</li>' +
+    '<li>All 3 timeframes pointing the same way = <b>Grade A setup</b></li>' +
+    '</ul>'],
+
+  /* ── LEVERAGE (Level 5) ─────────────────────────────────── */
+  leverage_intro: ['WHAT IS LEVERAGE? ⚡',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li>Leverage lets you control <b>MORE</b> with LESS of your own money</li>' +
+    '<li>2× leverage: a 1% win = <b>2% gain</b>. But a 1% loss = <b>2% loss</b></li>' +
+    '<li>It makes wins bigger — <b>and losses bigger too</b></li>' +
+    '<li>Only use it once you have a proven edge and strict stop losses</li>' +
+    '</ul>'],
+  risk_reward: ['RISK vs REWARD 📊',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li>Risk no more than <b>1–2%</b> of your balance per trade</li>' +
+    '<li>Always aim for at least <b>2R</b> (win twice what you risk)</li>' +
+    '<li>At 2R with 40% win rate → you are <b>profitable long-term</b></li>' +
+    '<li>💡 Math beats emotion every time</li>' +
+    '</ul>'],
+};
+const LESSON_LIBRARY = ['candles_intro','what_is_doji','long_vs_short','what_is_sl',
+  'what_is_trend','support_resist','bos','ob','sweep','vwap','vwap_trade','htf','htf_align','leverage_intro','risk_reward'];
+const SETUP_LABEL={bos:"Break of Structure",ob:"Order Block",vwap:"VWAP",sweep:"Liquidity Sweep",vwap_bounce:"VWAP Bounce",trend_break:"Trend Break"};
+function jTimeAgo(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+function renderTerms() {
+  return TERMS.map(t =>
+    '<div class="jTerm" data-key="' + t.key + '"><b class="t">' + esc(t.term) + '</b>' +
+    '<div class="d">' + esc(t.def) + '</div></div>'
+  ).join('');
+}
+function renderLessons() {
+  return LESSON_LIBRARY.filter(k => LESSONS[k]).map(k => {
+    const l = LESSONS[k]; // [title, bodyHTML, optionalSVG]
+    return '<div class="jLesson" data-key="' + k + '"><b class="t">' + l[0] + '</b>' +
+           '<div class="body">' + (l[1] || '') + '</div></div>';
+  }).join('');
+}
+function noteLinkLabel(n) {
+  if (n.linkType === 'term')   { const t = TERM_BY_KEY[n.linkRef]; return t ? '🔗 ' + t.term : ''; }
+  if (n.linkType === 'lesson') { const l = LESSONS[n.linkRef];     return l ? '🔗 ' + l[0] : ''; }
+  if (n.linkType === 'trade')  { const e = journal.find(x => x.id === +n.linkRef);
+    return e ? '🔗 ' + (e.dir === 'long' ? 'LONG' : 'SHORT') + ' ' + (e.delta >= 0 ? '+' : '−') + fmt(Math.abs(e.delta)) : ''; }
+  return '';
+}
+function renderNotes() {
+  // Composer
+  const termOpts  = TERMS.map(t => '<option value="term:' + t.key + '">Term · ' + esc(t.term) + '</option>').join('');
+  const lessonOpts = LESSON_LIBRARY.filter(k => LESSONS[k]).map(k => '<option value="lesson:' + k + '">Lesson · ' + LESSONS[k][0].replace(/<[^>]*>/g,'') + '</option>').join('');
+  const tradeOpts = journal.slice(0, 30).map(e => '<option value="trade:' + e.id + '">Trade · ' + (e.dir === 'long' ? 'LONG' : 'SHORT') + ' ' + (e.delta >= 0 ? '+' : '−') + fmt(Math.abs(e.delta)) + '</option>').join('');
+  let html = '<div id="jNoteComposer">' +
+    '<textarea id="jNoteText" placeholder="Write a note… (a takeaway, a rule, a reminder)"></textarea>' +
+    '<div class="crow">' +
+      '<select id="jNoteLink"><option value="">Link to… (optional)</option>' +
+        '<optgroup label="Terms">' + termOpts + '</optgroup>' +
+        '<optgroup label="Lessons">' + lessonOpts + '</optgroup>' +
+        (tradeOpts ? '<optgroup label="Trades">' + tradeOpts + '</optgroup>' : '') +
+      '</select>' +
+      '<button class="add" id="jNoteAdd">ADD</button>' +
+    '</div></div>';
+  // List
+  if (!journalNotes.length) {
+    html += '<div id="jEmpty">No notes yet.<br>Jot down takeaways and link them to a term, lesson, or trade.</div>';
+  } else {
+    html += journalNotes.map(n => {
+      const link = noteLinkLabel(n);
+      return '<div class="jNoteItem"><button class="jNoteDel" data-noteid="' + n.id + '">&times;</button>' +
+        '<div class="txt">' + esc(n.text) + '</div>' +
+        '<div class="meta">' + jTimeAgo(n.ts) + '</div>' +
+        (link ? '<span class="jLink" data-linktype="' + n.linkType + '" data-linkref="' + esc(String(n.linkRef)) + '">' + esc(link) + '</span>' : '') +
+      '</div>';
+    }).join('');
+  }
+  return html;
+}
+function renderJournalStats() {
+  const n = journal.length;
+  const wins = journal.filter(e => e.delta > 0).length;
+  const net = journal.reduce((a, e) => a + e.delta, 0);
+  const winRate = n ? Math.round(wins / n * 100) : 0;
+  const winsNet = journal.filter(e => e.delta > 0).reduce((a, e) => a + e.delta, 0);
+  const lossNet = journal.filter(e => e.delta < 0).reduce((a, e) => a + e.delta, 0);
+  const avgWin = wins ? winsNet / wins : 0;
+  const lossCount = journal.filter(e => e.delta < 0).length;
+  const avgLoss = lossCount ? Math.abs(lossNet / lossCount) : 0;
+  const stat = (k, v, color) =>
+    '<div class="jStat"><div class="k">' + k + '</div><div class="v"' +
+    (color ? ' style="color:' + color + '"' : '') + '>' + v + '</div></div>';
+  return stat('TRADES', n) +
+    stat('WIN RATE', winRate + '%', winRate >= 50 ? '#16c784' : '#e6edf3') +
+    stat('NET P&amp;L', (net >= 0 ? '+' : '−') + fmt(Math.abs(net)), net >= 0 ? '#16c784' : '#ea3943') +
+    stat('AVG WIN', '+' + fmt(avgWin), '#16c784') +
+    stat('AVG LOSS', '−' + fmt(avgLoss), '#ea3943');
+}
+function renderJournalList() {
+  if (!journal.length) {
+    return '<div id="jEmpty">No trades logged yet.<br>Take a trade on the chart and it will appear here —<br>every entry, with a note you can add.</div>';
+  }
+  return journal.map(e => {
+    const cls = e.delta > 0 ? 'win' : e.delta < 0 ? 'loss' : 'flat';
+    const dcls = e.delta > 0 ? 'up' : e.delta < 0 ? 'down' : 'flat';
+    const dsign = e.delta > 0 ? '+' : e.delta < 0 ? '−' : '';
+    const dirTxt = e.dir === 'long' ? '▲ LONG' : '▼ SHORT';
+    const setup = SETUP_LABEL[e.setupType] || (e.setupType || '—');
+    return '<div class="jEntry ' + cls + '">' +
+      '<div class="jRow1">' +
+        '<span class="jDir ' + e.dir + '">' + dirTxt + '</span>' +
+        '<span class="jDelta ' + dcls + '">' + dsign + fmt(Math.abs(e.delta)) + ' SHELLS</span>' +
+      '</div>' +
+      '<div class="jMeta">' +
+        '<span class="tag">' + esc(setup) + '</span>' +
+        '<span class="tag">Grade ' + esc(e.quality || 'C') + '</span>' +
+        'R:R ' + (e.rr ? e.rr.toFixed(1) : '—') + ' · Bal ' + fmt(e.balanceAfter) +
+        ' · Hr ' + (e.hour || '?') + ' · ' + jTimeAgo(e.ts) +
+      '</div>' +
+      ((e.candleSnap && e.candleSnap.length)
+        ? '<button class="jView" data-id="' + e.id + '">&#128269; VIEW FULL CHART</button>' : '') +
+      '<textarea class="jNote" data-id="' + e.id + '" placeholder="Add a note — why did you take this trade? What did you learn?">' +
+        esc(e.note || '') + '</textarea>' +
+    '</div>';
+  }).join('');
+}
+function renderJournalSection() {
+  const showStats = journalTab === 'history';
+  $('jStats').style.display = showStats ? 'flex' : 'none';
+  if (showStats) $('jStats').innerHTML = renderJournalStats();
+  document.querySelectorAll('.jTab').forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === journalTab));
+  $('jList').innerHTML =
+      journalTab === 'terms'   ? renderTerms()
+    : journalTab === 'lessons' ? renderLessons()
+    : journalTab === 'notes'   ? renderNotes()
+    :                            renderJournalList();
+  $('jList').scrollTop = 0;
+}
+function switchJournalTab(tab, focusKey) {
+  journalTab = tab;
+  renderJournalSection();
+  if (focusKey) {
+    const el = $('jList').querySelector('[data-key="' + focusKey + '"]');
+    if (el) { el.scrollIntoView({ block: 'center' }); el.classList.add('jFlash'); }
+  }
+}
+function openJournalReview(id) {
+  const e = journal.find(x => x.id === id);
+  if (!e || !e.candleSnap || !e.candleSnap.length) return;
+  $('cfChart').innerHTML = tradeChartSVGFull(e);
+  $('chartFull').classList.add('open');
+}
+function openJournalLink(type, ref) {
+  if (type === 'trade')  { openJournalReview(+ref); return; }
+  if (type === 'term')   { switchJournalTab('terms', ref); return; }
+  if (type === 'lesson') { switchJournalTab('lessons', ref); return; }
+}
+function tradeChartSVGFull(t) {
+  if (!t || !t.candleSnap || !t.candleSnap.length) return '';
+  const cs = t.candleSnap;
+  const sType = t.setupType || 'bos';
+  const isLong = t.dir === 'long';
+  const isWin  = t.result === 'win';
+
+  // Pass 1: body prices + SL/TP/entry — must all be visible
+  let lo = Infinity, hi = -Infinity;
+  for (const c of cs) {
+    lo = Math.min(lo, Math.min(c.open, c.h));
+    hi = Math.max(hi, Math.max(c.open, c.h));
+  }
+  if (t.slH    !== undefined) { lo = Math.min(lo, t.slH);    hi = Math.max(hi, t.slH); }
+  if (t.tpH    !== undefined) { lo = Math.min(lo, t.tpH);    hi = Math.max(hi, t.tpH); }
+  if (t.entryH !== undefined) { lo = Math.min(lo, t.entryH); hi = Math.max(hi, t.entryH); }
+  // For VWAP trades, ensure the VWAP curve is always visible
+  if (sType === 'vwap_bounce') {
+    for (const c of cs) { if (c.vwap) { lo = Math.min(lo, c.vwap); hi = Math.max(hi, c.vwap); } }
+  }
+  const bodyRng2 = Math.max(1, hi - lo);
+  // Pass 2: include wicks, capped at 40% of body range so spikes don't dominate
+  for (const c of cs) {
+    lo = Math.min(lo, Math.min(c.open, c.h) - Math.min(c.wick2 || 0, bodyRng2 * 0.4 + 2));
+    hi = Math.max(hi, Math.max(c.open, c.h) + Math.min(c.wick  || 0, bodyRng2 * 0.4 + 2));
+  }
+  const pad = (hi - lo) * 0.10;
+  lo -= pad; hi += pad;
+  const range = Math.max(1, hi - lo);
+
+  const VW = 390, VH = 760;
+  const chartX = 10, chartW = VW - 20;
+  const chartTop = 68, chartBot = 480;
+  const chartH = chartBot - chartTop;
+  const nC = cs.length;
+  const xw = chartW / nC;
+  const Y = lvl => chartTop + (1 - (lvl - lo) / range) * chartH;
+
+  const typeLabel = sType === 'vwap_bounce' ? 'VWAP BOUNCE'
+                  : sType === 'trend_break'  ? 'TREND BREAK'
+                  : 'ORDER BLOCK + BOS';
+  const resultCol = isWin ? '#16c784' : '#ea3943';
+  const dirLabel  = isLong ? '▲ LONG' : '▼ SHORT';
+  const dSign     = t.delta > 0 ? '+' : '−';
+
+  let s = '<svg viewBox="0 0 ' + VW + ' ' + VH + '" xmlns="http://www.w3.org/2000/svg">';
+  s += '<rect width="' + VW + '" height="' + VH + '" fill="#080c12"/>';
+
+  // Defs — arrow markers
+  s += '<defs>'
+     + '<marker id="tr_arrDn" markerWidth="8" markerHeight="8" refX="4" refY="8" orient="auto"><path d="M0,0 L4,8 L8,0 Z" fill="#d8b4fe"/></marker>'
+     + '<marker id="tr_arrDnC" markerWidth="8" markerHeight="8" refX="4" refY="8" orient="auto"><path d="M0,0 L4,8 L8,0 Z" fill="#4cc3ff"/></marker>'
+     + '</defs>';
+
+  // Title bar
+  s += '<rect width="' + VW + '" height="60" fill="#0d1420"/>';
+  s += '<text x="' + (VW/2) + '" y="19" fill="#4cc3ff" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">' + typeLabel + ' — ' + dirLabel + '</text>';
+  // Result badge
+  s += '<rect x="' + (VW/2 - 70) + '" y="27" width="140" height="25" rx="5" fill="' + resultCol + '22"/>';
+  s += '<text x="' + (VW/2) + '" y="44" fill="' + resultCol + '" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">'
+     + (isWin ? '✓ WIN' : '✗ LOSS') + '  ' + dSign + fmt(Math.abs(t.delta)) + ' 🐚</text>';
+
+  // Chart area
+  s += '<rect x="' + chartX + '" y="' + chartTop + '" width="' + chartW + '" height="' + chartH
+     + '" fill="rgba(255,255,255,0.015)" stroke="#1c2737" stroke-width="1" rx="4"/>';
+  for (let gi = 1; gi <= 3; gi++) {
+    const gy = chartTop + (gi/4) * chartH;
+    s += '<line x1="' + chartX + '" y1="' + gy + '" x2="' + (chartX+chartW) + '" y2="' + gy
+       + '" stroke="#1c2737" stroke-width="0.5" stroke-dasharray="4 4"/>';
+  }
+
+  // ── VWAP curve (vwap_bounce trades only) ──────────────────────────────
+  if (sType === 'vwap_bounce') {
+    const vwapPts = cs.map((c, i) => c.vwap ? { i, v: c.vwap } : null).filter(Boolean);
+    if (vwapPts.length >= 2) {
+      let vPath = '';
+      vwapPts.forEach(({ i, v }) => {
+        const vx = chartX + i * xw + xw / 2;
+        const vy = Y(v);
+        vPath += (vPath ? ' L' : 'M') + vx.toFixed(1) + ',' + vy.toFixed(1);
+      });
+      s += '<path d="' + vPath + '" fill="none" stroke="#ff9f43" stroke-width="2.5" opacity="0.9"/>';
+      // Label at the right end
+      const last = vwapPts[vwapPts.length - 1];
+      const lvx = chartX + last.i * xw + xw / 2;
+      const lvy = Math.max(chartTop + 12, Math.min(chartBot - 6, Y(last.v)));
+      s += '<rect x="' + (lvx - 26) + '" y="' + (lvy - 13) + '" width="52" height="15" rx="3" fill="rgba(255,159,67,0.22)" stroke="#ff9f43" stroke-width="0.8"/>';
+      s += '<text x="' + lvx + '" y="' + (lvy - 2) + '" fill="#ff9f43" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">VWAP</text>';
+    }
+  }
+
+  // ── SWING LEVEL (trend_break only) ─────────────────────────────────────
+  if (sType === 'trend_break') {
+    // Mirror game logic: swingHigh/Low uses body prices only (no wicks), last 7 candles before break
+    const nCs = cs.length;
+    const prevCs = cs.slice(Math.max(0, nCs - 8), nCs - 1);
+    let swingLevel;
+    if (isLong) {
+      // Bull break: close exceeded max BODY high of prior candles
+      swingLevel = prevCs.reduce((m, c) => Math.max(m, Math.max(c.open, c.h)), -Infinity);
+    } else {
+      // Bear break: close fell below min BODY low of prior candles
+      swingLevel = prevCs.reduce((m, c) => Math.min(m, Math.min(c.open, c.h)), Infinity);
+    }
+    if (isFinite(swingLevel)) {
+      const sy = Y(swingLevel);
+      // Yellow dashed swing level line
+      s += '<line x1="' + chartX + '" y1="' + sy + '" x2="' + (chartX + chartW) + '" y2="' + sy
+         + '" stroke="#ffd60a" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.9"/>';
+      // Pill label
+      const swingLbl = isLong ? 'SWING HIGH — BROKEN ↑' : 'SWING LOW — BROKEN ↓';
+      const pillW = 148, pillH = 16, pillX = chartX + chartW - pillW - 4;
+      const pillY = Math.max(chartTop + 4, sy - pillH - 2);
+      s += '<rect x="' + pillX + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH
+         + '" rx="3" fill="rgba(255,214,10,0.18)" stroke="#ffd60a" stroke-width="0.8"/>';
+      s += '<text x="' + (pillX + pillW / 2) + '" y="' + (pillY + 11) + '" fill="#ffd60a"'
+         + ' font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">' + swingLbl + '</text>';
+      // Yellow dashed circle on the last candle (the break candle)
+      const breakIdx = nC - 1;
+      const bc = cs[breakIdx];
+      const bcX = chartX + breakIdx * xw + xw / 2;
+      const bcYtop = Y(Math.max(bc.open, bc.h) + (bc.wick || 0));
+      const bcYbot = Y(Math.min(bc.open, bc.h) - (bc.wick2 || 0));
+      const bcCy = (bcYtop + bcYbot) / 2;
+      const bcR = Math.max(12, (bcYbot - bcYtop) / 2 + 8);
+      s += '<circle cx="' + bcX + '" cy="' + bcCy + '" r="' + bcR
+         + '" fill="none" stroke="#ffd60a" stroke-width="2" stroke-dasharray="4 3" opacity="0.85"/>';
+    }
+  }
+
+  // SL / TP / Entry level lines (drawn before candles so they're beneath)
+  [
+    { h: t.tpH,    col: '#16c784', lbl: 'TAKE PROFIT' },
+    { h: t.entryH, col: '#ffd60a', lbl: 'ENTRY' },
+    { h: t.slH,    col: '#ea3943', lbl: 'STOP LOSS' },
+  ].forEach(({ h, col, lbl }) => {
+    if (h === undefined) return;
+    const ly = Y(h);
+    if (ly < chartTop - 2 || ly > chartBot + 2) return;
+    s += '<line x1="' + chartX + '" y1="' + ly + '" x2="' + (chartX+chartW) + '" y2="' + ly
+       + '" stroke="' + col + '" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.65"/>';
+    s += '<text x="' + (chartX + 5) + '" y="' + (ly - 3) + '" fill="' + col
+       + '" font-size="9" font-weight="bold" font-family="monospace" opacity="0.85">' + lbl + '</text>';
+  });
+
+  // Candles
+  for (let i = 0; i < nC; i++) {
+    const c   = cs[i];
+    const bx  = chartX + i * xw + 5, bw2 = xw - 10;
+    const yO  = Y(c.open), yC = Y(c.h);
+    const top = Math.min(yO, yC), bh = Math.max(3, Math.abs(yO - yC));
+    const col = c.color === 'green' ? '#16c784' : '#ea3943';
+    const cxm = bx + bw2 / 2;
+    if (c.wick  > 1) s += '<line x1="' + cxm + '" y1="' + top + '" x2="' + cxm + '" y2="' + Y(Math.max(c.open,c.h)+c.wick) + '" stroke="#8b98a8" stroke-width="2"/>';
+    if (c.wick2 > 1) s += '<line x1="' + cxm + '" y1="' + (top+bh) + '" x2="' + cxm + '" y2="' + Y(Math.min(c.open,c.h)-c.wick2) + '" stroke="#8b98a8" stroke-width="2"/>';
+    s += '<rect x="' + bx + '" y="' + top + '" width="' + bw2 + '" height="' + bh + '" fill="' + col + '" rx="1"/>';
+    // OB annotation
+    if (c.ob) {
+      s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (bw2+4) + '" height="' + (bh+6)
+         + '" fill="rgba(168,85,247,0.22)" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="3 2" rx="2"/>';
+      const arrowTipOB = top - 5;
+      if (arrowTipOB - 24 > chartTop)
+        s += '<line x1="' + cxm + '" y1="' + (arrowTipOB-22) + '" x2="' + cxm + '" y2="' + arrowTipOB
+           + '" stroke="#d8b4fe" stroke-width="1.5" marker-end="url(#tr_arrDn)"/>';
+      s += '<text x="' + cxm + '" y="' + Math.max(chartTop+14, arrowTipOB-26) + '" fill="#d8b4fe" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ORDER BLOCK</text>';
+    }
+    // BOS annotation
+    if (c.bos) {
+      s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (bw2+4) + '" height="' + (bh+6)
+         + '" fill="rgba(76,195,255,0.15)" stroke="#4cc3ff" stroke-width="1.5" rx="2"/>';
+      s += '<text x="' + cxm + '" y="' + Math.max(chartTop+14, top-8) + '" fill="#4cc3ff" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">BOS ⚡</text>';
+    }
+    // Turtle on last candle
+    if (i === nC - 1) {
+      const turtleYt = Math.max(chartTop + 28, top - 22);
+      s += '<text x="' + (bx+bw2/2) + '" y="' + turtleYt + '" font-size="20" text-anchor="middle">🐢</text>';
+    }
+  }
+
+  // Divider
+  s += '<line x1="10" y1="490" x2="380" y2="490" stroke="#1c2737" stroke-width="1"/>';
+
+  // ── WHY THIS SETUP? ────────────────────────────────────────────────────────
+  const whyLines = sType === 'vwap_bounce' ? [
+    { t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' },
+    { t: 'VWAP = average price of all trades today.', c: '#ff9f43' },
+    { t: 'Price always returns to VWAP like a magnet.', c: '#c7d1de' },
+    { t: isLong ? 'Price bounced UP off VWAP → bulls defending it.' : 'Price got pushed DOWN from VWAP → bears rejecting it.', c: isLong ? '#16c784' : '#ea3943' },
+  ] : sType === 'trend_break' ? [
+    { t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' },
+    { t: isLong ? 'See the yellow line? That was KEY RESISTANCE.' : 'See the yellow line? That was KEY SUPPORT.', c: '#ffd60a' },
+    { t: isLong ? 'Price broke ABOVE it → buyers took over.' : 'Price broke BELOW it → sellers took over.', c: isLong ? '#16c784' : '#ea3943' },
+    { t: isLong ? 'Old ceiling = new floor. Ride the UP move.' : 'Old floor = new ceiling. Ride the DOWN move.', c: '#c7d1de' },
+  ] : [
+    { t: 'WHY THIS SETUP?', b: true, c: '#4cc3ff' },
+    { t: '🟣 ORDER BLOCK — big banks hid orders in this candle.', c: '#d8b4fe' },
+    { t: '   Price returned to fill those orders. Classic.', c: '#c7d1de' },
+    { t: '⚡ BOS — price cleared a key level. Trade confirmed!', c: '#4cc3ff' },
+  ];
+  let wyY = 507;
+  whyLines.forEach(({ t: lt, b, c: lc }) => {
+    s += '<text x="14" y="' + wyY + '" fill="' + lc + '" font-size="11" font-family="monospace"'
+       + (b ? ' font-weight="bold"' : '') + '>' + lt + '</text>';
+    wyY += 18;
+  });
+
+  // ── WHAT HAPPENED? ─────────────────────────────────────────────────────────
+  s += '<line x1="10" y1="590" x2="380" y2="590" stroke="#1c2737" stroke-width="1"/>';
+  const whatLines = [
+    { t: 'WHAT HAPPENED?', b: true, c: '#4cc3ff' },
+    { t: isWin
+        ? (isLong ? '✓ Price went UP and hit your Take Profit. You won!' : '✓ Price went DOWN and hit your Take Profit. You won!')
+        : (isLong ? '✗ Price went DOWN and hit your Stop Loss.' : '✗ Price went UP and hit your Stop Loss.'),
+      c: isWin ? '#16c784' : '#ea3943' },
+    { t: isWin
+        ? 'Great read! The setup played out exactly as planned.'
+        : 'Even perfect setups lose sometimes. That\'s trading.',
+      c: isWin ? '#c7d1de' : '#6a7e94' },
+    { t: isWin
+        ? 'Keep spotting quality setups and the money follows.'
+        : 'The Stop Loss SAVED you from a bigger loss. Good risk mgmt!',
+      c: '#4a5a70' },
+  ];
+  let whY2 = 607;
+  whatLines.forEach(({ t: lt, b, c: lc }) => {
+    s += '<text x="14" y="' + whY2 + '" fill="' + lc + '" font-size="11" font-family="monospace"'
+       + (b ? ' font-weight="bold"' : '') + '>' + lt + '</text>';
+    whY2 += 18;
+  });
+  // R:R line
+  if (t.rr) {
+    const riskAmt = t.rr > 0.01 ? Math.abs(t.delta) / t.rr : 0;
+    s += '<text x="14" y="' + whY2 + '" fill="#4a5a70" font-size="10" font-family="monospace">R:R = '
+       + t.rr.toFixed(1) + ':1  ·  risked ' + fmt(riskAmt) + ' 🐚  ·  '
+       + (isWin ? 'won' : 'lost') + ' ' + fmt(Math.abs(t.delta)) + ' 🐚</text>';
+  }
+
+  s += '<text x="' + (VW/2) + '" y="' + (VH-10) + '" fill="#242e3e" font-size="11" font-family="monospace" text-anchor="middle">TAP ANYWHERE TO CLOSE</text>';
+  s += '</svg>';
+  return s;
+}
+
+// tab + list handlers (mirror the in-game delegation)
+$('jTabs').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.jTab');if(b)switchJournalTab(b.getAttribute('data-tab'));});
+$('jList').addEventListener('input',e=>{const ta=e.target;if(!ta.classList||!ta.classList.contains('jNote'))return;const id=+ta.getAttribute('data-id');const en=journal.find(x=>x.id===id);if(en)en.note=ta.value;});
+$('jList').addEventListener('click',e=>{const t=e.target;
+  const v=t.closest&&t.closest('.jView');if(v){openJournalReview(+v.getAttribute('data-id'));return;}
+  if(t.id==='jNoteAdd'){const txt=($('jNoteText').value||'').trim();if(!txt)return;const lv=$('jNoteLink').value;const note={id:++noteSeq,ts:Date.now(),text:txt,linkType:'',linkRef:''};if(lv){const[a,b]=lv.split(':');note.linkType=a;note.linkRef=b;}journalNotes.unshift(note);renderJournalSection();return;}
+  const d=t.closest&&t.closest('.jNoteDel');if(d){journalNotes=journalNotes.filter(n=>n.id!==+d.getAttribute('data-noteid'));renderJournalSection();return;}
+  const l=t.closest&&t.closest('.jLink');if(l){openJournalLink(l.getAttribute('data-linktype'),l.getAttribute('data-linkref'));return;}
+});
+$('chartFull').addEventListener('click',()=>$('chartFull').classList.remove('open'));
+$('jClose').addEventListener('click',()=>alert('In-game: closes the journal and resumes play.'));
+renderJournalSection();
+</script></body></html>

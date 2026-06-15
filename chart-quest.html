@@ -409,14 +409,14 @@
     font: 13px var(--font-ui); color: #c7d1de;
   }
   #authCard {
-    width: min(300px, 88vw); background: #0d1320;
+    width: min(340px, 90vw); background: #0d1320;
     border: 1px solid #2a3442; border-radius: 14px;
-    padding: 24px 22px 20px;
+    padding: 0 22px 20px;
     box-shadow: 0 18px 50px rgba(0,0,0,0.7);
   }
-  #authLogo { text-align: center; margin-bottom: 18px; }
-  #authLogo .name { font-size: 18px; font-weight: 900; letter-spacing: 3px; color: #4cc3ff; }
-  #authLogo .sub  { font-size: 10px; letter-spacing: 2px; color: #7d8aa0; margin-top: 3px; }
+  #authLogo { text-align: center; margin: 0 -22px 18px; }
+  
+  #authLogo img { width: 100%; border-radius: 14px 14px 0 0; display: block; }
   #authTabs { display: flex; margin-bottom: 16px; border-radius: 7px; overflow: hidden; border: 1px solid #2a3442; }
   #authTabs button { flex: 1; padding: 8px 0; font: bold 11px var(--font-ui); letter-spacing: 1px;
     background: transparent; border: none; color: #7d8aa0; cursor: pointer; }
@@ -478,8 +478,7 @@
 <div id="authOverlay">
   <div id="authCard">
     <div id="authLogo">
-      <div class="name">🐢 CHART QUEST</div>
-      <div class="sub">SIGN IN TO SAVE YOUR PROGRESS</div>
+      <img src="logo.png" alt="Chart Quest">
     </div>
     <div id="authTabs">
       <button id="authTabSignin" class="active">SIGN IN</button>

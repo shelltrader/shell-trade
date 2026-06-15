@@ -1029,9 +1029,8 @@
    onmouseout="this.style.borderColor='${borderCol}';this.style.boxShadow='${shadowVal}';this.style.transform=''">
   ${recBadge}
   <div style="padding:${meta.recommended ? 36 : 26}px 16px 14px;text-align:center;background:linear-gradient(180deg,${f.color}1c 0%,transparent 100%);border-bottom:1px solid ${f.color}18;">
-    <div style="width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;border:2px solid ${f.color}44;background:#ffffff08;overflow:hidden;">
-      <img src="${logoUrl}" alt="${f.name}" width="46" height="46" style="object-fit:contain;"
-           onerror="this.outerHTML='<span style=\'font-size:24px;font-weight:900;color:${f.color}\'>${f.emoji}</span>'">
+    <div style="width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;border:2px solid ${f.color}55;background:${f.color}20;font-size:28px;font-weight:900;line-height:1;">
+      ${f.emoji}
     </div>
     <div style="font-size:14px;font-weight:700;color:#fff;letter-spacing:0.3px;">${f.name}</div>
     <div style="font-size:8px;color:${f.color};letter-spacing:3px;font-weight:700;margin-top:2px;">${f.ticker}</div>
@@ -1079,9 +1078,8 @@
   font-family:'Inter',-apple-system,sans-serif;
 ">
   <div style="padding:16px 14px 12px;text-align:center;background:#08090f;border-bottom:1px solid #141e2a;">
-    <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 7px;border:1px solid #1e2a36;overflow:hidden;">
-      <img src="${logoUrl}" alt="${f.name}" width="32" height="32" style="object-fit:contain;filter:grayscale(1) brightness(.7);"
-           onerror="this.outerHTML='<span style=\'font-size:17px;color:#3a4858\'>${f.emoji}</span>'">
+    <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 7px;border:1px solid #1e2a36;background:#1a2030;font-size:18px;font-weight:900;line-height:1;color:#3a4858;">
+      ${f.emoji}
     </div>
     <div style="font-size:12px;font-weight:700;color:#3a4858;">${f.name}</div>
     <div style="font-size:7.5px;letter-spacing:2.5px;color:#2a3848;margin-top:2px;">${f.ticker}</div>

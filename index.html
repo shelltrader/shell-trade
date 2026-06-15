@@ -612,10 +612,11 @@
   display:none; position:fixed; inset:0; z-index:40;
   background:rgba(4,6,12,0.97);
   font:12px var(--font-ui); color:#c7d1de;
-  overflow-y:hidden; box-sizing:border-box;
+  overflow-y:auto; -webkit-overflow-scrolling:touch; box-sizing:border-box;
+  display:flex; flex-direction:column; align-items:center;
 ">
   <!-- drawn by drawIntermission() on <canvas id="imCanvas"> -->
-  <canvas id="imCanvas" style="display:block;width:100%;"></canvas>
+  <canvas id="imCanvas" style="display:block;margin:0 auto;max-width:440px;"></canvas>
   <button id="imJournalBtn">&#128214; JOURNAL</button>
   <!-- interactive guess buttons (shown only during mini-game phase) -->
   <div id="imGuess" style="display:none; position:fixed; bottom:0; left:0; right:0;
@@ -1300,7 +1301,7 @@ const player = {
   shells: 0,      // starting balance — earn from scratch
   level:  1,
   xp:     0,
-  xpNeeded: 100,  // XP required to reach the next level
+  xpNeeded: 250,  // XP required to reach the next level (harder progression)
 };
 
 /* ---------- Rank ladder: Beginner → Trader ----------
@@ -1363,6 +1364,25 @@ const rings = []; // expanding bounce-pad rings (world space)
 /* ---- Shells: collectible shells placed on candle tops.
    Each shell is worth 10 SHELLS. Collected by walking over them. ---- */
 const coins = []; // { x, y, r, collected, bobT }
+const portals = []; // { x, y, r, label, sublabel, action, glowT, entered }
+
+function spawnPortal(label, sublabel, action) {
+  // Remove any existing portal with the same label (prevent duplicates)
+  for (let i = portals.length - 1; i >= 0; i--) {
+    if (portals[i].label === label) portals.splice(i, 1);
+  }
+  // Spawn ahead of turtle — above jump height so jetpack is required (~200px above ground)
+  portals.push({
+    x: turtle.x + W * 0.65,
+    y: groundY - 200,
+    r: 32,
+    label,
+    sublabel,
+    action,
+    glowT: 0,
+    entered: false,
+  });
+}
 
 /* ---- Combo system: consecutive actions (jumps, spins, trades) ---- */
 const combo = { count: 0, t: 0, maxT: 4.0 }; // decays if no action for 4s
@@ -1631,6 +1651,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowRight' || e.code === 'KeyD') { e.preventDefault(); turtle.dir = 1;  turtle.halt = false; }
 });
 
+let _holdTimer = null; // hold ~150ms triggers jetpack instead of jump
 let pointer = null; // active gesture: {x0,y0: start, fired: swipe already fired?}
 window.addEventListener('pointerdown', (e) => {
   // Candle Academy greeting: any tap dismisses immediately
@@ -1657,20 +1678,27 @@ window.addEventListener('pointerdown', (e) => {
   if (paused || lessonOpen || e.target !== canvas) return;
   e.preventDefault();
   pointer = { x0: e.clientX, y0: e.clientY, fired: false };
+  // Hold 150 ms → jetpack; quick release → jump
+  _holdTimer = setTimeout(() => {
+    _holdTimer = null;
+    if (pointer && !pointer.fired) { pointer.fired = true; fireJetpack(); }
+  }, 150);
 });
 window.addEventListener('pointermove', (e) => {
   if (!pointer || pointer.fired) return;
   const dx = e.clientX - pointer.x0;
   const dy = e.clientY - pointer.y0;
   if (Math.abs(dy) >= Math.abs(dx)) {
-    if (dy < -28) { pointer.fired = true; fireJetpack(); }     // swipe up
-    if (dy >  28) { pointer.fired = true; shellTuck();  }      // swipe down
+    if (dy < -45) { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } pointer.fired = true; fireJetpack(); }  // swipe up
+    if (dy >  45) { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } pointer.fired = true; shellTuck();  }   // swipe down
   } else {
-    if (dx < -32) { pointer.fired = true; turtle.dir = -1; turtle.halt = false; } // swipe left: turn around
-    if (dx >  32) { pointer.fired = true; turtle.dir = 1;  turtle.halt = false; } // swipe right: forwards
+    if (dx < -40) { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } pointer.fired = true; turtle.dir = -1; turtle.halt = false; } // swipe left
+    if (dx >  40) { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } pointer.fired = true; turtle.dir = 1;  turtle.halt = false; } // swipe right
   }
 });
 window.addEventListener('pointerup', (e) => {
+  // Cancel hold timer if it's still running (user released before 150 ms)
+  if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; }
   // Map viewport coords → stage-local (canvas) coords for hit-testing
   const lx = e.clientX - stageX, ly = e.clientY - stageY;
   // HTF zoom: swipe left/right = move Mini Shell; swipe up = jump; tap = close
@@ -2178,6 +2206,16 @@ let lessonOpen = false, lessonGap = 0;
    Everything else must be in the current level's curriculum focus list. */
 const BYPASS_GATE = new Set(['win', 'loss', 'realdata', 'controls']);
 
+// Trade gate: player must complete N trades (with at least W wins) before advancing
+const tradeGate = { completed: 0, won: 0 };
+function tradeGateRequired() {
+  return session.level <= 4 ? { n: 3, w: 2 } : { n: 5, w: 3 };
+}
+function tradeGatePassed() {
+  const r = tradeGateRequired();
+  return tradeGate.completed >= r.n && tradeGate.won >= r.w;
+}
+
 function teach(key) {
   if (introFlow && introFlow.active) return; // no popup lessons during intro
   if (taught[key] || !LESSONS[key]) return;
@@ -2188,7 +2226,15 @@ function teach(key) {
   if (!BYPASS_GATE.has(key) && session.lessonsThisHour >= 2) return;
   taught[key] = true;
   if (!BYPASS_GATE.has(key)) session.lessonsThisHour++;
-  lessonQ.push(LESSONS[key]);
+  const lesson = LESSONS[key];
+  if (BYPASS_GATE.has(key)) {
+    // Bypass lessons (win/loss/controls/realdata) trigger immediately
+    lessonQ.push(lesson);
+  } else {
+    // Curriculum lessons: spawn a portal — player jetpacks in to learn
+    const title = (lesson[0] || '').replace(/<[^>]*>/g, '').slice(0, 18).toUpperCase() || key.toUpperCase();
+    spawnPortal(title, '⬆ BOOST TO LEARN', () => lessonQ.push(lesson));
+  }
 }
 
 /* Force-teach a lesson regardless of gate (used by Candle Academy & leverage unlocks) */
@@ -2546,9 +2592,13 @@ function openIntermission() {
   $('imGuess').style.display = 'none';
   $('imResult').style.display = 'none';
   const imC = $('imCanvas');
-  imC.width  = W * (window.devicePixelRatio || 1);   // stage dimensions, not the full window
-  imC.height = H * (window.devicePixelRatio || 1);
-  imC.style.height = H + 'px';
+  const dpr2 = window.devicePixelRatio || 1;
+  const imW = Math.min(W, 440); // cap at 440px — no stretched layout on desktop
+  const imH = Math.max(H, 940); // tall enough for all content
+  imC.width  = imW * dpr2;
+  imC.height = imH * dpr2;
+  imC.style.width  = imW + 'px';
+  imC.style.height = imH + 'px';
   drawIntermission();
 }
 
@@ -2601,6 +2651,23 @@ function drawIntermission() {
   // Session P&L
   const netStr = (session.net >= 0 ? '+' : '−') + fmt(Math.abs(session.net));
   const winPct = session.trades ? Math.round(session.wins / session.trades * 100) : 0;
+  // Trade gate status bar
+  if (session.cleared) {
+    const gReq = tradeGateRequired();
+    const gPass = tradeGatePassed();
+    const barY = shellY + 48;
+    const barW = Math.min(IW - 40, 240), barX = (IW - barW) / 2;
+    ictx.fillStyle = gPass ? 'rgba(22,199,132,0.15)' : 'rgba(201,160,255,0.10)';
+    irr(barX, barY, barW, 20, 5); ictx.fill();
+    ictx.strokeStyle = gPass ? '#16c784' : '#c9a0ff'; ictx.lineWidth = 1;
+    irr(barX, barY, barW, 20, 5); ictx.stroke();
+    ictx.font = 'bold 9px ' + MONO; ictx.textAlign = 'center';
+    ictx.fillStyle = gPass ? '#16c784' : '#c9a0ff';
+    const gTxt = gPass
+      ? '✅ TRADE GATE PASSED — READY TO ADVANCE'
+      : `🔒 GATE: ${tradeGate.completed}/${gReq.n} trades · ${tradeGate.won}/${gReq.w} wins needed`;
+    ictx.fillText(gTxt, IW / 2, barY + 13);
+  }
   ictx.font = '9px ' + SANS2; ictx.fillStyle = '#4a5a72';
   ictx.fillText('SESSION  P&L ' + netStr + '  ·  ' + winPct + '% wins', IW / 2, shellY + 26);
   // All-time P&L
@@ -2912,8 +2979,8 @@ function drawIntermission() {
       if(!right3){ictx.fillStyle='#3ddc6a'; ictx.fillText('→ '+q.answers[q.correct],18,sumY3); sumY3+=14;}
       sumY3+=6;
     });
-    // NEXT / RETRY button
-    const btnY6=IH-50, btnW6=200, btnH6=36, btnX6=IW/2-btnW6/2;
+    // NEXT / RETRY button — placed just below quiz summary content
+    const btnY6=sumY3+20, btnW6=200, btnH6=36, btnX6=IW/2-btnW6/2;
     const btnCol6=cleared?'#16c784':'#ea3943';
     ictx.fillStyle=btnCol6+'22'; irr(btnX6,btnY6,btnW6,btnH6,8); ictx.fill();
     ictx.strokeStyle=btnCol6; ictx.lineWidth=2; irr(btnX6,btnY6,btnW6,btnH6,8); ictx.stroke();
@@ -2968,8 +3035,10 @@ function closeIntermission(proceed) {
   session.lessonsThisHour = 0;
   session.trades = session.wins = session.net = 0;
   session.tradeLog = [];
+  tradeGate.completed = 0; tradeGate.won = 0; // reset gate for next hour
   session.inModal = false;
   coins.splice(0); // clear coins for the new hour
+  portals.splice(0); // clear portals for the new hour
   combo.count = 0; combo.t = 0;
   nextSetupIn();
 }
@@ -4692,7 +4761,8 @@ $('emBtn').onclick = () => {
 $('intermission').addEventListener('pointerup', (e) => {
   if (im.phase !== 'quiz') return;
   const rects = im.answerRects || [];
-  const lx = e.clientX - stageX, ly = e.clientY - stageY;
+  const imScroll = $('intermission').scrollTop || 0;
+  const lx = e.clientX - stageX, ly = e.clientY - stageY + imScroll;
   for (const r of rects) {
     if (lx >= r.x && lx <= r.x + r.w && ly >= r.y && ly <= r.y + r.h) {
       if (r.type === 'trade') {
@@ -4725,6 +4795,15 @@ $('intermission').addEventListener('pointerup', (e) => {
   }
 });
 $('imNext').onclick = () => {
+  // Gate: must complete required trades before advancing
+  if (session.cleared && !tradeGatePassed()) {
+    const r = tradeGateRequired();
+    const needed = r.n - tradeGate.completed;
+    const wNeeded = r.w - tradeGate.won;
+    const msg = `Complete ${r.n} trades (${r.w} wins) to advance. Need ${Math.max(0,needed)} more trade${needed!==1?'s':''}, ${Math.max(0,wNeeded)} more win${wNeeded!==1?'s':''}.`;
+    floaters.push({ text: '🔒 TRADE GATE: ' + msg, color: '#c9a0ff', y: 64, t: 3.5 });
+    return;
+  }
   // Clearing an hour with a boss defined → fight it before advancing
   if (session.cleared && BOSSES[session.level] && !bossesDone.has(session.level)) {
     $('intermission').style.display = 'none';
@@ -4767,9 +4846,26 @@ function onCandleEntered(c) {
     // Intro flow checkpoints (first play only)
     if (introFlow.active && introFlow.phase === 'run') {
       introFlow.candleCount++;
-      if (introFlow.candleCount === 55) { triggerFlashQuiz(); return; }
-      if (introFlow.candleCount === 65) { triggerPredictionBet(); return; }
-      if (introFlow.candleCount === 75) { triggerIntroBoss(); return; }
+      // Spawn portals early so player has time to fly into them
+      if (introFlow.candleCount === 48 && !portals.find(p => p.label === 'FLASH QUIZ'))
+        spawnPortal('FLASH QUIZ', '⬆ BOOST TO ENTER', () => triggerFlashQuiz());
+      if (introFlow.candleCount === 60 && !portals.find(p => p.label === 'PREDICTION BET'))
+        spawnPortal('PREDICTION BET', '⬆ BOOST TO ENTER', () => triggerPredictionBet());
+      if (introFlow.candleCount === 70 && !portals.find(p => p.label === 'BOSS PORTAL'))
+        spawnPortal('BOSS PORTAL', '⬆ BOOST TO ENTER', () => triggerIntroBoss());
+      // Auto-fallback: if player missed the portal, force-trigger 10 candles later
+      if (introFlow.candleCount === 58 && portals.find(p => p.label === 'FLASH QUIZ')) {
+        portals.splice(portals.findIndex(p => p.label === 'FLASH QUIZ'), 1);
+        triggerFlashQuiz(); return;
+      }
+      if (introFlow.candleCount === 70 && portals.find(p => p.label === 'PREDICTION BET')) {
+        portals.splice(portals.findIndex(p => p.label === 'PREDICTION BET'), 1);
+        triggerPredictionBet(); return;
+      }
+      if (introFlow.candleCount === 80 && portals.find(p => p.label === 'BOSS PORTAL')) {
+        portals.splice(portals.findIndex(p => p.label === 'BOSS PORTAL'), 1);
+        triggerIntroBoss(); return;
+      }
     }
     if (session.startBal > 0 && player.shells <= session.startBal * (1 - session.failPct / 100)) return endHour();
     if (session.candles >= session.perHour) return endHour();
@@ -4903,8 +4999,10 @@ function resolveTrade(result) {
   }
   // Expectancy tracking: every closed trade updates the running stats
   stats.trades++; session.trades++;
+  tradeGate.completed++; // track toward mandatory gate
   if (delta > 0) {
     stats.wins++; session.wins++;
+    tradeGate.won++; // winning trade counts toward gate
     combo.count += 2; combo.t = combo.maxT; // winning trades give a combo boost
   } else {
     combo.count = 0; // loss resets the streak
@@ -4942,7 +5040,7 @@ function resolveTrade(result) {
   // carrying the full chart snapshot so each entry can be reviewed full-screen.
   logJournalTrade(tradeRecord);
   teach(delta > 0 ? 'win' : 'loss');
-  addXP(result === 'win' ? 30 : delta > 0 ? 20 : 10);
+  addXP(result === 'win' ? 15 : delta > 0 ? 10 : 5); // harder XP — earn less per trade
   trade = null;
   setupZone = null; // the setup that spawned this trade is done
   closeBtnEl.style.display = 'none';
@@ -5208,6 +5306,20 @@ function update(dt) {
         triggerLeverageLesson(nextTier);
         floaters.push({ text: nextTier.label + ' UNLOCKED!', color: '#ff9f43', y: turtle.y - 44, t: 2.5 });
       }
+    }
+  }
+
+  /* --- Portal collision + animation --- */
+  for (let pi = portals.length - 1; pi >= 0; pi--) {
+    const p = portals[pi];
+    p.glowT += dt;
+    if (p.entered) { portals.splice(pi, 1); continue; }
+    const ptx = turtle.x + turtle.w / 2;
+    const pty = turtle.y + turtle.h / 2;
+    const dist = Math.hypot(ptx - p.x, pty - p.y);
+    if (dist < p.r + 14) {
+      p.entered = true;
+      p.action();
     }
   }
 
@@ -6170,6 +6282,51 @@ function render(cameraX) {
     // Shell spiral mark
     ctx.font = 'bold 7px ' + MONO; ctx.fillStyle = '#006b63'; ctx.textAlign = 'center';
     ctx.fillText('🐚', sx, sy + 3); ctx.textAlign = 'left';
+  }
+
+  // Portals: black void with purple glow — jetpack to enter
+  for (const p of portals) {
+    if (p.entered) continue;
+    const sx = p.x - cameraX;
+    if (sx < -80 || sx > W + 80) continue;
+    const sy = p.y;
+    const pulse = 0.7 + 0.3 * Math.sin(p.glowT * 3);
+    const r = p.r;
+    // Outer purple glow
+    const grd = ctx.createRadialGradient(sx, sy, r * 0.6, sx, sy, r * 2.2);
+    grd.addColorStop(0, `rgba(160,60,255,${0.45 * pulse})`);
+    grd.addColorStop(1, 'rgba(80,0,180,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(sx, sy, r * 2.2, 0, Math.PI * 2); ctx.fill();
+    // Purple ring
+    ctx.strokeStyle = `rgba(200,100,255,${0.85 * pulse})`;
+    ctx.lineWidth = 3 + pulse * 2;
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
+    // Inner void (dark gradient)
+    const inner = ctx.createRadialGradient(sx, sy, 0, sx, sy, r - 2);
+    inner.addColorStop(0, '#000');
+    inner.addColorStop(1, '#1a0030');
+    ctx.fillStyle = inner;
+    ctx.beginPath(); ctx.arc(sx, sy, r - 2, 0, Math.PI * 2); ctx.fill();
+    // Rotating sparkles
+    const sAngle = p.glowT * 1.8;
+    ctx.fillStyle = `rgba(220,140,255,${0.7 + 0.3 * Math.sin(p.glowT * 4)})`;
+    for (let s = 0; s < 5; s++) {
+      const a = sAngle + s * Math.PI * 2 / 5;
+      const sr = r + 5;
+      const spx = sx + Math.cos(a) * sr;
+      const spy = sy + Math.sin(a) * sr;
+      ctx.beginPath(); ctx.arc(spx, spy, 2, 0, Math.PI * 2); ctx.fill();
+    }
+    // Label
+    ctx.font = 'bold 10px ' + MONO; ctx.textAlign = 'center';
+    ctx.fillStyle = '#c9a0ff';
+    ctx.fillText(p.label, sx, sy - r - 16);
+    ctx.font = '9px ' + SANS2;
+    ctx.fillStyle = `rgba(200,160,255,${0.6 + 0.4 * Math.sin(p.glowT * 2)})`;
+    ctx.fillText(p.sublabel, sx, sy - r - 5);
+    ctx.textAlign = 'left';
+    ctx.lineWidth = 1;
   }
 
   // Combo counter (shown when combo >= 3)

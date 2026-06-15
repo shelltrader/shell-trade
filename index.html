@@ -1616,6 +1616,7 @@ function shellTuck() {
    Swipes fire the moment they pass the threshold; a plain tap fires
    jump on release (so we can tell the gestures apart). */
 window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; // don't eat auth typing
   if (lessonOpen) { // lesson card owns input — Space/Enter = OK
     if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); dismissLesson(); }
     return;

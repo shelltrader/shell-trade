@@ -949,7 +949,7 @@
 const CFG = {
   walkSpeed:    130,   // turtle horizontal speed, px/sec (world units)
   gravity:      2300,  // px/sec^2 — high gravity = snappy feel
-  jumpVelocity: -1300, // initial jump speed, px/sec (apex ≈ v²/2g ≈ 367px,
+  jumpVelocity: -850,  // gentle jetpack puff — boost (Up/W) goes much higher,
                        // reaches avg candle height; big candles need jetpack)
   gapMin:     0,   gapMax:     0,    // candles touch, like a real chart —
                                      // the tops form a bumpy continuous road
@@ -986,7 +986,7 @@ const CFG = {
                        // history on the left, unprinted future on the right
 
   /* Jetpack */
-  jetpackVelocity: -1150, // launch speed — noticeably higher than a jump
+  jetpackVelocity: -1400, // full boost — clearly higher than a gentle jump puff
   jetpackHang:     0.30,  // seconds of reduced gravity after firing (hang time)
   jetpackGravityScale: 0.45, // gravity multiplier during the hang window
   fuelMax:     100,
@@ -1576,6 +1576,7 @@ function jump() {
   if (turtle.onGround) {
     turtle.vy = CFG.jumpVelocity;
     turtle.onGround = false;
+    turtle.flameT = 0.18; // small jetpack puff — turtle always uses the pack
     combo.count++;
     combo.t = combo.maxT;
   }

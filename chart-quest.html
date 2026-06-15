@@ -504,6 +504,8 @@
     <h3>YOUR ACCOUNT</h3>
     <div id="apEmail">Guest</div>
     <div id="apRank">🌊 DRIFTER</div>
+    <div id="apFaction" style="font-size:11px;color:#7d8aa0;margin-bottom:14px;"></div>
+    <button class="ap-btn" id="apChangeFaction" style="background:none;border:1px solid #2a3442;color:#c9a0ff;">⚡ Change Faction</button>
     <button class="ap-btn" id="apSignOut">Sign out</button>
     <button class="ap-btn" id="apClose">Close</button>
   </div>
@@ -644,6 +646,44 @@
       border-radius:8px; cursor:pointer;"></button>
   </div>
 </div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     FACTION PICKER  (shown once on first launch, after auth)
+     z-index 210 — sits above everything including auth overlay
+     ════════════════════════════════════════════════════════════════ -->
+<div id="factionOverlay" style="
+  display:none; position:fixed; inset:0; z-index:210;
+  background:#04060c; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  font-family:var(--font-ui);
+">
+  <!-- starfield canvas drawn by JS -->
+  <canvas id="factionStars" style="position:fixed;inset:0;pointer-events:none;z-index:0;"></canvas>
+
+  <div style="position:relative;z-index:1;">
+    <!-- header -->
+    <div style="text-align:center;padding:36px 24px 20px;">
+      <div style="font-size:10px;color:#4cc3ff;letter-spacing:4px;font-weight:700;margin-bottom:8px;">
+        CHART QUEST — FIRST LAUNCH
+      </div>
+      <div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:1px;line-height:1.1;">
+        CHOOSE YOUR COIN
+      </div>
+      <div style="font-size:13px;color:#7d8aa0;max-width:380px;margin:10px auto 0;line-height:1.6;">
+        Your faction determines which <strong style="color:#c7d1de;">real live market</strong> you'll trade on.
+        All charts, boss fights, and lessons will reflect your chosen coin.
+        <br><span style="color:#4cc3ff;font-size:11px;">You can change this later from your account.</span>
+      </div>
+    </div>
+
+    <!-- cards grid -->
+    <div id="factionCards" style="
+      display:flex; flex-wrap:wrap; justify-content:center;
+      gap:14px; padding:8px 16px 60px;
+      max-width:1320px; margin:0 auto;
+    "></div>
+  </div>
+</div>
+
 </div><!-- /#stage -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -872,6 +912,10 @@
     const accountBtn = document.getElementById('accountBtn');
     if (accountBtn) accountBtn.style.display = '';
     updateAccountBtn();
+    // First-launch: show faction picker if no coin chosen yet
+    if (!localStorage.getItem('cq_faction')) {
+      showFactionPicker();
+    }
   }
 
   function updateAccountBtn() {
@@ -888,13 +932,17 @@
   }
 
   window.openAccountPanel = function() {
-    const panel   = document.getElementById('accountPanel');
-    const emailEl = document.getElementById('apEmail');
-    const rankEl  = document.getElementById('apRank');
+    const panel    = document.getElementById('accountPanel');
+    const emailEl  = document.getElementById('apEmail');
+    const rankEl   = document.getElementById('apRank');
+    const facEl    = document.getElementById('apFaction');
     if (emailEl) emailEl.textContent = _supaUser ? _supaUser.email : 'Guest';
     if (rankEl && typeof rankForLevel !== 'undefined') {
       const rk = rankForLevel(player.level);
       rankEl.textContent = rk.emoji + ' ' + rk.name;
+    }
+    if (facEl && typeof playerFaction !== 'undefined') {
+      facEl.innerHTML = '<span style="color:' + playerFaction.color + '">⬡ ' + playerFaction.name + ' (' + playerFaction.ticker + ')</span> faction';
     }
     if (panel) panel.style.display = 'flex';
   };
@@ -913,6 +961,147 @@
     const accountBtn = document.getElementById('accountBtn');
     if (accountBtn) accountBtn.style.display = 'none';
   }
+
+
+  // ─── FACTION PICKER ────────────────────────────────────────────
+  function showFactionPicker(isChange) {
+    const overlay = document.getElementById('factionOverlay');
+    if (!overlay) return;
+
+    // Animate background starfield
+    const starsC = document.getElementById('factionStars');
+    if (starsC) {
+      starsC.width  = window.innerWidth;
+      starsC.height = window.innerHeight;
+      const sx = starsC.getContext('2d');
+      sx.clearRect(0, 0, starsC.width, starsC.height);
+      for (let i = 0; i < 180; i++) {
+        const x = Math.random() * starsC.width;
+        const y = Math.random() * starsC.height;
+        const r = Math.random() * 1.2 + 0.2;
+        sx.beginPath(); sx.arc(x, y, r, 0, Math.PI * 2);
+        sx.fillStyle = 'rgba(180,210,255,' + (Math.random() * 0.6 + 0.1) + ')';
+        sx.fill();
+      }
+    }
+
+    // Build cards
+    const container = document.getElementById('factionCards');
+    if (container) {
+      container.innerHTML = Object.keys(FACTION_CONFIG).map(key => buildFactionCard(key, isChange)).join('');
+    }
+
+    overlay.style.display = 'block';
+  }
+
+  function buildFactionCard(key, isChange) {
+    const f = FACTION_CONFIG[key];
+    const stars  = '<span style="color:' + f.color + '">' + '★'.repeat(f.safetyStars)  + '</span>'
+                 + '<span style="color:#2a3442">'           + '★'.repeat(5 - f.safetyStars) + '</span>';
+    const isCurrent = localStorage.getItem('cq_faction') === key;
+    const borderCol = isCurrent ? f.color : f.color + '40';
+    const shadowVal = isCurrent ? '0 0 28px ' + f.glow + ', inset 0 0 12px ' + f.glow : '';
+    return \`
+<div style="
+  width:220px; min-height:420px; display:flex; flex-direction:column;
+  background:\${f.gradient};
+  border:2px solid \${borderCol};
+  border-radius:18px; overflow:hidden;
+  box-shadow:\${shadowVal};
+  transition:transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+  cursor:pointer; font-family:var(--font-ui);
+" onclick="window._confirmFaction('\${key}')"
+   onmouseover="this.style.borderColor='\${f.color}';this.style.boxShadow='0 0 28px \${f.glow}';this.style.transform='translateY(-6px) scale(1.02)'"
+   onmouseout="this.style.borderColor='\${borderCol}';this.style.boxShadow='\${shadowVal}';this.style.transform=''">
+
+  <!-- TOP / HERO SECTION -->
+  <div style="
+    padding:26px 20px 18px;
+    background:linear-gradient(180deg,\${f.color}20 0%,transparent 100%);
+    border-bottom:1px solid \${f.color}22; text-align:center;
+  ">
+    <div style="
+      display:inline-flex; align-items:center; justify-content:center;
+      width:68px; height:68px; border-radius:50%;
+      background:\${f.color}18; border:2px solid \${f.color}55;
+      font-size:36px; font-weight:900; color:\${f.color};
+      margin-bottom:10px; box-shadow:0 0 20px \${f.glow};
+    ">\${f.emoji}</div>
+    <div style="font-size:17px;font-weight:900;color:#fff;letter-spacing:0.5px;">\${f.name}</div>
+    <div style="font-size:10px;color:\${f.color};letter-spacing:3px;font-weight:700;margin-top:2px;">\${f.ticker}</div>
+    <div style="font-size:10px;color:#606880;margin-top:5px;font-style:italic;">\${f.tagline}</div>
+  </div>
+
+  <!-- STATS -->
+  <div style="padding:14px 16px 12px;border-bottom:1px solid \${f.color}15;flex-shrink:0;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <div style="font-size:8px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;">MKT CAP</div>
+        <div style="font-size:11px;color:#d0d8e8;font-weight:600;margin-top:3px;">\${f.marketCap}</div>
+      </div>
+      <div>
+        <div style="font-size:8px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;">SUPPLY</div>
+        <div style="font-size:11px;color:#d0d8e8;font-weight:600;margin-top:3px;">\${f.supply}</div>
+      </div>
+      <div>
+        <div style="font-size:8px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;">SAFETY</div>
+        <div style="font-size:14px;margin-top:3px;">\${stars}</div>
+      </div>
+      <div>
+        <div style="font-size:8px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;">DIFFICULTY</div>
+        <div style="font-size:10px;color:#d0d8e8;font-weight:600;margin-top:3px;">\${f.difficulty}</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <div style="font-size:8px;color:#4cc3ff;letter-spacing:1.5px;font-weight:700;margin-bottom:3px;">VOLATILITY</div>
+      <div style="
+        height:5px;border-radius:3px;
+        background:linear-gradient(90deg,\${f.color},\${f.color}40);
+        width:\${ {BTC:'40%',ETH:'55%',SOL:'72%',XRP:'70%',DOGE:'90%'}[key] };
+      "></div>
+      <div style="font-size:10px;color:#9ab0c8;margin-top:3px;">\${f.volatility}</div>
+    </div>
+  </div>
+
+  <!-- DESCRIPTION -->
+  <div style="padding:13px 16px;font-size:10.5px;color:#8a9ab8;line-height:1.55;flex:1;">
+    \${f.description}
+  </div>
+
+  <!-- SELECT BUTTON -->
+  <div style="padding:0 16px 18px;">
+    <button style="
+      width:100%; padding:11px 0; font-size:11px; font-weight:800; letter-spacing:2px;
+      background:\${f.color}18; border:2px solid \${f.color}; color:\${f.color};
+      border-radius:9px; cursor:pointer; font-family:var(--font-ui);
+    " onmouseover="this.style.background='\${f.color}33'"
+       onmouseout="this.style.background='\${f.color}18'">
+      \${isCurrent ? '✓ CURRENT FACTION' : 'SELECT ' + f.ticker}
+    </button>
+  </div>
+</div>\`;
+  }
+
+  window._confirmFaction = function(key) {
+    const f = FACTION_CONFIG[key];
+    if (!f) return;
+    playerFaction = f;
+    localStorage.setItem('cq_faction', key);
+    // Re-fetch live data for the chosen coin
+    fetchMarketData(f);
+    // Re-init candles and HTF from fresh data (prePopulateHTF runs inside fetchMarketData)
+    // Also seed HTF immediately with whatever data we already have (avoids blank panels)
+    prePopulateHTF(MARKET_DATA);
+    // Hide picker
+    const overlay = document.getElementById('factionOverlay');
+    if (overlay) overlay.style.display = 'none';
+    // Mark intro so it shows for new players
+    if (!localStorage.getItem('cq_played')) {
+      // intro will run normally
+    }
+  };
+  window.showFactionPicker = showFactionPicker; // expose for account panel
+  // ─── END FACTION PICKER ────────────────────────────────────────
 
   // ---- Boot: check for existing session, then wire up listeners ----
   _supa.auth.getSession().then(({ data: { session: existing } }) => {
@@ -935,6 +1124,10 @@
     q('accountBtn')    ?.addEventListener('click', window.openAccountPanel);
     q('apClose')       ?.addEventListener('click', closeAccountPanel);
     q('apSignOut')     ?.addEventListener('click', doSignOut);
+    q('apChangeFaction')?.addEventListener('click', () => {
+      closeAccountPanel();
+      showFactionPicker(true);
+    });
   });
 })();
 
@@ -1147,6 +1340,84 @@ const NY_OPEN = buildReplay(20260611); // offline fallback session
    exact format of the fallback — so the level IS a real chart.
    Later, live mode can use the same pipeline via Binance's public
    WebSocket (btcusdt@kline_1m): every closed candle spawns a platform. */
+
+/* ──────────────────────────────────────────────────────────────────
+   FACTION SYSTEM
+   Player picks one of 5 coins on first launch. Their choice determines
+   which real Binance market the entire game runs on — chart, HTF panels,
+   journal snapshots, boss fights, everything.
+   ────────────────────────────────────────────────────────────────── */
+const FACTION_CONFIG = {
+  BTC: {
+    symbol: 'BTCUSDT', ticker: 'BTC', name: 'Bitcoin',
+    emoji: '₿',
+    color: '#f7931a', colorDark: '#7a4800',
+    gradient: 'linear-gradient(160deg,#1c0e00 0%,#2d1800 60%,#120900 100%)',
+    glow: 'rgba(247,147,26,0.35)',
+    marketCap: '~$2.0 Trillion',
+    supply: '21,000,000 (hard cap)',
+    safetyStars: 5, safetyLabel: 'Very Safe',
+    volatility: 'Moderate', difficulty: 'Beginner 🟢',
+    tagline: 'The Original · Digital Gold',
+    description: 'Created in 2009, Bitcoin has a mathematically fixed supply of 21 million coins — making it the world\'s first truly scarce digital asset. The most liquid and trusted crypto, it\'s used as the benchmark for the entire market. When institutions buy crypto, they buy BTC first.',
+  },
+  ETH: {
+    symbol: 'ETHUSDT', ticker: 'ETH', name: 'Ethereum',
+    emoji: 'Ξ',
+    color: '#627eea', colorDark: '#1a2060',
+    gradient: 'linear-gradient(160deg,#080d28 0%,#111b48 60%,#050a1e 100%)',
+    glow: 'rgba(98,126,234,0.35)',
+    marketCap: '~$300 Billion',
+    supply: '~120M (no hard cap)',
+    safetyStars: 4, safetyLabel: 'Safe',
+    volatility: 'Moderate–High', difficulty: 'Beginner 🟢',
+    tagline: 'World Computer · DeFi Native',
+    description: 'Ethereum is a programmable blockchain — a world computer that runs unstoppable applications. It powers DeFi, NFTs, and thousands of protocols. More volatile than Bitcoin but fundamental to the entire ecosystem. Second largest by market cap and the engine behind most of crypto\'s innovation.',
+  },
+  SOL: {
+    symbol: 'SOLUSDT', ticker: 'SOL', name: 'Solana',
+    emoji: '◎',
+    color: '#14f195', colorDark: '#003a24',
+    gradient: 'linear-gradient(160deg,#020d08 0%,#051f12 60%,#010a05 100%)',
+    glow: 'rgba(20,241,149,0.28)',
+    marketCap: '~$80 Billion',
+    supply: '~600M (inflationary)',
+    safetyStars: 3, safetyLabel: 'Moderate',
+    volatility: 'High', difficulty: 'Intermediate 🟡',
+    tagline: 'Speed Demon · High Beta',
+    description: 'Solana processes 65,000+ transactions per second at near-zero cost — designed for speed. High-beta asset: when the market pumps, SOL flies harder; when it dumps, SOL falls further. Great for learning volatile price action. Attracts builders, gamers, and DeFi traders.',
+  },
+  XRP: {
+    symbol: 'XRPUSDT', ticker: 'XRP', name: 'XRP',
+    emoji: '✕',
+    color: '#00aae4', colorDark: '#002a3a',
+    gradient: 'linear-gradient(160deg,#000d14 0%,#001c28 60%,#000810 100%)',
+    glow: 'rgba(0,170,228,0.3)',
+    marketCap: '~$120 Billion',
+    supply: '100B max · 58B circulating',
+    safetyStars: 3, safetyLabel: 'Moderate',
+    volatility: 'High', difficulty: 'Intermediate 🟡',
+    tagline: 'Global Payments · Institutional',
+    description: 'Built by Ripple for cross-border bank settlements, XRP moves money globally in 3–5 seconds for fractions of a cent. Its low per-unit price creates large percentage swings even on small dollar moves — ideal for learning volatility. Used by financial institutions in 55+ countries.',
+  },
+  DOGE: {
+    symbol: 'DOGEUSDT', ticker: 'DOGE', name: 'Dogecoin',
+    emoji: 'Ð',
+    color: '#c3a634', colorDark: '#3a2e00',
+    gradient: 'linear-gradient(160deg,#0d0b00 0%,#1f1800 60%,#090700 100%)',
+    glow: 'rgba(195,166,52,0.3)',
+    marketCap: '~$25 Billion',
+    supply: 'Unlimited · +5B/year',
+    safetyStars: 2, safetyLabel: 'Risky',
+    volatility: 'Very High', difficulty: 'Advanced 🔴',
+    tagline: 'Meme Legend · Pure Chaos',
+    description: 'Started as a joke in 2013 based on a Shiba Inu meme — now a $25B asset. No hard supply cap; 5 billion new coins mint every year. Driven by community, celebrity tweets, and pure sentiment. Its wild swings make it the ultimate platform for learning to read volatile price action.',
+  },
+};
+
+// Read saved faction from localStorage (default BTC for new players)
+let playerFaction = FACTION_CONFIG[localStorage.getItem('cq_faction') || ''] || FACTION_CONFIG.BTC;
+
 let MARKET_DATA = NY_OPEN;
 let dataSource = 'SIM REPLAY';
 let priceBase = 100; // dollar price of the first candle (real when live data loads)
@@ -1156,43 +1427,47 @@ function fmtPrice(p) {
   const a = Math.abs(p);
   return '$' + (a >= 1000 ? fmt(p) : a >= 10 ? p.toFixed(2) : p.toFixed(3));
 }
-try {
-  fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=500')
-    .then(r => r.json())
-    .then(rows => {
-      // Validate: must be an array of arrays with numeric OHLC fields
-      if (!Array.isArray(rows) || rows.length < 10) return;
-      const out = [];
-      for (let i = 1; i < rows.length; i++) {
-        const r = rows[i], rp = rows[i-1];
-        // Each row is [openTime, open, high, low, close, ...] — all strings from Binance
-        const open  = parseFloat(r[1]),  high  = parseFloat(r[2]),
-              low   = parseFloat(r[3]),  close = parseFloat(r[4]),
-              prevClose = parseFloat(rp[4]);
-        // Reject any row with non-finite, negative, or clearly bogus values
-        if (!isFinite(open) || !isFinite(high) || !isFinite(low) ||
-            !isFinite(close) || !isFinite(prevClose)) continue;
-        if (open <= 0 || high <= 0 || low <= 0 || close <= 0) continue;
-        if (high < low || high < open || high < close) continue;  // structurally invalid
-        if (Math.abs(close - prevClose) / prevClose > 0.5) continue; // >50% move = bad data
-        out.push([
-          (close - prevClose) / prevClose * 100,            // close-to-close %
-          Math.max(0, (high - Math.max(open, close)) / prevClose * 100), // upper wick %
-          Math.max(0, (Math.min(open, close) - low) / prevClose * 100),  // lower wick %
-        ]);
-      }
-      if (out.length > 100) {
-        MARKET_DATA = out;
-        dataSource = 'BTC/USDT 1m · BINANCE';
-        priceBase = parseFloat(rows[0][4]);  // real dollars on the axis
-        if (!isFinite(priceBase) || priceBase <= 0) return; // safety guard
-        market.price = priceBase;
-        prePopulateHTF(MARKET_DATA); // re-build HTF history from real data
-        teach('realdata');
-      }
-    })
-    .catch(() => {}); // offline → fallback replay keeps the game running
-} catch (e) { /* no fetch available */ }
+function fetchMarketData(faction) {
+  // Fetch real 1-minute OHLCV data for the player's chosen coin from Binance public API.
+  // All 5 faction symbols (BTCUSDT / ETHUSDT / SOLUSDT / XRPUSDT / DOGEUSDT) are on
+  // Binance's free, CORS-open endpoint — no API key required.
+  try {
+    fetch('https://api.binance.com/api/v3/klines?symbol=' + faction.symbol + '&interval=1m&limit=500')
+      .then(r => r.json())
+      .then(rows => {
+        if (!Array.isArray(rows) || rows.length < 10) return;
+        const out = [];
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i], rp = rows[i-1];
+          const open  = parseFloat(r[1]),  high  = parseFloat(r[2]),
+                low   = parseFloat(r[3]),  close = parseFloat(r[4]),
+                prevClose = parseFloat(rp[4]);
+          if (!isFinite(open) || !isFinite(high) || !isFinite(low) ||
+              !isFinite(close) || !isFinite(prevClose)) continue;
+          if (open <= 0 || high <= 0 || low <= 0 || close <= 0) continue;
+          if (high < low || high < open || high < close) continue;
+          if (Math.abs(close - prevClose) / prevClose > 0.5) continue;
+          out.push([
+            (close - prevClose) / prevClose * 100,
+            Math.max(0, (high - Math.max(open, close)) / prevClose * 100),
+            Math.max(0, (Math.min(open, close) - low) / prevClose * 100),
+          ]);
+        }
+        if (out.length > 100) {
+          MARKET_DATA = out;
+          dataSource = faction.ticker + '/USDT 1m · BINANCE';
+          priceBase = parseFloat(rows[0][4]);
+          if (!isFinite(priceBase) || priceBase <= 0) return;
+          market.price = priceBase;
+          prePopulateHTF(MARKET_DATA);
+          teach('realdata');
+        }
+      })
+      .catch(() => {});
+  } catch (e) {}
+}
+// Kick off fetch immediately using the player's saved (or default BTC) faction
+fetchMarketData(playerFaction);
 
 const market = { level: 100, price: 100, idx: 0, eventIn: 12, trendDir: 1 };
 
@@ -6564,6 +6839,19 @@ function drawHUD() {
   ctx.textAlign = 'center';
   ctx.fillText('HOUR ' + session.level + ' · MIN ' + session.candles + '/' + session.perHour +
                ' · ' + dataSource, W / 2, 58);
+  // Faction badge — small coin-coloured tag in top-left corner
+  if (typeof playerFaction !== 'undefined') {
+    const fc = playerFaction;
+    ctx.save();
+    const bw = 72, bh = 18, bx = 8, by = 8;
+    ctx.fillStyle = fc.color + '18';
+    irr(bx, by, bw, bh, 5); ctx.fill();
+    ctx.strokeStyle = fc.color + '60'; ctx.lineWidth = 1;
+    irr(bx, by, bw, bh, 5); ctx.stroke();
+    ctx.font = 'bold 9px ' + MONO; ctx.fillStyle = fc.color; ctx.textAlign = 'left';
+    ctx.fillText(fc.emoji + ' ' + fc.ticker, bx + 7, by + 12);
+    ctx.restore();
+  }
   ctx.textAlign = 'left';
 
   // Floating P&L / level-up texts (rise and fade under the balance)

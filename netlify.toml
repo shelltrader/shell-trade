@@ -1,0 +1,45 @@
+# Shell Trade — Netlify deployment configuration
+# Security headers applied to every response.
+
+# ── Build pipeline ──────────────────────────────────────────────────────────
+# Every deploy: install the obfuscator, run build.js, serve the output.
+# build.js reads shell-trade.html and writes an obfuscated index.html.
+# The publish dir is "." so Netlify serves index.html directly.
+[build]
+  command     = "npm install javascript-obfuscator && node build.js"
+  publish     = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Prevent clickjacking
+    X-Frame-Options = "DENY"
+    # Prevent MIME-type sniffing
+    X-Content-Type-Options = "nosniff"
+    # Referrer policy — don't leak URL to third parties
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Permissions policy — disable features the game doesn't use
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    # HSTS — force HTTPS for 1 year (including subdomains)
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    # Content Security Policy
+    # - default-src 'self'          → block all unlisted origins by default
+    # - script-src  jsdelivr CDN    → only the Supabase SDK allowed from CDN
+    # - connect-src supabase + binance → only these two external APIs
+    # - img-src data:               → canvas toDataURL() needs data: URIs
+    # - frame-ancestors 'none'      → belt-and-suspenders clickjack protection
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.binance.com; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+# Redirect HTTP → HTTPS (Netlify handles this by default, but explicit is safer)
+[[redirects]]
+  from = "http://shell-trade.netlify.app/*"
+  to   = "https://shell-trade.netlify.app/:splat"
+  status = 301
+  force  = true
+
+# Preview files — serve a 404 in production so dev artifacts are never public
+[[redirects]]
+  from   = "/preview-*.html"
+  to     = "/404.html"
+  status = 404
+  force  = true

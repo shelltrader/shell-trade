@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Chart Quest — Founder Dashboard</title>
+<style>
+  :root{
+    --bg:#0a0e16;
+    --panel:#11161f;
+    --panel-2:#0d1119;
+    --border:#222c3a;
+    --text:#c7d1de;
+    --muted:#7c8798;
+    --green:#3ddc6a;
+    --amber:#ffb454;
+    --red:#ff5c5c;
+    --blue:#5ab0ff;
+    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    --font-mono: "SF Mono", "Menlo", "Consolas", monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--font-ui); -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--blue);}
+
+  /* ---------- Header ---------- */
+  header{
+    position:sticky; top:0; z-index:10;
+    background:linear-gradient(180deg, #0d1119 0%, #0a0e16 100%);
+    border-bottom:1px solid var(--border);
+    padding:14px 22px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand img{height:34px; width:34px; border-radius:8px; object-fit:cover;}
+  .brand h1{font-size:16px; margin:0; color:#fff; letter-spacing:.2px;}
+  .brand .tag{
+    font-size:10px; font-weight:700; color:var(--green); border:1px solid #1f4f33;
+    background:#0f1f15; padding:2px 7px; border-radius:5px; margin-left:6px; letter-spacing:.4px;
+  }
+  .header-right{display:flex; align-items:center; gap:12px; font-size:11px; color:var(--muted);}
+  #refreshBtn{
+    background:#142235; border:1px solid #2a3e57; color:var(--blue);
+    font-size:11px; padding:7px 12px; border-radius:7px; cursor:pointer; font-family:var(--font-ui);
+  }
+  #refreshBtn:hover{background:#192c45;}
+  #refreshBtn:disabled{opacity:.5; cursor:default;}
+
+  /* ---------- Tabs ---------- */
+  nav.tabs{
+    display:flex; gap:4px; padding:0 22px; border-bottom:1px solid var(--border);
+    background:var(--panel-2); overflow-x:auto;
+  }
+  nav.tabs button{
+    background:none; border:none; color:var(--muted); font-family:var(--font-ui);
+    font-size:13px; font-weight:600; padding:13px 16px; cursor:pointer;
+    border-bottom:2px solid transparent; white-space:nowrap;
+  }
+  nav.tabs button:hover{color:var(--text);}
+  nav.tabs button.active{color:#fff; border-bottom-color:var(--green);}
+
+  main{max-width:1180px; margin:0 auto; padding:26px 22px 60px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:6px;}
+  .section-head h2{font-size:15px; color:#fff; margin:0;}
+  .section-head .meta{font-size:11px; color:var(--muted);}
+
+  /* ---------- Stat cards ---------- */
+  .stat-grid{display:grid; grid-template-columns:repeat(5, 1fr); gap:12px; margin-bottom:22px;}
+  @media (max-width:1000px){.stat-grid{grid-template-columns:repeat(2, 1fr);}}
+  .stat-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:16px 16px 14px;
+  }
+  .stat-card .label{font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;}
+  .stat-card .value{font-size:26px; font-weight:700; color:#fff; font-family:var(--font-mono); line-height:1;}
+  .stat-card .value.green{color:var(--green);}
+  .stat-card .value.amber{color:var(--amber);}
+  .stat-card .value.muted{color:var(--muted); font-size:16px; font-weight:600;}
+  .stat-card .note{font-size:10.5px; color:var(--muted); margin-top:7px; line-height:1.4;}
+
+  #statsError{
+    display:none; background:#2a1414; border:1px solid #5c2a2a; color:#ff9b9b;
+    border-radius:8px; padding:10px 14px; font-size:12px; margin-bottom:16px;
+  }
+
+  .founder-note{
+    background:#0f1622; border:1px dashed #2a3a52; border-radius:10px;
+    padding:14px 16px; font-size:12.5px; color:var(--muted); line-height:1.6; margin-top:8px;
+  }
+  .founder-note b{color:var(--text);}
+
+  /* ---------- Issues panel ---------- */
+  .subhead{font-size:13px; font-weight:700; color:#fff; margin:26px 0 12px; display:flex; align-items:center; gap:8px;}
+  .subhead:first-child{margin-top:0;}
+  .count-badge{
+    font-size:10.5px; font-weight:700; background:#1a2230; color:var(--muted);
+    border-radius:20px; padding:2px 9px;
+  }
+
+  .issue-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px; margin-bottom:10px;
+  }
+  .issue-card .row1{display:flex; align-items:center; gap:10px; margin-bottom:6px; flex-wrap:wrap;}
+  .issue-card .date{font-size:10.5px; color:var(--muted); font-family:var(--font-mono);}
+  .issue-card .title{font-size:13.5px; font-weight:700; color:#fff;}
+  .issue-card .label-tag{
+    font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px;
+    padding:2px 7px; border-radius:4px;
+  }
+  .label-tag.issue{background:#2a1717; color:var(--red);}
+  .label-tag.fix{background:#11271a; color:var(--green);}
+  .issue-card p{font-size:12.5px; line-height:1.55; margin:6px 0;}
+  .issue-card p .lbl{color:var(--muted); font-weight:600;}
+
+  .bug-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:12px 16px; margin-bottom:8px; display:flex; justify-content:space-between; gap:14px; align-items:flex-start;
+  }
+  .bug-card .msg{font-size:12.5px; line-height:1.5; color:var(--text);}
+  .bug-card .ctx{font-size:10.5px; color:var(--muted); margin-top:5px;}
+  .bug-card .right{text-align:right; flex-shrink:0;}
+  .bug-card .when{font-size:10px; color:var(--muted); font-family:var(--font-mono); white-space:nowrap;}
+  .status-pill{font-size:9.5px; font-weight:700; text-transform:uppercase; padding:2px 8px; border-radius:20px; margin-top:6px; display:inline-block;}
+  .status-pill.open{background:#2a1717; color:var(--red);}
+  .status-pill.fixed{background:#11271a; color:var(--green);}
+  .status-pill.wontfix{background:#241f12; color:var(--amber);}
+
+  .empty-state{font-size:12.5px; color:var(--muted); padding:18px; text-align:center; border:1px dashed var(--border); border-radius:10px;}
+
+  /* ---------- Updates panel ---------- */
+  .update-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:16px 18px; margin-bottom:12px;
+  }
+  .update-card .date{font-size:10.5px; color:var(--muted); font-family:var(--font-mono); margin-bottom:4px;}
+  .update-card .title{font-size:14px; font-weight:700; color:#fff; margin-bottom:6px;}
+  .update-card .body{font-size:12.5px; line-height:1.6; color:var(--text); margin-bottom:10px;}
+  .shot-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .shot-box{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:7px;
+    min-height:70px; display:flex; align-items:center; justify-content:center;
+    font-size:10.5px; color:var(--muted); text-align:center; padding:8px;
+  }
+  .shot-box img{max-width:100%; border-radius:5px; display:block;}
+  .shot-label{font-size:9.5px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); margin-bottom:4px;}
+
+  /* ---------- Content panel (V2 placeholder) ---------- */
+  .v2-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:26px; text-align:center; margin-bottom:18px;
+  }
+  .v2-card .icon{font-size:30px; margin-bottom:8px;}
+  .v2-card h3{font-size:16px; color:#fff; margin:0 0 8px;}
+  .v2-card p{font-size:12.5px; color:var(--muted); max-width:520px; margin:0 auto;}
+  .v2-list{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:18px; text-align:left;}
+  @media (max-width:760px){.v2-list{grid-template-columns:1fr;}}
+  .v2-item{background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:12px 14px;}
+  .v2-item .t{font-size:12.5px; font-weight:700; color:var(--text); margin-bottom:3px;}
+  .v2-item .d{font-size:11.5px; color:var(--muted); line-height:1.5;}
+
+  footer{text-align:center; font-size:10.5px; color:var(--muted); padding:24px 22px 40px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <img src="logo.png" alt="" onerror="this.style.display='none'">
+    <div>
+      <h1>Chart Quest — Founder Dashboard<span class="tag">V1</span></h1>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="lastUpdated">not loaded yet</span>
+    <button id="refreshBtn" onclick="loadAll()">↻ Refresh</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="stats">📊 Statistics</button>
+  <button class="tab-btn" data-tab="issues">🛠 Issues</button>
+  <button class="tab-btn" data-tab="updates">📦 Updates</button>
+  <button class="tab-btn" data-tab="content">🎬 Content</button>
+</nav>
+
+<main>
+
+  <!-- ============ STATISTICS ============ -->
+  <section class="panel active" id="panel-stats">
+    <div class="section-head">
+      <h2>Live Statistics</h2>
+      <span class="meta">Pulled live from Supabase · auto-refreshes every 60s</span>
+    </div>
+
+    <div id="statsError">Couldn't reach the live database just now. Showing the last known numbers (or blanks if none loaded yet). Click Refresh to try again.</div>
+
+    <div class="stat-grid" id="primaryStats">
+      <div class="stat-card"><div class="label">Current Players</div><div class="value" id="s_active24">—</div><div class="note">Unique players active in the last 24h. No real-time "online now" tracking yet — this is the closest live proxy.</div></div>
+      <div class="stat-card"><div class="label">Total Sign-Ups</div><div class="value green" id="s_signups">—</div><div class="note">Accounts created (email/password or guest-converted).</div></div>
+      <div class="stat-card"><div class="label">Reached The End</div><div class="value" id="s_reachedend">—</div><div class="note">Players who completed all 6 Hours of the curriculum.</div></div>
+      <div class="stat-card"><div class="label">Total Downloads</div><div class="value muted" id="s_downloads">N/A</div><div class="note">Browser game, no installable build yet — nothing to count as a "download."</div></div>
+      <div class="stat-card"><div class="label">Total Revenue</div><div class="value muted" id="s_revenue">$0</div><div class="note">No monetization is live yet (course/paid tier is on the roadmap).</div></div>
+    </div>
+
+    <div class="stat-grid" id="secondaryStats" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card"><div class="label">Total Plays (page loads)</div><div class="value" id="s_visits">—</div><div class="note">Counted once per page load, anonymous, no PII.</div></div>
+      <div class="stat-card"><div class="label">Active Players (7d)</div><div class="value" id="s_active7">—</div></div>
+      <div class="stat-card"><div class="label">Avg Player Level</div><div class="value" id="s_avglevel">—</div></div>
+      <div class="stat-card"><div class="label">Bug Reports</div><div class="value amber" id="s_bugs">—</div><div class="note" id="s_bugs_note">open / total</div></div>
+    </div>
+
+    <div class="founder-note">
+      <b>Heads up:</b> the numbers above are currently mostly my own test traffic from building and verifying this dashboard today (2026-06-16) — not real player activity yet. They'll become meaningful once the game gets real visitors.<br><br>
+      <b>What I'd add for V3:</b> a visit → sign-up → faction-pick → reached-end conversion funnel, Day-1/Day-7 retention curves, average session length and where players quit, and a revenue breakdown once the paid course ships. Once Dashboard V2's content pipeline exists, social mentions/shares would fit well here too.
+    </div>
+  </section>
+
+  <!-- ============ ISSUES ============ -->
+  <section class="panel" id="panel-issues">
+    <div class="section-head">
+      <h2>Issues Log</h2>
+      <span class="meta">Problem → what I did to fix it. Kept for my own reference as much as yours.</span>
+    </div>
+
+    <div class="subhead">🛠 Resolved — Code &amp; Game Issues <span class="count-badge" id="resolvedCount">0</span></div>
+    <div id="resolvedIssues"></div>
+
+    <div class="subhead">🐞 Open Bug Reports — submitted by players <span class="count-badge" id="bugCount">…</span></div>
+    <div id="bugReports"><div class="empty-state">Loading live bug reports…</div></div>
+  </section>
+
+  <!-- ============ UPDATES ============ -->
+  <section class="panel" id="panel-updates">
+    <div class="section-head">
+      <h2>Update Log</h2>
+      <span class="meta">Newest first · plain-language, no need to replay the game to know what changed</span>
+    </div>
+    <div id="updatesList"></div>
+  </section>
+
+  <!-- ============ CONTENT (V2 placeholder) ============ -->
+  <section class="panel" id="panel-content">
+    <div class="v2-card">
+      <div class="icon">🎬</div>
+      <h3>Content &amp; Social — coming in Dashboard V2</h3>
+      <p>This panel lights up once the content/social system is built. Planned for V2:</p>
+      <div class="v2-list">
+        <div class="v2-item"><div class="t">Replay Manager</div><div class="d">Browse and pull any recorded run/trade replay for clipping.</div></div>
+        <div class="v2-item"><div class="t">Content Export System</div><div class="d">One-click export of gameplay moments in social-ready formats.</div></div>
+        <div class="v2-item"><div class="t">Special Events Log</div><div class="d">Auto-captures stand-out in-game moments worth turning into content.</div></div>
+        <div class="v2-item"><div class="t">"Record Everything" System</div><div class="d">Background capture pipeline so nothing worth posting gets missed.</div></div>
+        <div class="v2-item"><div class="t">Content Instrumentation</div><div class="d">Tagging/metadata on captured moments so they're searchable later.</div></div>
+        <div class="v2-item"><div class="t">AI Marketing/Social Pipeline</div><div class="d">An AI pipeline to help draft and schedule social content from captured moments.</div></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>Dream Home Spotlight · Chart Quest internal dashboard — not linked from the game, for founder eyes only.</footer>
+
+<script>
+const SUPA_URL  = 'https://ymxppzhczvmiuoncuqqu.supabase.co';
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
+
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function rpc(name, body = {}) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: { apikey: SUPA_ANON, Authorization: `Bearer ${SUPA_ANON}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(name + ' returned ' + res.status);
+  return res.json();
+}
+
+/* ---------------- Tabs ---------------- */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ---------------- Statistics ---------------- */
+async function loadStats() {
+  const errBox = document.getElementById('statsError');
+  try {
+    const s = await rpc('get_dashboard_stats');
+    errBox.style.display = 'none';
+    document.getElementById('s_active24').textContent = s.active_players_24h ?? 0;
+    document.getElementById('s_signups').textContent  = s.total_signups ?? 0;
+    document.getElementById('s_reachedend').textContent = s.players_reached_end ?? 0;
+    document.getElementById('s_visits').textContent   = s.total_visits ?? 0;
+    document.getElementById('s_active7').textContent  = s.active_players_7d ?? 0;
+    document.getElementById('s_avglevel').textContent = s.avg_player_level ?? '—';
+    document.getElementById('s_bugs').textContent      = `${s.open_bug_reports ?? 0} / ${s.total_bug_reports ?? 0}`;
+    document.getElementById('bugCount').textContent    = s.open_bug_reports ?? 0;
+    return s;
+  } catch (e) {
+    errBox.style.display = 'block';
+    console.error('loadStats failed', e);
+  }
+}
+
+/* ---------------- Bug reports (live) ---------------- */
+async function loadBugs() {
+  const box = document.getElementById('bugReports');
+  try {
+    const bugs = await rpc('get_recent_bug_reports', { p_limit: 50 });
+    if (!bugs || bugs.length === 0) {
+      box.innerHTML = '<div class="empty-state">No bug reports yet — nice.</div>';
+      return;
+    }
+    box.innerHTML = bugs.map(b => {
+      const ctxBits = [];
+      if (b.context) {
+        if (b.context.level)   ctxBits.push('Level ' + esc(b.context.level));
+        if (b.context.faction) ctxBits.push(esc(b.context.faction));
+      }
+      const when = b.created_at ? new Date(b.created_at).toLocaleString() : '';
+      const status = (b.status || 'open').toLowerCase();
+      return `<div class="bug-card">
+        <div>
+          <div class="msg">${esc(b.message)}</div>
+          ${ctxBits.length ? `<div class="ctx">${ctxBits.join(' · ')}</div>` : ''}
+        </div>
+        <div class="right">
+          <div class="when">${esc(when)}</div>
+          <span class="status-pill ${status}">${esc(status)}</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state">Couldn\'t load live bug reports right now.</div>';
+    console.error('loadBugs failed', e);
+  }
+}
+
+/* ---------------- Resolved issues (static log — edit this array to add entries) ---------------- */
+const issuesLog = [
+  {
+    date: '2026-06-16',
+    title: "Visit counter wasn't recording real plays",
+    issue: "The page-view counter feeding the \"plays / current players\" stat was silently failing on every load — it called the database in a way that threw an error which got swallowed, so the network request never actually went out. The dashboard would have shown zero plays forever.",
+    fix: "Rewrote the call to match the working pattern used everywhere else in the game's code, then proved the fix by reloading the live page and watching the count increase in the database in real time."
+  },
+  {
+    date: '2026-06-16',
+    title: "A leftover/typo'd variable was crashing the render loop",
+    issue: "A variable that no longer existed (and, separately, an earlier typo — irr instead of rr) was being read inside the drawing loop. Either one silently stopped the turtle and portals from drawing once triggered.",
+    fix: "Replaced the dead/typo'd references with the correct variables and verified the turtle and portals render correctly through a full playthrough."
+  },
+  {
+    date: '2026-06-15 / 06-16',
+    title: "Wrong crypto logos on coins + the faction-select screen",
+    issue: "Several coin ticker icons (BTC, ETH, SOL, etc.) showed the wrong logo in both the main game and the faction-selection screen, and an earlier version that loaded them from a CDN broke completely whenever that CDN was unreachable.",
+    fix: "Replaced the CDN-dependent images with reliable inline icons so logos always render regardless of network conditions, and corrected the logo-to-coin mapping."
+  },
+  {
+    date: '2026-06-16',
+    title: "Bottom action bar was misaligned, no visible wallet balance",
+    issue: "Daily Drill / Journal / Wallet / Sign-in buttons sat at different heights instead of one clean row, and players had no on-screen way to see their Shell balance.",
+    fix: "Re-laid-out the bottom bar into a single aligned row and added a Shell Wallet display so balance is always visible."
+  },
+  {
+    date: '2026-06-15',
+    title: "Game could get stuck after sign-in or picking a faction",
+    issue: "In some cases the game wouldn't start, or would immediately re-halt, right after a player logged in, played as a guest, or picked a faction — leftover state from the previous screen wasn't being cleared.",
+    fix: "Reset the relevant state at each of those transitions so the game reliably launches fresh every time."
+  },
+  {
+    date: '2026-06-15',
+    title: "Couldn't type into the login/sign-up form",
+    issue: "The game's keyboard controls (movement, jump, etc.) intercepted every keystroke, including ones meant for the email/password fields, so typing didn't work.",
+    fix: "Exempted text inputs from the game's keyboard handler so typing works normally in any form."
+  },
+  {
+    date: '2026-06-15',
+    title: "Full security audit — code &amp; database hardening",
+    issue: "Before going live, ran a full audit and found: a publicly-callable elevated-privilege database function, game progress (shells/XP/level) being written straight from the browser with no server-side check — an easy cheat target, missing HTTP security headers, no integrity check on the loaded Supabase script, and a few lower-severity gaps (storage-abuse limits, missing indexes, an unvalidated price feed).",
+    fix: "Locked down the risky database function, added a server-side check that validates every progress update (so editing shells=9999999 in DevTools no longer works), added full security headers + a strict content policy, pinned the script integrity hash, added size/row limits against storage abuse, added database indexes, and validated the live price feed. Full write-up in SECURITY_AUDIT.md — score went from 48/100 to 95/100."
+  },
+  {
+    date: '2026-06-15',
+    title: "Code was wide open to copying",
+    issue: "Anyone could view-source the game, copy the whole file, and host a working clone on their own site — game logic, backend wiring, everything.",
+    fix: "Added a build step that scrambles the code before it ships, plus a domain check that refuses to run the game on any site other than the official one."
+  },
+  {
+    date: '2026-06-15',
+    title: "Leftover duplicate game file in the repo",
+    issue: "An old, outdated copy of the game was still sitting in the public GitHub repo next to the current version — risk of it getting served by accident or confusing future edits.",
+    fix: "Removed it. The repo now has a single source of truth."
+  }
+];
+
+function renderIssues() {
+  document.getElementById('resolvedCount').textContent = issuesLog.length;
+  document.getElementById('resolvedIssues').innerHTML = issuesLog.map(it => `
+    <div class="issue-card">
+      <div class="row1">
+        <span class="date">${esc(it.date)}</span>
+        <span class="title">${esc(it.title)}</span>
+      </div>
+      <p><span class="label-tag issue">Issue</span></p>
+      <p>${esc(it.issue)}</p>
+      <p><span class="label-tag fix">Fix</span></p>
+      <p>${esc(it.fix)}</p>
+    </div>
+  `).join('');
+}
+
+/* ---------------- Update log (static — edit this array to add entries) ---------------- */
+const updatesLog = [
+  {
+    date: '2026-06-16',
+    title: "Added a \"Report a Bug\" button + anonymous visit tracking",
+    body: "Players can now flag a problem right from inside the account panel — no need to message you separately. Also added a simple, anonymous counter so you can see how many times the game has actually been opened (no personal info collected)."
+  },
+  {
+    date: '2026-06-16',
+    title: "Fixed the visit counter — it wasn't actually counting",
+    body: "Caught and fixed a bug where the counter above looked fine but never saved anything. Confirmed it now records every page load correctly."
+  },
+  {
+    date: '2026-06-16',
+    title: "Cleaned up the bottom toolbar + added your wallet balance on screen",
+    body: "Daily Drill, Journal, Wallet, and Sign-in buttons now sit in one neat row instead of being scattered, and your Shell balance is now visible at all times."
+  },
+  {
+    date: '2026-06-16',
+    title: "Fixed coin logos + a crash that was hiding the turtle",
+    body: "Coin icons (BTC, ETH, SOL, etc.) now show the correct logo everywhere, and fixed a bug that was silently breaking the turtle/portal animation under certain conditions."
+  },
+  {
+    date: '2026-06-15',
+    title: "Locked the game down for public launch",
+    body: "Ran a full security review and fixed everything it found: players can no longer cheat their stats by editing values in the browser, the code is now scrambled before it's published, and the site only runs on the official domain."
+  },
+  {
+    date: '2026-06-15',
+    title: "Fixed the login screen + made game-start reliable",
+    body: "You can now actually type into the email/password fields, and the game reliably starts fresh every time after signing in, playing as a guest, or picking a faction."
+  },
+  {
+    date: '2026-06-15',
+    title: "Added faction selection (pick your coin)",
+    body: "New players now choose a faction — BTC, ETH, SOL, XRP, or DOGE — at the start, each with its own real chart data and look."
+  },
+  {
+    date: '2026-06-15',
+    title: "Renamed Shell Trade → Chart Quest",
+    body: "Gave the game its current name and updated the branding to match."
+  }
+];
+
+function renderUpdates() {
+  document.getElementById('updatesList').innerHTML = updatesLog.map((u, i) => `
+    <div class="update-card">
+      <div class="date">${esc(u.date)}</div>
+      <div class="title">${esc(u.title)}</div>
+      <div class="body">${esc(u.body)}</div>
+      ${i === 0 ? `<div class="shot-row">
+        <div class="shot-box"><div><div class="shot-label">Before</div>screenshot logging starts with this dashboard — none captured yet</div></div>
+        <div class="shot-box"><div><div class="shot-label">After</div>screenshot logging starts with this dashboard — none captured yet</div></div>
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+
+/* ---------------- Boot ---------------- */
+async function loadAll() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true; btn.textContent = 'Refreshing…';
+  await Promise.all([loadStats(), loadBugs()]);
+  document.getElementById('lastUpdated').textContent = 'updated ' + new Date().toLocaleTimeString();
+  btn.disabled = false; btn.textContent = '↻ Refresh';
+}
+
+renderIssues();
+renderUpdates();
+loadAll();
+setInterval(loadAll, 60000);
+</script>
+</body>
+</html>

@@ -1017,6 +1017,39 @@
     overlay.style.display = 'block';
   }
 
+  // Per-coin logo mark — self-contained vector icons (no external image
+  // requests, so they can never 404/CORS-fail like a hotlinked CDN icon
+  // would). BTC/DOGE use their real currency glyphs (₿ / Ð); ETH/SOL/XRP/BNB
+  // get a small brand-flavoured vector mark instead of a generic placeholder.
+  function coinIconSVG(ticker, color) {
+    switch (ticker) {
+      case 'BTC':  return '₿';
+      case 'DOGE': return 'Đ';
+      case 'ETH':
+        return '<svg viewBox="0 0 24 24" width="30" height="30" style="display:block">'
+          + '<polygon points="12,1.5 19.5,12 12,16.2 4.5,12" fill="' + color + '"/>'
+          + '<polygon points="12,18 19.5,13.6 12,22.5 4.5,13.6" fill="' + color + '" opacity="0.55"/>'
+          + '</svg>';
+      case 'SOL':
+        return '<svg viewBox="0 0 24 24" width="28" height="28" style="display:block">'
+          + '<rect x="2.5" y="4.5" width="19" height="3.6" rx="1.8" fill="' + color + '"/>'
+          + '<rect x="2.5" y="10.2" width="19" height="3.6" rx="1.8" fill="' + color + '" opacity="0.78"/>'
+          + '<rect x="2.5" y="15.9" width="19" height="3.6" rx="1.8" fill="' + color + '" opacity="0.52"/>'
+          + '</svg>';
+      case 'XRP':
+        return '<svg viewBox="0 0 24 24" width="28" height="28" style="display:block">'
+          + '<path d="M2.5 6.5 Q9 15 12 6.5 Q15 15 21.5 6.5" stroke="' + color + '" stroke-width="2.3" fill="none" stroke-linecap="round"/>'
+          + '<path d="M2.5 17.5 Q9 9 12 17.5 Q15 9 21.5 17.5" stroke="' + color + '" stroke-width="2.3" fill="none" stroke-linecap="round"/>'
+          + '</svg>';
+      case 'BNB':
+        return '<svg viewBox="0 0 24 24" width="28" height="28" style="display:block">'
+          + '<polygon points="12,2 21,12 12,22 3,12" fill="none" stroke="' + color + '" stroke-width="2.1"/>'
+          + '<polygon points="12,8.6 15.4,12 12,15.4 8.6,12" fill="' + color + '"/>'
+          + '</svg>';
+      default: return '';
+    }
+  }
+
   function buildFactionCard(key, isChange) {
     const f = FACTION_CONFIG[key];
     const meta = FACTION_META[key] || {};
@@ -1024,7 +1057,6 @@
                 + '<span style="color:#1e2a36">' + '★'.repeat(5 - f.safetyStars) + '</span>';
     const isCurrent = localStorage.getItem('cq_faction') === key;
     const volPcts = {BTC:'34%',ETH:'54%',SOL:'82%',BNB:'60%',DOGE:'90%',XRP:'70%'};
-    const logoUrl = 'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/' + f.ticker.toLowerCase() + '.svg';
     const borderCol = isCurrent ? f.color : f.color + '42';
     const shadowVal = isCurrent ? '0 0 28px ' + f.glow : '';
     const recBadge = meta.recommended ? '<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#16c784;color:#032515;font-size:7.5px;font-weight:700;letter-spacing:1.5px;padding:3px 10px;border-radius:20px;white-space:nowrap;z-index:2;">★ RECOMMENDED</div>' : '';
@@ -1040,7 +1072,7 @@
   ${recBadge}
   <div style="padding:${meta.recommended ? 36 : 26}px 16px 14px;text-align:center;background:linear-gradient(180deg,${f.color}1c 0%,transparent 100%);border-bottom:1px solid ${f.color}18;">
     <div style="width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;border:2px solid ${f.color}55;background:${f.color}20;font-size:28px;font-weight:900;line-height:1;">
-      ${f.emoji}
+      ${coinIconSVG(f.ticker, f.color)}
     </div>
     <div style="font-size:14px;font-weight:700;color:#fff;letter-spacing:0.3px;">${f.name}</div>
     <div style="font-size:8px;color:${f.color};letter-spacing:3px;font-weight:700;margin-top:2px;">${f.ticker}</div>
@@ -1080,7 +1112,6 @@
   function buildLockedFactionCard(key) {
     const f  = FACTION_CONFIG[key];
     const meta = FACTION_META[key] || {};
-    const logoUrl = 'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/' + f.ticker.toLowerCase() + '.svg';
     return `
 <div style="
   flex:1 1 110px;min-width:100px;max-width:173px;border-radius:13px;overflow:hidden;opacity:0.45;
@@ -1088,8 +1119,8 @@
   font-family:'Inter',-apple-system,sans-serif;
 ">
   <div style="padding:16px 14px 12px;text-align:center;background:#08090f;border-bottom:1px solid #141e2a;">
-    <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 7px;border:1px solid #1e2a36;background:#1a2030;font-size:18px;font-weight:900;line-height:1;color:#3a4858;">
-      ${f.emoji}
+    <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 7px;border:1px solid #1e2a36;background:#1a2030;font-size:18px;font-weight:900;line-height:1;color:#3a4858;opacity:0.6;">
+      ${coinIconSVG(f.ticker, '#3a4858')}
     </div>
     <div style="font-size:12px;font-weight:700;color:#3a4858;">${f.name}</div>
     <div style="font-size:7.5px;letter-spacing:2.5px;color:#2a3848;margin-top:2px;">${f.ticker}</div>
@@ -5865,6 +5896,50 @@ function rr(x, y, w, h, r) {
   else ctx.rect(x, y, w, h);
 }
 
+// Canvas version of coinIconSVG — same brand marks, drawn with primitives
+// (no Image preload / network round-trip) so the HUD coin badge can never
+// show a broken-image icon. cx/cy = centre, s = icon half-size in px.
+function drawCoinGlyph(ticker, cx, cy, s, color) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(1, s * 0.26);
+  if (ticker === 'BTC' || ticker === 'DOGE') {
+    ctx.font = 'bold ' + Math.round(s * 1.9) + 'px ' + MONO;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(ticker === 'BTC' ? '₿' : 'Đ', 0, 1);
+  } else if (ticker === 'ETH') {
+    ctx.beginPath();
+    ctx.moveTo(0, -s); ctx.lineTo(s * 0.78, 0); ctx.lineTo(0, s * 0.35); ctx.lineTo(-s * 0.78, 0);
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    ctx.moveTo(0, s * 0.35); ctx.lineTo(s * 0.78, 0); ctx.lineTo(0, s); ctx.lineTo(-s * 0.78, 0);
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+  } else if (ticker === 'SOL') {
+    const w = s * 1.75, h = s * 0.42;
+    [[-s * 0.62, 1], [0, 0.78], [s * 0.62, 0.52]].forEach(([dy, op]) => {
+      ctx.globalAlpha = op;
+      rr(-w / 2, dy - h / 2, w, h, h / 2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  } else if (ticker === 'XRP') {
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-s, -s * 0.32); ctx.quadraticCurveTo(0, s * 0.85, s, -s * 0.32); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-s, s * 0.85); ctx.quadraticCurveTo(0, -s * 0.32, s, s * 0.85); ctx.stroke();
+  } else if (ticker === 'BNB') {
+    ctx.beginPath();
+    ctx.moveTo(0, -s); ctx.lineTo(s * 0.85, 0); ctx.lineTo(0, s); ctx.lineTo(-s * 0.85, 0);
+    ctx.closePath(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.32); ctx.lineTo(s * 0.3, 0); ctx.lineTo(0, s * 0.32); ctx.lineTo(-s * 0.3, 0);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
 /* ---- Shell the turtle ----
    Drawn inside the collision box (46x30), facing right.
    Layers back-to-front: legs → jetpack → head+sunglasses → dome shell
@@ -6745,7 +6820,7 @@ function render(cameraX) {
     ctx.font = 'bold 10px ' + MONO; ctx.textAlign = 'center';
     ctx.fillStyle = '#c9a0ff';
     ctx.fillText(p.label, sx, sy - r - 16);
-    ctx.font = '9px ' + SANS2;
+    ctx.font = '9px ' + SANS;
     ctx.fillStyle = `rgba(200,160,255,${0.6 + 0.4 * Math.sin(p.glowT * 2)})`;
     ctx.fillText(p.sublabel, sx, sy - r - 5);
     ctx.textAlign = 'left';
@@ -6996,8 +7071,9 @@ function drawHUD() {
     rr(bx, by, bw, bh, 5); ctx.fill();
     ctx.strokeStyle = fc.color + '60'; ctx.lineWidth = 1;
     rr(bx, by, bw, bh, 5); ctx.stroke();
+    drawCoinGlyph(fc.ticker, bx + 13, by + 9, 5.5, fc.color);
     ctx.font = 'bold 9px ' + MONO; ctx.fillStyle = fc.color; ctx.textAlign = 'left';
-    ctx.fillText(fc.emoji + ' ' + fc.ticker, bx + 7, by + 12);
+    ctx.fillText(fc.ticker, bx + 22, by + 12);
     ctx.restore();
   }
   ctx.textAlign = 'left';

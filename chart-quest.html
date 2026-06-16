@@ -159,14 +159,24 @@
     background: #0d1320; color: #4a5666;
   }
 
+  /* --- Bottom action bar: Daily Drill / Journal / Wallet / Account, one row --- */
+  #bottomBar {
+    position: fixed; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom));
+    z-index: 15; display: flex; justify-content: center; align-items: stretch;
+    gap: 8px; padding: 0 10px; flex-wrap: nowrap;
+  }
+  #bottomBar button {
+    flex: 1 1 0; min-width: 0; max-width: 160px;
+    cursor: pointer; font: bold 11px var(--font-ui); letter-spacing: 0.5px;
+    padding: 9px 8px; border-radius: 8px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    user-select: none; -webkit-user-select: none;
+  }
+
   /* --- Daily Drill + streak --- */
   #dailyBtn {
-    position: fixed; left: 12px; bottom: calc(54px + env(safe-area-inset-bottom)); z-index: 15; cursor: pointer;
-    font: bold 11px var(--font-ui); letter-spacing: 0.5px;
-    padding: 9px 13px; border-radius: 8px; white-space: nowrap;
     background: #0d1320; border: 1px solid #ff9f43; color: #ff9f43;
     box-shadow: 0 0 12px rgba(255,159,67,0.2);
-    user-select: none; -webkit-user-select: none;
   }
   #dailyBtn.done { border-color: #2a3d55; color: #7d8aa0; box-shadow: none; }
   #dailyBtn .dot { display:inline-block; width:7px; height:7px; border-radius:50%;
@@ -289,14 +299,44 @@
 
   /* --- Trading Journal (persistent trade log + notes) --- */
   #journalBtn {
-    position: fixed; left: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 15; cursor: pointer;
-    font: bold 11px var(--font-ui); letter-spacing: 0.5px;
-    padding: 9px 13px; border-radius: 8px; white-space: nowrap;
     background: #0d1320; border: 1px solid #4cc3ff; color: #4cc3ff;
     box-shadow: 0 0 12px rgba(76,195,255,0.18);
-    user-select: none; -webkit-user-select: none;
   }
   #journalBtn:hover { background: #14222f; }
+
+  /* --- Shell Wallet (currency home) --- */
+  #walletBtn {
+    background: #0d1320; border: 1px solid #ffd60a; color: #ffd60a;
+    box-shadow: 0 0 12px rgba(255,214,10,0.18);
+  }
+  #walletBtn:hover { background: #14222f; }
+  #shellWalletPanel {
+    display: none; position: fixed; inset: 0; z-index: 71;
+    background: #080c12; flex-direction: column;
+    font: 13px var(--font-ui); color: #c7d1de;
+  }
+  #shellWalletPanel.open { display: flex; }
+  #swHeader {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px 12px; border-bottom: 1px solid #1c2737; flex-shrink: 0;
+  }
+  #swHeader .swt { font-weight: bold; font-size: 14px; letter-spacing: 2px; color: #ffd60a; }
+  #swClose {
+    background: none; border: 1px solid #2a3442; border-radius: 7px;
+    color: #7d8aa0; font: bold 13px var(--font-ui); padding: 7px 13px; cursor: pointer;
+  }
+  #swClose:hover { color: #e6edf3; border-color: #ffd60a; }
+  #swBody { flex: 1; overflow-y: auto; padding: 16px 18px 28px; }
+  #swBalanceCard {
+    text-align: center; background: #0d1320; border: 1px solid #2a3442;
+    border-radius: 14px; padding: 22px 16px; margin-bottom: 18px;
+  }
+  #swBalanceLabel { font-size: 10px; letter-spacing: 2px; color: #7d8aa0; }
+  #swBalance { font-size: 38px; font-weight: bold; color: #ffd60a; font-family: var(--font-mono); margin-top: 6px; }
+  #swOpen { font-size: 13px; font-weight: bold; font-family: var(--font-mono); margin-top: 4px; min-height: 16px; }
+  #swTagline { font-size: 12px; color: #7d8aa0; margin-top: 10px; }
+  #swStatsLabel, #swListLabel { font-size: 10px; letter-spacing: 2px; color: #7d8aa0; margin: 4px 2px 8px; }
+  #swStats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
   #journalPanel {
     display: none; position: fixed; inset: 0; z-index: 70;
     background: #080c12; flex-direction: column;
@@ -441,14 +481,10 @@
     color: #7d8aa0; cursor: pointer; margin-top: 4px; }
   #authGuestBtn:hover { color: #c7d1de; border-color: #4a5666; }
 
-  /* --- Account button (bottom-right HUD) --- */
+  /* --- Account button (bottom action bar) --- */
   #accountBtn {
-    position: fixed; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 15; cursor: pointer;
-    font: bold 11px var(--font-ui); letter-spacing: 0.5px;
-    padding: 9px 13px; border-radius: 8px; white-space: nowrap;
     background: #0d1320; border: 1px solid #7c4dff; color: #c9b3ff;
     box-shadow: 0 0 10px rgba(124,77,255,0.15);
-    user-select: none; -webkit-user-select: none;
   }
   /* --- Account panel (slide-up sheet) --- */
   #accountPanel {
@@ -497,9 +533,6 @@
   </div>
 </div>
 
-<!-- Account button (bottom-right, visible during game) -->
-<button id="accountBtn" style="display:none">👤 SIGN IN</button>
-
 <!-- Account panel -->
 <div id="accountPanel">
   <div id="accountCard">
@@ -510,6 +543,34 @@
     <button class="ap-btn" id="apChangeFaction" style="background:none;border:1px solid #2a3442;color:#c9a0ff;">⚡ Change Faction</button>
     <button class="ap-btn" id="apSignOut">Sign out</button>
     <button class="ap-btn" id="apClose">Close</button>
+  </div>
+</div>
+
+<!-- Bottom action bar: Daily Drill / Journal / Shell Wallet / Account — one aligned row -->
+<div id="bottomBar">
+  <button id="dailyBtn">&#128293; DAILY DRILL</button>
+  <button id="journalBtn">&#128214; JOURNAL</button>
+  <button id="walletBtn">&#128032; WALLET</button>
+  <button id="accountBtn" style="display:none">👤 SIGN IN</button>
+</div>
+
+<!-- Shell Wallet: always-visible home for the player's SHELLS balance -->
+<div id="shellWalletPanel">
+  <div id="swHeader">
+    <span class="swt">&#128032; SHELL WALLET</span>
+    <button id="swClose">CLOSE &#10005;</button>
+  </div>
+  <div id="swBody">
+    <div id="swBalanceCard">
+      <div id="swBalanceLabel">YOUR BALANCE</div>
+      <div id="swBalance">0</div>
+      <div id="swOpen"></div>
+      <div id="swTagline">Your SHELLS always live here in your Shell Wallet.</div>
+    </div>
+    <div id="swStatsLabel">LIFETIME STATS</div>
+    <div id="swStats"></div>
+    <div id="swListLabel">RECENT ACTIVITY</div>
+    <div id="swList"></div>
   </div>
 </div>
 
@@ -573,7 +634,6 @@
 </div>
 
 <!-- Trading Journal: persistent log of every trade + notes -->
-<button id="journalBtn">&#128214; JOURNAL</button>
 <div id="journalPanel">
   <div id="jHeader">
     <span class="jt">&#128214; TRADING JOURNAL</span>
@@ -590,7 +650,6 @@
 </div>
 
 <!-- Daily Drill + streak -->
-<button id="dailyBtn">&#128293; DAILY DRILL</button>
 <div id="dailyDrill">
   <div id="ddHeader">
     <span class="ddt">&#128293; DAILY DRILL</span>
@@ -4681,7 +4740,7 @@ function openJournalLink(type, ref) {
 let journalOpen = false, journalPrevPaused = false;
 // Can be opened from gameplay (HUD button), the intermission, or the trade panel.
 function openJournal(tab) {
-  if (journalOpen || lessonOpen || htfZoomState || candleAcademy.active || (introFlow.active && introFlow.phase !== 'run')) return;
+  if (journalOpen || walletOpen || lessonOpen || htfZoomState || candleAcademy.active || (introFlow.active && introFlow.phase !== 'run')) return;
   if (tab) journalTab = tab;
   renderJournalSection();
   $('journalPanel').classList.add('open');
@@ -4852,7 +4911,7 @@ function updateDailyBtn() {
   else { b.classList.remove('done'); b.innerHTML = '🔥 DAILY DRILL <span class="dot"></span>'; }
 }
 function openDailyDrill() {
-  if (dailyOpen || lessonOpen || htfZoomState || candleAcademy.active || (introFlow.active && introFlow.phase !== 'run')) return;
+  if (dailyOpen || walletOpen || lessonOpen || htfZoomState || candleAcademy.active || (introFlow.active && introFlow.phase !== 'run')) return;
   renderDailyStreakBar();
   if (ddDoneToday()) renderDailyDone();
   else { ddState = ddBuild(); renderDailyRound(); }
@@ -4862,6 +4921,48 @@ function openDailyDrill() {
 function closeDailyDrill() { $('dailyDrill').classList.remove('open'); paused = dailyPrevPaused; dailyOpen = false; }
 $('dailyBtn').addEventListener('click', openDailyDrill);
 $('ddClose').addEventListener('click', closeDailyDrill);
+
+/* ---------- Shell Wallet: always-visible home for the player's SHELLS ---------- */
+let walletOpen = false, walletPrevPaused = false;
+function renderWalletSection() {
+  const uPnL = trade ? trade.riskAmt * (trade.leverage || 1) * tradeR() : 0;
+  $('swBalance').textContent = fmt(player.shells) + ' 🐚';
+  const openEl = $('swOpen');
+  if (trade) {
+    openEl.style.color = uPnL >= 0 ? '#16c784' : '#ea3943';
+    openEl.textContent = (uPnL >= 0 ? '+' : '−') + fmt(Math.abs(uPnL)) + ' OPEN (in active trade, not yet settled)';
+  } else {
+    openEl.textContent = '';
+  }
+  $('swStats').innerHTML = renderJournalStats();
+  $('swList').innerHTML = renderJournalList();
+}
+function openShellWallet() {
+  if (walletOpen || journalOpen || dailyOpen || lessonOpen || htfZoomState || candleAcademy.active || (introFlow.active && introFlow.phase !== 'run')) return;
+  renderWalletSection();
+  $('shellWalletPanel').classList.add('open');
+  walletPrevPaused = paused; paused = true; walletOpen = true;
+}
+function closeShellWallet() {
+  $('shellWalletPanel').classList.remove('open');
+  paused = walletPrevPaused; walletOpen = false;
+}
+$('walletBtn').addEventListener('click', openShellWallet);
+$('swClose').addEventListener('click', closeShellWallet);
+// Notes/charts inside the wallet's activity list reuse the journal's own click/input handlers,
+// so route them the same way (view full chart / save note) instead of duplicating logic.
+$('swList').addEventListener('input', (e) => {
+  const ta = e.target;
+  if (!ta.classList || !ta.classList.contains('jNote')) return;
+  const id = +ta.getAttribute('data-id');
+  const entry = journal.find(x => x.id === id);
+  if (entry) { entry.note = ta.value; saveJournal(); }
+});
+$('swList').addEventListener('click', (e) => {
+  const view = e.target.closest ? e.target.closest('.jView') : null;
+  if (view) openJournalReview(+view.getAttribute('data-id'));
+});
+
 $('ddBody').addEventListener('click', (e) => {
   const t = e.target;
   if (t.id === 'ddNext') { ddNext(); return; }

@@ -12,7 +12,7 @@ echo "[2/4] Staging changes..."
 git add -A
 
 echo "[3/4] Committing..."
-git commit -m "Fix wrong coin logos (vector icons) + fix render-loop crash (SANS2 undefined var was killing turtle/portal rendering)" || echo "  (nothing new to commit)"
+git commit -m "Add Shell Wallet UI, align bottom action bar (Daily Drill/Journal/Wallet/Sign In) into one row" || echo "  (nothing new to commit)"
 
 echo "[4/4] Pushing to GitHub..."
 git push origin HEAD:main

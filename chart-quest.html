@@ -505,6 +505,14 @@
   #apSignOut  { background: #14222f; border: 1px solid #ea3943; color: #ea3943; }
   #apClose    { background: none; border: 1px solid #2a3442; color: #7d8aa0; }
   #apClose:hover { color: #c7d1de; }
+  #apReportBug { background: none; border: 1px solid #2a3442; color: #ffb454; }
+  #apBugForm textarea { width: 100%; min-height: 60px; background: #0a0e16;
+    border: 1px solid #2a3442; border-radius: 7px; color: #c7d1de;
+    font: 12px var(--font-ui); padding: 8px; resize: vertical;
+    box-sizing: border-box; margin-bottom: 8px; }
+  #apBugSubmit { background: #1a2e1f; border: 1px solid #3ddc6a; color: #3ddc6a; }
+  #apBugThanks { display: none; color: #3ddc6a; font-size: 11px;
+    margin-bottom: 8px; text-align: center; }
 </style>
 </head>
 <body>
@@ -541,6 +549,12 @@
     <div id="apRank">🌊 DRIFTER</div>
     <div id="apFaction" style="font-size:11px;color:#7d8aa0;margin-bottom:14px;"></div>
     <button class="ap-btn" id="apChangeFaction" style="background:none;border:1px solid #2a3442;color:#c9a0ff;">⚡ Change Faction</button>
+    <button class="ap-btn" id="apReportBug">🐞 Report a Bug</button>
+    <div id="apBugForm" style="display:none;">
+      <textarea id="apBugText" placeholder="What went wrong?" maxlength="500"></textarea>
+      <button class="ap-btn" id="apBugSubmit">Submit</button>
+    </div>
+    <div id="apBugThanks">Thanks — bug reported!</div>
     <button class="ap-btn" id="apSignOut">Sign out</button>
     <button class="ap-btn" id="apClose">Close</button>
   </div>
@@ -776,6 +790,10 @@
   // Expose only the minimal API the rest of the game needs via named functions,
   // not as raw globals — reduces the attack surface for console-based exfiltration.
   window._supaSignedIn = () => !!_supaUser;
+
+  // ---- Anonymous visit counter (no PII, dashboard stat only) ----
+  // Fires once per page load; failures are silent and never block the game.
+  try { _supa.rpc('record_site_visit', {}).catch(() => {}); } catch(e) {}
 
   // ---- Cloud push helpers (all fire-and-forget; failures are silent) ----
 
@@ -1017,7 +1035,45 @@
   function closeAccountPanel() {
     const panel = document.getElementById('accountPanel');
     if (panel) panel.style.display = 'none';
+    const form   = document.getElementById('apBugForm');
+    const thanks = document.getElementById('apBugThanks');
+    if (form)   form.style.display   = 'none';
+    if (thanks) thanks.style.display = 'none';
   }
+  // ---- Bug report (anonymous or signed-in) ----
+  function toggleBugForm() {
+    const form   = document.getElementById('apBugForm');
+    const thanks = document.getElementById('apBugThanks');
+    if (thanks) thanks.style.display = 'none';
+    if (!form) return;
+    const showing = form.style.display === 'block';
+    form.style.display = showing ? 'none' : 'block';
+    if (!showing) { const t = document.getElementById('apBugText'); if (t) t.focus(); }
+  }
+  async function submitBugReport() {
+    const textEl = document.getElementById('apBugText');
+    const msg    = (textEl?.value || '').trim();
+    if (!msg) return;
+    const btn = document.getElementById('apBugSubmit');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+    try {
+      await _supa.rpc('submit_bug_report', {
+        p_message: msg,
+        p_context: {
+          page:    location.href,
+          level:   (typeof player !== 'undefined' ? player.level : null),
+          faction: (typeof playerFaction !== 'undefined' && playerFaction ? playerFaction.ticker : null)
+        }
+      });
+    } catch(e) {}
+    if (textEl) textEl.value = '';
+    const form   = document.getElementById('apBugForm');
+    const thanks = document.getElementById('apBugThanks');
+    if (form)   form.style.display   = 'none';
+    if (thanks) thanks.style.display = 'block';
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit'; }
+  }
+
   async function doSignOut() {
     await _supa.auth.signOut();
     _supaUser = null;
@@ -1243,6 +1299,8 @@
     q('accountBtn')    ?.addEventListener('click', window.openAccountPanel);
     q('apClose')       ?.addEventListener('click', closeAccountPanel);
     q('apSignOut')     ?.addEventListener('click', doSignOut);
+    q('apReportBug')   ?.addEventListener('click', toggleBugForm);
+    q('apBugSubmit')   ?.addEventListener('click', submitBugReport);
     q('apChangeFaction')?.addEventListener('click', () => {
       closeAccountPanel();
       showFactionPicker(true);

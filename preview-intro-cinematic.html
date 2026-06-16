@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Chart Quest — Opening Cinematic (Preview)</title>
+<style>
+  :root { --font-ui: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #04060c; overflow: hidden; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--font-ui); }
+
+  /* Portrait stage — mirrors the game's #stage letterboxing (MAX_ASPECT 0.58) */
+  #stage {
+    position: relative; background: #04060c; overflow: hidden;
+    box-shadow: 0 0 0 1px #11161f, 0 30px 80px rgba(0,0,0,0.6);
+  }
+  canvas#game { display: block; touch-action: none; }
+
+  /* Preview chrome (NOT part of the cinematic) */
+  #devbar {
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 8px; align-items: center; z-index: 50;
+    background: rgba(10,14,22,0.85); border: 1px solid #1c2230; border-radius: 999px;
+    padding: 6px 8px; font-size: 12px; color: #8b95a7; backdrop-filter: blur(6px);
+  }
+  #devbar button {
+    font: 600 12px var(--font-ui); color: #c9d1d9; background: #161c28;
+    border: 1px solid #2a3344; border-radius: 999px; padding: 6px 12px; cursor: pointer;
+  }
+  #devbar button:hover { border-color: #4a5666; color: #fff; }
+  #devbar .tag { color: #5a6b82; padding: 0 4px; }
+  #phaseTag { color: #7c4dff; font-weight: 700; min-width: 78px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div id="devbar">
+  <span class="tag">PREVIEW</span>
+  <button id="btnReplay">↻ Replay</button>
+  <button id="btnSkip">Skip ⏭</button>
+  <button id="btnMute">🔊 Sound</button>
+  <span class="tag">phase</span><span id="phaseTag">—</span>
+</div>
+
+<div id="stage">
+  <canvas id="game"></canvas>
+</div>
+
+<script>
+'use strict';
+/* ════════════════════════════════════════════════════════════════════════
+   CHART QUEST — OPENING CINEMATIC  (standalone preview)
+
+   This file is a PLAYABLE PROTOTYPE of the new intro. The cinematic engine
+   below (the IntroCinematic IIFE) is written to be lifted almost verbatim
+   into chart-quest.html — it only depends on primitives that already exist
+   in the game: `ctx`, `W`, `H`, `rr()`, `drawTurtle()` (= drawAcadShell),
+   `COLOR`, and `FACTION_CONFIG`. Everything outside the IIFE here is just
+   preview scaffolding (canvas setup + dev buttons) that the real game
+   already provides.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Primitives copied from chart-quest.html (so the preview runs alone) ─── */
+const COLOR = {
+  bg:'#0a0e14', greenBody:'#16c784', redBody:'#ea3943', wick:'#c9d1d9',
+  turtleBody:'#3ddc6a', turtleShell:'#2bb455', turtleOutline:'#157a36',
+  turtleBelly:'#8fe8a8', lens:'#10141a', lensShine:'#3b4a5e',
+  flameOuter:'#ff9f43', flameInner:'#ffe08a',
+};
+const FACTION_CONFIG = {
+  BTC: { ticker:'BTC', name:'Bitcoin',  emoji:'₿', color:'#f7931a', glow:'rgba(247,147,26,0.55)' },
+  ETH: { ticker:'ETH', name:'Ethereum', emoji:'Ξ', color:'#627eea', glow:'rgba(98,126,234,0.55)' },
+  SOL: { ticker:'SOL', name:'Solana',   emoji:'◎', color:'#8b5cf6', glow:'rgba(139,92,246,0.55)' },
+};
+
+const canvas = document.getElementById('game');
+const stage  = document.getElementById('stage');
+const ctx    = canvas.getContext('2d');
+let W = 0, H = 0, dpr = 1;
+const MAX_ASPECT = 0.58;
+
+function resize() {
+  const availH = Math.min(window.innerHeight - 0, 940);
+  const availW = window.innerWidth;
+  H = availH;
+  W = Math.min(availW, Math.round(availH * MAX_ASPECT));
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  stage.style.width = W + 'px'; stage.style.height = H + 'px';
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+  else ctx.rect(x, y, w, h);
+}
+
+/* drawTurtle = the game's drawAcadShell(cx,cy,scale,emotion), copied verbatim.
+   In the real game you call drawAcadShell directly — do NOT duplicate it. */
+function drawTurtle(cx, cy, scale, emotion) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+  const w = 40, h = 36, ox = -w / 2, oy = -h / 2;
+  ctx.fillStyle = COLOR.turtleBody;
+  rr(ox + w * 0.28, oy + h * 0.78, 8, 7, 3); ctx.fill();
+  rr(ox + w * 0.54, oy + h * 0.78, 8, 7, 3); ctx.fill();
+  ctx.fillRect(ox + w * 0.68, oy + h * 0.34, 8, 8);
+  ctx.beginPath(); ctx.arc(ox + w * 0.85, oy + h * 0.38, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = COLOR.turtleOutline; ctx.lineWidth = 1.2; ctx.beginPath();
+  if (emotion === 'happy' || emotion === 'excited') ctx.arc(ox + w * 0.88, oy + h * 0.44, 3.5, 0.1 * Math.PI, 0.7 * Math.PI);
+  else if (emotion === 'worried') ctx.arc(ox + w * 0.88, oy + h * 0.52, 3, -0.65 * Math.PI, -0.15 * Math.PI);
+  else { ctx.moveTo(ox + w * 0.855, oy + h * 0.47); ctx.lineTo(ox + w * 0.905, oy + h * 0.47); }
+  ctx.stroke();
+  const shellL = ox + w * 0.08, shellR = ox + w * 0.74;
+  const shellBot = oy + h * 0.82, shellTop = oy + h * 0.02;
+  ctx.beginPath(); ctx.moveTo(shellL, shellBot);
+  ctx.bezierCurveTo(shellL, shellTop, shellR, shellTop, shellR, shellBot); ctx.closePath();
+  ctx.fillStyle = COLOR.turtleShell; ctx.fill();
+  ctx.lineWidth = 2.5; ctx.strokeStyle = COLOR.turtleOutline; ctx.stroke();
+  ctx.fillStyle = COLOR.turtleBelly; rr(shellL + 2, shellBot - 4, shellR - shellL - 4, 4, 2); ctx.fill();
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(shellL, shellBot);
+  ctx.bezierCurveTo(shellL, shellTop, shellR, shellTop, shellR, shellBot); ctx.closePath(); ctx.clip();
+  const hcx = (shellL + shellR) / 2, hcy = oy + h * 0.45, hrr = 5.5;
+  ctx.strokeStyle = COLOR.turtleOutline; ctx.lineWidth = 1.2; ctx.beginPath();
+  for (let i = 0; i <= 6; i++) { const a = (Math.PI / 3) * i; if (!i) ctx.moveTo(hcx + Math.cos(a) * hrr, hcy + Math.sin(a) * hrr); else ctx.lineTo(hcx + Math.cos(a) * hrr, hcy + Math.sin(a) * hrr); }
+  ctx.stroke();
+  for (let i = 0; i < 3; i++) { const a = (Math.PI * 2 / 3) * i; ctx.beginPath(); ctx.moveTo(hcx + Math.cos(a) * hrr, hcy + Math.sin(a) * hrr); ctx.lineTo(hcx + Math.cos(a) * (hrr + 8), hcy + Math.sin(a) * (hrr + 8)); ctx.stroke(); }
+  ctx.restore();
+  ctx.fillStyle = COLOR.lens;
+  ctx.beginPath(); ctx.ellipse(ox + w * 0.83, oy + h * 0.30, 3.4, 3.0, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(ox + w * 0.95, oy + h * 0.30, 3.4, 3.0, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = COLOR.lens; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(ox + w * 0.86, oy + h * 0.30); ctx.lineTo(ox + w * 0.92, oy + h * 0.30); ctx.stroke();
+  ctx.fillStyle = COLOR.lensShine;
+  ctx.beginPath(); ctx.arc(ox + w * 0.955, oy + h * 0.27, 1.0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   INTRO CINEMATIC  — the part that ships into chart-quest.html
+   Phases: glitch → fall → choose → plunge → impact → validator → title → done
+   ════════════════════════════════════════════════════════════════════════ */
+const IntroCinematic = (() => {
+
+  const F = '-apple-system, BlinkMacSystemFont, system-ui, sans-serif';
+  const MONO = '"SF Mono", ui-monospace, Menlo, Consolas, monospace';
+
+  const S = {
+    active: false,
+    phase: 'glitch',
+    t: 0,                 // seconds in current phase
+    tGlobal: 0,
+    onDone: null,
+    faction: null,        // chosen FACTION_CONFIG key
+    accent: '#7c4dff',    // current accent (turtle green until chosen, then faction)
+    // turtle
+    tx: 0, ty: 0, tvx: 0, trot: 0,
+    // input
+    pointerX: null, pointerDown: false, keyL: false, keyR: false,
+    // world scroll
+    scroll: 0, speed: 1,
+    // fx
+    shake: 0, flash: 0, flashCol: '#ffffff',
+    rings: [], streaks: [],
+    portals: [], chosenPortal: null,
+    valLine: 0, valLineT: 0,
+    addrs: [], pillars: [], nodes: [], motes: [],
+  };
+
+  const ERR_LINES = ['CONNECTION LOST','WALLET NOT FOUND','CHAIN UNKNOWN','BLOCK 0xERR','SIGNATURE INVALID','ERROR','ERROR','ERROR'];
+  const VAL_RED = '#ff2b3d';      // the Validator's domain is always red
+  const VAL_RED_DK = '#7a0d18';
+  const VAL_LINES = [
+    "You're lucky. No one survives a chain collapse.",
+    "Only Traders reach the Exit Block.",
+    "Learn. Trade. Survive.",
+  ];
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function hexAddr() {
+    const h = '0123456789abcdef'; let s = '0x';
+    for (let i = 0; i < 8; i++) s += h[(Math.random() * 16) | 0];
+    return s + '…' + h[(Math.random()*16)|0] + h[(Math.random()*16)|0];
+  }
+
+  function seedWorld() {
+    S.pillars = []; S.nodes = []; S.addrs = []; S.motes = [];
+    // Background candle pillars (parallax columns of giant translucent candles)
+    for (let i = 0; i < 7; i++) {
+      S.pillars.push({ x: rand(0.05, 0.95), y: rand(0, 1), w: rand(26, 60), h: rand(120, 320),
+        up: Math.random() > 0.5, depth: rand(0.25, 0.8) });
+    }
+    // Blockchain nodes (hex rings connected by chains)
+    for (let i = 0; i < 6; i++) S.nodes.push({ x: rand(0.1, 0.9), y: rand(0, 1), r: rand(10, 26), depth: rand(0.3, 0.9), sp: rand(0.4, 1) });
+    // Floating wallet addresses
+    for (let i = 0; i < 7; i++) S.addrs.push({ x: rand(0.06, 0.8), y: rand(0, 1), txt: hexAddr(), depth: rand(0.2, 0.6) });
+    // Transaction particles streaming up
+    for (let i = 0; i < 70; i++) S.motes.push({ x: rand(0, 1), y: rand(0, 1), r: rand(0.6, 2.2), sp: rand(0.5, 1.6), c: Math.random() > 0.5 });
+  }
+
+  function start(onDone) {
+    S.active = true; S.phase = 'glitch'; S.t = 0; S.tGlobal = 0;
+    S.onDone = onDone || function(){};
+    S.faction = null; S.accent = COLOR.turtleBody;
+    S.tx = W * 0.5; S.ty = -40; S.tvx = 0; S.trot = 0;
+    S.scroll = 0; S.speed = 5.1; S.shake = 0; S.flash = 0;   // ~3× faster base fall
+    S.rings = []; S.streaks = []; S.portals = []; S.chosenPortal = null;
+    S.diving = null; S.dwellT = 0; S.lockP = 0; S.aimPortal = null;
+    S.valLine = 0; S.valLineT = 0; S.floaters = [];
+    // Collectible shells during the fall (5 total, worth 10 each) — give the
+    // player a reason to move. {at} = fall-time it enters from the bottom;
+    // {x} = lane (fraction of W). Spaced wider to match the faster fall.
+    S.shells = [
+      { at: 1.8,  x: 0.32, y: null, got: false, gone: false },
+      { at: 3.9,  x: 0.66, y: null, got: false, gone: false },
+      { at: 6.0,  x: 0.38, y: null, got: false, gone: false },
+      { at: 8.1,  x: 0.62, y: null, got: false, gone: false },
+      { at: 10.2, x: 0.50, y: null, got: false, gone: false },
+    ];
+    S.shellsGot = 0; S.shellValue = 0;
+    seedWorld();
+    attach();
+    Audio.unlock();
+    Audio.glitch();
+  }
+
+  function finish() {
+    S.active = false;
+    detach();
+    Audio.stopAll();
+    const key = S.faction || 'BTC';
+    S.onDone(key);
+  }
+
+  function setPhase(p) { S.phase = p; S.t = 0; }
+
+  /* ─── Input ─────────────────────────────────────────────────────────── */
+  function onDown(e) {
+    S.pointerDown = true;
+    const r = canvas.getBoundingClientRect();
+    const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+    S.pointerX = cx;
+    // Tap to commit to the aimed chain during selection.
+    if (S.phase === 'choose' && S.aimPortal && !S.diving) { S.diving = S.aimPortal; }
+    // Dialogue: tap advances a line
+    if (S.phase === 'validator') {
+      if (S.valLineT > 0.5) { advanceValidator(); }
+    }
+    e.preventDefault();
+  }
+  function onMove(e) {
+    // Steer on ANY pointer movement (hover on desktop, drag on touch) — no
+    // need to hold a button. This is what makes the turtle feel responsive.
+    const r = canvas.getBoundingClientRect();
+    S.pointerX = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+  }
+  function onUp() { S.pointerDown = false; }   // keep last pointerX so the turtle holds position
+  function onKey(e, d) {
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') S.keyL = d;
+    if (e.code === 'ArrowRight'|| e.code === 'KeyD') S.keyR = d;
+    if (d && e.code === 'Space' && S.phase === 'validator' && S.valLineT > 0.4) advanceValidator();
+  }
+  const kd = e => onKey(e, true), ku = e => onKey(e, false);
+  function attach() {
+    canvas.addEventListener('pointerdown', onDown);
+    canvas.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('keydown', kd);
+    window.addEventListener('keyup', ku);
+  }
+  function detach() {
+    canvas.removeEventListener('pointerdown', onDown);
+    canvas.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('keydown', kd);
+    window.removeEventListener('keyup', ku);
+  }
+
+  function advanceValidator() {
+    S.valLine++;
+    S.valLineT = 0;
+    Audio.blip();
+    if (S.valLine >= VAL_LINES.length) setPhase('title');
+  }
+
+  /* ─── Update ─────────────────────────────────────────────────────────── */
+  function steerTurtle(dt, gravity) {
+    // pointer follow OR key velocity
+    let target = null;
+    if (S.pointerX != null) target = S.pointerX;              // hover OR drag steers
+    if (target != null) S.tvx += (target - S.tx) * 26 * dt;   // much snappier follow
+    if (S.keyL) S.tvx -= 2800 * dt;
+    if (S.keyR) S.tvx += 2800 * dt;
+    S.tvx = Math.max(-1400, Math.min(1400, S.tvx * 0.80));    // faster, still damped
+    S.tx += S.tvx * dt;
+    const m = 30;
+    if (S.tx < m) { S.tx = m; S.tvx *= -0.3; }
+    if (S.tx > W - m) { S.tx = W - m; S.tvx *= -0.3; }
+    S.trot = Math.max(-0.5, Math.min(0.5, -S.tvx / 1400)) + Math.sin(S.tGlobal * 6) * 0.06;
+  }
+
+  // Shells rise from the bottom at the felt fall speed; steer the turtle
+  // over one to collect it. Missing a shell never penalises the player.
+  function updateShells(dt) {
+    // Shells rise at a steady, readable pace — slower than the rushing
+    // background — so a moving player can realistically reach all five.
+    const rise = 500;
+    for (const s of S.shells) {
+      if (s.got || s.gone) continue;
+      if (s.y == null) { if (S.t >= s.at) s.y = H + 40; else continue; }
+      s.y -= rise * dt;
+      // generous catch box so a fast shell still feels fair to grab
+      if (Math.abs(S.tx - s.x * W) < 44 && Math.abs(S.ty - s.y) < 54) {
+        s.got = true; S.shellsGot++; S.shellValue += 10;
+        S.rings.push({ x: s.x * W, y: s.y, t: 0, life: 0.6, col: '#ffd60a' });
+        S.floaters.push({ x: s.x * W, y: s.y, t: 0, txt: '+10' });
+        Audio.coin();
+      } else if (s.y < -40) {
+        s.gone = true;
+      }
+    }
+    for (const f of S.floaters) { f.t += dt; f.y -= 40 * dt; }
+    S.floaters = S.floaters.filter(f => f.t < 0.9);
+  }
+
+  function update(dt) {
+    S.tGlobal += dt;
+    S.t += dt;
+    S.shake = Math.max(0, S.shake - dt * 2.5);
+    S.flash = Math.max(0, S.flash - dt * 1.8);
+    S.scroll += S.speed * 260 * dt;
+    for (const r of S.rings) r.t += dt;
+    S.rings = S.rings.filter(r => r.t < r.life);
+    for (const s of S.streaks) { s.y += s.v * dt; if (s.y > H + 40) { s.y = -40; s.x = rand(0, W); } }
+
+    switch (S.phase) {
+      case 'glitch':
+        if (S.t > 2.4) { setPhase('fall'); Audio.whoosh(); }
+        break;
+
+      case 'fall': {
+        S.ty += (Math.min(H * 0.42, S.ty + 600 * dt) - S.ty) * Math.min(1, dt * 4); // ease to fall line
+        steerTurtle(dt, true);
+        updateShells(dt);
+        if (S.t > 13.2) {           // long, fast fall, then portals rise
+          spawnPortals();
+          setPhase('choose');
+        }
+        break;
+      }
+
+      case 'choose': {
+        if (!S.portals.length) { spawnPortals(); break; }   // safety
+        // Bleed the fast fall off into a calm, weightless DRIFT.
+        S.speed += (0.22 - S.speed) * Math.min(1, dt * 1.4);
+        for (const p of S.portals) {
+          p.y += (p.targetY - p.y) * Math.min(1, dt * 2.4);  // portals ease up smoothly
+          p.pulse = 0.7 + 0.3 * Math.sin(S.tGlobal * 4 + p.i);
+        }
+        steerTurtle(dt, true);                 // full free horizontal control, always
+        // Aimed portal (nearest).
+        let aim = S.portals[0];
+        for (const p of S.portals) if (Math.abs(S.tx - p.x) < Math.abs(S.tx - aim.x)) aim = p;
+        S.aimPortal = aim;
+        const portalY = S.portals[0].targetY;
+        // The turtle floats on a line ABOVE all three portals so it never
+        // auto-drops into the middle one. Full freedom to slide across BTC,
+        // ETH and SOL; commit only by dwelling over one (or tapping).
+        const hoverLine = portalY - aim.r - 28;
+        if (!S.diving) {
+          if (S.ty < hoverLine) S.ty = Math.min(hoverLine, S.ty + 70 * dt);
+          else S.ty = hoverLine + Math.sin(S.tGlobal * 2.4) * 5;
+          // Lock only when the player COMES TO REST on a chain — sliding
+          // across (any real horizontal speed) never locks, so you can freely
+          // browse all three. Hold still ~1.4s to commit, or tap to dive now.
+          const settled = Math.abs(S.tx - aim.x) < aim.r * 0.5 && Math.abs(S.tvx) < 70;
+          S.dwellT = settled ? (S.dwellT || 0) + dt : 0;
+          S.lockP = Math.min(1, S.dwellT / 1.4);
+          if (S.dwellT > 1.4) S.diving = aim;       // deliberately settled → dive
+          if (S.t > 11) S.diving = aim;             // safety, never stalls
+        } else {
+          // dive cleanly into the chosen portal
+          const p = S.diving;
+          S.tx += (p.x - S.tx) * Math.min(1, dt * 9);
+          S.ty += (p.y - S.ty) * Math.min(1, dt * 8);
+          if (Math.abs(S.ty - p.y) < 10) choosePortal(p);
+        }
+        break;
+      }
+
+      case 'plunge': { // = the portal WARP (dimensional transition)
+        S.speed += dt * 1.4;
+        if (S.t > 2.4) { setPhase('impact'); doImpact(); }
+        break;
+      }
+
+      case 'impact': {
+        if (S.t > 1.3) { setPhase('validator'); S.valLine = 0; S.valLineT = 0; Audio.appear(); }
+        break;
+      }
+
+      case 'validator':
+        S.valLineT += dt;
+        // auto-advance each line as a fallback (player can tap to go faster)
+        if (S.valLineT > 3.4) advanceValidator();
+        break;
+
+      case 'title':
+        if (S.t > 4.0) finish();
+        break;
+    }
+  }
+
+  function spawnPortals() {
+    const lanes = [0.22, 0.5, 0.78];
+    const keys = ['BTC', 'ETH', 'SOL'];
+    S.portals = keys.map((k, i) => ({
+      i, key: k, cfg: FACTION_CONFIG[k],
+      x: W * lanes[i], y: H + 120, targetY: H * 0.58, r: Math.min(W * 0.17, 66), pulse: 1,
+    }));
+    Audio.rise();
+  }
+
+  function choosePortal(p) {
+    if (S.chosenPortal) return;
+    S.chosenPortal = p;
+    S.faction = p.key;
+    S.accent = p.cfg.color;
+    // Kick off the reusable dimensional WARP (see triggerWarp / drawWarpTunnel).
+    triggerWarp(p.cfg.color, p.x, p.y);
+    Audio.chime(p.key); Audio.warp();
+    setPhase('plunge');
+  }
+
+  function doImpact() {
+    S.shake = 1; S.flash = 1; S.flashCol = '#ffffff';
+    // Land in the RED zone (the Validator's domain).
+    S.rings.push({ x: W / 2, y: H * 0.72, t: 0, life: 1.0, col: VAL_RED });
+    S.rings.push({ x: W / 2, y: H * 0.72, t: 0, life: 1.4, col: '#ffffff' });
+    Audio.impact();
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     REUSABLE DIMENSIONAL WARP  — the signature "entering another part of
+     the blockchain" transition. Call triggerWarp(color, x, y) and render
+     drawWarpTunnel(...) for ~1s on ANY zone change: portal select here,
+     and (in production) lesson start, boss start, and trade entry. One
+     motif used everywhere makes every transition feel like the same world.
+     ═══════════════════════════════════════════════════════════════════ */
+  function triggerWarp(color, x, y) {
+    S.warp = { col: color || S.accent, x: (x == null ? W / 2 : x), y: (y == null ? H / 2 : y), t: 0 };
+    S.flash = 0.9; S.flashCol = color || S.accent;
+  }
+  function drawWarpTunnel(cx, cy, color, age) {
+    // dark base
+    ctx.fillStyle = '#02030a'; ctx.fillRect(0, 0, W, H);
+    const maxR = Math.hypot(W, H);
+    // concentric hex rings flying outward toward the viewer
+    const RINGS = 10;
+    for (let i = 0; i < RINGS; i++) {
+      const f = ((i / RINGS) + (S.tGlobal * 1.1)) % 1;     // 0→1 outward
+      const rad = f * f * maxR * 1.15 + 6;
+      ctx.globalAlpha = (1 - f) * 0.75;
+      ctx.strokeStyle = color; ctx.lineWidth = 1 + (1 - f) * 3.5;
+      ctx.beginPath();
+      for (let k = 0; k <= 6; k++) {
+        const a = Math.PI / 3 * k + f * 0.7;
+        const px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad;
+        if (!k) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+    // radial speed streaks shooting past
+    const STREAKS = 30;
+    for (let i = 0; i < STREAKS; i++) {
+      const a = (i / STREAKS) * Math.PI * 2 + i * 1.3;
+      const f = ((i / STREAKS) + (S.tGlobal * 1.6)) % 1;
+      const r0 = f * maxR * 0.6, r1 = r0 + 60 + f * 160;
+      ctx.globalAlpha = (1 - f) * 0.5;
+      ctx.strokeStyle = i % 4 === 0 ? '#ffffff' : color; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+      ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    // glowing core
+    const core = ctx.createRadialGradient(cx, cy, 2, cx, cy, 80 + age * 120);
+    core.addColorStop(0, '#ffffff'); core.addColorStop(0.25, color); core.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = 0.85; ctx.fillStyle = core;
+    ctx.beginPath(); ctx.arc(cx, cy, 80 + age * 120, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  /* ─── Draw helpers ──────────────────────────────────────────────────── */
+  function bgGradient() { bgGradientCol(S.accent); }
+  function bgGradientCol(a) {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#05070e');
+    g.addColorStop(0.5, shade(a, -0.78));
+    g.addColorStop(1, '#02030a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  function shade(hex, amt) {
+    const n = parseInt(hex.slice(1), 16);
+    let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    if (amt < 0) { r *= (1 + amt); g *= (1 + amt); b *= (1 + amt); }
+    else { r += (255 - r) * amt; g += (255 - g) * amt; b += (255 - b) * amt; }
+    return 'rgb(' + (r|0) + ',' + (g|0) + ',' + (b|0) + ')';
+  }
+
+  function drawWorld(speedScale) {
+    // wallet addresses (far)
+    ctx.font = '11px ' + MONO; ctx.textAlign = 'left';
+    for (const a of S.addrs) {
+      const y = (((a.y * H) - S.scroll * a.depth * 0.4) % (H + 60) + (H + 60)) % (H + 60) - 30;
+      ctx.fillStyle = 'rgba(120,150,200,' + (0.05 + a.depth * 0.10) + ')';
+      ctx.fillText(a.txt, a.x * W, y);
+    }
+    // candle pillars (parallax)
+    for (const p of S.pillars) {
+      const y = (((p.y * H) - S.scroll * p.depth) % (H + 360) + (H + 360)) % (H + 360) - 180;
+      const col = p.up ? COLOR.greenBody : COLOR.redBody;
+      ctx.globalAlpha = 0.05 + p.depth * 0.13;
+      ctx.fillStyle = col;
+      rr(p.x * W - p.w / 2, y, p.w, p.h, 5); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(p.x * W, y - 22); ctx.lineTo(p.x * W, y + p.h + 22); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // blockchain nodes + chains
+    for (const n of S.nodes) {
+      const y = (((n.y * H) - S.scroll * n.depth * 0.7) % (H + 120) + (H + 120)) % (H + 120) - 60;
+      ctx.globalAlpha = 0.10 + n.depth * 0.18;
+      ctx.strokeStyle = S.accent; ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      for (let i = 0; i <= 6; i++) { const a = (Math.PI / 3) * i + S.tGlobal * n.sp * 0.3; const px = n.x * W + Math.cos(a) * n.r, py = y + Math.sin(a) * n.r; if (!i) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+      ctx.closePath(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(n.x * W, y, 2, 0, Math.PI * 2); ctx.fillStyle = S.accent; ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    // transaction motes streaming up
+    for (const m of S.motes) {
+      const y = (((m.y * H) - S.scroll * (0.5 + m.sp) * speedScale) % (H + 20) + (H + 20)) % (H + 20) - 10;
+      ctx.fillStyle = m.c ? 'rgba(93,237,181,0.5)' : 'rgba(255,255,255,0.35)';
+      ctx.beginPath(); ctx.arc(m.x * W, y, m.r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  function drawTurtleFalling(emotion) {
+    ctx.save();
+    ctx.translate(S.tx, S.ty);
+    ctx.rotate(S.trot);
+    // jetpack / motion flame trailing upward
+    const fl = 8 + Math.sin(S.tGlobal * 30) * 4;
+    const grd = ctx.createLinearGradient(0, -6, 0, -36 - fl);
+    grd.addColorStop(0, COLOR.flameInner); grd.addColorStop(1, 'rgba(255,159,67,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.moveTo(-7, -6); ctx.lineTo(0, -34 - fl); ctx.lineTo(7, -6); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    drawTurtle(S.tx, S.ty, 1.5, emotion);
+  }
+
+  function drawRings() {
+    for (const r of S.rings) {
+      const k = r.t / r.life;
+      ctx.globalAlpha = (1 - k) * 0.8;
+      ctx.strokeStyle = r.col; ctx.lineWidth = 4 * (1 - k) + 1;
+      ctx.beginPath(); ctx.arc(r.x, r.y, k * Math.max(W, H) * 0.7, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* ─── Phase draws ───────────────────────────────────────────────────── */
+  function drawGlitch() {
+    ctx.fillStyle = '#04060c'; ctx.fillRect(0, 0, W, H);
+    // scanlines
+    ctx.fillStyle = 'rgba(255,255,255,0.025)';
+    for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
+    // random data noise blocks
+    for (let i = 0; i < 26; i++) {
+      ctx.globalAlpha = rand(0.02, 0.12);
+      ctx.fillStyle = Math.random() > 0.5 ? COLOR.greenBody : COLOR.redBody;
+      ctx.fillRect(rand(0, W), rand(0, H), rand(8, 60), rand(1, 4));
+    }
+    ctx.globalAlpha = 1;
+    // flickering error lines with RGB split
+    const n = Math.min(ERR_LINES.length, Math.floor(S.t / 0.28));
+    ctx.textAlign = 'center'; ctx.font = 'bold 20px ' + MONO;
+    for (let i = 0; i < n; i++) {
+      const y = H * 0.30 + i * 30;
+      if (Math.random() < 0.08) continue; // flicker out
+      const jx = rand(-2, 2);
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#ff3b54'; ctx.fillText(ERR_LINES[i], W / 2 + jx - 2, y);
+      ctx.fillStyle = '#2bd4ff'; ctx.fillText(ERR_LINES[i], W / 2 + jx + 2, y);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#e6edf3'; ctx.fillText(ERR_LINES[i], W / 2 + jx, y);
+    }
+    // blinking cursor line
+    if (Math.floor(S.t * 2) % 2 === 0) {
+      ctx.fillStyle = COLOR.greenBody; ctx.font = '13px ' + MONO; ctx.textAlign = 'left';
+      ctx.fillText('> reconstructing wallet_', 18, H - 40);
+    }
+  }
+
+  // Vector shell coin (no emoji dependency — always renders).
+  function drawShellIcon(x, y, rad) {
+    ctx.save();
+    ctx.translate(x, y);
+    // coin body
+    ctx.fillStyle = '#ffd60a';
+    ctx.beginPath(); ctx.arc(0, 0, rad, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 1.6; ctx.stroke();
+    // scallop fan ridges (shell look), radiating from the bottom hinge
+    ctx.strokeStyle = 'rgba(150,100,10,0.8)'; ctx.lineWidth = 1.3;
+    const hinge = rad * 0.85;
+    for (let i = -2; i <= 2; i++) {
+      const a = -Math.PI / 2 + i * 0.42;
+      ctx.beginPath();
+      ctx.moveTo(0, hinge);
+      ctx.lineTo(Math.cos(a) * rad * 0.92, hinge + Math.sin(a) * rad * 1.7);
+      ctx.stroke();
+    }
+    // hinge dot + top highlight
+    ctx.fillStyle = '#9a6a08'; ctx.beginPath(); ctx.arc(0, hinge, 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.arc(-rad * 0.3, -rad * 0.35, rad * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawShells() {
+    for (const s of S.shells) {
+      if (s.got || s.gone || s.y == null) continue;
+      const x = s.x * W, y = s.y, bob = Math.sin(S.tGlobal * 5 + s.at) * 2;
+      const pr = 1 + 0.12 * Math.sin(S.tGlobal * 6 + s.at);
+      // strong glow so it pops against the rushing background
+      const g = ctx.createRadialGradient(x, y, 2, x, y, 34 * pr);
+      g.addColorStop(0, 'rgba(255,214,10,0.7)'); g.addColorStop(1, 'rgba(255,214,10,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 34 * pr, 0, Math.PI * 2); ctx.fill();
+      // pulsing catch ring
+      ctx.strokeStyle = 'rgba(255,214,10,0.7)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 22 * pr, 0, Math.PI * 2); ctx.stroke();
+      drawShellIcon(x, y + bob, 12);
+    }
+  }
+
+  function drawShellCounter() {
+    if (!S.shellsGot) return;
+    ctx.fillStyle = 'rgba(6,8,16,0.6)';
+    rr(W - 86, 16, 70, 28, 14); ctx.fill();
+    drawShellIcon(W - 70, 30, 8);
+    ctx.fillStyle = '#ffd60a'; ctx.font = 'bold 14px ' + F;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(S.shellValue), W - 56, 31);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function drawFloaters() {
+    for (const f of S.floaters) {
+      ctx.globalAlpha = Math.max(0, 1 - f.t / 0.9);
+      ctx.fillStyle = '#ffd60a'; ctx.font = 'bold 15px ' + F; ctx.textAlign = 'center';
+      ctx.fillText(f.txt, f.x, f.y);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawFall(emotion, hint) {
+    bgGradient();
+    drawWorld(1);
+    drawShells();
+    drawRings();
+    drawTurtleFalling(emotion);
+    drawFloaters();
+    drawShellCounter();
+    if (hint && S.t < 2.2) {
+      ctx.globalAlpha = Math.max(0, Math.min(1, (2.2 - S.t))) * (S.t > 0.3 ? 1 : S.t / 0.3);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 14px ' + F; ctx.textAlign = 'center';
+      ctx.fillText('◄  DRAG TO STEER  ►', W / 2, H * 0.16);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawChoose() {
+    bgGradient();
+    drawWorld(1);
+    // prompt
+    ctx.globalAlpha = 0.85 + 0.15 * Math.sin(S.tGlobal * 4);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 17px ' + F; ctx.textAlign = 'center';
+    ctx.fillText('CHOOSE YOUR CHAIN', W / 2, H * 0.1);
+    ctx.globalAlpha = 1;
+    ctx.font = '11px ' + F; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillText('browse all three — stop on one to lock it, or tap to dive', W / 2, H * 0.1 + 18);
+    // guide line from the turtle down to the portal it's currently aimed at
+    if (S.aimPortal) {
+      ctx.strokeStyle = S.aimPortal.cfg.color + 'aa'; ctx.lineWidth = 2;
+      ctx.setLineDash([3, 6]);
+      ctx.beginPath(); ctx.moveTo(S.tx, S.ty + 14); ctx.lineTo(S.aimPortal.x, S.aimPortal.y - S.aimPortal.r); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    for (const p of S.portals) drawPortal(p, p === S.aimPortal);
+    // lock-progress arc filling around the aimed portal while you settle on it
+    if (S.aimPortal && S.lockP > 0 && !S.diving) {
+      const p = S.aimPortal;
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r + 12, -Math.PI / 2, -Math.PI / 2 + S.lockP * Math.PI * 2);
+      ctx.stroke(); ctx.lineCap = 'butt';
+    }
+    drawRings();
+    drawTurtleFalling('focused');
+  }
+
+  function drawPortal(p, aimed) {
+    const cfg = p.cfg;
+    ctx.save();
+    if (aimed) {  // emphasise the lane the player will drop into
+      ctx.strokeStyle = '#fff';
+      ctx.globalAlpha = 0.45 + 0.35 * Math.sin(S.tGlobal * 8);
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 8, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // outer glow
+    const g = ctx.createRadialGradient(p.x, p.y, p.r * 0.2, p.x, p.y, p.r * 1.7);
+    g.addColorStop(0, cfg.glow); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 1.7, 0, Math.PI * 2); ctx.fill();
+    // ring
+    ctx.strokeStyle = cfg.color; ctx.lineWidth = 3 * p.pulse;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.stroke();
+    // inner swirl
+    ctx.strokeStyle = shade(cfg.color, 0.3); ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6;
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * (0.4 + k * 0.18), S.tGlobal * (1 + k) % (Math.PI * 2), S.tGlobal * (1 + k) % (Math.PI * 2) + Math.PI * 1.2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    // real coin logo
+    drawCoinLogo(p.key, p.x, p.y, p.r * 0.5);
+    // label
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px ' + F; ctx.textAlign = 'center';
+    ctx.fillText(cfg.ticker, p.x, p.y + p.r + 18);
+    ctx.restore();
+  }
+
+  // Brand-accurate logo marks, drawn with canvas paths (same geometry the
+  // game uses in coinIconSVG): BTC ₿ disc, ETH double-diamond, SOL tri-bar.
+  function drawCoinLogo(key, cx, cy, size) {
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (key === 'BTC') {
+      ctx.fillStyle = '#f7931a';
+      ctx.beginPath(); ctx.arc(cx, cy, size, 0, Math.PI * 2); ctx.fill();
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(0.16);
+      ctx.fillStyle = '#fff'; ctx.font = '900 ' + (size * 1.55) + 'px ' + F;
+      ctx.fillText('₿', 0, size * 0.04);   // ₿
+      ctx.restore();
+    } else if (key === 'ETH') {
+      const sc = (size * 2) / 21;
+      const mv = (X, Y) => ctx.moveTo(cx + (X - 12) * sc, cy + (Y - 12) * sc);
+      const ln = (X, Y) => ctx.lineTo(cx + (X - 12) * sc, cy + (Y - 12) * sc);
+      ctx.fillStyle = '#627eea';
+      ctx.beginPath(); mv(12, 1.5); ln(19.5, 12); ln(12, 16.2); ln(4.5, 12); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 0.55;
+      ctx.beginPath(); mv(12, 18); ln(19.5, 13.6); ln(12, 22.5); ln(4.5, 13.6); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+    } else if (key === 'SOL') {
+      const g = ctx.createLinearGradient(cx - size, cy - size, cx + size, cy + size);
+      g.addColorStop(0, '#00FFA3'); g.addColorStop(1, '#DC1FFF');
+      ctx.fillStyle = g;
+      const bw = size * 1.8, bh = size * 0.34, gap = size * 0.27, skew = size * 0.42;
+      [-(bh + gap), 0, (bh + gap)].forEach((yo, i) => {
+        const top = cy + yo - bh / 2, bot = cy + yo + bh / 2;
+        const off = (i === 1 ? -1 : 1) * size * 0.16;   // middle bar notches the other way
+        const L = cx - bw / 2 + off, R = cx + bw / 2 + off;
+        ctx.beginPath();
+        ctx.moveTo(L + skew, top); ctx.lineTo(R, top);
+        ctx.lineTo(R - skew, bot); ctx.lineTo(L, bot);
+        ctx.closePath(); ctx.fill();
+      });
+    }
+    ctx.restore();
+  }
+
+  function drawPlunge() { // the WARP — diving through the portal into the next zone
+    const cx = W / 2, cy = H * 0.5;
+    const age = Math.min(1, S.t / 2.4);
+    const col = (S.warp && S.warp.col) || S.accent;
+    drawWarpTunnel(cx, cy, col, age);
+    // turtle sucked into the vortex, spinning, shrinking as it dives in
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(S.tGlobal * 3.4 * (0.4 + age));
+    drawTurtle(0, 0, 1.5 * (1 - 0.45 * age), 'excited');
+    ctx.restore();
+    // white-out as we punch through to the other side
+    if (age > 0.78) {
+      ctx.globalAlpha = (age - 0.78) / 0.22;
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Shared landing platform (red in the Validator's domain).
+  function drawPlatform() {
+    const platTop = H * 0.72;
+    // a giant red candle body as the floor (no wick)
+    const bg = ctx.createLinearGradient(0, platTop, 0, H);
+    bg.addColorStop(0, shade(VAL_RED, -0.4)); bg.addColorStop(1, shade(VAL_RED, -0.72));
+    ctx.fillStyle = bg;
+    rr(W * 0.08, platTop, W * 0.84, H * 0.5, 6); ctx.fill();
+    ctx.strokeStyle = VAL_RED; ctx.lineWidth = 2; rr(W * 0.08, platTop, W * 0.84, H * 0.5, 6); ctx.stroke();
+    // soft top highlight so the turtle and Validator read as standing on it
+    ctx.strokeStyle = 'rgba(255,120,130,0.45)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W * 0.1, platTop + 1.5); ctx.lineTo(W * 0.9, platTop + 1.5); ctx.stroke();
+    return platTop;
+  }
+
+  function drawImpact() {
+    bgGradientCol(VAL_RED);
+    const platTop = drawPlatform();
+    drawRings();
+    // turtle slammed onto the platform; small dust puffs
+    drawTurtle(W * 0.5, platTop - 6, 1.5, 'worried');
+    ctx.globalAlpha = Math.max(0, 1 - S.t * 1.5);
+    ctx.fillStyle = 'rgba(255,120,120,0.5)';
+    for (let i = 0; i < 8; i++) {
+      const a = Math.PI + (i / 7) * Math.PI, d = 20 + S.t * 120;
+      ctx.beginPath(); ctx.arc(W * 0.5 + Math.cos(a) * d, platTop - 4 + Math.sin(a) * d * 0.3, 4, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawValidator() {
+    // Red domain: dark hall with a deep red glow
+    bgGradientCol(VAL_RED_DK);
+    const platTop = drawPlatform();
+    drawRings();
+
+    const vx = W * 0.6, vBase = platTop;        // stands ON the platform
+    const appear = Math.min(1, S.t / 1.0);
+    const pulse = 0.55 + 0.45 * Math.sin(S.tGlobal * 2.2);
+    const vh = 212 * appear;                    // total height
+    const topY = vBase - vh;
+
+    // ── back aura: a single clean pulsing red halo ──
+    ctx.save();
+    const aura = ctx.createRadialGradient(vx, topY + vh * 0.42, 10, vx, topY + vh * 0.42, 160);
+    aura.addColorStop(0, 'rgba(255,43,61,' + (0.30 * appear * pulse) + ')');
+    aura.addColorStop(1, 'rgba(255,43,61,0)');
+    ctx.fillStyle = aura; ctx.fillRect(vx - 170, topY - 50, 340, vh + 140);
+    ctx.restore();
+
+    // ── rising embers (sparse, behind the figure) ──
+    ctx.save();
+    for (let i = 0; i < 9; i++) {
+      const ph = (S.tGlobal * 0.5 + i * 0.41) % 1;
+      const ex = vx + Math.sin(i * 2.1 + S.tGlobal * 0.8) * 52;
+      const ey = vBase - ph * vh * 1.05;
+      ctx.globalAlpha = (1 - ph) * 0.55 * appear;
+      ctx.fillStyle = i % 3 === 0 ? '#ffd0a0' : VAL_RED;
+      ctx.beginPath(); ctx.arc(ex, ey, 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+
+    // ── smooth flowing cloak silhouette ──
+    const cloak = () => {
+      ctx.beginPath();
+      ctx.moveTo(vx - 48, vBase);
+      ctx.bezierCurveTo(vx - 42, vBase - vh * 0.46, vx - 27, topY + vh * 0.26, vx - 17, topY + 40);
+      ctx.quadraticCurveTo(vx, topY - 2, vx + 17, topY + 40);     // hood peak
+      ctx.bezierCurveTo(vx + 27, topY + vh * 0.26, vx + 42, vBase - vh * 0.46, vx + 48, vBase);
+      ctx.closePath();
+    };
+    ctx.save();
+    ctx.globalAlpha = appear;
+    cloak();
+    const body = ctx.createLinearGradient(0, topY, 0, vBase);
+    body.addColorStop(0, '#1b0307'); body.addColorStop(0.55, '#0a0204'); body.addColorStop(1, '#160709');
+    ctx.fillStyle = body; ctx.fill();
+    ctx.strokeStyle = VAL_RED; ctx.lineWidth = 2; ctx.globalAlpha = appear * (0.55 + 0.3 * pulse);
+    ctx.shadowColor = VAL_RED; ctx.shadowBlur = 16; ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // ── digital scanlines, clipped to the cloak ──
+    ctx.save();
+    cloak(); ctx.clip();
+    ctx.strokeStyle = 'rgba(255,43,61,0.14)'; ctx.lineWidth = 1;
+    const off = (S.tGlobal * 26) % 8;
+    for (let y = topY; y < vBase; y += 8) { ctx.beginPath(); ctx.moveTo(vx - 52, y + off); ctx.lineTo(vx + 52, y + off); ctx.stroke(); }
+    ctx.restore();
+
+    // ── hooded void ──
+    ctx.save();
+    ctx.globalAlpha = appear;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(vx - 14, topY + 44);
+    ctx.quadraticCurveTo(vx, topY + 16, vx + 14, topY + 44);
+    ctx.quadraticCurveTo(vx + 12, topY + 70, vx, topY + 76);
+    ctx.quadraticCurveTo(vx - 12, topY + 70, vx - 14, topY + 44);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // ── glowing red eyes inside the hood ──
+    ctx.save();
+    ctx.globalAlpha = appear;
+    ctx.translate(vx, topY + 52);
+    ctx.shadowColor = VAL_RED; ctx.shadowBlur = 14 + 8 * pulse;
+    [-7, 7].forEach((ex, idx) => {
+      ctx.save(); ctx.translate(ex, 0); ctx.rotate(idx ? 0.28 : -0.28);
+      ctx.fillStyle = VAL_RED;
+      ctx.beginPath(); ctx.ellipse(0, 0, 5, 2.4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(1.5, 0, 1.1, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowColor = VAL_RED; ctx.shadowBlur = 14 + 8 * pulse;
+      ctx.restore();
+    });
+    ctx.shadowBlur = 0; ctx.restore();
+
+    // ── chest emblem: a single glowing red candle (no wick) ──
+    ctx.save();
+    ctx.globalAlpha = appear * (0.7 + 0.3 * pulse);
+    const cyem = topY + vh * 0.52;
+    ctx.shadowColor = VAL_RED; ctx.shadowBlur = 12;
+    ctx.fillStyle = VAL_RED; rr(vx - 5, cyem - 11, 10, 22, 2); ctx.fill();
+    ctx.shadowBlur = 0; ctx.restore();
+
+    // turtle on the platform, front-left, looking up at him
+    drawTurtle(W * 0.3, platTop - 5, 1.25, 'worried');
+
+    // ── dialogue plate (red-accented) ──
+    const line = VAL_LINES[Math.min(S.valLine, VAL_LINES.length - 1)];
+    const tin = Math.min(1, S.valLineT / 0.4);
+    ctx.globalAlpha = tin;
+    ctx.fillStyle = 'rgba(10,2,4,0.88)';
+    rr(20, H * 0.1, W - 40, 72, 12); ctx.fill();
+    ctx.strokeStyle = VAL_RED + '88'; ctx.lineWidth = 1.5; rr(20, H * 0.1, W - 40, 72, 12); ctx.stroke();
+    ctx.fillStyle = VAL_RED; ctx.font = 'bold 10px ' + F; ctx.textAlign = 'left';
+    ctx.fillText('◆ THE VALIDATOR', 36, H * 0.1 + 22);
+    ctx.fillStyle = '#ffe9eb'; ctx.font = '15px ' + F;
+    wrap(line, 36, H * 0.1 + 45, W - 72, 19);
+    ctx.globalAlpha = 1;
+    if (S.valLineT > 1.2) {
+      ctx.globalAlpha = 0.4 + 0.3 * Math.sin(S.tGlobal * 5);
+      ctx.fillStyle = '#fff'; ctx.font = '11px ' + F; ctx.textAlign = 'right';
+      ctx.fillText('tap ▸', W - 34, H * 0.1 + 62);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawTitle() {
+    bgGradient();
+    drawWorld(1.2);
+    const k = Math.min(1, S.t / 0.8);
+    ctx.globalAlpha = k;
+    // logo wordmark
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff'; ctx.font = '900 34px ' + F;
+    ctx.shadowColor = S.accent; ctx.shadowBlur = 24;
+    ctx.fillText('CHART QUEST', W / 2, H * 0.40);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = S.accent; ctx.font = 'bold 14px ' + F;
+    ctx.fillText('LOST IN THE BLOCKCHAIN', W / 2, H * 0.40 + 28);
+    // two-line mandate, fading in after the logo
+    const k2 = Math.max(0, Math.min(1, (S.t - 1.2) / 0.8));
+    ctx.globalAlpha = k2;
+    ctx.fillStyle = '#c9d1d9'; ctx.font = '15px ' + F;
+    ctx.fillText('Become a Trader.', W / 2, H * 0.56);
+    ctx.fillText('Find the Exit Block.', W / 2, H * 0.56 + 24);
+    ctx.globalAlpha = 1;
+  }
+
+  function wrap(text, x, y, maxW, lh) {
+    const words = text.split(' '); let line = '', yy = y;
+    for (const w of words) {
+      const test = line + (line ? ' ' : '') + w;
+      if (ctx.measureText(test).width > maxW) { ctx.fillText(line, x, yy); yy += lh; line = w; }
+      else line = test;
+    }
+    if (line) ctx.fillText(line, x, yy);
+  }
+
+  /* ─── Master draw (with shake + flash envelope) ─────────────────────── */
+  function draw() {
+    ctx.save();
+    if (S.shake > 0) ctx.translate(rand(-1, 1) * 10 * S.shake, rand(-1, 1) * 10 * S.shake);
+    switch (S.phase) {
+      case 'glitch':    drawGlitch(); break;
+      case 'fall':      drawFall('focused', true); break;
+      case 'choose':    drawChoose(); break;
+      case 'plunge':    drawPlunge(); break;
+      case 'impact':    drawImpact(); break;
+      case 'validator': drawValidator(); break;
+      case 'title':     drawTitle(); break;
+    }
+    ctx.restore();
+    if (S.flash > 0) {
+      ctx.globalAlpha = S.flash;
+      ctx.fillStyle = S.flashCol; ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
+    // vignette
+    const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.45)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  }
+
+  return { start, update, draw, _S: S, setFaction: k => { S.faction = k; } };
+})();
+
+/* ════════════════════════════════════════════════════════════════════════
+   AUDIO — tiny WebAudio layer, zero asset files. All synthesised.
+   Safe to delete entirely; the cinematic works silently without it.
+   ════════════════════════════════════════════════════════════════════════ */
+const Audio = (() => {
+  let ac = null, muted = false, glitchNode = null;
+  function ctxx() { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} } return ac; }
+  function unlock() { const a = ctxx(); if (a && a.state === 'suspended') a.resume(); }
+  function setMuted(m) { muted = m; if (m) stopAll(); }
+  function tone(freq, dur, type, vol, slideTo) {
+    const a = ctxx(); if (!a || muted) return;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'sine'; o.frequency.setValueAtTime(freq, a.currentTime);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, a.currentTime + dur);
+    g.gain.setValueAtTime(0.0001, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol || 0.2, a.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + dur + 0.02);
+  }
+  function noise(dur, vol) {
+    const a = ctxx(); if (!a || muted) return null;
+    const buf = a.createBuffer(1, a.sampleRate * dur, a.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1);
+    const src = a.createBufferSource(); src.buffer = buf;
+    const g = a.createGain(); g.gain.value = vol || 0.05;
+    const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1200;
+    src.connect(f); f.connect(g); g.connect(a.destination); src.start();
+    return { src, g };
+  }
+  return {
+    unlock, setMuted,
+    glitch() { glitchNode = noise(2.4, 0.04); },
+    whoosh() { tone(120, 0.7, 'sawtooth', 0.12, 600); },
+    rise()   { tone(220, 0.9, 'sine', 0.08, 660); },
+    chime(k) { const f = { BTC: 523, ETH: 587, SOL: 659 }[k] || 523; tone(f, 0.5, 'triangle', 0.18); tone(f * 1.5, 0.5, 'sine', 0.10); },
+    impact() { tone(70, 0.5, 'sine', 0.35, 40); noise(0.25, 0.18); },
+    coin()   { tone(880, 0.10, 'square', 0.10, 1320); tone(1320, 0.12, 'sine', 0.06); },
+    warp()   { tone(160, 1.4, 'sawtooth', 0.14, 1400); tone(80, 1.4, 'sine', 0.10, 320); },
+    appear() { tone(180, 1.2, 'sine', 0.06, 220); },
+    blip()   { tone(440, 0.08, 'square', 0.08); },
+    stopAll(){ if (glitchNode) { try { glitchNode.src.stop(); } catch(e){} glitchNode = null; } },
+  };
+})();
+
+/* ════════════════════════════════════════════════════════════════════════
+   PREVIEW DRIVER  (this part is replaced by the game's frame() in production)
+   ════════════════════════════════════════════════════════════════════════ */
+let last = performance.now();
+let started = false;
+function drawReady() {
+  ctx.fillStyle = '#04060c'; ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff'; ctx.font = '900 30px var(--font-ui)';
+  ctx.fillText('CHART QUEST', W / 2, H * 0.44);
+  ctx.fillStyle = '#7c4dff'; ctx.font = 'bold 12px var(--font-ui)';
+  ctx.fillText('LOST IN THE BLOCKCHAIN', W / 2, H * 0.44 + 24);
+  ctx.globalAlpha = 0.5 + 0.4 * Math.sin(performance.now() / 350);
+  ctx.fillStyle = '#c9d1d9'; ctx.font = '14px var(--font-ui)';
+  ctx.fillText('▶  tap to enter', W / 2, H * 0.6);
+  ctx.globalAlpha = 1;
+}
+function loop(now) {
+  const dt = Math.min((now - last) / 1000, 1 / 30);
+  last = now;
+  if (!started) {
+    drawReady();
+    document.getElementById('phaseTag').textContent = 'ready';
+  } else if (IntroCinematic._S.active) {
+    IntroCinematic.update(dt);
+    IntroCinematic.draw();
+    document.getElementById('phaseTag').textContent = IntroCinematic._S.phase;
+  } else {
+    // "gameplay starts here" placeholder so the handoff is visible
+    ctx.fillStyle = COLOR.bg; ctx.fillRect(0, 0, W, H);
+    const cfg = FACTION_CONFIG[IntroCinematic._S.faction || 'BTC'];
+    ctx.textAlign = 'center';
+    ctx.fillStyle = cfg.color; ctx.font = 'bold 16px var(--font-ui)';
+    ctx.fillText('▶ GAMEPLAY BEGINS', W / 2, H * 0.46);
+    ctx.fillStyle = '#7d8aa0'; ctx.font = '13px var(--font-ui)';
+    ctx.fillText('faction handed off: ' + cfg.name + ' (' + cfg.ticker + ')', W / 2, H * 0.46 + 26);
+    ctx.fillStyle = '#4a5666'; ctx.font = '12px var(--font-ui)';
+    ctx.fillText('→ Flash Quiz · Prediction Bet · The Market Maker', W / 2, H * 0.46 + 50);
+    document.getElementById('phaseTag').textContent = 'done';
+  }
+  requestAnimationFrame(loop);
+}
+
+function startCinematic() {
+  IntroCinematic.start((factionKey) => {
+    // In production this calls window._confirmFaction(factionKey) then lets
+    // the normal game loop take over with introFlow checkpoints.
+    console.log('[intro] complete → faction:', factionKey);
+  });
+}
+
+// First tap anywhere on the stage starts the cinematic from frame 1 (also
+// unlocks audio). Without this, the intro would auto-run on page load and the
+// fall could elapse before the viewer is even looking.
+function beginFromGate() { if (!started) { started = true; Audio.unlock(); startCinematic(); } }
+stage.addEventListener('pointerdown', beginFromGate);
+
+document.getElementById('btnReplay').addEventListener('click', () => { started = true; startCinematic(); });
+document.getElementById('btnSkip').addEventListener('click', () => { IntroCinematic._S.faction = IntroCinematic._S.faction || 'BTC'; IntroCinematic._S.active = false; Audio.stopAll(); });
+const muteBtn = document.getElementById('btnMute');
+let _m = false;
+muteBtn.addEventListener('click', () => { _m = !_m; Audio.setMuted(_m); muteBtn.textContent = _m ? '🔇 Muted' : '🔊 Sound'; });
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

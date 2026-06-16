@@ -242,6 +242,11 @@
   .bfOpt.correct { border-color: #16c784; background: rgba(22,199,132,0.13); color: #16c784; }
   .bfOpt.wrong   { border-color: #ea3943; background: rgba(234,57,67,0.13); color: #ea3943; }
   .bfOpt.dim     { opacity: 0.5; }
+  .bfHint { font-size: 11px; color: #7d8aa0; text-align: center; margin: -4px 0 12px; }
+  .trendPt { cursor: pointer; transition: fill 0.15s, stroke 0.15s; }
+  .trendPt:hover { fill: rgba(255,214,10,0.32); }
+  .trendPt.good { fill: rgba(22,199,132,0.35); stroke: #16c784; }
+  .trendPt.bad  { fill: rgba(234,57,67,0.35); stroke: #ea3943; }
   #bfFeedback { text-align: center; font-size: 12px; margin-top: 8px; min-height: 18px; line-height: 1.5; color: #9aa7b6; }
   #bfNext { margin-top: 14px; width: 100%; padding: 14px 0; font: bold 14px var(--font-ui); background: #14222f; border: 1px solid #4cc3ff; color: #4cc3ff; border-radius: 8px; cursor: pointer; }
   .bfBtnRow { display: flex; gap: 10px; margin-top: 16px; }
@@ -330,9 +335,13 @@
   #swBalanceCard {
     text-align: center; background: #0d1320; border: 1px solid #2a3442;
     border-radius: 14px; padding: 22px 16px; margin-bottom: 18px;
+    box-shadow: 0 0 22px rgba(255,214,10,0.08) inset;
   }
   #swBalanceLabel { font-size: 10px; letter-spacing: 2px; color: #7d8aa0; }
-  #swBalance { font-size: 38px; font-weight: bold; color: #ffd60a; font-family: var(--font-mono); margin-top: 6px; }
+  #swBalance {
+    font-size: 38px; font-weight: bold; color: #ffd60a; font-family: var(--font-mono); margin-top: 6px;
+    text-shadow: 0 0 14px rgba(255,214,10,0.65), 0 0 28px rgba(255,214,10,0.3);
+  }
   #swOpen { font-size: 13px; font-weight: bold; font-family: var(--font-mono); margin-top: 4px; min-height: 16px; }
   #swTagline { font-size: 12px; color: #7d8aa0; margin-top: 10px; }
   #swStatsLabel, #swListLabel { font-size: 10px; letter-spacing: 2px; color: #7d8aa0; margin: 4px 2px 8px; }
@@ -990,8 +999,13 @@
     const accountBtn = document.getElementById('accountBtn');
     if (accountBtn) accountBtn.style.display = '';
     updateAccountBtn();
-    // First-launch: show faction picker if no coin chosen yet
-    if (!localStorage.getItem('cq_faction')) {
+    // First play → run the opening cinematic. It creates mystery, lets the
+    // player pick their chain via the BTC/ETH/SOL portals, then hands the
+    // chosen faction off into the game. Replaces the old greeting + DOM picker.
+    if (!localStorage.getItem('cq_played')) {
+      candleAcademy.active = false;   // cinematic's title card replaces the greeting
+      IntroCinematic.start(function (key) { if (window._confirmFaction) window._confirmFaction(key); });
+    } else if (!localStorage.getItem('cq_faction')) {
       showFactionPicker();
     } else {
       // Faction already chosen — reset game state in case the loop ran & halted under the overlay
@@ -1147,12 +1161,19 @@
           + '<polygon points="12,1.5 19.5,12 12,16.2 4.5,12" fill="' + color + '"/>'
           + '<polygon points="12,18 19.5,13.6 12,22.5 4.5,13.6" fill="' + color + '" opacity="0.55"/>'
           + '</svg>';
-      case 'SOL':
-        return '<svg viewBox="0 0 24 24" width="28" height="28" style="display:block">'
-          + '<rect x="2.5" y="4.5" width="19" height="3.6" rx="1.8" fill="' + color + '"/>'
-          + '<rect x="2.5" y="10.2" width="19" height="3.6" rx="1.8" fill="' + color + '" opacity="0.78"/>'
-          + '<rect x="2.5" y="15.9" width="19" height="3.6" rx="1.8" fill="' + color + '" opacity="0.52"/>'
+      case 'SOL': {
+        // Real Solana logomark: three slanted parallelogram bars in the
+        // signature green-to-purple gradient (not a generic equalizer icon).
+        const gid = 'solGrad' + Math.random().toString(36).slice(2,8);
+        return '<svg viewBox="0 0 397 311" width="28" height="22" style="display:block">'
+          + '<defs><linearGradient id="' + gid + '" x1="360.9" x2="141.2" y1="351.5" y2="-69.3" gradientUnits="userSpaceOnUse">'
+          + '<stop offset="0" stop-color="#00FFA3"/><stop offset="1" stop-color="#DC1FFF"/>'
+          + '</linearGradient></defs>'
+          + '<path fill="url(#' + gid + ')" d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z"/>'
+          + '<path fill="url(#' + gid + ')" d="M64.6 3.8C67.1 1.4 70.4 0 73.9 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z"/>'
+          + '<path fill="url(#' + gid + ')" d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z"/>'
           + '</svg>';
+      }
       case 'XRP':
         return '<svg viewBox="0 0 24 24" width="28" height="28" style="display:block">'
           + '<path d="M2.5 6.5 Q9 15 12 6.5 Q15 15 21.5 6.5" stroke="' + color + '" stroke-width="2.3" fill="none" stroke-linecap="round"/>'
@@ -1307,6 +1328,9 @@
       closeAccountPanel();
       showFactionPicker(true);
     });
+    // Dev/testing shortcut: open with ?guest (or ?dev) to skip the auth
+    // screen and drop straight into the first-play flow (the cinematic).
+    if (/[?&](guest|dev)(=|&|$)/.test(location.search)) resolveAuth();
   });
 })();
 
@@ -1482,7 +1506,8 @@ function candleTop(c) {
    Deterministic seed = the same "day" replays every run.
    TO USE A REAL CHART: replace NY_OPEN with an exported array of
    [closePct, upperWickPct] per minute — everything else just works. */
-function buildReplay(seed) {
+function buildReplay(seed, volScale) {
+  volScale = volScale || 1; // per-coin volatility multiplier — see FALLBACK_DATA below
   const m32 = (a) => () => {
     a |= 0; a = a + 0x6D2B79F5 | 0;
     let t = Math.imul(a ^ a >>> 15, 1 | a);
@@ -1499,9 +1524,9 @@ function buildReplay(seed) {
   const out = [];
   let cluster = 1, drift = 0, driftLeft = 0;
   for (let i = 0; i < 390; i++) {
-    const base = 0.022 + 0.075 * Math.exp(-i / 22);  // open burst → midday calm
+    const base = (0.022 + 0.075 * Math.exp(-i / 22)) * volScale;  // open burst → midday calm
     cluster = Math.max(0.5, Math.min(2.8, cluster + 0.25 * (rnd() - 0.5) + 0.05 * (1 - cluster)));
-    if (driftLeft-- <= 0) { drift = (rnd() - 0.5) * 0.014; driftLeft = 8 + Math.floor(rnd() * 25); }
+    if (driftLeft-- <= 0) { drift = (rnd() - 0.5) * 0.014 * volScale; driftLeft = 8 + Math.floor(rnd() * 25); }
     let d = gauss() * base * cluster + drift;
     let wick = Math.abs(gauss()) * base * 0.35;      // most candles: tiny/no wick
     let wickLo = Math.abs(gauss()) * base * 0.3;     // lower wick, usually small
@@ -1511,7 +1536,21 @@ function buildReplay(seed) {
   }
   return out;
 }
-const NY_OPEN = buildReplay(20260611); // offline fallback session
+const NY_OPEN = buildReplay(20260611); // offline fallback session (BTC character)
+
+/* Per-coin offline fallback. Every faction used to share this ONE simulated
+   session, so if the live Binance fetch failed (geo-blocked, offline, rate
+   limited, etc.) every coin rendered the exact same candles — which looked
+   like "the chart never changes when I pick ETH/SOL". Each ticker now gets
+   its own seed (different shape) and its own volatility scale (matching the
+   relative volatility shown on the faction cards), plus its own rough price
+   level, so the chart and HTF panels always look distinct per coin even
+   before/without a successful network fetch. */
+const FALLBACK_SEED  = { BTC: 20260611, ETH: 20260612, SOL: 20260613, BNB: 20260614, DOGE: 20260615, XRP: 20260616 };
+const FALLBACK_VOL   = { BTC: 1,        ETH: 1.26,      SOL: 1.55,     BNB: 1.33,     DOGE: 1.62,      XRP: 1.43 };
+const FALLBACK_PRICE = { BTC: 109234,   ETH: 3850,      SOL: 168,      BNB: 712,      DOGE: 0.41,      XRP: 2.35 };
+const FALLBACK_DATA  = {};
+for (const tk in FALLBACK_SEED) FALLBACK_DATA[tk] = buildReplay(FALLBACK_SEED[tk], FALLBACK_VOL[tk]);
 
 /* REAL CHART DATA: at load the game fetches actual BTC/USDT 1-minute
    history from Binance's public API (no key, CORS-open, works straight
@@ -1620,9 +1659,9 @@ const FACTION_META = {
 // Read saved faction from localStorage (default BTC for new players)
 let playerFaction = FACTION_CONFIG[localStorage.getItem('cq_faction') || ''] || FACTION_CONFIG.BTC;
 
-let MARKET_DATA = NY_OPEN;
+let MARKET_DATA = FALLBACK_DATA[playerFaction.ticker] || NY_OPEN;
 let dataSource = 'SIM REPLAY';
-let priceBase = 100; // dollar price of the first candle (real when live data loads)
+let priceBase = FALLBACK_PRICE[playerFaction.ticker] || 100; // dollar price of the first candle (real when live data loads)
 
 // "$109,234" / "$98.45" — sensible precision at any magnitude
 function fmtPrice(p) {
@@ -1630,6 +1669,15 @@ function fmtPrice(p) {
   return '$' + (a >= 1000 ? fmt(p) : a >= 10 ? p.toFixed(2) : p.toFixed(3));
 }
 function fetchMarketData(faction) {
+  // Switch to this coin's own simulated session IMMEDIATELY (synchronously) so the
+  // chart/HTF panels are always correct for the selected coin even before the network
+  // request below resolves — and even if it never resolves (offline, geo-blocked,
+  // rate-limited). Without this, picking ETH/SOL kept showing whatever coin's candles
+  // happened to be loaded already (usually BTC's), because the old code only updated
+  // MARKET_DATA inside the fetch's .then() and silently no-op'd on any failure.
+  MARKET_DATA = FALLBACK_DATA[faction.ticker] || NY_OPEN;
+  dataSource = 'SIM REPLAY';
+  priceBase = FALLBACK_PRICE[faction.ticker] || 100;
   // Fetch real 1-minute OHLCV data for the player's chosen coin from Binance public API.
   // All 5 faction symbols (BTCUSDT / ETHUSDT / SOLUSDT / XRPUSDT / DOGEUSDT) are on
   // Binance's free, CORS-open endpoint — no API key required.
@@ -1795,6 +1843,7 @@ const RANKS = [
   { name: 'DOLPHIN',    emoji: '🐬', color: '#7cc4ff', blurb: 'Manages risk like a pro.' },
   { name: 'SHARK',      emoji: '🦈', color: '#9fb4c9', blurb: 'Stacks confluence across timeframes.' },
   { name: 'WHALE',      emoji: '🐋', color: '#5ad1ff', blurb: 'Trades a full plan.' },
+  { name: 'LEVIATHAN',  emoji: '🐲', color: '#7c3aed', blurb: 'Ancient force of the deep. One boss from mastery.' },
   { name: 'TRADER',     emoji: '👑', color: '#16c784', blurb: 'Graduated. The market is yours to read.' },
 ];
 // One rank tier per level; caps at TRADER.
@@ -1848,10 +1897,19 @@ function spawnPortal(label, sublabel, action) {
   for (let i = portals.length - 1; i >= 0; i--) {
     if (portals[i].label === label) portals.splice(i, 1);
   }
-  // Spawn ahead of turtle — above jump height so jetpack is required (~200px above ground)
+  // Float the portal above the actual chart SURFACE near its spawn point, not a fixed
+  // height above the absolute ground floor. Candle towers routinely grow taller than
+  // ~200px, which used to bury the portal under (behind) the candles — visible only
+  // underneath the chart and physically unreachable since it sat below the walkable
+  // top. Anchor to the nearest already-generated candle's top instead (falling back to
+  // the turtle's current height if none has spawned that far ahead yet).
+  const px = turtle.x + W * 0.65;
+  const near = candles.find(c => px >= c.x && px < c.x + c.w) ||
+    candles.reduce((best, c) => (!best || Math.abs(c.x - px) < Math.abs(best.x - px)) ? c : best, null);
+  const surfaceY = Math.min(near ? candleTop(near) : turtle.y, turtle.y);
   portals.push({
-    x: turtle.x + W * 0.65,
-    y: groundY - 200,
+    x: px,
+    y: Math.max(60, surfaceY - 190), // clear of the surface — jetpack height required
     r: 32,
     label,
     sublabel,
@@ -2113,6 +2171,7 @@ function shellTuck() {
    jump on release (so we can tell the gestures apart). */
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; // don't eat auth typing
+  if (window.cineActive) return;   // opening cinematic handles its own keys
   if (lessonOpen) { // lesson card owns input — Space/Enter = OK
     if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); dismissLesson(); }
     return;
@@ -2131,6 +2190,7 @@ window.addEventListener('keydown', (e) => {
 let _holdTimer = null; // hold ~150ms triggers jetpack instead of jump
 let pointer = null; // active gesture: {x0,y0: start, fired: swipe already fired?}
 window.addEventListener('pointerdown', (e) => {
+  if (window.cineActive) return;   // opening cinematic handles its own pointer input
   // Candle Academy greeting: any tap dismisses immediately
   if (candleAcademy.active) {
     e.preventDefault();
@@ -2334,6 +2394,7 @@ let bannerT = 0;           // banner time remaining (0 = hidden)
 let lastCandleId = -1;     // candle the turtle is currently on
 let maxSeenCandleId = -1;  // furthest candle ever reached (backtrack-proof)
 let flashT = 0, flashColor = '#16c784'; // win/loss screen flash
+let portalWarp = null; // { t, dur, x, y } — "jump into another dimension" transition on portal entry
 const floaters = [];       // floating "+243" / "LEVEL 2!" texts
 
 /* ---------- The teaching layer ----------
@@ -2554,6 +2615,51 @@ const LESSONS = {
     '<li>At 2R with 40% win rate → you are <b>profitable long-term</b></li>' +
     '<li>💡 Math beats emotion every time</li>' +
     '</ul>'],
+
+  /* ── TREND LINES (Level 7) ──────────────────────────────── */
+  trendlines: ['DRAWING TREND LINES 📐',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li>An <b>uptrend line</b> connects rising <b style="color:#16c784">swing LOWS</b></li>' +
+    '<li>A <b>downtrend line</b> connects falling <b style="color:#ea3943">swing HIGHS</b></li>' +
+    '<li>💡 <b>Three-touch rule:</b> 2 points is a guess — 3+ respected touches make it real</li>' +
+    '<li>A confirmed CLOSE through the line = a possible trend change</li>' +
+    '</ul>'],
+
+  /* ── BULLISH STRUCTURES (Level 8) ────────────────────────── */
+  bull_patterns: ['BULLISH STRUCTURES 🚩',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li><b>Bull Flag:</b> sharp rally, then a small downward-drifting pause</li>' +
+    '<li><b>Ascending Triangle:</b> flat top + rising lows — buyers getting bolder</li>' +
+    '<li><b>Cup &amp; Handle:</b> a rounded recovery, then one last small dip before breakout</li>' +
+    '<li>💡 These work best <b>inside an existing uptrend</b> — context first</li>' +
+    '</ul>'],
+
+  /* ── BEARISH STRUCTURES (Level 9) ───────────────────────── */
+  bear_patterns: ['BEARISH STRUCTURES 🔻',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li><b>Bear Flag:</b> sharp drop, then a small upward-drifting pause</li>' +
+    '<li><b>Descending Triangle:</b> flat bottom + falling highs — sellers getting bolder</li>' +
+    '<li>Mirror images of bullish patterns — same logic, opposite direction</li>' +
+    '<li>💡 Weak volume on the breakdown = the move can fail or get retested</li>' +
+    '</ul>'],
+
+  /* ── HEAD & SHOULDERS + KEY REVERSALS (Level 9) ──────────── */
+  head_shoulders: ['HEAD &amp; SHOULDERS 🗿',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li>Three peaks: <b>left shoulder</b>, a taller <b>head</b>, then a <b>right shoulder</b></li>' +
+    '<li>The <b>neckline</b> connects the two lows between them — that\'s the real trigger</li>' +
+    '<li>A confirmed close <b>below the neckline</b> = bearish reversal signal</li>' +
+    '<li>💡 A <b>Double Top</b> is the simpler 2-peak version of the same idea</li>' +
+    '</ul>'],
+
+  /* ── CONFLUENCE (Level 10) ───────────────────────────────── */
+  confluence: ['STACKING CONFLUENCE 🧩',
+    '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
+    '<li><b>Confluence</b> = multiple signals lining up to agree on one trade idea</li>' +
+    '<li>Trend + structure break + VWAP + a pattern, all pointing the same way = your best setups</li>' +
+    '<li>One signal alone is a guess. Three aligned signals is a plan.</li>' +
+    '<li>💡 Confluence makes a setup stronger — it never erases real structure in the way</li>' +
+    '</ul>'],
 };
 /* ---------- Quiz Questions (indexed by lesson key) ---------- */
 const QUIZ_QUESTIONS = {
@@ -2623,6 +2729,29 @@ const QUIZ_QUESTIONS = {
     { q:'A 1:2 Risk:Reward ratio means…', answers:['Risk $1 to make $2','Risk $2 to make $1','Equal risk and reward','No stop loss needed'], correct:0 },
     { q:'Good R:R means you can be wrong often and still…', answers:['Profit overall','Lose everything','Need 90% win rate','Use max leverage'], correct:0 },
   ],
+  trendlines: [
+    { q:'A valid trendline needs at least how many respected touches?', answers:['Three swing points','One point','Any two random points','Touches don\'t matter'], correct:0 },
+    { q:'In an uptrend, a trendline connects the…', answers:['Rising swing LOWS','Rising swing HIGHS','Random candle bodies','The VWAP line'], correct:0 },
+    { q:'Price CLOSES below a well-respected rising trendline. This usually signals…', answers:['A possible trend change — watch for reversal','Nothing, ignore it','Guaranteed continuation up','A new all-time high'], correct:0 },
+  ],
+  bull_patterns: [
+    { q:'A BULL FLAG forms after a sharp rally, then…', answers:['A small downward-sloping pause before continuing up','An immediate crash','A doji and nothing else','A break of the uptrend'], correct:0 },
+    { q:'An ASCENDING TRIANGLE (flat top, rising lows) typically breaks…', answers:['Upward, continuing the bullish pressure','Downward always','Sideways forever','Only on Fridays'], correct:0 },
+    { q:'Bullish continuation patterns are most reliable when they appear…', answers:['During an existing uptrend','In random sideways chop with no trend','At all-time lows with no volume','After 10 red candles, regardless of trend'], correct:0 },
+  ],
+  bear_patterns: [
+    { q:'A BEAR FLAG forms after a sharp drop, then…', answers:['A small upward-sloping pause before continuing down','An immediate rally to new highs','Nothing — flags are only bullish','A guaranteed reversal up'], correct:0 },
+    { q:'A DESCENDING TRIANGLE (flat bottom, falling highs) typically breaks…', answers:['Downward, continuing the bearish pressure','Upward always','Sideways forever','Only at market open'], correct:0 },
+  ],
+  head_shoulders: [
+    { q:'A HEAD & SHOULDERS top has three peaks where…', answers:['The middle peak (head) is highest, flanked by two lower shoulders','All three peaks are equal height','The head is the lowest point','It only appears in downtrends'], correct:0 },
+    { q:'The "neckline" in a Head & Shoulders pattern is…', answers:['The support line connecting the two troughs between the peaks','The line through all three peaks','The VWAP line','A trendline drawn through the head only'], correct:0 },
+    { q:'A confirmed break of the neckline (after H&S top) suggests…', answers:['A bearish reversal is likely underway','Price will keep rising','It was a doji','Leverage should be increased'], correct:0 },
+  ],
+  confluence: [
+    { q:'CONFLUENCE in trading means…', answers:['Multiple signals lining up to support the same trade idea','Using only one indicator','Ignoring price structure','Trading on news alone'], correct:0 },
+    { q:'Which is the STRONGEST setup?', answers:['Trend + structure break + VWAP + pattern all agree','A single green candle','A random guess with high leverage','Any setup with no stop loss'], correct:0 },
+  ],
 };
 
 /* ---------- Progressive Curriculum ---------- */
@@ -2662,12 +2791,40 @@ const CURRICULUM = [
     title: 'ZOOM OUT', subtitle: 'Always check the bigger picture',
     tip: 'Tap the 5m / 15m / 1h panel before every trade.' },
 
-  // Hour 6+ — leverage and R:R math
+  // Hour 6 — leverage and R:R math
   { focus: ['leverage_intro', 'risk_reward'],
     intermissionFocus: ['leverage_intro', 'risk_reward'],
     difficulty: 1.4, marketSpeed: 1.1,
     title: 'LEVERAGE & EDGE', subtitle: 'Power tools — handle with care',
     tip: 'Only use leverage when your setup is Grade A.' },
+
+  // Hour 7 — review VWAP, then learn to draw trend lines
+  { focus: ['vwap', 'vwap_trade', 'trendlines'],
+    intermissionFocus: ['vwap', 'vwap_trade', 'trendlines'],
+    difficulty: 1.5, marketSpeed: 1.13,
+    title: 'VWAP & TREND LINES', subtitle: 'Master the magnet, then draw the line',
+    tip: 'Connect at least 3 touches — two points is a guess, three is a trendline.' },
+
+  // Hour 8 — bullish continuation structures
+  { focus: ['bull_patterns'],
+    intermissionFocus: ['bull_patterns', 'trendlines'],
+    difficulty: 1.6, marketSpeed: 1.16,
+    title: 'BULLISH STRUCTURES', subtitle: 'Flags, triangles & continuation patterns',
+    tip: 'A pattern needs a clear prior trend to "continue" — context first, pattern second.' },
+
+  // Hour 9 — bearish structures + Head & Shoulders / key reversals
+  { focus: ['bear_patterns', 'head_shoulders'],
+    intermissionFocus: ['bear_patterns', 'head_shoulders', 'bull_patterns'],
+    difficulty: 1.75, marketSpeed: 1.2,
+    title: 'BEARISH STRUCTURES', subtitle: 'Bear flags, descending triangles & Head & Shoulders',
+    tip: 'Bearish patterns mirror bullish ones — same logic, opposite direction.' },
+
+  // Hour 10 — stacking confluence (final hour, hardest boss reviews everything since Hour 7)
+  { focus: ['confluence'],
+    intermissionFocus: ['confluence', 'trendlines', 'bull_patterns', 'bear_patterns', 'head_shoulders'],
+    difficulty: 1.9, marketSpeed: 1.25,
+    title: 'CONFLUENCE MASTERY', subtitle: 'Stack every signal you\'ve learned',
+    tip: 'One signal is a guess. Three aligned signals is a plan.' },
 ];
 function getCurriculum(level) {
   return CURRICULUM[Math.min(level - 1, CURRICULUM.length - 1)];
@@ -2868,7 +3025,8 @@ const LESSON_UNLOCK = {
   ob:4, sweep:4,
   vwap:5, vwap_trade:5,
   htf:6, htf_align:6,
-  leverage_intro:8, risk_reward:8
+  leverage_intro:8, risk_reward:8,
+  trendlines:7, bull_patterns:8, bear_patterns:9, head_shoulders:9, confluence:10
 };
 loadLessonProgress();
 
@@ -2893,12 +3051,18 @@ const TERMS = [
   { key: 'htf',        term: 'Higher Time Frame',     def: 'A larger chart (15m, 1h). Shows the bigger trend. Never trade a 1m setup against the HTF.' },
   { key: 'leverage',   term: 'Leverage',              def: 'Borrowed size that multiplies BOTH gains and losses. Powerful and dangerous — use sparingly.' },
   { key: 'rr',         term: 'Risk : Reward (R:R)',   def: 'How much you can win vs. lose. Aim for 2R+ — then you can be wrong often and still profit.' },
+  { key: 'trendline',  term: 'Trend Line',            def: 'A line connecting swing lows (uptrend) or swing highs (downtrend). Needs 3 touches to be valid — 2 points is just a guess.' },
+  { key: 'bullflag',   term: 'Bull Flag',             def: 'A sharp rally (the pole) followed by a tight, calm pullback (the flag). A continuation pattern — the breakout above the flag often resumes the original rally.' },
+  { key: 'bearflag',   term: 'Bear Flag',             def: 'A sharp sell-off (the pole) followed by a tight, calm bounce (the flag). The mirror of a bull flag — breakdown below the flag often resumes the sell-off.' },
+  { key: 'headshoulders', term: 'Head & Shoulders',   def: 'A reversal pattern: a peak (left shoulder), a higher peak (head), then a similar peak to the first (right shoulder). Breaking the neckline signals the uptrend is reversing down. Upside-down, it’s an Inverse H&S — a bullish reversal.' },
+  { key: 'confluence', term: 'Confluence',            def: 'Multiple signals lining up at the same price and pointing the same direction — e.g. VWAP + support + a bull flag breakout. The more signals stack, the stronger the case for the trade.' },
 ];
 const TERM_BY_KEY = Object.fromEntries(TERMS.map(t => [t.key, t]));
 
 /* ---- Journal Section 2: Lessons library (the curriculum lessons, reviewable any time) ---- */
 const LESSON_LIBRARY = ['candles_intro','what_is_doji','long_vs_short','what_is_sl',
-  'what_is_trend','support_resist','bos','ob','sweep','vwap','vwap_trade','htf','htf_align','leverage_intro','risk_reward'];
+  'what_is_trend','support_resist','bos','ob','sweep','vwap','vwap_trade','htf','htf_align','leverage_intro','risk_reward',
+  'trendlines','bull_patterns','bear_patterns','head_shoulders','confluence'];
 
 /* ---- Journal Section 4: Notes (free-form, can link to a term / lesson / trade) ---- */
 const NOTES_KEY = 'shellTradeNotes_v1';
@@ -5056,6 +5220,31 @@ function bossCandleSVG(cands) {
   });
   s += '</svg>'; return s;
 }
+// Pixel position of a candle's LOW (wick bottom) or HIGH (wick top), using
+// the exact same coordinate formula as bossCandleSVG so taps line up.
+function candleExtremeXY(cands, i, side) {
+  const VW = 300, VH = 150, pad = 16, n = cands.length;
+  const Y = (v) => pad + (1 - v / 100) * (VH - 2 * pad);
+  const slotW = (VW - 2 * pad) / n;
+  const c = cands[i];
+  const cx = pad + slotW * (i + 0.5);
+  const lowVal  = Math.min(c.o, c.c) - (c.lo || 0);
+  const highVal = Math.max(c.o, c.c) + (c.up || 0);
+  return { x: cx, y: Y(side === 'low' ? lowVal : highVal) };
+}
+// Candle chart + tappable dots at every candle's low (or high) — the
+// trend-line drawing exercise. The player taps dots in left-to-right
+// order; a polyline grows as they go.
+function bossCandleSVGTrend(cands, side) {
+  let s = bossCandleSVG(cands).replace('</svg>', '');
+  s += '<polyline id="trendLine" points="" fill="none" stroke="#ffd60a" stroke-width="2.5"/>';
+  cands.forEach((c, i) => {
+    const { x, y } = candleExtremeXY(cands, i, side);
+    s += '<circle class="trendPt" data-i="' + i + '" cx="' + x + '" cy="' + y + '" r="9" fill="rgba(255,214,10,0.16)" stroke="#ffd60a" stroke-width="1.5"/>';
+  });
+  s += '</svg>';
+  return s;
+}
 const BOSSES = {
   0: {
     name: 'THE MARKET MAKER', emoji: '🎰',
@@ -5162,6 +5351,97 @@ const BOSSES = {
       { q: 'Which approach to leverage is the SAFEST?', options: ['Low leverage (2–3×), strict stop loss, never risk more than 2% per trade', 'High leverage (50×) with a very tight stop to "limit" the loss', 'Maximum leverage to maximize returns when your setup looks perfect'], correct: 0, explain: 'Low leverage survives volatility and gaps. A 50× tight stop gets wiped by a single wick or slippage event. High leverage for a "perfect setup" is how accounts get zeroed — perfect setups fail all the time.' },
     ],
   },
+  7: {
+    name: 'THE LINE WARDEN', emoji: '🧭',
+    reward: { shells: 650, xp: 260 },
+    bossHP: 5, playerHP: 3,
+    rounds: [
+      { q: 'Price has been below VWAP all session and just reclaimed it on a strong green candle. What\'s the move?', options: ['Look for longs — VWAP reclaim flips the bias bullish', 'Short immediately — VWAP is now resistance', 'Ignore it — VWAP doesn\'t matter intraday'], correct: 0, explain: 'Reclaiming VWAP after being below it all session is a real shift — buyers paid above "fair value" again. That favors longs until proven otherwise.' },
+      { q: 'Two coins both trade above VWAP. Coin A\'s VWAP is flat; Coin B\'s VWAP is sloping up fast. Which shows stronger buying pressure?', options: ['Coin B — a rising VWAP means buyers kept paying up all session', 'Coin A — a flat VWAP is more stable, so it\'s stronger', 'They are equally strong — VWAP slope doesn\'t matter'], correct: 0, explain: 'VWAP slope reveals pressure, not just position. A rising VWAP means the average price itself is climbing — real, sustained demand — not just a temporary spike above a flat average.' },
+      { q: 'You connect two random highs with a straight line and call it a trend line. Why might an experienced trader disagree?', options: ['Two points can always form A line — it doesn\'t prove anything until a THIRD point respects it', 'Lines only count on the daily chart', 'Trend lines must always be perfectly horizontal', 'You need at least 5 points before it counts'], correct: 0, explain: 'Any two points make a line — that\'s just geometry, not signal. A trend line earns its name when a third touch respects it. Two points is a guess; three is a pattern.' },
+      { type: 'trend', side: 'low', sequence: [1, 4, 7],
+        candles: [
+          { o: 45, c: 60, up: 5, lo: 0 },
+          { o: 33, c: 23, up: 4, lo: 3 },
+          { o: 48, c: 63, up: 5, lo: 0 },
+          { o: 44, c: 58, up: 4, lo: 0 },
+          { o: 40, c: 31, up: 4, lo: 3 },
+          { o: 52, c: 66, up: 4, lo: 0 },
+          { o: 46, c: 60, up: 4, lo: 0 },
+          { o: 50, c: 41, up: 4, lo: 3 },
+        ],
+        q: 'Draw the rising support line: tap each swing LOW it touches, left to right.',
+        explain: 'Three rising lows, each higher than the last — a textbook ascending trend line. As long as price keeps respecting it, the uptrend stays intact.' },
+      { type: 'trend', side: 'high', sequence: [1, 4, 7],
+        candles: [
+          { o: 45, c: 58, up: 2, lo: 5 },
+          { o: 60, c: 70, up: 2, lo: 4 },
+          { o: 35, c: 48, up: 2, lo: 4 },
+          { o: 40, c: 53, up: 2, lo: 4 },
+          { o: 50, c: 61, up: 2, lo: 4 },
+          { o: 32, c: 44, up: 2, lo: 4 },
+          { o: 36, c: 48, up: 2, lo: 4 },
+          { o: 42, c: 53, up: 2, lo: 4 },
+        ],
+        q: 'Now draw the falling resistance line: tap each swing HIGH it touches, left to right.',
+        explain: 'Three falling highs, each capped lower than the last — sellers are gradually tightening their grip. A close above this line would be the first sign that\'s changing.' },
+    ],
+  },
+  8: {
+    name: 'THE FLAG BEARER', emoji: '🚩',
+    reward: { shells: 750, xp: 300 },
+    bossHP: 6, playerHP: 3,
+    rounds: [
+      { q: 'A coin rallies hard, then drifts sideways-to-down in a tight, calm channel for a few candles. What is this setup called?', options: ['A Bull Flag — likely to continue the rally on breakout', 'A Head & Shoulders top — likely to reverse down', 'A Doji — pure indecision'], correct: 0, explain: 'The sharp rally is the "pole," the tight calm pullback is the "flag." It\'s a pause, not a reversal — the breakout above the flag often resumes the original move.' },
+      { q: 'An Ascending Triangle has a FLAT top and RISING lows. What does the rising-lows part tell you?', options: ['Buyers are getting more aggressive, accepting higher prices each dip', 'Sellers are fully in control', 'The breakout will definitely be downward', 'Nothing — only the flat top matters'], correct: 0, explain: 'Each higher low means buyers are stepping in earlier and paying more each time. That building pressure against a flat ceiling usually resolves upward.' },
+      { q: 'A Cup & Handle pattern is best described as…', options: ['A rounded recovery (the cup), then one last small dip (the handle) before breakout', 'A sharp V-shaped crash and instant recovery', 'Three equal peaks in a row', 'A flat line with no movement'], correct: 0, explain: 'The "cup" is a slow, rounded recovery back to the old high. The "handle" is a brief final shakeout — often the lowest-risk entry — right before the breakout.' },
+      { q: 'You spot a perfect-looking bull flag — but it formed during a long, grinding downtrend with no prior rally. Should you trust it?', options: ['Be skeptical — continuation patterns need a real trend to continue', 'Yes — the shape is all that matters', 'Yes — flags always mean "buy" regardless of context', 'No pattern works without a stop loss, so it doesn\'t matter'], correct: 0, explain: 'A bull flag is a CONTINUATION pattern — it needs a real prior uptrend (the "pole") to continue. The same shape inside a downtrend is just a pause in selling, not a flag.' },
+      { candles: [{ o: 22, c: 70, up: 4, lo: 2 }, { o: 68, c: 62, up: 3, lo: 2 }, { o: 61, c: 56, up: 2, lo: 2 }, { o: 55, c: 58, up: 7, lo: 1 }], q: 'A sharp green rally, then three small candles drifting gently down. What\'s forming here?', options: ['A bull flag — the pole already printed, this is the flag', 'A bearish reversal — sell now', 'A double top', 'Nothing — random noise'], correct: 0, explain: 'Big rally (the pole) followed by a tight, controlled pullback (the flag) is exactly the bull flag shape. The "tight and controlled" part matters — a wild, wide pullback is a weaker, less reliable flag.' },
+      { q: 'Which detail makes a bull flag LOW quality and more likely to fail?', options: ['The "flag" pullback is wide, choppy, and on heavy volume — not tight and calm', 'The flag is small and calm compared to the pole', 'The pole was a strong, decisive move', 'The pattern formed during an existing uptrend'], correct: 0, explain: 'A clean flag is small, calm, and low-volume — a controlled pause. A wide, volatile, heavy-volume pullback suggests real selling pressure, not just profit-taking, and is far more likely to break down instead of continuing up.' },
+    ],
+  },
+  9: {
+    name: 'THE NECKLINE REAPER', emoji: '💀',
+    reward: { shells: 850, xp: 340 },
+    bossHP: 7, playerHP: 3,
+    rounds: [
+      { q: 'A coin drops hard, then drifts sideways-to-up in a tight, calm channel. What is this setup called?', options: ['A Bear Flag — likely to continue the sell-off on breakdown', 'A Bull Flag — likely to rally', 'An Inverse Head & Shoulders — reversal up'], correct: 0, explain: 'The sharp drop is the "pole," the calm upward drift is the "flag." It mirrors a bull flag exactly, just upside down — the breakdown below the flag often resumes the sell-off.' },
+      { q: 'A Descending Triangle has a FLAT bottom and FALLING highs. What does that combination usually resolve into?', options: ['A downward breakdown — sellers are getting more aggressive into a floor', 'An upward breakout — buyers are clearly winning', 'It always stays sideways forever', 'It has no bias either way'], correct: 0, explain: 'Falling highs into a flat floor means sellers keep pushing in earlier and lower each time. That pressure against support usually breaks down rather than holds.' },
+      { q: 'A HEAD & SHOULDERS top has three peaks where…', options: ['The middle peak (head) is highest, flanked by two lower shoulders', 'All three peaks are equal height', 'The head is the lowest point', 'It only appears in strong uptrends with no warning'], correct: 0, explain: 'Left shoulder, then a higher head, then a right shoulder roughly matching the left — that\'s the shape. It signals buyers are failing to make a new high a second time.' },
+      { q: 'The "neckline" in a Head & Shoulders pattern is…', options: ['The support line connecting the two troughs between the peaks', 'The line through all three peaks', 'The VWAP line', 'A trendline drawn through the head only'], correct: 0, explain: 'The neckline connects the two lows on either side of the head. It\'s the real trigger — the pattern isn\'t confirmed until price CLOSES below it.' },
+      { q: 'A confirmed close below the neckline (after a H&S top) suggests…', options: ['A bearish reversal is likely underway', 'Price will keep rising', 'It was just a doji', 'You should add more leverage to your long'], correct: 0, explain: 'The neckline break is the pattern\'s confirmation. Until that close happens, it\'s just three peaks — afterward, it\'s a confirmed reversal signal worth acting on.' },
+      { q: 'What is a Double Top, relative to a Head & Shoulders top?', options: ['A simpler 2-peak version of the same reversal idea — no "head" in the middle', 'A completely unrelated bullish pattern', 'The exact same pattern with a different name', 'A pattern that only appears on the 1-minute chart'], correct: 0, explain: 'Same underlying story — buyers fail to push to new highs — just with two peaks instead of three. Less detail than a H&S, but the same warning: resistance is holding.' },
+      { q: 'A bear flag forms, but the "flag" pullback is wide, choppy, and on rising volume. What does that suggest?', options: ['The flag is lower quality — real buying pressure, not just profit-taking on shorts', 'It\'s a perfect, high-quality bear flag', 'Volume never matters for flags', 'It guarantees the breakdown will happen'], correct: 0, explain: 'Just like bull flags, a clean bear flag is tight, calm, and low-volume. A wide, heavy-volume bounce hints at real buyers stepping in — the breakdown is less reliable.' },
+    ],
+  },
+  10: {
+    name: 'THE KRAKEN', emoji: '🦑',
+    reward: { shells: 1100, xp: 420 },
+    bossHP: 9, playerHP: 3,
+    rounds: [
+      { q: 'CONFLUENCE in trading means…', options: ['Multiple independent signals lining up to support the same trade idea', 'Using only your favorite single indicator', 'Ignoring price structure entirely', 'Trading purely on news headlines'], correct: 0, explain: 'One signal alone is a guess — it could easily be noise. When trend, structure, VWAP, and a pattern all agree, you have real confluence: a much stronger case for the trade.' },
+      { q: 'Which setup is the STRONGEST?', options: ['Uptrend + bullish BOS + price at VWAP + a bull flag breakout, all agreeing', 'A single green candle with no other context', 'A random guess paired with high leverage', 'Any setup taken with no stop loss'], correct: 0, explain: 'Stacking trend, structure, VWAP, and a pattern means four independent reasons are all pointing the same way. That\'s the highest-probability scenario you can build.' },
+      { q: 'Price respects a rising trend line, sits right at VWAP, AND just completed a bull flag breakout — but the higher timeframe trend is DOWN. What do you do?', options: ['Stay cautious or size down — confluence on the LTF still loses to a conflicting HTF trend', 'Take it full-size — three lower-timeframe signals beat one higher-timeframe trend', 'Ignore the HTF entirely, it never matters', 'Confluence means it\'s a guaranteed win, so leverage up'], correct: 0, explain: 'Confluence makes a setup more probable, not certain — and a conflicting HTF trend is itself a major signal working against you. Real confluence weighs ALL the evidence, including the bigger picture.' },
+      { type: 'trend', side: 'low', sequence: [1, 4, 6, 9],
+        candles: [
+          { o: 40, c: 50, up: 3, lo: 5 },
+          { o: 28, c: 18, up: 3, lo: 3 },
+          { o: 40, c: 52, up: 4, lo: 0 },
+          { o: 38, c: 50, up: 4, lo: 0 },
+          { o: 35, c: 27, up: 3, lo: 3 },
+          { o: 45, c: 58, up: 4, lo: 0 },
+          { o: 40, c: 33, up: 3, lo: 3 },
+          { o: 48, c: 60, up: 4, lo: 0 },
+          { o: 50, c: 62, up: 4, lo: 0 },
+          { o: 52, c: 45, up: 3, lo: 3 },
+        ],
+        q: 'Harder line: this rising support has FOUR respected touches. Tap each swing LOW, left to right.',
+        explain: 'Four touches is more confirmation than the 3-touch minimum — one of the strongest trend lines you can find. The more touches, the more confidently the market is respecting it.' },
+      { q: 'A Head & Shoulders top confirms with a neckline break. Price then breaks a rising trend line on the same candle, AND that candle closes below VWAP. How many independent bearish signals just fired?', options: ['Three — the H&S confirmation, the trend line break, and the VWAP loss all agree', 'Just one — they all really mean the same single thing', 'Zero — none of these relate to each other', 'It doesn\'t count unless leverage is involved'], correct: 0, explain: 'Pattern confirmation, trend line break, and VWAP loss are three genuinely independent tools agreeing at once. That stacking is exactly what makes a setup high-conviction instead of a coin flip.' },
+      { q: 'A bull flag breaks out right into a falling trend line from a much higher timeframe. What does confluence-thinking tell you?', options: ['Treat the HTF trend line as real resistance — it can stall or reject the breakout', 'Ignore it completely and trust the bull flag alone', 'The bull flag automatically cancels out the trend line', 'Bigger timeframes never matter once you have a pattern'], correct: 0, explain: 'Confluence cuts both ways — it also means watching for signals that CONTRADICT your trade. A HTF trend line has rejected far more volume than your LTF pattern; respect it until it actually breaks.' },
+      { q: 'Final check: you have a bull flag, a rising trend line, price above VWAP, and a 1:3 risk-to-reward — but your stop loss would risk 8% of your account on this one trade. What\'s the right call?', options: ['Reduce position size — great confluence still doesn\'t excuse oversized risk', 'Take it at full size — the confluence justifies the extra risk', 'Remove the stop loss since the setup is so strong', 'Add maximum leverage since you\'re confident'], correct: 0, explain: 'No amount of confluence changes your risk math. Even an A+ setup gets sized so a loss costs ~1–2% of the account — confluence affects your CONFIDENCE, never your position size discipline.' },
+    ],
+  },
 };
 let bfState = null;
 const bossesDone = new Set();
@@ -5176,11 +5456,60 @@ function renderBossHUD() {
 function renderBossRound() {
   const r = bfState.boss.rounds[bfState.idx];
   let html = '';
+  if (r.type === 'trend') {
+    bfState.tapped = [];
+    html += '<div id="bfChart">' + bossCandleSVGTrend(r.candles, r.side) + '</div>';
+    html += '<div class="bfQ">' + r.q + '</div>';
+    html += '<div class="bfHint">Tap the candle ' + (r.side === 'low' ? 'LOWS' : 'HIGHS') +
+      ' in order, left → right, to draw the trend line.</div>';
+    html += '<div id="bfFeedback"></div>';
+    $('bfBody').innerHTML = html;
+    return;
+  }
   if (r.candles) html += '<div id="bfChart">' + bossCandleSVG(r.candles) + '</div>';
   html += '<div class="bfQ">' + r.q + '</div>';
   html += r.options.map((o, i) => '<button class="bfOpt" data-i="' + i + '">' + esc(o) + '</button>').join('');
   html += '<div id="bfFeedback"></div>';
   $('bfBody').innerHTML = html;
+}
+// Redraw the trend-line polyline through every tapped point so far.
+function updateTrendLine() {
+  const r = bfState.boss.rounds[bfState.idx];
+  const pts = (bfState.tapped || []).map(i => {
+    const p = candleExtremeXY(r.candles, i, r.side); return p.x + ',' + p.y;
+  }).join(' ');
+  const poly = $('bfBody').querySelector('#trendLine');
+  if (poly) poly.setAttribute('points', pts);
+}
+// Handle a tap on a trend-point dot. Correct order = the line grows and
+// eventually damages the boss; tapping the wrong candle costs a heart.
+function bfTrendTap(i) {
+  if (bfState.answered) return;
+  const r = bfState.boss.rounds[bfState.idx];
+  bfState.tapped = bfState.tapped || [];
+  const stepIdx = bfState.tapped.length;
+  const expected = r.sequence[stepIdx];
+  const correctTap = i === expected;
+  bfState.tapped.push(i);
+  updateTrendLine();
+  const ptEl = $('bfBody').querySelector('.trendPt[data-i="' + i + '"]');
+  if (ptEl) ptEl.classList.add(correctTap ? 'good' : 'bad');
+
+  if (!correctTap) {
+    bfState.answered = true;
+    bfState.playerHP--;
+    renderBossHUD();
+    $('bfFeedback').innerHTML = '<b style="color:#ea3943">✗ Wrong point — that breaks the line.</b><br>' + r.explain;
+    $('bfBody').insertAdjacentHTML('beforeend', '<button id="bfNext">CONTINUE →</button>');
+    return;
+  }
+  if (bfState.tapped.length >= r.sequence.length) {
+    bfState.answered = true;
+    bfState.bossHP--;
+    renderBossHUD();
+    $('bfFeedback').innerHTML = '<b style="color:#16c784">✓ Trend line drawn! Boss takes damage.</b><br>' + r.explain;
+    $('bfBody').insertAdjacentHTML('beforeend', '<button id="bfNext">CONTINUE →</button>');
+  }
 }
 function bfAnswer(i) {
   if (bfState.answered) return; bfState.answered = true;
@@ -5231,6 +5560,8 @@ $('bfBody').addEventListener('click', (e) => {
   if (t.id === 'bfClaim') { bossFinish(); return; }   // win screen → advance the hour
   if (t.id === 'bfRetry') { bossRetry(); return; }
   if (t.id === 'bfSkip')  { bossFinish(); return; }
+  const pt = t.closest ? t.closest('.trendPt') : null;
+  if (pt && bfState && !bfState.answered) { bfTrendTap(+pt.getAttribute('data-i')); return; }
   const opt = t.closest ? t.closest('.bfOpt') : null;
   if (opt && bfState && !bfState.answered) bfAnswer(+opt.getAttribute('data-i'));
 });
@@ -5934,7 +6265,11 @@ function update(dt) {
     const dist = Math.hypot(ptx - p.x, pty - p.y);
     if (dist < p.r + 14) {
       p.entered = true;
-      p.action();
+      const camX = Math.max(0, turtle.x - W * CFG.cameraAnchor);
+      portalWarp = { t: 0, dur: 0.7, x: p.x - camX, y: p.y,
+                     color: (typeof playerFaction !== 'undefined' && playerFaction && playerFaction.color) || '#a06eff' };
+      const act = p.action;
+      setTimeout(() => { try { act(); } catch (e) {} }, 280); // let the warp animation lead the lesson card
     }
   }
 
@@ -6080,12 +6415,22 @@ function drawCoinGlyph(ticker, cx, cy, s, color) {
     ctx.closePath(); ctx.fill();
     ctx.globalAlpha = 1;
   } else if (ticker === 'SOL') {
-    const w = s * 1.75, h = s * 0.42;
-    [[-s * 0.62, 1], [0, 0.78], [s * 0.62, 0.52]].forEach(([dy, op]) => {
-      ctx.globalAlpha = op;
-      rr(-w / 2, dy - h / 2, w, h, h / 2); ctx.fill();
+    // Real Solana mark: three slanted parallelogram bars in the signature
+    // green→purple gradient (matches the SVG version used on the faction card).
+    const grad = ctx.createLinearGradient(-s, -s, s, s);
+    grad.addColorStop(0, '#00FFA3');
+    grad.addColorStop(1, '#DC1FFF');
+    ctx.fillStyle = grad;
+    const wH = s * 0.82, hb = s * 0.26, sk = s * 0.22, shift = s * 0.17;
+    [[-s * 0.58, shift], [0, 0], [s * 0.58, -shift]].forEach(([dy, ox]) => {
+      ctx.beginPath();
+      ctx.moveTo(ox - wH + sk, dy - hb);
+      ctx.lineTo(ox + wH + sk, dy - hb);
+      ctx.lineTo(ox + wH - sk, dy + hb);
+      ctx.lineTo(ox - wH - sk, dy + hb);
+      ctx.closePath();
+      ctx.fill();
     });
-    ctx.globalAlpha = 1;
   } else if (ticker === 'XRP') {
     ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(-s, -s * 0.32); ctx.quadraticCurveTo(0, s * 0.85, s, -s * 0.32); ctx.stroke();
@@ -6920,26 +7265,40 @@ function render(cameraX) {
   drawTrendLines(cameraX);
   drawVolumeBars(cameraX);
 
-  // Coins: gold spinning discs on candle tops
+  // Coins: glowing shell pickups on candle tops
   for (const coin of coins) {
     if (coin.collected) continue;
     const sx = coin.x - cameraX;
     if (sx < -30 || sx > W + 30) continue;
     const bob = Math.sin(coin.bobT) * 3;
     const sy = coin.y + bob;
-    // Glow (teal shell colour)
-    ctx.globalAlpha = 0.28;
-    ctx.fillStyle = '#40e0d0';
-    ctx.beginPath(); ctx.arc(sx, sy, coin.r + 4, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-    // Body
-    ctx.fillStyle = '#40e0d0';
+    const pulse = 0.5 + 0.5 * Math.sin(coin.bobT * 1.7);
+
+    // Soft pulsing halo — radial gradient so it fades cleanly to nothing
+    const glowR = coin.r + 7 + pulse * 3;
+    const halo = ctx.createRadialGradient(sx, sy, 0, sx, sy, glowR);
+    halo.addColorStop(0, 'rgba(154,249,239,' + (0.45 + pulse * 0.2) + ')');
+    halo.addColorStop(0.55, 'rgba(64,224,208,' + (0.22 + pulse * 0.12) + ')');
+    halo.addColorStop(1, 'rgba(64,224,208,0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(sx, sy, glowR, 0, Math.PI * 2); ctx.fill();
+
+    // Glassy gradient body — pops more than a flat fill
+    const body = ctx.createRadialGradient(sx - coin.r * 0.3, sy - coin.r * 0.35, coin.r * 0.1, sx, sy, coin.r * 1.15);
+    body.addColorStop(0, '#dafffa');
+    body.addColorStop(0.45, '#5ef0e2');
+    body.addColorStop(1, '#1aa89c');
+    ctx.fillStyle = body;
     ctx.beginPath(); ctx.ellipse(sx, sy, coin.r, coin.r * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+    // Bright rim so it reads clearly against busy candle backgrounds
+    ctx.strokeStyle = 'rgba(223,255,252,' + (0.7 + pulse * 0.3) + ')';
+    ctx.lineWidth = 0.9;
+    ctx.beginPath(); ctx.ellipse(sx, sy, coin.r, coin.r * 0.7, 0, 0, Math.PI * 2); ctx.stroke();
     // Shine
-    ctx.fillStyle = 'rgba(220,255,252,0.6)';
+    ctx.fillStyle = 'rgba(220,255,252,0.7)';
     ctx.beginPath(); ctx.ellipse(sx - 1.5, sy - 1, coin.r * 0.35, coin.r * 0.2, -0.4, 0, Math.PI * 2); ctx.fill();
     // Shell spiral mark
-    ctx.font = 'bold 7px ' + MONO; ctx.fillStyle = '#006b63'; ctx.textAlign = 'center';
+    ctx.font = 'bold 7px ' + MONO; ctx.fillStyle = '#00554e'; ctx.textAlign = 'center';
     ctx.fillText('🐚', sx, sy + 3); ctx.textAlign = 'left';
   }
 
@@ -7174,12 +7533,19 @@ function drawHUD() {
   ctx.textAlign = 'right';
   ctx.font = '10px ' + SANS;
   ctx.fillStyle = '#7d8aa0';
-  ctx.fillText('SHELLS', W - 12, 17);
+  ctx.fillText('🐚 SHELLS', W - 12, 17);
   const uPnL = trade ? trade.riskAmt * (trade.leverage || 1) * tradeR() : 0;
-  ctx.font = 'bold 17px ' + MONO;
-  ctx.fillStyle = !trade ? COLOR.greenBody
+  const shellGlowCol = !trade ? COLOR.greenBody
                 : uPnL >= 0 ? COLOR.greenBody : COLOR.redBody;
+  ctx.font = 'bold 17px ' + MONO;
+  ctx.fillStyle = shellGlowCol;
+  // Soft pulsing glow behind the balance so it stands out as the "score"
+  ctx.save();
+  ctx.shadowColor = shellGlowCol;
+  ctx.shadowBlur = 9 + Math.sin(performance.now() / 260) * 3;
   ctx.fillText(fmt(player.shells + uPnL), W - 12, 36);
+  ctx.shadowBlur = 0;
+  ctx.restore();
   // Leverage badge
   if (leverage.current > 1 && trade) {
     ctx.font = 'bold 9px ' + SANS;
@@ -7260,6 +7626,69 @@ function drawHUD() {
 
   drawHTFPanel();
   if (htfZoomState) drawHTFZoom(); // full-screen overlay — drawn last, on top of everything
+
+  // Portal warp — "jumping into another dimension" transition, drawn topmost so it
+  // fully engulfs the screen (HUD included) right before the lesson/quiz card appears.
+  if (portalWarp) {
+    // Signature dimensional WARP — the same hex-tunnel used by the opening
+    // cinematic's portal entry, so every zone change (lesson, quiz, boss,
+    // chart/trade setup) feels like diving into another part of the chain.
+    const pw = portalWarp;
+    const k = Math.min(1, pw.t / pw.dur);
+    const col = pw.color || '#a06eff';
+    const cx = pw.x, cy = pw.y;
+    const maxR = Math.hypot(W, H) * 1.15;
+    const envIn = Math.min(1, k / 0.18);
+    const envOut = k < 0.62 ? 1 : Math.max(0, 1 - (k - 0.62) / 0.38);
+    const env = envIn * envOut;             // fade in fast, hold, release
+    ctx.save();
+
+    // dark base engulfs the screen (HUD included)
+    ctx.globalAlpha = env;
+    ctx.fillStyle = '#02030a'; ctx.fillRect(0, 0, W, H);
+
+    // concentric hex rings flying outward toward the viewer
+    const RINGS = 10;
+    for (let i = 0; i < RINGS; i++) {
+      const f = ((i / RINGS) + pw.t * 1.9) % 1;
+      const rad = f * f * maxR + 6;
+      ctx.globalAlpha = env * (1 - f) * 0.8;
+      ctx.strokeStyle = col; ctx.lineWidth = 1 + (1 - f) * 3.5;
+      ctx.beginPath();
+      for (let kk = 0; kk <= 6; kk++) {
+        const a = Math.PI / 3 * kk + f * 0.7;
+        const px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad;
+        if (!kk) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+
+    // radial speed streaks shooting past
+    const STREAKS = 30;
+    for (let i = 0; i < STREAKS; i++) {
+      const a = (i / STREAKS) * Math.PI * 2 + i * 1.3;
+      const f = ((i / STREAKS) + pw.t * 2.8) % 1;
+      const r0 = f * maxR * 0.6, r1 = r0 + 60 + f * 160;
+      ctx.globalAlpha = env * (1 - f) * 0.5;
+      ctx.strokeStyle = i % 4 === 0 ? '#ffffff' : col; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+      ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+      ctx.stroke();
+    }
+
+    // glowing core
+    const coreR = 70 + k * 160;
+    const core = ctx.createRadialGradient(cx, cy, 2, cx, cy, coreR);
+    core.addColorStop(0, 'rgba(255,255,255,' + env + ')');
+    core.addColorStop(0.25, col);
+    core.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = env * 0.9; ctx.fillStyle = core;
+    ctx.beginPath(); ctx.arc(cx, cy, coreR, 0, Math.PI * 2); ctx.fill();
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
 }
 
 /* =========================================================
@@ -8274,6 +8703,926 @@ function drawPredictionBet() {
   ctx.restore();
 }
 
+/* ════════ OPENING CINEMATIC (ported from preview-intro-cinematic.html) ════════
+   Reuses ctx,W,H,rr,drawAcadShell,COLOR,FACTION_CONFIG. Owns the screen via the
+   guard at the top of frame(); input guarded by window.cineActive. */
+const IntroCinematic = (() => {
+
+  const F = '-apple-system, BlinkMacSystemFont, system-ui, sans-serif';
+  const MONO = '"SF Mono", ui-monospace, Menlo, Consolas, monospace';
+
+  const S = {
+    active: false,
+    phase: 'glitch',
+    t: 0,                 // seconds in current phase
+    tGlobal: 0,
+    onDone: null,
+    faction: null,        // chosen FACTION_CONFIG key
+    accent: '#7c4dff',    // current accent (turtle green until chosen, then faction)
+    // turtle
+    tx: 0, ty: 0, tvx: 0, trot: 0,
+    // input
+    pointerX: null, pointerDown: false, keyL: false, keyR: false,
+    // world scroll
+    scroll: 0, speed: 1,
+    // fx
+    shake: 0, flash: 0, flashCol: '#ffffff',
+    rings: [], streaks: [],
+    portals: [], chosenPortal: null,
+    valLine: 0, valLineT: 0,
+    addrs: [], pillars: [], nodes: [], motes: [],
+  };
+
+  const ERR_LINES = ['CONNECTION LOST','WALLET NOT FOUND','CHAIN UNKNOWN','BLOCK 0xERR','SIGNATURE INVALID','ERROR','ERROR','ERROR'];
+  const VAL_RED = '#ff2b3d';      // the Validator's domain is always red
+  const VAL_RED_DK = '#7a0d18';
+  const VAL_LINES = [
+    "You're lucky. No one survives a chain collapse.",
+    "Only Traders reach the Exit Block.",
+    "Learn. Trade. Survive.",
+  ];
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function hexAddr() {
+    const h = '0123456789abcdef'; let s = '0x';
+    for (let i = 0; i < 8; i++) s += h[(Math.random() * 16) | 0];
+    return s + '…' + h[(Math.random()*16)|0] + h[(Math.random()*16)|0];
+  }
+
+  function seedWorld() {
+    S.pillars = []; S.nodes = []; S.addrs = []; S.motes = [];
+    // Background candle pillars (parallax columns of giant translucent candles)
+    for (let i = 0; i < 7; i++) {
+      S.pillars.push({ x: rand(0.05, 0.95), y: rand(0, 1), w: rand(26, 60), h: rand(120, 320),
+        up: Math.random() > 0.5, depth: rand(0.25, 0.8) });
+    }
+    // Blockchain nodes (hex rings connected by chains)
+    for (let i = 0; i < 6; i++) S.nodes.push({ x: rand(0.1, 0.9), y: rand(0, 1), r: rand(10, 26), depth: rand(0.3, 0.9), sp: rand(0.4, 1) });
+    // Floating wallet addresses
+    for (let i = 0; i < 7; i++) S.addrs.push({ x: rand(0.06, 0.8), y: rand(0, 1), txt: hexAddr(), depth: rand(0.2, 0.6) });
+    // Transaction particles streaming up
+    for (let i = 0; i < 70; i++) S.motes.push({ x: rand(0, 1), y: rand(0, 1), r: rand(0.6, 2.2), sp: rand(0.5, 1.6), c: Math.random() > 0.5 });
+  }
+
+  function start(onDone) {
+    S.active = true; S.phase = 'glitch'; window.cineActive = true; S.t = 0; S.tGlobal = 0;
+    S.onDone = onDone || function(){};
+    S.faction = null; S.accent = COLOR.turtleBody;
+    S.tx = W * 0.5; S.ty = -40; S.tvx = 0; S.trot = 0;
+    S.scroll = 0; S.speed = 5.1; S.shake = 0; S.flash = 0;   // ~3× faster base fall
+    S.rings = []; S.streaks = []; S.portals = []; S.chosenPortal = null;
+    S.diving = null; S.dwellT = 0; S.lockP = 0; S.aimPortal = null;
+    S.valLine = 0; S.valLineT = 0; S.floaters = [];
+    // Collectible shells during the fall (5 total, worth 10 each) — give the
+    // player a reason to move. {at} = fall-time it enters from the bottom;
+    // {x} = lane (fraction of W). Spaced wider to match the faster fall.
+    S.shells = [
+      { at: 1.8,  x: 0.32, y: null, got: false, gone: false },
+      { at: 3.9,  x: 0.66, y: null, got: false, gone: false },
+      { at: 6.0,  x: 0.38, y: null, got: false, gone: false },
+      { at: 8.1,  x: 0.62, y: null, got: false, gone: false },
+      { at: 10.2, x: 0.50, y: null, got: false, gone: false },
+    ];
+    S.shellsGot = 0; S.shellValue = 0;
+    seedWorld();
+    attach();
+    CineAudio.unlock();
+    CineAudio.glitch();
+  }
+
+  function finish() {
+    S.active = false; window.cineActive = false;
+    detach();
+    CineAudio.stopAll();
+    const key = S.faction || 'BTC';
+    S.onDone(key);
+  }
+
+  function setPhase(p) { S.phase = p; S.t = 0; }
+
+  /* ─── Input ─────────────────────────────────────────────────────────── */
+  function onDown(e) {
+    S.pointerDown = true;
+    const r = canvas.getBoundingClientRect();
+    const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+    S.pointerX = cx;
+    // Tap to commit to the aimed chain during selection.
+    if (S.phase === 'choose' && S.aimPortal && !S.diving) { S.diving = S.aimPortal; }
+    // Dialogue: tap advances a line
+    if (S.phase === 'validator') {
+      if (S.valLineT > 0.5) { advanceValidator(); }
+    }
+    e.preventDefault();
+  }
+  function onMove(e) {
+    // Steer on ANY pointer movement (hover on desktop, drag on touch) — no
+    // need to hold a button. This is what makes the turtle feel responsive.
+    const r = canvas.getBoundingClientRect();
+    S.pointerX = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+  }
+  function onUp() { S.pointerDown = false; }   // keep last pointerX so the turtle holds position
+  function onKey(e, d) {
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') S.keyL = d;
+    if (e.code === 'ArrowRight'|| e.code === 'KeyD') S.keyR = d;
+    if (d && e.code === 'Space' && S.phase === 'validator' && S.valLineT > 0.4) advanceValidator();
+  }
+  const kd = e => onKey(e, true), ku = e => onKey(e, false);
+  function attach() {
+    canvas.addEventListener('pointerdown', onDown);
+    canvas.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('keydown', kd);
+    window.addEventListener('keyup', ku);
+  }
+  function detach() {
+    canvas.removeEventListener('pointerdown', onDown);
+    canvas.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('keydown', kd);
+    window.removeEventListener('keyup', ku);
+  }
+
+  function advanceValidator() {
+    S.valLine++;
+    S.valLineT = 0;
+    CineAudio.blip();
+    if (S.valLine >= VAL_LINES.length) setPhase('title');
+  }
+
+  /* ─── Update ─────────────────────────────────────────────────────────── */
+  function steerTurtle(dt, gravity) {
+    // pointer follow OR key velocity
+    let target = null;
+    if (S.pointerX != null) target = S.pointerX;              // hover OR drag steers
+    if (target != null) S.tvx += (target - S.tx) * 26 * dt;   // much snappier follow
+    if (S.keyL) S.tvx -= 2800 * dt;
+    if (S.keyR) S.tvx += 2800 * dt;
+    S.tvx = Math.max(-1400, Math.min(1400, S.tvx * 0.80));    // faster, still damped
+    S.tx += S.tvx * dt;
+    const m = 30;
+    if (S.tx < m) { S.tx = m; S.tvx *= -0.3; }
+    if (S.tx > W - m) { S.tx = W - m; S.tvx *= -0.3; }
+    S.trot = Math.max(-0.5, Math.min(0.5, -S.tvx / 1400)) + Math.sin(S.tGlobal * 6) * 0.06;
+  }
+
+  // Shells rise from the bottom at the felt fall speed; steer the turtle
+  // over one to collect it. Missing a shell never penalises the player.
+  function updateShells(dt) {
+    // Shells rise at a steady, readable pace — slower than the rushing
+    // background — so a moving player can realistically reach all five.
+    const rise = 500;
+    for (const s of S.shells) {
+      if (s.got || s.gone) continue;
+      if (s.y == null) { if (S.t >= s.at) s.y = H + 40; else continue; }
+      s.y -= rise * dt;
+      // generous catch box so a fast shell still feels fair to grab
+      if (Math.abs(S.tx - s.x * W) < 44 && Math.abs(S.ty - s.y) < 54) {
+        s.got = true; S.shellsGot++; S.shellValue += 10;
+        S.rings.push({ x: s.x * W, y: s.y, t: 0, life: 0.6, col: '#ffd60a' });
+        S.floaters.push({ x: s.x * W, y: s.y, t: 0, txt: '+10' });
+        CineAudio.coin();
+      } else if (s.y < -40) {
+        s.gone = true;
+      }
+    }
+    for (const f of S.floaters) { f.t += dt; f.y -= 40 * dt; }
+    S.floaters = S.floaters.filter(f => f.t < 0.9);
+  }
+
+  function update(dt) {
+    S.tGlobal += dt;
+    S.t += dt;
+    S.shake = Math.max(0, S.shake - dt * 2.5);
+    S.flash = Math.max(0, S.flash - dt * 1.8);
+    S.scroll += S.speed * 260 * dt;
+    for (const r of S.rings) r.t += dt;
+    S.rings = S.rings.filter(r => r.t < r.life);
+    for (const s of S.streaks) { s.y += s.v * dt; if (s.y > H + 40) { s.y = -40; s.x = rand(0, W); } }
+
+    switch (S.phase) {
+      case 'glitch':
+        if (S.t > 2.4) { setPhase('fall'); CineAudio.whoosh(); }
+        break;
+
+      case 'fall': {
+        S.ty += (Math.min(H * 0.42, S.ty + 600 * dt) - S.ty) * Math.min(1, dt * 4); // ease to fall line
+        steerTurtle(dt, true);
+        updateShells(dt);
+        if (S.t > 13.2) {           // long, fast fall, then portals rise
+          spawnPortals();
+          setPhase('choose');
+        }
+        break;
+      }
+
+      case 'choose': {
+        if (!S.portals.length) { spawnPortals(); break; }   // safety
+        // Bleed the fast fall off into a calm, weightless DRIFT.
+        S.speed += (0.22 - S.speed) * Math.min(1, dt * 1.4);
+        for (const p of S.portals) {
+          p.y += (p.targetY - p.y) * Math.min(1, dt * 2.4);  // portals ease up smoothly
+          p.pulse = 0.7 + 0.3 * Math.sin(S.tGlobal * 4 + p.i);
+        }
+        steerTurtle(dt, true);                 // full free horizontal control, always
+        // Aimed portal (nearest).
+        let aim = S.portals[0];
+        for (const p of S.portals) if (Math.abs(S.tx - p.x) < Math.abs(S.tx - aim.x)) aim = p;
+        S.aimPortal = aim;
+        const portalY = S.portals[0].targetY;
+        // The turtle floats on a line ABOVE all three portals so it never
+        // auto-drops into the middle one. Full freedom to slide across BTC,
+        // ETH and SOL; commit only by dwelling over one (or tapping).
+        const hoverLine = portalY - aim.r - 28;
+        if (!S.diving) {
+          if (S.ty < hoverLine) S.ty = Math.min(hoverLine, S.ty + 70 * dt);
+          else S.ty = hoverLine + Math.sin(S.tGlobal * 2.4) * 5;
+          // Lock only when the player COMES TO REST on a chain — sliding
+          // across (any real horizontal speed) never locks, so you can freely
+          // browse all three. Hold still ~1.4s to commit, or tap to dive now.
+          const settled = Math.abs(S.tx - aim.x) < aim.r * 0.5 && Math.abs(S.tvx) < 70;
+          S.dwellT = settled ? (S.dwellT || 0) + dt : 0;
+          S.lockP = Math.min(1, S.dwellT / 1.4);
+          if (S.dwellT > 1.4) S.diving = aim;       // deliberately settled → dive
+          if (S.t > 11) S.diving = aim;             // safety, never stalls
+        } else {
+          // dive cleanly into the chosen portal
+          const p = S.diving;
+          S.tx += (p.x - S.tx) * Math.min(1, dt * 9);
+          S.ty += (p.y - S.ty) * Math.min(1, dt * 8);
+          if (Math.abs(S.ty - p.y) < 10) choosePortal(p);
+        }
+        break;
+      }
+
+      case 'plunge': { // = the portal WARP (dimensional transition)
+        S.speed += dt * 1.4;
+        if (S.t > 2.4) { setPhase('impact'); doImpact(); }
+        break;
+      }
+
+      case 'impact': {
+        if (S.t > 1.3) { setPhase('validator'); S.valLine = 0; S.valLineT = 0; CineAudio.appear(); }
+        break;
+      }
+
+      case 'validator':
+        S.valLineT += dt;
+        // auto-advance each line as a fallback (player can tap to go faster)
+        if (S.valLineT > 3.4) advanceValidator();
+        break;
+
+      case 'title':
+        if (S.t > 4.0) finish();
+        break;
+    }
+  }
+
+  function spawnPortals() {
+    const lanes = [0.22, 0.5, 0.78];
+    const keys = ['BTC', 'ETH', 'SOL'];
+    S.portals = keys.map((k, i) => ({
+      i, key: k, cfg: FACTION_CONFIG[k],
+      x: W * lanes[i], y: H + 120, targetY: H * 0.58, r: Math.min(W * 0.17, 66), pulse: 1,
+    }));
+    CineAudio.rise();
+  }
+
+  function choosePortal(p) {
+    if (S.chosenPortal) return;
+    S.chosenPortal = p;
+    S.faction = p.key;
+    S.accent = p.cfg.color;
+    // Kick off the reusable dimensional WARP (see triggerWarp / drawWarpTunnel).
+    triggerWarp(p.cfg.color, p.x, p.y);
+    CineAudio.chime(p.key); CineAudio.warp();
+    setPhase('plunge');
+  }
+
+  function doImpact() {
+    S.shake = 1; S.flash = 1; S.flashCol = '#ffffff';
+    // Land in the RED zone (the Validator's domain).
+    S.rings.push({ x: W / 2, y: H * 0.72, t: 0, life: 1.0, col: VAL_RED });
+    S.rings.push({ x: W / 2, y: H * 0.72, t: 0, life: 1.4, col: '#ffffff' });
+    CineAudio.impact();
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     REUSABLE DIMENSIONAL WARP  — the signature "entering another part of
+     the blockchain" transition. Call triggerWarp(color, x, y) and render
+     drawWarpTunnel(...) for ~1s on ANY zone change: portal select here,
+     and (in production) lesson start, boss start, and trade entry. One
+     motif used everywhere makes every transition feel like the same world.
+     ═══════════════════════════════════════════════════════════════════ */
+  function triggerWarp(color, x, y) {
+    S.warp = { col: color || S.accent, x: (x == null ? W / 2 : x), y: (y == null ? H / 2 : y), t: 0 };
+    S.flash = 0.9; S.flashCol = color || S.accent;
+  }
+  function drawWarpTunnel(cx, cy, color, age) {
+    // dark base
+    ctx.fillStyle = '#02030a'; ctx.fillRect(0, 0, W, H);
+    const maxR = Math.hypot(W, H);
+    // concentric hex rings flying outward toward the viewer
+    const RINGS = 10;
+    for (let i = 0; i < RINGS; i++) {
+      const f = ((i / RINGS) + (S.tGlobal * 1.1)) % 1;     // 0→1 outward
+      const rad = f * f * maxR * 1.15 + 6;
+      ctx.globalAlpha = (1 - f) * 0.75;
+      ctx.strokeStyle = color; ctx.lineWidth = 1 + (1 - f) * 3.5;
+      ctx.beginPath();
+      for (let k = 0; k <= 6; k++) {
+        const a = Math.PI / 3 * k + f * 0.7;
+        const px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad;
+        if (!k) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+    // radial speed streaks shooting past
+    const STREAKS = 30;
+    for (let i = 0; i < STREAKS; i++) {
+      const a = (i / STREAKS) * Math.PI * 2 + i * 1.3;
+      const f = ((i / STREAKS) + (S.tGlobal * 1.6)) % 1;
+      const r0 = f * maxR * 0.6, r1 = r0 + 60 + f * 160;
+      ctx.globalAlpha = (1 - f) * 0.5;
+      ctx.strokeStyle = i % 4 === 0 ? '#ffffff' : color; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+      ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    // glowing core
+    const core = ctx.createRadialGradient(cx, cy, 2, cx, cy, 80 + age * 120);
+    core.addColorStop(0, '#ffffff'); core.addColorStop(0.25, color); core.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = 0.85; ctx.fillStyle = core;
+    ctx.beginPath(); ctx.arc(cx, cy, 80 + age * 120, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  /* ─── Draw helpers ──────────────────────────────────────────────────── */
+  function bgGradient() { bgGradientCol(S.accent); }
+  function bgGradientCol(a) {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#05070e');
+    g.addColorStop(0.5, shade(a, -0.78));
+    g.addColorStop(1, '#02030a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  function shade(hex, amt) {
+    const n = parseInt(hex.slice(1), 16);
+    let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    if (amt < 0) { r *= (1 + amt); g *= (1 + amt); b *= (1 + amt); }
+    else { r += (255 - r) * amt; g += (255 - g) * amt; b += (255 - b) * amt; }
+    return 'rgb(' + (r|0) + ',' + (g|0) + ',' + (b|0) + ')';
+  }
+
+  function drawWorld(speedScale) {
+    // wallet addresses (far)
+    ctx.font = '11px ' + MONO; ctx.textAlign = 'left';
+    for (const a of S.addrs) {
+      const y = (((a.y * H) - S.scroll * a.depth * 0.4) % (H + 60) + (H + 60)) % (H + 60) - 30;
+      ctx.fillStyle = 'rgba(120,150,200,' + (0.05 + a.depth * 0.10) + ')';
+      ctx.fillText(a.txt, a.x * W, y);
+    }
+    // candle pillars (parallax)
+    for (const p of S.pillars) {
+      const y = (((p.y * H) - S.scroll * p.depth) % (H + 360) + (H + 360)) % (H + 360) - 180;
+      const col = p.up ? COLOR.greenBody : COLOR.redBody;
+      ctx.globalAlpha = 0.05 + p.depth * 0.13;
+      ctx.fillStyle = col;
+      rr(p.x * W - p.w / 2, y, p.w, p.h, 5); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(p.x * W, y - 22); ctx.lineTo(p.x * W, y + p.h + 22); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // blockchain nodes + chains
+    for (const n of S.nodes) {
+      const y = (((n.y * H) - S.scroll * n.depth * 0.7) % (H + 120) + (H + 120)) % (H + 120) - 60;
+      ctx.globalAlpha = 0.10 + n.depth * 0.18;
+      ctx.strokeStyle = S.accent; ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      for (let i = 0; i <= 6; i++) { const a = (Math.PI / 3) * i + S.tGlobal * n.sp * 0.3; const px = n.x * W + Math.cos(a) * n.r, py = y + Math.sin(a) * n.r; if (!i) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+      ctx.closePath(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(n.x * W, y, 2, 0, Math.PI * 2); ctx.fillStyle = S.accent; ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    // transaction motes streaming up
+    for (const m of S.motes) {
+      const y = (((m.y * H) - S.scroll * (0.5 + m.sp) * speedScale) % (H + 20) + (H + 20)) % (H + 20) - 10;
+      ctx.fillStyle = m.c ? 'rgba(93,237,181,0.5)' : 'rgba(255,255,255,0.35)';
+      ctx.beginPath(); ctx.arc(m.x * W, y, m.r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  function drawTurtleFalling(emotion) {
+    ctx.save();
+    ctx.translate(S.tx, S.ty);
+    ctx.rotate(S.trot);
+    // jetpack / motion flame trailing upward
+    const fl = 8 + Math.sin(S.tGlobal * 30) * 4;
+    const grd = ctx.createLinearGradient(0, -6, 0, -36 - fl);
+    grd.addColorStop(0, COLOR.flameInner); grd.addColorStop(1, 'rgba(255,159,67,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.moveTo(-7, -6); ctx.lineTo(0, -34 - fl); ctx.lineTo(7, -6); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    drawAcadShell(S.tx, S.ty, 1.5, emotion);
+  }
+
+  function drawRings() {
+    for (const r of S.rings) {
+      const k = r.t / r.life;
+      ctx.globalAlpha = (1 - k) * 0.8;
+      ctx.strokeStyle = r.col; ctx.lineWidth = 4 * (1 - k) + 1;
+      ctx.beginPath(); ctx.arc(r.x, r.y, k * Math.max(W, H) * 0.7, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* ─── Phase draws ───────────────────────────────────────────────────── */
+  function drawGlitch() {
+    ctx.fillStyle = '#04060c'; ctx.fillRect(0, 0, W, H);
+    // scanlines
+    ctx.fillStyle = 'rgba(255,255,255,0.025)';
+    for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
+    // random data noise blocks
+    for (let i = 0; i < 26; i++) {
+      ctx.globalAlpha = rand(0.02, 0.12);
+      ctx.fillStyle = Math.random() > 0.5 ? COLOR.greenBody : COLOR.redBody;
+      ctx.fillRect(rand(0, W), rand(0, H), rand(8, 60), rand(1, 4));
+    }
+    ctx.globalAlpha = 1;
+    // flickering error lines with RGB split
+    const n = Math.min(ERR_LINES.length, Math.floor(S.t / 0.28));
+    ctx.textAlign = 'center'; ctx.font = 'bold 20px ' + MONO;
+    for (let i = 0; i < n; i++) {
+      const y = H * 0.30 + i * 30;
+      if (Math.random() < 0.08) continue; // flicker out
+      const jx = rand(-2, 2);
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#ff3b54'; ctx.fillText(ERR_LINES[i], W / 2 + jx - 2, y);
+      ctx.fillStyle = '#2bd4ff'; ctx.fillText(ERR_LINES[i], W / 2 + jx + 2, y);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#e6edf3'; ctx.fillText(ERR_LINES[i], W / 2 + jx, y);
+    }
+    // blinking cursor line
+    if (Math.floor(S.t * 2) % 2 === 0) {
+      ctx.fillStyle = COLOR.greenBody; ctx.font = '13px ' + MONO; ctx.textAlign = 'left';
+      ctx.fillText('> reconstructing wallet_', 18, H - 40);
+    }
+  }
+
+  // Vector shell coin (no emoji dependency — always renders).
+  function drawShellIcon(x, y, rad) {
+    ctx.save();
+    ctx.translate(x, y);
+    // coin body
+    ctx.fillStyle = '#ffd60a';
+    ctx.beginPath(); ctx.arc(0, 0, rad, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 1.6; ctx.stroke();
+    // scallop fan ridges (shell look), radiating from the bottom hinge
+    ctx.strokeStyle = 'rgba(150,100,10,0.8)'; ctx.lineWidth = 1.3;
+    const hinge = rad * 0.85;
+    for (let i = -2; i <= 2; i++) {
+      const a = -Math.PI / 2 + i * 0.42;
+      ctx.beginPath();
+      ctx.moveTo(0, hinge);
+      ctx.lineTo(Math.cos(a) * rad * 0.92, hinge + Math.sin(a) * rad * 1.7);
+      ctx.stroke();
+    }
+    // hinge dot + top highlight
+    ctx.fillStyle = '#9a6a08'; ctx.beginPath(); ctx.arc(0, hinge, 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.arc(-rad * 0.3, -rad * 0.35, rad * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawShells() {
+    for (const s of S.shells) {
+      if (s.got || s.gone || s.y == null) continue;
+      const x = s.x * W, y = s.y, bob = Math.sin(S.tGlobal * 5 + s.at) * 2;
+      const pr = 1 + 0.12 * Math.sin(S.tGlobal * 6 + s.at);
+      // strong glow so it pops against the rushing background
+      const g = ctx.createRadialGradient(x, y, 2, x, y, 34 * pr);
+      g.addColorStop(0, 'rgba(255,214,10,0.7)'); g.addColorStop(1, 'rgba(255,214,10,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 34 * pr, 0, Math.PI * 2); ctx.fill();
+      // pulsing catch ring
+      ctx.strokeStyle = 'rgba(255,214,10,0.7)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 22 * pr, 0, Math.PI * 2); ctx.stroke();
+      drawShellIcon(x, y + bob, 12);
+    }
+  }
+
+  function drawShellCounter() {
+    if (!S.shellsGot) return;
+    ctx.fillStyle = 'rgba(6,8,16,0.6)';
+    rr(W - 86, 16, 70, 28, 14); ctx.fill();
+    drawShellIcon(W - 70, 30, 8);
+    ctx.fillStyle = '#ffd60a'; ctx.font = 'bold 14px ' + F;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(S.shellValue), W - 56, 31);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function drawFloaters() {
+    for (const f of S.floaters) {
+      ctx.globalAlpha = Math.max(0, 1 - f.t / 0.9);
+      ctx.fillStyle = '#ffd60a'; ctx.font = 'bold 15px ' + F; ctx.textAlign = 'center';
+      ctx.fillText(f.txt, f.x, f.y);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawFall(emotion, hint) {
+    bgGradient();
+    drawWorld(1);
+    drawShells();
+    drawRings();
+    drawTurtleFalling(emotion);
+    drawFloaters();
+    drawShellCounter();
+    if (hint && S.t < 2.2) {
+      ctx.globalAlpha = Math.max(0, Math.min(1, (2.2 - S.t))) * (S.t > 0.3 ? 1 : S.t / 0.3);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 14px ' + F; ctx.textAlign = 'center';
+      ctx.fillText('◄  DRAG TO STEER  ►', W / 2, H * 0.16);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawChoose() {
+    bgGradient();
+    drawWorld(1);
+    // prompt
+    ctx.globalAlpha = 0.85 + 0.15 * Math.sin(S.tGlobal * 4);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 17px ' + F; ctx.textAlign = 'center';
+    ctx.fillText('CHOOSE YOUR CHAIN', W / 2, H * 0.1);
+    ctx.globalAlpha = 1;
+    ctx.font = '11px ' + F; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillText('browse all three — stop on one to lock it, or tap to dive', W / 2, H * 0.1 + 18);
+    // guide line from the turtle down to the portal it's currently aimed at
+    if (S.aimPortal) {
+      ctx.strokeStyle = S.aimPortal.cfg.color + 'aa'; ctx.lineWidth = 2;
+      ctx.setLineDash([3, 6]);
+      ctx.beginPath(); ctx.moveTo(S.tx, S.ty + 14); ctx.lineTo(S.aimPortal.x, S.aimPortal.y - S.aimPortal.r); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    for (const p of S.portals) drawPortal(p, p === S.aimPortal);
+    // lock-progress arc filling around the aimed portal while you settle on it
+    if (S.aimPortal && S.lockP > 0 && !S.diving) {
+      const p = S.aimPortal;
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r + 12, -Math.PI / 2, -Math.PI / 2 + S.lockP * Math.PI * 2);
+      ctx.stroke(); ctx.lineCap = 'butt';
+    }
+    drawRings();
+    drawTurtleFalling('focused');
+  }
+
+  function drawPortal(p, aimed) {
+    const cfg = p.cfg;
+    ctx.save();
+    if (aimed) {  // emphasise the lane the player will drop into
+      ctx.strokeStyle = '#fff';
+      ctx.globalAlpha = 0.45 + 0.35 * Math.sin(S.tGlobal * 8);
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 8, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // outer glow
+    const g = ctx.createRadialGradient(p.x, p.y, p.r * 0.2, p.x, p.y, p.r * 1.7);
+    g.addColorStop(0, cfg.glow); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 1.7, 0, Math.PI * 2); ctx.fill();
+    // ring
+    ctx.strokeStyle = cfg.color; ctx.lineWidth = 3 * p.pulse;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.stroke();
+    // inner swirl
+    ctx.strokeStyle = shade(cfg.color, 0.3); ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6;
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * (0.4 + k * 0.18), S.tGlobal * (1 + k) % (Math.PI * 2), S.tGlobal * (1 + k) % (Math.PI * 2) + Math.PI * 1.2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    // real coin logo
+    drawCoinLogo(p.key, p.x, p.y, p.r * 0.5);
+    // label
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px ' + F; ctx.textAlign = 'center';
+    ctx.fillText(cfg.ticker, p.x, p.y + p.r + 18);
+    ctx.restore();
+  }
+
+  // Brand-accurate logo marks, drawn with canvas paths (same geometry the
+  // game uses in coinIconSVG): BTC ₿ disc, ETH double-diamond, SOL tri-bar.
+  function drawCoinLogo(key, cx, cy, size) {
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (key === 'BTC') {
+      ctx.fillStyle = '#f7931a';
+      ctx.beginPath(); ctx.arc(cx, cy, size, 0, Math.PI * 2); ctx.fill();
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(0.16);
+      ctx.fillStyle = '#fff'; ctx.font = '900 ' + (size * 1.55) + 'px ' + F;
+      ctx.fillText('₿', 0, size * 0.04);   // ₿
+      ctx.restore();
+    } else if (key === 'ETH') {
+      const sc = (size * 2) / 21;
+      const mv = (X, Y) => ctx.moveTo(cx + (X - 12) * sc, cy + (Y - 12) * sc);
+      const ln = (X, Y) => ctx.lineTo(cx + (X - 12) * sc, cy + (Y - 12) * sc);
+      ctx.fillStyle = '#627eea';
+      ctx.beginPath(); mv(12, 1.5); ln(19.5, 12); ln(12, 16.2); ln(4.5, 12); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 0.55;
+      ctx.beginPath(); mv(12, 18); ln(19.5, 13.6); ln(12, 22.5); ln(4.5, 13.6); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+    } else if (key === 'SOL') {
+      const g = ctx.createLinearGradient(cx - size, cy - size, cx + size, cy + size);
+      g.addColorStop(0, '#00FFA3'); g.addColorStop(1, '#DC1FFF');
+      ctx.fillStyle = g;
+      const bw = size * 1.8, bh = size * 0.34, gap = size * 0.27, skew = size * 0.42;
+      [-(bh + gap), 0, (bh + gap)].forEach((yo, i) => {
+        const top = cy + yo - bh / 2, bot = cy + yo + bh / 2;
+        const off = (i === 1 ? -1 : 1) * size * 0.16;   // middle bar notches the other way
+        const L = cx - bw / 2 + off, R = cx + bw / 2 + off;
+        ctx.beginPath();
+        ctx.moveTo(L + skew, top); ctx.lineTo(R, top);
+        ctx.lineTo(R - skew, bot); ctx.lineTo(L, bot);
+        ctx.closePath(); ctx.fill();
+      });
+    }
+    ctx.restore();
+  }
+
+  function drawPlunge() { // the WARP — diving through the portal into the next zone
+    const cx = W / 2, cy = H * 0.5;
+    const age = Math.min(1, S.t / 2.4);
+    const col = (S.warp && S.warp.col) || S.accent;
+    drawWarpTunnel(cx, cy, col, age);
+    // turtle sucked into the vortex, spinning, shrinking as it dives in
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(S.tGlobal * 3.4 * (0.4 + age));
+    drawAcadShell(0, 0, 1.5 * (1 - 0.45 * age), 'excited');
+    ctx.restore();
+    // white-out as we punch through to the other side
+    if (age > 0.78) {
+      ctx.globalAlpha = (age - 0.78) / 0.22;
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Shared landing platform (red in the Validator's domain).
+  function drawPlatform() {
+    const platTop = H * 0.72;
+    // a giant red candle body as the floor (no wick)
+    const bg = ctx.createLinearGradient(0, platTop, 0, H);
+    bg.addColorStop(0, shade(VAL_RED, -0.4)); bg.addColorStop(1, shade(VAL_RED, -0.72));
+    ctx.fillStyle = bg;
+    rr(W * 0.08, platTop, W * 0.84, H * 0.5, 6); ctx.fill();
+    ctx.strokeStyle = VAL_RED; ctx.lineWidth = 2; rr(W * 0.08, platTop, W * 0.84, H * 0.5, 6); ctx.stroke();
+    // soft top highlight so the turtle and Validator read as standing on it
+    ctx.strokeStyle = 'rgba(255,120,130,0.45)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W * 0.1, platTop + 1.5); ctx.lineTo(W * 0.9, platTop + 1.5); ctx.stroke();
+    return platTop;
+  }
+
+  function drawImpact() {
+    bgGradientCol(VAL_RED);
+    const platTop = drawPlatform();
+    drawRings();
+    // turtle slammed onto the platform; small dust puffs
+    drawAcadShell(W * 0.5, platTop - 6, 1.5, 'worried');
+    ctx.globalAlpha = Math.max(0, 1 - S.t * 1.5);
+    ctx.fillStyle = 'rgba(255,120,120,0.5)';
+    for (let i = 0; i < 8; i++) {
+      const a = Math.PI + (i / 7) * Math.PI, d = 20 + S.t * 120;
+      ctx.beginPath(); ctx.arc(W * 0.5 + Math.cos(a) * d, platTop - 4 + Math.sin(a) * d * 0.3, 4, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawValidator() {
+    // Red domain: dark hall with a deep red glow
+    bgGradientCol(VAL_RED_DK);
+    const platTop = drawPlatform();
+    drawRings();
+
+    const vx = W * 0.6, vBase = platTop;        // stands ON the platform
+    const appear = Math.min(1, S.t / 1.0);
+    const pulse = 0.55 + 0.45 * Math.sin(S.tGlobal * 2.2);
+    const vh = 212 * appear;                    // total height
+    const topY = vBase - vh;
+
+    // ── back aura: a single clean pulsing red halo ──
+    ctx.save();
+    const aura = ctx.createRadialGradient(vx, topY + vh * 0.42, 10, vx, topY + vh * 0.42, 160);
+    aura.addColorStop(0, 'rgba(255,43,61,' + (0.30 * appear * pulse) + ')');
+    aura.addColorStop(1, 'rgba(255,43,61,0)');
+    ctx.fillStyle = aura; ctx.fillRect(vx - 170, topY - 50, 340, vh + 140);
+    ctx.restore();
+
+    // ── rising embers (sparse, behind the figure) ──
+    ctx.save();
+    for (let i = 0; i < 9; i++) {
+      const ph = (S.tGlobal * 0.5 + i * 0.41) % 1;
+      const ex = vx + Math.sin(i * 2.1 + S.tGlobal * 0.8) * 52;
+      const ey = vBase - ph * vh * 1.05;
+      ctx.globalAlpha = (1 - ph) * 0.55 * appear;
+      ctx.fillStyle = i % 3 === 0 ? '#ffd0a0' : VAL_RED;
+      ctx.beginPath(); ctx.arc(ex, ey, 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+
+    // ── smooth flowing cloak silhouette ──
+    const cloak = () => {
+      ctx.beginPath();
+      ctx.moveTo(vx - 48, vBase);
+      ctx.bezierCurveTo(vx - 42, vBase - vh * 0.46, vx - 27, topY + vh * 0.26, vx - 17, topY + 40);
+      ctx.quadraticCurveTo(vx, topY - 2, vx + 17, topY + 40);     // hood peak
+      ctx.bezierCurveTo(vx + 27, topY + vh * 0.26, vx + 42, vBase - vh * 0.46, vx + 48, vBase);
+      ctx.closePath();
+    };
+    ctx.save();
+    ctx.globalAlpha = appear;
+    cloak();
+    const body = ctx.createLinearGradient(0, topY, 0, vBase);
+    body.addColorStop(0, '#1b0307'); body.addColorStop(0.55, '#0a0204'); body.addColorStop(1, '#160709');
+    ctx.fillStyle = body; ctx.fill();
+    ctx.strokeStyle = VAL_RED; ctx.lineWidth = 2; ctx.globalAlpha = appear * (0.55 + 0.3 * pulse);
+    ctx.shadowColor = VAL_RED; ctx.shadowBlur = 16; ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // ── digital scanlines, clipped to the cloak ──
+    ctx.save();
+    cloak(); ctx.clip();
+    ctx.strokeStyle = 'rgba(255,43,61,0.14)'; ctx.lineWidth = 1;
+    const off = (S.tGlobal * 26) % 8;
+    for (let y = topY; y < vBase; y += 8) { ctx.beginPath(); ctx.moveTo(vx - 52, y + off); ctx.lineTo(vx + 52, y + off); ctx.stroke(); }
+    ctx.restore();
+
+    // ── hooded void ──
+    ctx.save();
+    ctx.globalAlpha = appear;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(vx - 14, topY + 44);
+    ctx.quadraticCurveTo(vx, topY + 16, vx + 14, topY + 44);
+    ctx.quadraticCurveTo(vx + 12, topY + 70, vx, topY + 76);
+    ctx.quadraticCurveTo(vx - 12, topY + 70, vx - 14, topY + 44);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // ── glowing red eyes inside the hood ──
+    ctx.save();
+    ctx.globalAlpha = appear;
+    ctx.translate(vx, topY + 52);
+    ctx.shadowColor = VAL_RED; ctx.shadowBlur = 14 + 8 * pulse;
+    [-7, 7].forEach((ex, idx) => {
+      ctx.save(); ctx.translate(ex, 0); ctx.rotate(idx ? 0.28 : -0.28);
+      ctx.fillStyle = VAL_RED;
+      ctx.beginPath(); ctx.ellipse(0, 0, 5, 2.4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(1.5, 0, 1.1, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowColor = VAL_RED; ctx.shadowBlur = 14 + 8 * pulse;
+      ctx.restore();
+    });
+    ctx.shadowBlur = 0; ctx.restore();
+
+    // ── chest emblem: a single glowing red candle (no wick) ──
+    ctx.save();
+    ctx.globalAlpha = appear * (0.7 + 0.3 * pulse);
+    const cyem = topY + vh * 0.52;
+    ctx.shadowColor = VAL_RED; ctx.shadowBlur = 12;
+    ctx.fillStyle = VAL_RED; rr(vx - 5, cyem - 11, 10, 22, 2); ctx.fill();
+    ctx.shadowBlur = 0; ctx.restore();
+
+    // turtle on the platform, front-left, looking up at him
+    drawAcadShell(W * 0.3, platTop - 5, 1.25, 'worried');
+
+    // ── dialogue plate (red-accented) ──
+    const line = VAL_LINES[Math.min(S.valLine, VAL_LINES.length - 1)];
+    const tin = Math.min(1, S.valLineT / 0.4);
+    ctx.globalAlpha = tin;
+    ctx.fillStyle = 'rgba(10,2,4,0.88)';
+    rr(20, H * 0.1, W - 40, 72, 12); ctx.fill();
+    ctx.strokeStyle = VAL_RED + '88'; ctx.lineWidth = 1.5; rr(20, H * 0.1, W - 40, 72, 12); ctx.stroke();
+    ctx.fillStyle = VAL_RED; ctx.font = 'bold 10px ' + F; ctx.textAlign = 'left';
+    ctx.fillText('◆ THE VALIDATOR', 36, H * 0.1 + 22);
+    ctx.fillStyle = '#ffe9eb'; ctx.font = '15px ' + F;
+    wrap(line, 36, H * 0.1 + 45, W - 72, 19);
+    ctx.globalAlpha = 1;
+    if (S.valLineT > 1.2) {
+      ctx.globalAlpha = 0.4 + 0.3 * Math.sin(S.tGlobal * 5);
+      ctx.fillStyle = '#fff'; ctx.font = '11px ' + F; ctx.textAlign = 'right';
+      ctx.fillText('tap ▸', W - 34, H * 0.1 + 62);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawTitle() {
+    bgGradient();
+    drawWorld(1.2);
+    const k = Math.min(1, S.t / 0.8);
+    ctx.globalAlpha = k;
+    // logo wordmark
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff'; ctx.font = '900 34px ' + F;
+    ctx.shadowColor = S.accent; ctx.shadowBlur = 24;
+    ctx.fillText('CHART QUEST', W / 2, H * 0.40);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = S.accent; ctx.font = 'bold 14px ' + F;
+    ctx.fillText('LOST IN THE BLOCKCHAIN', W / 2, H * 0.40 + 28);
+    // two-line mandate, fading in after the logo
+    const k2 = Math.max(0, Math.min(1, (S.t - 1.2) / 0.8));
+    ctx.globalAlpha = k2;
+    ctx.fillStyle = '#c9d1d9'; ctx.font = '15px ' + F;
+    ctx.fillText('Become a Trader.', W / 2, H * 0.56);
+    ctx.fillText('Find the Exit Block.', W / 2, H * 0.56 + 24);
+    ctx.globalAlpha = 1;
+  }
+
+  function wrap(text, x, y, maxW, lh) {
+    const words = text.split(' '); let line = '', yy = y;
+    for (const w of words) {
+      const test = line + (line ? ' ' : '') + w;
+      if (ctx.measureText(test).width > maxW) { ctx.fillText(line, x, yy); yy += lh; line = w; }
+      else line = test;
+    }
+    if (line) ctx.fillText(line, x, yy);
+  }
+
+  /* ─── Master draw (with shake + flash envelope) ─────────────────────── */
+  function draw() {
+    ctx.save();
+    if (S.shake > 0) ctx.translate(rand(-1, 1) * 10 * S.shake, rand(-1, 1) * 10 * S.shake);
+    switch (S.phase) {
+      case 'glitch':    drawGlitch(); break;
+      case 'fall':      drawFall('focused', true); break;
+      case 'choose':    drawChoose(); break;
+      case 'plunge':    drawPlunge(); break;
+      case 'impact':    drawImpact(); break;
+      case 'validator': drawValidator(); break;
+      case 'title':     drawTitle(); break;
+    }
+    ctx.restore();
+    if (S.flash > 0) {
+      ctx.globalAlpha = S.flash;
+      ctx.fillStyle = S.flashCol; ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
+    // vignette
+    const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.45)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  }
+
+  return { start, update, draw, _S: S, setFaction: k => { S.faction = k; } };
+})();
+
+/* ════════════════════════════════════════════════════════════════════════
+   AUDIO — tiny WebAudio layer, zero asset files. All synthesised.
+   Safe to delete entirely; the cinematic works silently without it.
+   ════════════════════════════════════════════════════════════════════════ */
+const CineAudio = (() => {
+  let ac = null, muted = false, glitchNode = null;
+  function ctxx() { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} } return ac; }
+  function unlock() { const a = ctxx(); if (a && a.state === 'suspended') a.resume(); }
+  function setMuted(m) { muted = m; if (m) stopAll(); }
+  function tone(freq, dur, type, vol, slideTo) {
+    const a = ctxx(); if (!a || muted) return;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'sine'; o.frequency.setValueAtTime(freq, a.currentTime);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, a.currentTime + dur);
+    g.gain.setValueAtTime(0.0001, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol || 0.2, a.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + dur + 0.02);
+  }
+  function noise(dur, vol) {
+    const a = ctxx(); if (!a || muted) return null;
+    const buf = a.createBuffer(1, a.sampleRate * dur, a.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1);
+    const src = a.createBufferSource(); src.buffer = buf;
+    const g = a.createGain(); g.gain.value = vol || 0.05;
+    const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1200;
+    src.connect(f); f.connect(g); g.connect(a.destination); src.start();
+    return { src, g };
+  }
+  return {
+    unlock, setMuted,
+    glitch() { glitchNode = noise(2.4, 0.04); },
+    whoosh() { tone(120, 0.7, 'sawtooth', 0.12, 600); },
+    rise()   { tone(220, 0.9, 'sine', 0.08, 660); },
+    chime(k) { const f = { BTC: 523, ETH: 587, SOL: 659 }[k] || 523; tone(f, 0.5, 'triangle', 0.18); tone(f * 1.5, 0.5, 'sine', 0.10); },
+    impact() { tone(70, 0.5, 'sine', 0.35, 40); noise(0.25, 0.18); },
+    coin()   { tone(880, 0.10, 'square', 0.10, 1320); tone(1320, 0.12, 'sine', 0.06); },
+    warp()   { tone(160, 1.4, 'sawtooth', 0.14, 1400); tone(80, 1.4, 'sine', 0.10, 320); },
+    appear() { tone(180, 1.2, 'sine', 0.06, 220); },
+    blip()   { tone(440, 0.08, 'square', 0.08); },
+    stopAll(){ if (glitchNode) { try { glitchNode.src.stop(); } catch(e){} glitchNode = null; } },
+  };
+})();
+const introCine = IntroCinematic._S;
+/* ════════ END OPENING CINEMATIC ════════ */
+
 /* ---------- Main loop ---------- */
 let lastTime = performance.now();
 let camY = 0; // vertical camera offset (negative = looking up)
@@ -8282,6 +9631,9 @@ function frame(now) {
   // Clamp dt so a backgrounded tab doesn't cause a huge physics step
   const dt = Math.min((now - lastTime) / 1000, 1 / 30);
   lastTime = now;
+
+  // Opening cinematic owns the screen while it's running.
+  if (introCine.active) { IntroCinematic.update(dt); IntroCinematic.draw(); requestAnimationFrame(frame); return; }
 
   // Greeting card: render before game starts, auto-advance after 3s
   if (candleAcademy.active) {
@@ -8315,6 +9667,7 @@ function frame(now) {
   // UI effect timers run even while paused so animations stay alive
   flashT = Math.max(0, flashT - dt);
   shakeT = Math.max(0, shakeT - dt);
+  if (portalWarp) { portalWarp.t += dt; if (portalWarp.t >= portalWarp.dur) portalWarp = null; }
   if (inspectT > 0 && (inspectT -= dt) <= 0) hideInspector();
   pumpLessons(dt);
   // Animate intermission screen (Bull/Bear bob)

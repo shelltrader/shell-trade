@@ -793,7 +793,7 @@
 
   // ---- Anonymous visit counter (no PII, dashboard stat only) ----
   // Fires once per page load; failures are silent and never block the game.
-  try { _supa.rpc('record_site_visit', {}).catch(() => {}); } catch(e) {}
+  (async () => { try { await _supa.rpc('record_site_visit', {}); } catch(e) {} })();
 
   // ---- Cloud push helpers (all fire-and-forget; failures are silent) ----
 

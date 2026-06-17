@@ -14,7 +14,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chart Quest">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="theme-color" content="#0a0e14">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Chart Quest</title>
@@ -24,11 +31,18 @@
   /* Portrait stage, letterboxed on wide screens. The game + all overlays live
      inside #stage; the transform makes position:fixed overlays resolve to the
      stage box (not the viewport), so everything stays in the portrait frame. */
-  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; }
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000;
+    overscroll-behavior: none;        /* kills pull-to-refresh and overscroll nav */
+    -webkit-overflow-scrolling: auto; /* disable momentum scroll on iOS */
+    touch-action: none;               /* prevent browser from stealing touch gestures */
+    user-select: none; -webkit-user-select: none;
+  }
   #stage {
     position: fixed; top: 0; left: 0; overflow: hidden;
     background: #0a0e14; transform: translateZ(0);
     box-shadow: 0 0 0 1px #1c2737, 0 10px 60px rgba(0,0,0,0.6);
+    touch-action: none;
   }
   canvas#game { display: block; position: absolute; left: 0; top: 0; touch-action: none; }
   canvas { display: block; touch-action: none; }
@@ -1909,7 +1923,8 @@ function spawnPortal(label, sublabel, action) {
   const surfaceY = Math.min(near ? candleTop(near) : turtle.y, turtle.y);
   portals.push({
     x: px,
-    y: Math.max(60, surfaceY - 190), // clear of the surface — jetpack height required
+    y: Math.max(50, surfaceY - 280), // floats high — a plain jump (~157px) can't reach
+                                     // the entry zone, so the jetpack boost is required
     r: 32,
     label,
     sublabel,
@@ -9716,6 +9731,29 @@ prePopulateHTF(MARKET_DATA); // seed HTF history so panels show data right away
 spawnTurtle();
 // teach('controls') and teach('goal') fire after Candle Academy completes
 requestAnimationFrame(frame);
+
+// ── PWA service worker ────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+// ── Mobile: hard-block browser touch interception on the game stage ───────────
+// touch-action:none in CSS covers 99% of cases; this catches the remainder
+// (iOS Safari swipe-to-navigate near screen edges, pull-to-refresh, etc.)
+const _stage = document.getElementById('stage');
+if (_stage) {
+  const _blockTouch = e => {
+    // Allow default only for interactive form elements (sign-in inputs, etc.)
+    if (e.target.closest && e.target.closest('input, textarea, select, button[type="submit"]')) return;
+    e.preventDefault();
+  };
+  _stage.addEventListener('touchstart',  _blockTouch, { passive: false });
+  _stage.addEventListener('touchmove',   _blockTouch, { passive: false });
+  _stage.addEventListener('touchend',    _blockTouch, { passive: false });
+  _stage.addEventListener('touchcancel', _blockTouch, { passive: false });
+}
 </script>
 </body>
 </html>

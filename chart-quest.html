@@ -2378,6 +2378,8 @@ function pushCandle(x, w, h, color, wick, flags) {
                  // PHASE 2 — beginner setup framework role tag: 'momentum' | 'pullback' | 'confirm'
                  // (or null for ordinary candles). Drives progressive recognition as Finn arrives.
                  flow: (flags && flags.flow) || null,
+                 flowN: (flags && flags.flowN) || 0,   // pullback index (1 or 2) for the on-chart label
+
                  _crystal: !!(flags && flags._crystal), _giantWick: !!(flags && flags._giantWick), _shatter: 0 });
   return x + w; // returns the right edge, handy for chaining
 }
@@ -2732,11 +2734,12 @@ function setupFlowCandle() {
   market.level = nl;
   market.trendDir = realDelta >= 0 ? 1 : -1;
   market.price *= 1 + (realDelta / CFG.pxPerPct) / 100;
+  const flowN = (role === 'pullback') ? s.step : 0;     // pullback index (1 or 2) for the on-chart label
   s.step++;
   if (s.step > 3) setupSeq = null;                      // sequence complete → filler script resumes
   return { h: market.level, color: realDelta >= 0 ? 'green' : 'red',
            wick: 0, wick2: 0, bos: false, sweep: false, choch: false, ob: false,
-           price: market.price, flow: role };
+           price: market.price, flow: role, flowN: flowN };
 }
 
 // WIN-VISIBILITY: while a Level-1 trade is OPEN, DRIVE price toward the decided line — the TP
@@ -2850,7 +2853,10 @@ function nextCandle() {
     if (setupSeq) return setupFlowCandle();
     if (genSetupIn > 0) genSetupIn--;
     const introBlocks = (typeof introFlow !== 'undefined' && introFlow.active && !introFlow.awaitingTrade);
-    const clear = !setupFlow && !pending && !trade && bannerT <= 0 && !introBlocks;
+    const uiBusy = (typeof lessonOpen !== 'undefined' && lessonOpen) ||
+                   (typeof lessonQ !== 'undefined' && lessonQ && lessonQ.length) ||
+                   (typeof pendingCelebration !== 'undefined' && pendingCelebration);
+    const clear = !setupFlow && !pending && !trade && bannerT <= 0 && !introBlocks && !uiBusy;
     if (genSetupIn <= 0 && clear && session.candles >= SETUP_WARMUP) {
       setupSeq = { dir: pickSetupDir(), step: 0 };
       return setupFlowCandle();
@@ -11628,6 +11634,7 @@ function waitThenNextTrade(left) {
     const ready = !lessonOpen && (typeof lessonQ === 'undefined' || lessonQ.length === 0) && !pendingCelebration && !_celebrating;
     if (ready || capped) {
       setupCountdown = 2;
+      genSetupIn = 2;   // PHASE 2 — arm the BEGINNER FRAMEWORK for the next guided trade (Levels 1-3 use this, not setupCountdown)
       try { if (typeof market !== 'undefined') market.eventIn = Math.min(market.eventIn || 4, 4); } catch (e) {}
       floaters.push({ text: 'Good trade! ' + left + ' more before the Gambler', color: '#16c784', y: 104, t: 3.0 });
       try { showTradeIncoming(); } catch (e) {}
@@ -12182,25 +12189,29 @@ function drawCandle(c, cameraX) {
   ctx.fillRect(bx + 1, top + 1, bw - 2, Math.max(1, Math.min(2.5, bodyH * 0.14)));
   ctx.globalAlpha = 1;
 
-  // PHASE 2 — BEGINNER SETUP FRAMEWORK, drawn ON the candles so the player SEES the pattern
-  // develop (Levels 1-3, only while a setup is live): the momentum candle glows + is labelled,
-  // the TWO pullback candles get an amber dashed box + "PULLBACK", and the confirmation candle
-  // is labelled (the spotlight ring already encircles it). No center-screen text needed.
+  // PHASE 2 — BEGINNER SETUP FRAMEWORK, drawn ON the candles so the player SEES the setup form as
+  // they walk (Levels 1-3, while a setup is live): each candle in the setup is CIRCLED and labelled
+  // — MOMENTUM (boost over it), PULLBACK 1 & 2 (walk down them), CONFIRM (then enter). This is the
+  // whole "watch the setup develop in front of you" moment, so it's bold, not subtle.
   if (c.flow && session.level <= 3 && setupFlow && c.id >= setupFlow.momId) {
     const isPB = c.flow === 'pullback';
-    const lcol = isPB ? '#ffd60a' : (c.color === 'green' ? '#16c784' : '#ea3943');
-    const lab  = c.flow === 'momentum' ? 'MOMENTUM' : isPB ? 'PULLBACK' : 'CONFIRM ✓';
+    const col  = isPB ? '#ffd60a' : (c.color === 'green' ? '#19d27c' : '#ff5a64');
+    const lab  = c.flow === 'momentum' ? 'MOMENTUM'
+               : isPB ? ('PULLBACK ' + (c.flowN || ''))
+               : 'CONFIRM';
+    const cyB = (top + bot) / 2;
+    const rx = bw / 2 + 7, ry = Math.max(15, bodyH / 2 + 10);
+    const pulse = 1 + 0.06 * Math.sin(turtle.animT * 4);
     ctx.save();
-    if (isPB) {
-      ctx.strokeStyle = '#ffd60a'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
-      ctx.strokeRect(bx - 1, top - 1, bw + 2, bodyH + 2); ctx.setLineDash([]);
-    } else {
-      ctx.globalAlpha = 0.28 + Math.sin(turtle.animT * 5) * 0.10;
-      ctx.fillStyle = lcol; ctx.fillRect(bx - 3, top - 3, bw + 6, bodyH + 6);
-      ctx.globalAlpha = 1;
-    }
-    ctx.font = 'bold 9px ' + MONO; ctx.fillStyle = lcol; ctx.textAlign = 'center';
-    ctx.fillText(lab, mid, top - c.wick - 6);
+    ctx.strokeStyle = col; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.ellipse(mid, cyB, rx * pulse, ry * pulse, 0, 0, Math.PI * 2); ctx.stroke();
+    const ly = top - c.wick - 13;
+    ctx.font = 'bold 10px ' + MONO;
+    const tw = ctx.measureText(lab).width;
+    ctx.fillStyle = 'rgba(6,10,18,0.82)';
+    ctx.fillRect(mid - tw / 2 - 5, ly - 9, tw + 10, 14);
+    ctx.fillStyle = col; ctx.textAlign = 'center';
+    ctx.fillText(lab, mid, ly + 1.5);
     ctx.textAlign = 'left';
     ctx.restore();
   }
@@ -13659,6 +13670,10 @@ function render(cameraX) {
    "TAP TO TRADE" banner (a DOM element above the canvas) stays bright on top. */
 let setupSpotT = 0;
 function drawSetupSpotlight(cameraX) {
+  // PHASE 2 — the BEGINNER FRAMEWORK circles every setup candle (momentum + both pullbacks +
+  // confirm) in drawCandle, so the chart-dimming single-candle spotlight would WRONGLY hide the
+  // rest of the setup. Skip it entirely while a framework setup is live.
+  if (typeof setupFlow !== 'undefined' && setupFlow) { setupSpotT = Math.max(0, setupSpotT - 0.2); return; }
   // The circle must NOT vanish the instant the player jumps or boosts — it stays on the
   // setup candle until they actually take or skip the trade (dropping the turtle.halt
   // requirement). Losing the circle on an accidental hop ruined the first-trade moment.
@@ -16788,10 +16803,11 @@ function frame(now) {
   // Pull back EARLY — as soon as a trade is incoming or the player is setting one up — so the
   // world is already zoomed out BEFORE they enter. Then a brief slow-mo + audio cue fires the
   // instant the trade actually opens, and ~1s later it eases back further (stage 2).
-  // Zoom out on the REAL walking chart the moment a beginner setup ARMS (so the player sees the
-  // momentum → pullback → confirmation in context), through the ticket, and during the trade.
-  const _armed = (typeof setupFlow !== 'undefined' && setupFlow && setupFlow.armed);
-  const _approaching = (typeof tradeIncomingActive !== 'undefined' && tradeIncomingActive) || (typeof pending !== 'undefined' && pending) || _armed;
+  // Zoom out on the REAL walking chart the moment a beginner setup STARTS forming (momentum
+  // recognised — setupFlow exists), so the player WATCHES the momentum → pullback → confirmation
+  // develop in front of them as they walk, through the ticket, and during the trade.
+  const _developing = (typeof setupFlow !== 'undefined' && !!setupFlow);
+  const _approaching = (typeof tradeIncomingActive !== 'undefined' && tradeIncomingActive) || (typeof pending !== 'undefined' && pending) || _developing;
   const _chartTrialOn = (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active);
   const _zoomActive = (trade || _approaching || _chartTrialOn) && !firstTradeGuide;
   if (_zoomActive) {
@@ -16820,6 +16836,7 @@ function frame(now) {
   try {
     if (introFlow.active && introFlow.awaitingTrade && !introFlow.firstTradeDone &&
         !trade && !pending && !paused && !lessonOpen && !quickRead.active && !firstTradeGuide &&
+        !(typeof setupFlow !== 'undefined' && setupFlow) &&   // PHASE 2 — a beginner setup IS forming/armed → not stuck
         !(typeof htfZoomState !== 'undefined' && htfZoomState) &&
         !document.getElementById('chartFull').classList.contains('open')) {
       introFlow._stuckT = (introFlow._stuckT || 0) + dt;

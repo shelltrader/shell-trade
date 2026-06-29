@@ -84,8 +84,11 @@ function build() {
   }
 
   const scriptStart = openMatch.index;
-  // Find the matching </script> (last one in the file is the game script)
-  const closeIdx = html.lastIndexOf('</script>');
+  // Close at the FIRST </script> AFTER the main game block — NOT lastIndexOf. chart-quest.html
+  // now has multiple inline <script> blocks; lastIndexOf would swallow the </script><script>
+  // boundaries of the later blocks into the obfuscator input (a syntax error). We obfuscate ONLY
+  // the main game block; the trailing blocks are preserved verbatim in afterScript.
+  const closeIdx = html.indexOf('</script>', scriptStart);
   if (closeIdx === -1 || closeIdx < scriptStart) {
     console.error('[build] ERROR: Could not find closing </script>.');
     process.exit(1);

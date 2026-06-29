@@ -6222,15 +6222,13 @@ function advanceSetupFlow(c) {
   if (typeof introFlow !== 'undefined' && introFlow.active && !introFlow.awaitingTrade) return;
   if (setupFlow && setupFlow.armed) return;                              // already armed — wait for the player
   if (!c.flow) return;                                                   // ordinary filler candle
+  // Teaching is shown ON the candles (MOMENTUM / PULLBACK / CONFIRM labels in drawCandle),
+  // NOT as stacked center-screen floaters — so the stages never collide or clutter.
   if (c.flow === 'momentum') {
     setupFlow = { phase: 'momentum', dir: c.color === 'green' ? 'long' : 'short', momId: c.id, pb: 0, armed: false };
-    floaters.push({ text: c.color === 'green' ? '⚡ Strong green — momentum up' : '⚡ Strong red — momentum down',
-      color: '#ffd60a', y: H * 0.22, t: 2.2, center: true, size: 14, glow: true });
-    floaters.push({ text: 'Don’t chase it — wait for a pullback', color: '#cfe0ff', y: H * 0.27, t: 2.2, center: true, size: 12 });
+    try { hideTradeIncoming(); } catch (e) {}   // the real setup is visibly developing now — drop the intro "incoming" notice
   } else if (c.flow === 'pullback' && setupFlow) {
     setupFlow.pb++;
-    floaters.push({ text: setupFlow.pb === 1 ? 'Pullback forming…' : '…now wait for the confirmation candle',
-      color: '#9fc8e0', y: H * 0.24, t: 2.0, center: true, size: 13 });
   } else if (c.flow === 'confirm' && setupFlow) {
     armBeginnerSetup(c);
   }
@@ -6251,9 +6249,10 @@ function armBeginnerSetup(c) {
   try { document.body.classList.add('setupActive'); } catch (e) {}
   setupSpotT = 0;
   try { shellEmotion = 'focused'; } catch (e) {}
+  try { hideTradeIncoming(); } catch (e) {}   // ensure the intro notice is gone — the banner is the single message now
   try { GameMusic && GameMusic.sting && GameMusic.sting('setup'); } catch (e) {}
-  floaters.push({ text: '✓ Confirmation candle closed — setup ready!', color: '#16c784', y: H * 0.20, t: 2.4, center: true, size: 15, glow: true });
-  floaters.push({ text: 'You waited for the pullback. Tap to analyse.', color: '#cfe0ff', y: H * 0.255, t: 2.4, center: true, size: 12 });
+  // No center-screen floaters here — the banner IS the message ("SETUP READY — TAP TO ANALYSE"),
+  // and the confirmation candle is highlighted on the chart. One message at a time.
   spawnPortal('CHART SETUP', '⬆ FLY IN TO ANALYSE', function () { openTraderView(); }, 'trade');
 }
 // The setup scrolled by un-taken — clear it quietly and cool down before the next one develops.
@@ -6275,8 +6274,10 @@ function openPanel() {
   if (idx < 0) { hideBanner(); nextSetupIn(); return; }
 
   // ── Exploit guard: did the player walk ahead to peek at future candles? ──
-  // Allow at most 2 candles of lookahead from the setup candle.
-  if (setupBannerMaxCandleId >= 0 && maxSeenCandleId > setupBannerMaxCandleId + 2) {
+  // Allow at most 2 candles of lookahead from the setup candle. SKIPPED for the Phase 2
+  // beginner framework, where the setup legitimately arms AHEAD of Finn and he runs toward
+  // it — that forward travel is expected, and location-based expiry already governs validity.
+  if (!(setupFlow && setupFlow.armed) && setupBannerMaxCandleId >= 0 && maxSeenCandleId > setupBannerMaxCandleId + 2) {
     hideBanner(); nextSetupIn();
     floaters.push({ text: '⏱ TOO LATE — SETUP EXPIRED', color: '#f3838a', y: 120, t: 2.5 });
     return;
@@ -10819,7 +10820,9 @@ $('chartFull').addEventListener('pointerdown', () => {
   reviewEntry = null;
   // PHASE 1 — if this was the pre-trade Trader View ritual, dismissing it opens the
   // trade ticket (analyse → enter), instead of dropping the player back to the banner.
-  if (cfTraderView) { cfTraderView = false; openPanel(); }
+  // Clear the analysis freeze FIRST so that if openPanel early-returns (e.g. setup gone),
+  // the world resumes instead of staying frozen; openPanel re-pauses when it actually opens.
+  if (cfTraderView) { cfTraderView = false; paused = false; openPanel(); }
 });
 
 /* Live R-multiple of the open trade at the current price.
@@ -11210,9 +11213,9 @@ function onCandleEntered(c) {
         }
       } else if (!introFlow.firstTradeDone) {
         // Surface the Flash Quiz; entering it chains quiz → bet → trade → boss.
-        if (introFlow.candleCount === 90 && !portals.find(p => p.label === 'FLASH QUIZ'))   // SPRINT 2: longer free-play opening before the first quiz
+        if (introFlow.candleCount === 40 && !portals.find(p => p.label === 'FLASH QUIZ'))   // first interaction ~28s in — the old 90-candle (~60s) opening felt dead
           spawnPortal('FLASH QUIZ', '⬆ BOOST TO ENTER', () => triggerFlashQuiz());
-        if (introFlow.candleCount >= 104) {   // missed the portal → start it anyway
+        if (introFlow.candleCount >= 52) {   // missed the portal → start it anyway
           const fi = portals.findIndex(p => p.label === 'FLASH QUIZ');
           if (fi >= 0) portals.splice(fi, 1);
           triggerFlashQuiz(); return;
@@ -12175,6 +12178,29 @@ function drawCandle(c, cameraX) {
   ctx.globalAlpha = 0.5;
   ctx.fillRect(bx + 1, top + 1, bw - 2, Math.max(1, Math.min(2.5, bodyH * 0.14)));
   ctx.globalAlpha = 1;
+
+  // PHASE 2 — BEGINNER SETUP FRAMEWORK, drawn ON the candles so the player SEES the pattern
+  // develop (Levels 1-3, only while a setup is live): the momentum candle glows + is labelled,
+  // the TWO pullback candles get an amber dashed box + "PULLBACK", and the confirmation candle
+  // is labelled (the spotlight ring already encircles it). No center-screen text needed.
+  if (c.flow && session.level <= 3 && setupFlow && c.id >= setupFlow.momId) {
+    const isPB = c.flow === 'pullback';
+    const lcol = isPB ? '#ffd60a' : (c.color === 'green' ? '#16c784' : '#ea3943');
+    const lab  = c.flow === 'momentum' ? 'MOMENTUM' : isPB ? 'PULLBACK' : 'CONFIRM ✓';
+    ctx.save();
+    if (isPB) {
+      ctx.strokeStyle = '#ffd60a'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+      ctx.strokeRect(bx - 1, top - 1, bw + 2, bodyH + 2); ctx.setLineDash([]);
+    } else {
+      ctx.globalAlpha = 0.28 + Math.sin(turtle.animT * 5) * 0.10;
+      ctx.fillStyle = lcol; ctx.fillRect(bx - 3, top - 3, bw + 6, bodyH + 6);
+      ctx.globalAlpha = 1;
+    }
+    ctx.font = 'bold 9px ' + MONO; ctx.fillStyle = lcol; ctx.textAlign = 'center';
+    ctx.fillText(lab, mid, top - c.wick - 6);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  }
 
   // Order block = bounce pad. The pad ALWAYS shows (it's a fun gameplay element),
   // but it's only FRAMED as an "Order Block" (purple + label) once the player reaches

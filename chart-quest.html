@@ -2229,9 +2229,9 @@ const CFG = {
                                      // on-screen count ≈ this × 1.5). Enough context to read
                                      // trend & structure, but still Chart Quest — not TradingView.
   wickMin:    28,  wickMax:    74,   // wick lengths above the body — longer, natural proportions
-  cameraAnchor: 0.72,  // turtle is held at this fraction of screen width:
-                       // pushed right so most of the screen shows printed HISTORY
-                       // (trend/structure), with the unprinted future fogged on the right
+  cameraAnchor: 0.52,  // turtle is held near CENTRE of screen width so the player can see the
+                       // setup DEVELOP ahead of them (momentum → pullback → confirmation) and
+                       // watch the trade play out on both sides — not pinned to the right edge
 
   /* Jetpack — two boost tiers above the base hop. Capped at 2 boosts per air-time
      so the turtle uses the whole tank but never rockets off the top of the screen. */
@@ -2313,6 +2313,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
+const BUILD_TAG = 'build 185';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -12093,8 +12094,11 @@ function update(dt) {
 function beginnerMode() { return (typeof session !== 'undefined') && session.level <= 1; }
 
 function drawCandle(c, cameraX) {
-  // Fog of war: candles beyond the live edge haven't printed yet
-  if (c.id > maxSeenCandleId + 2) return;
+  // Fog of war: candles beyond the live edge haven't printed yet — EXCEPT a developing beginner
+  // setup, whose candles (momentum/pullback/confirm) must be visible AHEAD of Finn so he watches
+  // the setup form and walks toward it. (PHASE 2.)
+  const _setupCandle = c.flow && (typeof setupFlow !== 'undefined' && setupFlow) && c.id >= setupFlow.momId;
+  if (c.id > maxSeenCandleId + 2 && !_setupCandle) return;
 
   const sx  = c.x - cameraX;          // screen x
   const top = candleTop(c);           // body top  = max(open, close)
@@ -16964,6 +16968,9 @@ function frame(now) {
   if (Math.abs(camZoom - camZoomTarget) < 0.002) camZoom = camZoomTarget;
 
   render(cameraX);
+  // BUILD TAG — tiny version stamp so a playtest can confirm WHICH build actually loaded (caching
+  // check). Bump BUILD_TAG whenever the served code changes.
+  try { ctx.save(); ctx.font = '10px ' + MONO; ctx.fillStyle = 'rgba(150,170,200,0.55)'; ctx.textAlign = 'right'; ctx.fillText(BUILD_TAG, W - 8, 14); ctx.restore(); } catch (e) {}
   if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active) drawChartTrialOverlay();   // Guardian eyes watching + prompt + progress
   drawSetupSpotlight(cameraX);   // dim the chart + spotlight a live trade setup
   drawFirstTradeGuide();         // FIX 6 — the guided first-trade entry walkthrough (on top)

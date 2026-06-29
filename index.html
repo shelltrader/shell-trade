@@ -12807,10 +12807,13 @@ function drawHTFZoom() {
   const range = hi - lo;
   const CY = (v) => cY + cH * (1 - (v - lo) / range);
 
-  // Candle sizing
-  const nC  = all.length;
-  const cw  = Math.max(5, Math.min(28, (cW - 10) / nC - 2));
-  const cg  = Math.max(1, cw * 0.12);
+  // Candle sizing — the PITCH fills the chart width so candles never bunch on the left and the
+  // live edge sits near the right axis (GLOBAL VISUAL RULE: no empty gap / disconnected price
+  // scale, even on a timeframe with only a handful of candles). Body width is still capped.
+  const nC    = all.length;
+  const pitch = (cW - 6) / nC;
+  const cw    = Math.max(5, Math.min(28, pitch - 3));
+  const cg    = Math.max(1, pitch - cw);   // cw + cg = pitch → full-width fill (tap-mapping stays consistent)
 
   // Grid lines + right-side price axis
   ctx.font = '8px ' + MONO;

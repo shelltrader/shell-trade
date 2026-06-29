@@ -1,3 +1,9 @@
 node_modules/
 *.log
 .DS_Store
+
+# Secrets — never commit
+.netlify-token
+
+# Local backup archives
+_old_*.zip

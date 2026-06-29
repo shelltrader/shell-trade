@@ -2313,7 +2313,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 185';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 186';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -16968,9 +16968,6 @@ function frame(now) {
   if (Math.abs(camZoom - camZoomTarget) < 0.002) camZoom = camZoomTarget;
 
   render(cameraX);
-  // BUILD TAG — tiny version stamp so a playtest can confirm WHICH build actually loaded (caching
-  // check). Bump BUILD_TAG whenever the served code changes.
-  try { ctx.save(); ctx.font = '10px ' + MONO; ctx.fillStyle = 'rgba(150,170,200,0.55)'; ctx.textAlign = 'right'; ctx.fillText(BUILD_TAG, W - 8, 14); ctx.restore(); } catch (e) {}
   if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active) drawChartTrialOverlay();   // Guardian eyes watching + prompt + progress
   drawSetupSpotlight(cameraX);   // dim the chart + spotlight a live trade setup
   drawFirstTradeGuide();         // FIX 6 — the guided first-trade entry walkthrough (on top)
@@ -16997,6 +16994,17 @@ function frame(now) {
     // Live gameplay during the intro: overlay the control coach + goal HUD.
     drawIntroRunOverlay(dt);
   }
+
+  // BUILD TAG — drawn LAST (over the HUD) at top-left so a playtest can always confirm WHICH build
+  // loaded. Bump BUILD_TAG whenever the served code changes.
+  try {
+    ctx.save();
+    ctx.font = 'bold 10px ' + MONO;
+    const _bw = ctx.measureText(BUILD_TAG).width + 12;
+    ctx.fillStyle = 'rgba(6,10,18,0.78)'; ctx.fillRect(6, 6, _bw, 16);
+    ctx.fillStyle = '#7fd6ff'; ctx.textAlign = 'left'; ctx.fillText(BUILD_TAG, 12, 17);
+    ctx.restore();
+  } catch (e) {}
 
   requestAnimationFrame(frame);
 }

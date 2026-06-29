@@ -10594,7 +10594,10 @@ function openTraderView() {
 
 bannerEl.addEventListener('pointerdown', (e) => {
   if (e.target.id === 'bannerSkip') { e.preventDefault(); e.stopPropagation(); hideBanner(); nextSetupIn(); return; }
-  e.preventDefault(); openTraderView();   // ritual: zoom out & analyse BEFORE the ticket
+  // The "trader view" is the REAL chart zoomed out (camZoom, already pulled back while the setup
+  // is armed) — tapping goes straight to the trade ticket ON that chart. The full-screen SVG is
+  // no longer forced here; it stays available via the "fly in to analyse" portal / chart expand.
+  e.preventDefault(); openPanel();
 });
 // SPRINT 2 — ONE-TAP COMMIT. At Level 1 (the first trades) tapping UP/DOWN IS the
 // decision: set direction, seed the levels, and commit immediately — no second button.
@@ -16785,13 +16788,19 @@ function frame(now) {
   // Pull back EARLY — as soon as a trade is incoming or the player is setting one up — so the
   // world is already zoomed out BEFORE they enter. Then a brief slow-mo + audio cue fires the
   // instant the trade actually opens, and ~1s later it eases back further (stage 2).
-  const _approaching = (typeof tradeIncomingActive !== 'undefined' && tradeIncomingActive) || (typeof pending !== 'undefined' && pending);
+  // Zoom out on the REAL walking chart the moment a beginner setup ARMS (so the player sees the
+  // momentum → pullback → confirmation in context), through the ticket, and during the trade.
+  const _armed = (typeof setupFlow !== 'undefined' && setupFlow && setupFlow.armed);
+  const _approaching = (typeof tradeIncomingActive !== 'undefined' && tradeIncomingActive) || (typeof pending !== 'undefined' && pending) || _armed;
   const _chartTrialOn = (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active);
   const _zoomActive = (trade || _approaching || _chartTrialOn) && !firstTradeGuide;
   if (_zoomActive) {
     if (trade && !_zoomWasTrade) { slowmoT = SLOWMO_DUR; try { GameMusic && GameMusic.sting && GameMusic.sting('enter'); } catch (e) {} }  // the moment the trade opens
     if (trade) tradeT += dt; else tradeT = 0;
-    camZoomTarget = _chartTrialOn ? TRIAL_ZOOM : ((trade && tradeT > 1.0) ? TRADER_STAGE2 : TRADER_STAGE1);   // trial → an even wider Trader-Mode chart (more candles)
+    // Non-trade zoom = a general pull-back to read the setup. While a trade is LIVE the camera
+    // instead FITS the stop↔target band (see the vertical-camera block) so price visibly nears
+    // each line. (chart trials keep their own wide zoom.)
+    camZoomTarget = _chartTrialOn ? TRIAL_ZOOM : TRADER_STAGE1;
   } else { tradeT = 0; camZoomTarget = 1; }
   _zoomWasTrade = !!trade;
   if (slowmoT > 0) slowmoT = Math.max(0, slowmoT - dt);
@@ -16905,13 +16914,33 @@ function frame(now) {
     // into the top 20-30%. Now the camera targets the turtle's CENTRE at ~55% of the play area
     // and follows every frame; oversized candles simply scroll past while Shell stays framed.
     const playH = viewBot - viewTop;
-    const tc = turtle.y + turtle.h / 2;                       // turtle centre (world space)
-    const targetY = tc - (viewTop + playH * 0.55);            // hold the turtle at ~55%
-    camY += (targetY - camY) * Math.min(1, dt * 6);           // continuous, responsive follow
-    // Hard band: the turtle centre can NEVER leave 40%-65% of the play area — not on a fast
-    // jetpack burst, not when a giant candle appears. He is always visible and prioritized.
-    camY = Math.min(camY, tc - (viewTop + playH * 0.40));
-    camY = Math.max(camY, tc - (viewTop + playH * 0.65));
+    if (trade) {
+      // FIT-TO-TRADE framing: CENTRE the stop↔target band and zoom so both lines sit close to the
+      // edges with only a little padding — symmetric, so the player can always SEE how close price
+      // gets to either line (the emotional drawdown). Replaces the wide, padding-heavy follow.
+      const _pvy = H * 0.47;
+      const hHi = Math.max(trade.slH, trade.tpH);
+      const hLo = Math.min(trade.slH, trade.tpH);
+      const midH = (hHi + hLo) / 2;
+      const pad = playH * 0.12;                               // small symmetric padding beyond each line
+      let fz = (playH - 2 * pad) / Math.max(1, hHi - hLo);
+      fz = Math.max(0.6, Math.min(1.0, fz));                  // tighter than before; never magnify
+      camZoomTarget = fz;
+      // Solve camY so the band MIDPOINT sits at the play-area centre, at the LIVE zoom (co-eases):
+      //   screenY(h) = _pvy + ((groundY - h - camY) - _pvy) * camZoom
+      const z = camZoom || fz;
+      const playCenter = viewTop + playH * 0.5;
+      const camYFit = groundY - midH - _pvy - (playCenter - _pvy) / z;
+      camY += (camYFit - camY) * Math.min(1, dt * 6);
+    } else {
+      const tc = turtle.y + turtle.h / 2;                       // turtle centre (world space)
+      const targetY = tc - (viewTop + playH * 0.55);            // hold the turtle at ~55%
+      camY += (targetY - camY) * Math.min(1, dt * 6);           // continuous, responsive follow
+      // Hard band: the turtle centre can NEVER leave 40%-65% of the play area — not on a fast
+      // jetpack burst, not when a giant candle appears. He is always visible and prioritized.
+      camY = Math.min(camY, tc - (viewTop + playH * 0.40));
+      camY = Math.max(camY, tc - (viewTop + playH * 0.65));
+    }
   }
   // TRADER VIEW zoom easing — premium, never snaps (uses real dt so it's smooth through slow-mo).
   camZoom += (camZoomTarget - camZoom) * Math.min(1, dt * 3.2);

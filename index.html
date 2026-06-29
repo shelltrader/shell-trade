@@ -16782,6 +16782,78 @@ let camY = 0; // vertical camera offset (negative = looking up)
 let camZoom = 1, camZoomTarget = 1, slowmoT = 0, tradeT = 0, _zoomWasTrade = false;
 const TRADER_STAGE1 = 0.66, TRADER_STAGE2 = 0.5, TRIAL_ZOOM = 0.52, SLOWMO_DUR = 0.28;   // two-stage cinematic pull-back (+ a wider view for chart trials — big candles, ~12-14 visible ahead)
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CHART CONTINUITY GUARD — enforces the GLOBAL VISUAL RULE: the chart must always
+// read as a continuous living market, never a UI with a dead right-hand gap.
+//
+// WHY: the deliberate ~52% camera anchor leaves room AHEAD of Finn so a beginner
+// watches momentum → pullback → confirmation develop — that future space is
+// INTENTIONAL at zoom = 1 and is left untouched. But the moment the camera pulls
+// BACK (Trader View / a live trade / an approaching setup, camZoom < 1) the same
+// anchor exposes a large EMPTY region to the right of the live edge, with the
+// price scale + labels floating over nothing. That is exactly what the rule
+// forbids. This guard reframes the world horizontally in those zoom-out states so
+// printed history fills the left and price sits near the right — the dead zone
+// never exceeds ~maxDeadSpaceFrac of the viewport.
+//
+// SAFE BY CONSTRUCTION:
+//   • Visual only — never touches physics, collision, candle generation, or the
+//     maxSeenCandleId fog-of-war (those keep using the TRUE base camera).
+//   • Inert at zoom = 1 — normal walking is pixel-for-pixel unchanged.
+//   • Only ever shifts the world RIGHT (reveals already-printed history); it can
+//     never reveal un-printed future candles, so it can't spoil a setup/outcome.
+//   • Eased in AND out (no pop) and hard-clamped so the turtle can never be pushed
+//     off-screen.
+//   • Fully wrapped — any arithmetic edge case falls back to the unmodified camera.
+const CHART_CONTINUITY = {
+  enabled:          true,
+  maxDeadSpaceFrac: 0.18,   // the rule's ~15-20% cap on empty space right of the live edge
+  targetEdgeFrac:   0.82,   // reframe the live edge to here (= 1 − maxDeadSpaceFrac → intentional buffer)
+  maxTurtleFrac:    0.90,   // Finn is never pushed past this fraction of the width (stays on screen)
+  ease:             4.0,    // per-second lerp toward the reframed target (matches the camZoom feel)
+  zoomActiveBelow:  0.985,  // engage only once the camera has actually begun pulling back
+};
+let _contCamX = null;       // eased render-camera X (null = settled on the true base camera)
+
+// Returns the camera X to RENDER with. maintainCandles() + all physics still use the
+// true base camera passed in; only render()/overlays use this adjusted value.
+function enforceChartContinuity(baseCamX, dt) {
+  try {
+    const C = CHART_CONTINUITY;
+    if (!C.enabled || !candles || !candles.length) { _contCamX = null; return baseCamX; }
+
+    let desired = baseCamX;   // default: the true camera (zoomed in, or nothing to correct)
+    if (camZoom < C.zoomActiveBelow) {
+      const _pvx = W * CFG.cameraAnchor;   // the zoom pivot — identical to render()
+      // The VISIBLE live edge = right edge of the right-most candle that actually draws:
+      // printed candles (id ≤ maxSeenCandleId + 2) plus any developing beginner-setup candle.
+      let visRight = -Infinity;
+      for (let i = candles.length - 1; i >= 0; i--) {
+        const c = candles[i];
+        const drawn = (c.id <= maxSeenCandleId + 2) ||
+                      (c.flow && typeof setupFlow !== 'undefined' && setupFlow && c.id >= setupFlow.momId);
+        if (drawn) { visRight = c.x + c.w; break; }   // candles are x-ordered → first drawn from the right
+      }
+      if (isFinite(visRight)) {
+        // Invert render()'s transform — screen = _pvx + ((world − camX) − _pvx) · camZoom —
+        // to find the camX that lands the live edge at targetEdgeFrac of the viewport.
+        let want = visRight - _pvx - (C.targetEdgeFrac * W - _pvx) / camZoom;
+        // CLAMPS: never reveal un-printed future (want ≤ base), and keep Finn on screen.
+        const camMinForTurtle = turtle.x - _pvx - (C.maxTurtleFrac * W - _pvx) / camZoom;
+        const hi = baseCamX;                              // never shift left (would reveal the future)
+        const lo = Math.min(camMinForTurtle, baseCamX);   // never shove the turtle off the right edge
+        want = Math.max(lo, Math.min(hi, want));
+        if (isFinite(want)) desired = want;
+      }
+    }
+    // Ease toward the target both ways (engaging on pull-back AND releasing on zoom-in → no pop).
+    const k = Math.min(1, (dt || 0.016) * C.ease);
+    _contCamX = (_contCamX == null) ? desired : _contCamX + (desired - _contCamX) * k;
+    if (Math.abs(_contCamX - baseCamX) < 0.5) _contCamX = null;   // settled back on base → release
+    return _contCamX == null ? baseCamX : _contCamX;
+  } catch (e) { _contCamX = null; return baseCamX; }
+}
+
 function frame(now) {
   // Clamp dt so a backgrounded tab doesn't cause a huge physics step
   const dt = Math.min((now - lastTime) / 1000, 1 / 30);
@@ -16920,8 +16992,11 @@ function frame(now) {
 
   // Horizontal camera: once the turtle passes the anchor point, the world
   // scrolls left while he stays put on screen — infinite scrolling.
-  const cameraX = Math.max(0, turtle.x - W * CFG.cameraAnchor);
-  maintainCandles(cameraX);
+  const baseCameraX = Math.max(0, turtle.x - W * CFG.cameraAnchor);
+  maintainCandles(baseCameraX);   // candle generation + physics use the TRUE camera
+  // CHART CONTINUITY GUARD (Global Visual Rule): when the camera is pulled back, reframe the
+  // RENDER so the chart never shows a dead right-hand gap / floating price scale. Inert at zoom = 1.
+  const cameraX = enforceChartContinuity(baseCameraX, dt);
 
   // Vertical camera: auto-fit so the visible price action stays CENTRED in the
   // play area — no dead black space above or below the candles. Pan-only (no

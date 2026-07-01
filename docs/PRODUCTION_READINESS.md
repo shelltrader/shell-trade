@@ -24,6 +24,26 @@ public launch. Ordered by priority.
 
 ---
 
+## ⚠️ DEPLOY SEQUENCE for the ingest + dashboard-auth lockdown
+
+Built and ready, but **order matters** — applying the DB switchover before the
+new HTML is live will break the game's content sync and the dashboard.
+
+1. **Applied already (safe, additive):** Edge Function `ingest` (deployed),
+   migration `0008` (admins table seeded with founder uid + `ingest_throttle`).
+2. **Deploy the updated static files** (`index.html`, `chart-quest.html`,
+   `dashboard.html`) to Netlify.
+3. **Smoke-test the live game**: play briefly, confirm content/mastery still
+   sync (now via `/functions/v1/ingest`) — check the dashboard's content tab or
+   the `content_events` table for fresh rows.
+4. **Then apply `0009_lockdown_switchover.sql`** (admin-gates the RPCs, restricts
+   content reads to admins, drops the anon write policies).
+5. **Sign into the dashboard** with the founder account to confirm admin access;
+   confirm a signed-out/anon request to `get_dashboard_stats` now returns 403.
+
+Verify the admins allowlist first: `select * from public.admins;` should hold
+the founder's `auth.users.id`.
+
 ## 🔴 Must do before public launch
 
 ### 1. Production email (the #1 scaling blocker)
@@ -44,7 +64,7 @@ launch. 100 concurrent gameplay users are otherwise trivial for PostgREST.
 password length from 6 to 8 (client check in `doAuth`). *(Auth settings are
 dashboard-only — cannot be scripted via the DB.)*
 
-### 3b. 🔴 Lock down the public admin dashboard (NEW FINDING)
+### 3b. ✅ Built — Lock down the public admin dashboard (pending deploy + 0009)
 `dashboard.html` is served publicly at `/dashboard.html` and has **no login**. It
 uses the public anon key to call `get_dashboard_stats` and
 `get_recent_bug_reports`, and to read `content_events` / `content_replays`.
@@ -64,12 +84,14 @@ has no auth. Fix options (pick one):
 
 ## 🟠 Should do soon
 
-### 4. Close the open anon write tables
-`content_events`, `content_replays`, `player_mastery` allow unauthenticated
-INSERT/UPDATE with `WITH CHECK (true)` — anyone can read/write/flood them. No PII
-today, but it's an abuse + cost vector.
-- Route writes through a service-role Edge Function, **or**
-- At minimum, tie `player_mastery.player_id` to `auth.uid()` for signed-in users.
+### 4. ✅ Built — Close the open anon write tables (pending deploy + 0009)
+`content_events`, `content_replays`, `content_briefs`, `content_exports`,
+`content_generated`, `player_mastery` were writable by anyone with the anon key.
+Now routed through the `ingest` Edge Function (service-role, whitelists columns,
+clamps values, forces `processed_status='new'`, per-IP rate limit). The anon
+write policies are dropped in `0009`. Still open: `content_assets`,
+`published_posts`, `performance_snapshots` retain their `0001` anon policies —
+confirm no anon-key automation writes them, then lock the same way.
 
 ### 5. Review anon-executable SECURITY DEFINER RPCs
 `get_dashboard_stats` and `get_recent_bug_reports` are callable by anyone via

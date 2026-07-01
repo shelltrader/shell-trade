@@ -55,9 +55,24 @@ will silently fail to send confirmation emails.
 - Decide whether email confirmation is even required for this audience — turning
   it off removes the bottleneck (trade-off: unverified emails).
 
-### 2. Confirm the Supabase plan
-Free tier pauses on inactivity and shares compute. Move to **Pro** for a real
-launch. 100 concurrent gameplay users are otherwise trivial for PostgREST.
+### 1b. Fix the Auth Site URL / Redirect URLs
+Currently set to `localhost:3000`, so confirmation & password-reset links point
+at a dead local address. In **Auth → URL Configuration**, set **Site URL** to
+`https://chart-quest-game.netlify.app` and add it to **Redirect URLs**. (Founder
+account was email-confirmed directly in the DB, so this didn't block admin login,
+but it will break every real user's email link once SMTP is on.)
+
+### 2. 🔴 Upgrade to Pro — CONFIRMED on Free plan
+Verified 2026-07-01: the project is on the **Free plan**. This is the hard gate
+for scaling and for load testing:
+- Free pauses on inactivity, shares compute, and has strict Auth/email limits.
+- **Branching (needed to load-test safely) requires Pro** — confirmed by a
+  `PaymentRequiredException` when attempting to create a `loadtest` branch.
+- 1,000 users needs **Pro + a compute add-on**; 10,000 needs a **larger compute
+  instance** + distributed/k6-Cloud load generation (one machine can't emit 10k).
+Action: upgrade to Pro, then create a branch and run `load-test/k6-chartquest.js`
+graduated to 1k, and via k6 Cloud for 10k. Until then, real scale is untested and
+capped at Free-tier capacity.
 
 ### 3. Turn on leaked-password protection
 **Auth → Settings** → enable HaveIBeenPwned check. Consider raising the min

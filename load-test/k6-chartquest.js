@@ -43,15 +43,22 @@ if (SUPA_URL.includes(PROD_REF) && __ENV.ALLOW_PROD !== '1') {
 const restLatency = new Trend('cq_rest_latency', true);
 const restErrors  = new Rate('cq_rest_errors');
 
+// Graduated ramp: step through 25% → 50% → 100% of VUS so ONE run shows where
+// latency starts to climb (the knee), not just a single pass/fail at peak.
+const q = (f) => Math.max(1, Math.ceil(VUS * f));
 export const options = {
   scenarios: {
-    steady_100: {
+    graduated: {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '20s', target: VUS },   // ramp up
-        { duration: DURATION, target: VUS }, // hold at 100
-        { duration: '10s', target: 0 },      // ramp down
+        { duration: '15s', target: q(0.25) },
+        { duration: '30s', target: q(0.25) },
+        { duration: '15s', target: q(0.5) },
+        { duration: '30s', target: q(0.5) },
+        { duration: '15s', target: VUS },
+        { duration: DURATION, target: VUS },   // hold at peak
+        { duration: '10s',  target: 0 },
       ],
       gracefulRampDown: '10s',
     },
@@ -62,6 +69,14 @@ export const options = {
     http_req_duration: ['p(99)<2000'],
   },
 };
+
+// ── Scaling past ~1–2k VUs ────────────────────────────────────────────────
+// A single machine (k6 on one host) tops out around 1–2k VUs of light HTTP
+// before the LOAD GENERATOR, not the server, is the bottleneck. To truthfully
+// test 10k you need either k6 Cloud (`k6 cloud run ...`) or several distributed
+// runners sharing the load, AND the target must be on your real production tier
+// (Pro + a compute add-on) — a small branch instance will cap out well before
+// 10k regardless of how the load is generated.
 
 const headers = () => ({
   apikey: SUPA_ANON,

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Chart Quest — Intermission Redesign (Preview)</title>
+<style>
+  :root{
+    --bg:#080b12; --panel:#0d131f; --panel2:#111a28;
+    --line:#1b2738; --ink:#e6edf3; --sub:#8b97a8; --mut:#56657a;
+    --green:#16c784; --greenD:#0e7a50; --red:#ea3943; --redD:#8f2228;
+    --blue:#4cc3ff; --gold:#ffd60a; --purp:#a855f7; --orange:#ff9f43;
+    --font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;background:#04060b;font-family:var(--font);color:var(--ink);}
+  body{display:flex;align-items:center;justify-content:center;overflow:hidden;}
+
+  #stage{
+    position:relative;width:420px;height:880px;max-height:100vh;
+    background:radial-gradient(120% 60% at 50% 0%, #101a2e 0%, var(--bg) 55%);
+    overflow:hidden;box-shadow:0 0 0 1px #11161f,0 30px 90px rgba(0,0,0,.6);
+    display:flex;flex-direction:column;
+  }
+  #dev{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:90;display:flex;gap:8px;
+    background:rgba(10,14,22,.85);border:1px solid #1c2230;border-radius:999px;padding:5px 8px;font-size:11px;color:#8b95a7;}
+  #dev button{font:600 11px var(--font);color:#c9d1d9;background:#161c28;border:1px solid #2a3344;border-radius:999px;padding:5px 11px;cursor:pointer;}
+  #dev button:hover{border-color:#4a5666;color:#fff;}
+
+  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 18px 104px;}
+  .scroll::-webkit-scrollbar{width:0;}
+
+  /* header */
+  .head{text-align:center;margin-bottom:18px;}
+  .badge{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;
+    font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;}
+  .badge.win{background:rgba(22,199,132,.12);border:1px solid rgba(22,199,132,.4);color:var(--green);}
+  .badge.end{background:rgba(234,57,67,.10);border:1px solid rgba(234,57,67,.35);color:var(--red);}
+  .head h1{margin:12px 0 3px;font-size:24px;font-weight:800;letter-spacing:-.4px;}
+  .head .sub{font-size:12px;color:var(--sub);}
+  .stars{margin-top:11px;font-size:15px;letter-spacing:4px;}
+
+  /* stat tiles */
+  .tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:18px 0;}
+  .tile{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+    border-radius:14px;padding:14px 8px;text-align:center;position:relative;overflow:hidden;}
+  .tile .k{font-size:9px;letter-spacing:1.2px;color:var(--mut);font-weight:700;text-transform:uppercase;margin-bottom:7px;}
+  .tile .v{font-size:21px;font-weight:800;letter-spacing:-.5px;line-height:1;white-space:nowrap;}
+  .tile .v small{font-size:12px;font-weight:700;opacity:.65;}
+  .tile.shells .v{color:var(--gold);}
+  .tile.pnl .v.pos{color:var(--green);} .tile.pnl .v.neg{color:var(--red);}
+  .tile.rec .v .w{color:var(--green);} .tile.rec .v .l{color:var(--red);}
+  .tile .spark{position:absolute;left:0;right:0;bottom:0;height:3px;}
+
+  /* section heading (shared) */
+  .sec-h{display:flex;justify-content:space-between;align-items:baseline;margin:0 2px 11px;}
+  .sec-h .t{font-size:12px;font-weight:700;color:#9fb2c8;letter-spacing:.3px;}
+  .sec-h .h{font-size:10px;color:var(--mut);}
+
+  /* lessons completed */
+  .lessons{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:18px;}
+  .lessons .ch{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;
+    background:linear-gradient(180deg,rgba(76,195,255,.07),transparent);border-bottom:1px solid var(--line);}
+  .lessons .ch .t{font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--blue);}
+  .lessons .ch .c{font-size:10px;color:var(--mut);}
+  .lrow{display:flex;align-items:center;gap:12px;padding:12px 15px;cursor:pointer;border-bottom:1px solid rgba(27,39,56,.6);transition:background .14s;}
+  .lrow:last-child{border-bottom:none;}
+  .lrow:hover{background:rgba(76,195,255,.05);}
+  .lrow .ck{width:22px;height:22px;border-radius:50%;background:rgba(22,199,132,.14);color:var(--green);
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:0 0 auto;}
+  .lrow .nm{flex:1;font-size:13px;font-weight:600;color:var(--ink);}
+  .lrow .nm small{display:block;font-size:10.5px;font-weight:500;color:var(--mut);margin-top:2px;}
+  .lrow .go{color:var(--mut);font-size:16px;}
+
+  /* trade history */
+  .trades{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .trade{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px;cursor:pointer;
+    position:relative;transition:transform .14s,border-color .14s;}
+  .trade:hover{transform:translateY(-2px);}
+  .trade.w{border-left:3px solid var(--green);} .trade.l{border-left:3px solid var(--red);}
+  .trade .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .trade .side{font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 8px;border-radius:5px;}
+  .trade .side.long{background:rgba(22,199,132,.14);color:var(--green);}
+  .trade .side.short{background:rgba(234,57,67,.14);color:var(--red);}
+  .trade .delta{font-size:15px;font-weight:800;}
+  .trade .delta.pos{color:var(--green);} .trade .delta.neg{color:var(--red);}
+  .trade .spark{display:block;width:100%;height:30px;margin:8px 0 7px;}
+  .trade .meta{font-size:9.5px;color:var(--mut);display:flex;justify-content:space-between;align-items:center;}
+  .trade .rev{font-size:9px;color:var(--blue);text-align:center;margin-top:6px;opacity:.85;}
+
+  /* footer */
+  .foot{position:absolute;left:0;right:0;bottom:0;padding:14px 18px calc(16px + env(safe-area-inset-bottom));
+    background:linear-gradient(0deg,var(--bg) 62%,transparent);display:flex;gap:11px;}
+  .btn{padding:14px 0;border-radius:11px;font:800 13px var(--font);letter-spacing:.5px;cursor:pointer;border:1px solid;text-align:center;}
+  .btn.ghost{flex:1;background:transparent;border-color:#2a3a4e;color:#c7d1de;}
+  .btn.go{flex:1.7;background:linear-gradient(180deg,#19d08a,#0e9b64);border-color:#16c784;color:#04130c;
+    box-shadow:0 6px 18px rgba(22,199,132,.25);}
+
+  /* ── bottom-sheet overlay (shared by replay + lesson detail) ── */
+  .ov{position:absolute;inset:0;z-index:60;background:rgba(4,6,11,0);display:none;transition:background .25s,backdrop-filter .25s;}
+  .ov.on{display:block;background:rgba(4,6,11,.62);backdrop-filter:blur(3px);}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,#0c131f,#080d16);
+    border-top:1px solid #22324a;border-radius:20px 20px 0 0;transform:translateY(100%);
+    transition:transform .32s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;box-shadow:0 -20px 60px rgba(0,0,0,.5);}
+  .ov.on .sheet{transform:translateY(0);}
+  .grip{width:40px;height:4px;border-radius:3px;background:#2a3a4e;margin:8px auto 0;flex:0 0 auto;}
+  .sh-h{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 16px 10px;}
+  .sh-h .ttl{font-size:14px;font-weight:800;}
+  .sh-h .ttl small{display:block;font-size:10.5px;font-weight:600;color:var(--sub);margin-top:3px;}
+  .sh-h .x{width:32px;height:32px;border-radius:50%;border:1px solid #2a3a4e;background:#121a26;color:#c7d1de;font-size:15px;cursor:pointer;flex:0 0 auto;}
+
+  /* replay sheet */
+  #rsheet{height:86%;}
+  #chartWrap{flex:1;margin:4px 14px 0;border:1px solid #1c2738;border-radius:12px;background:#070b12;overflow:hidden;position:relative;}
+  #chart{display:block;width:100%;height:100%;}
+  .outcome{position:absolute;top:12px;left:12px;padding:6px 11px;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:.5px;opacity:0;transition:opacity .4s;}
+  .outcome.show{opacity:1;}
+  .outcome.win{background:rgba(22,199,132,.16);color:var(--green);border:1px solid rgba(22,199,132,.45);}
+  .outcome.loss{background:rgba(234,57,67,.14);color:var(--red);border:1px solid rgba(234,57,67,.4);}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;justify-content:center;}
+  .legend button{font:700 10px var(--font);padding:7px 11px;border-radius:8px;background:transparent;cursor:pointer;border:1px solid;}
+  .sh-ctrl{display:flex;gap:10px;padding:2px 14px 18px;}
+  .sh-ctrl button{flex:1;padding:13px 0;border-radius:10px;font:800 12px var(--font);letter-spacing:.4px;cursor:pointer;border:1px solid;}
+  .sh-ctrl .replay{background:rgba(76,195,255,.1);border-color:var(--blue);color:var(--blue);}
+  .sh-ctrl .scrub{background:transparent;border-color:#2a3a4e;color:#c7d1de;}
+
+  /* lesson detail sheet */
+  #lsheet{max-height:88%;}
+  #ldiagram{width:100%;height:208px;display:block;margin:0 auto;background:#070b12;border-top:1px solid #16202e;border-bottom:1px solid #16202e;}
+  .ldesc{padding:16px 18px 8px;}
+  .ldesc .lead{font-size:13.5px;line-height:1.6;color:#d4dde8;margin:0 0 14px;}
+  .lkey{display:flex;gap:10px;align-items:flex-start;margin-bottom:11px;}
+  .lkey .dot{width:10px;height:10px;border-radius:3px;margin-top:4px;flex:0 0 auto;}
+  .lkey .kt{font-size:12px;line-height:1.5;color:var(--sub);}
+  .lkey .kt b{color:var(--ink);}
+  .ldone{margin:6px 18px 20px;padding:11px;border-radius:10px;background:rgba(22,199,132,.08);
+    border:1px solid rgba(22,199,132,.25);color:var(--green);font-size:11.5px;font-weight:700;text-align:center;}
+</style>
+</head>
+<body>
+<div id="dev">
+  <button id="dReplay">▶ Demo replay</button>
+  <button id="dLesson">📚 Demo lesson</button>
+</div>
+
+<div id="stage">
+  <div class="scroll" id="scroll"></div>
+  <div class="foot" id="foot"></div>
+
+  <!-- replay overlay -->
+  <div class="ov" id="rov">
+    <div class="sheet" id="rsheet">
+      <div class="grip"></div>
+      <div class="sh-h"><div class="ttl" id="shTitle">Trade Review<small id="shSub"></small></div><button class="x" id="shClose">✕</button></div>
+      <div id="chartWrap"><canvas id="chart"></canvas><div class="outcome" id="outcome"></div></div>
+      <div class="legend" id="legend"></div>
+      <div class="sh-ctrl">
+        <button class="replay" id="btnReplay">▶ REPLAY</button>
+        <button class="scrub" id="btnDetails">📊 FULL SETUP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- lesson detail overlay -->
+  <div class="ov" id="lov">
+    <div class="sheet" id="lsheet">
+      <div class="grip"></div>
+      <div class="sh-h"><div class="ttl" id="lTitle">Lesson<small id="lSub"></small></div><button class="x" id="lClose">✕</button></div>
+      <canvas id="ldiagram"></canvas>
+      <div class="ldesc" id="lBody"></div>
+      <div class="ldone">✓ Completed in Hour 3 — Market Structure</div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ════════════════════════════════════════════════════════════════════════
+   CHART QUEST — INTERMISSION REDESIGN (preview)
+   • Bull/bear mascots removed.  • Trade-gate + win-rate% removed.
+   • "Lessons completed" list — each opens a full-screen detail w/ an accurate
+     market-structure diagram.  • Flawless rAF replay (kept from prior pass).
+   ════════════════════════════════════════════════════════════════════════ */
+const $=s=>document.querySelector(s);
+const fmt=n=>n.toLocaleString();
+
+/* ── seeded mock candles (mirrors game buildReplay shape) ── */
+function mulberry(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function genCandles(seed,n,trend){const r=mulberry(seed);let price=100;const out=[];for(let i=0;i<n;i++){const d=(r()-0.5)*3.4+trend*0.6;const o=price,c=price+d;out.push({o,c,hi:Math.max(o,c)+r()*1.6,lo:Math.min(o,c)-r()*1.6});price=c;}return out;}
+function makeTrade(id,seed,side,trend,win){
+  const candles=genCandles(seed,26,trend);const entryIdx=7;const ep=candles[entryIdx].c;const atr=4.2;
+  const sl=side==='long'?ep-atr*1.4:ep+atr*1.4, tp=side==='long'?ep+atr*2.6:ep-atr*2.6;
+  const target=win?tp:sl;
+  for(let i=entryIdx+1;i<candles.length;i++){const k=(i-entryIdx)/(candles.length-1-entryIdx);const want=ep+(target-ep)*Math.pow(k,0.85);
+    candles[i].c=candles[i].c*0.35+want*0.65+(mulberry(seed+i)()-0.5)*2.2;candles[i].o=candles[i-1].c;
+    candles[i].hi=Math.max(candles[i].o,candles[i].c)+0.8;candles[i].lo=Math.min(candles[i].o,candles[i].c)-0.8;}
+  return {id,side,entryIdx,ep,sl,tp,candles,win,delta:Math.round((win?1:-1)*(45+seed%40)),
+    setup:['Order Block','VWAP Bounce','BOS Retest','Liquidity Sweep'][id%4]};
+}
+
+/* ── lesson content (accurate, concise) ── */
+const LESSONS=[
+  {name:'Break of Structure', tag:'BOS', diagram:'bos', icon:'⚡',
+   sub:'Confirming the trend continues',
+   lead:'A Break of Structure (BOS) happens when price closes beyond the most recent swing high — in an uptrend — or swing low, in a downtrend. It confirms momentum is continuing in that direction.',
+   keys:[['#4cc3ff','The <b>structure line</b> is the prior swing high. A candle closing above it = a confirmed BOS.'],
+         ['#16c784','You don’t chase the break — you wait for price to pull back, then enter in the trend’s direction.']]},
+  {name:'Order Blocks', tag:'OB', diagram:'ob', icon:'🧱',
+   sub:'High-probability entry zones',
+   lead:'The order block is the last opposing candle before the move that breaks structure — the last red candle before a bullish BOS. Price often returns to this zone before continuing.',
+   keys:[['#a855f7','The <b>order block</b> (purple) is where big players left resting orders.'],
+         ['#ffd60a','A retrace into the OB is your entry; your stop sits just beyond it.']]},
+  {name:'Change of Character', tag:'ChoCh', diagram:'choch', icon:'🔄',
+   sub:'The first sign of a reversal',
+   lead:'A Change of Character (ChoCh) is the first break against the prevailing trend — price breaks the most recent lower high in a downtrend. It’s the earliest warning the trend may be turning.',
+   keys:[['#ff9f43','A downtrend prints <b>lower highs</b> and lower lows.'],
+         ['#4cc3ff','When price closes <b>above</b> the last lower high, character has changed — momentum may flip.']]},
+];
+
+const STATE={
+  cleared:true, level:3, lessonTitle:'Market Structure',
+  shells:1840, sessionNet:127, sessionWins:3, sessionTrades:4,
+  trades:[ makeTrade(0,1011,'long',1.0,true), makeTrade(1,2027,'short',-0.9,true),
+           makeTrade(2,3041,'long',0.4,false), makeTrade(3,4099,'long',1.2,true) ],
+};
+
+/* ── build intermission ── */
+function render(){
+  const s=STATE,cleared=s.cleared;const pnlPos=s.sessionNet>=0;
+  const losses=s.sessionTrades-s.sessionWins;const stars=Math.min(s.level,5);
+  $('#scroll').innerHTML=`
+    <div class="head">
+      <span class="badge ${cleared?'win':'end'}">${cleared?'◆ Hour '+s.level+' Cleared':'Hour '+s.level+' Ended'}</span>
+      <h1>${cleared?'Nicely done.':'Run complete.'}</h1>
+      <div class="sub">${s.lessonTitle} · ${s.sessionTrades} trades this hour</div>
+      <div class="stars">${'★'.repeat(stars)}<span style="color:#243349">${'★'.repeat(5-stars)}</span></div>
+    </div>
+
+    <div class="tiles">
+      <div class="tile shells"><div class="k">Total Shells</div><div class="v">🐚 ${fmt(s.shells)}</div>
+        <div class="spark" style="background:linear-gradient(90deg,transparent,var(--gold))"></div></div>
+      <div class="tile pnl"><div class="k">Session P&amp;L</div><div class="v ${pnlPos?'pos':'neg'}">${pnlPos?'+':'−'}${fmt(Math.abs(s.sessionNet))}</div></div>
+      <div class="tile rec"><div class="k">Trades Won</div><div class="v"><span class="w">${s.sessionWins}</span><small> / ${s.sessionTrades}</small></div></div>
+    </div>
+
+    <div class="sec-h"><span class="t">📚 Lessons Completed</span><span class="h">tap for details</span></div>
+    <div class="lessons">
+      <div class="ch"><span class="t">HOUR ${s.level} — ${s.lessonTitle.toUpperCase()}</span><span class="c">${LESSONS.length} lessons</span></div>
+      ${LESSONS.map((l,i)=>`
+        <div class="lrow" data-l="${i}">
+          <div class="ck">✓</div>
+          <div class="nm">${l.icon} ${l.name}<small>${l.sub}</small></div>
+          <div class="go">›</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="sec-h"><span class="t">📊 Trade History</span><span class="h">tap a card to replay</span></div>
+    <div class="trades" id="trades"></div>
+  `;
+
+  $('#scroll').querySelectorAll('.lrow').forEach(r=>r.addEventListener('click',()=>openLesson(+r.dataset.l)));
+
+  const tc=$('#trades');
+  s.trades.forEach(t=>{
+    const el=document.createElement('div');
+    el.className='trade '+(t.win?'w':'l');
+    el.innerHTML=`
+      <div class="top"><span class="side ${t.side}">${t.side==='long'?'▲ LONG':'▼ SHORT'}</span>
+        <span class="delta ${t.delta>=0?'pos':'neg'}">${t.delta>=0?'+':'−'}${Math.abs(t.delta)}</span></div>
+      <canvas class="spark" width="180" height="60"></canvas>
+      <div class="meta"><span>${t.setup}</span><span>${t.win?'TP hit':'SL hit'}</span></div>
+      <div class="rev">▶ tap to replay</div>`;
+    el.addEventListener('click',()=>openReplay(t));
+    tc.appendChild(el);
+    drawSpark(el.querySelector('.spark'),t);
+  });
+
+  $('#foot').innerHTML=`<button class="btn ghost">📖 Journal</button><button class="btn go">CONTINUE →</button>`;
+}
+
+/* sparkline */
+function drawSpark(cv,t){
+  const x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);
+  cv.width=cv.clientWidth*dpr||180*dpr;cv.height=cv.clientHeight*dpr||60*dpr;x.setTransform(dpr,0,0,dpr,0,0);
+  const W=cv.width/dpr,H=cv.height/dpr;x.clearRect(0,0,W,H);
+  const cs=t.candles,lo=Math.min(...cs.map(c=>c.lo)),hi=Math.max(...cs.map(c=>c.hi));
+  const Y=v=>H-6-((v-lo)/(hi-lo))*(H-12),X=i=>4+i/(cs.length-1)*(W-8);
+  x.beginPath();cs.forEach((c,i)=>i?x.lineTo(X(i),Y(c.c)):x.moveTo(X(i),Y(c.c)));
+  x.strokeStyle=t.win?'#16c784':'#ea3943';x.lineWidth=1.6;x.stroke();
+  const ex=X(t.entryIdx);x.fillStyle='#ffd60a';x.beginPath();x.arc(ex,Y(t.ep),2.6,0,7);x.fill();
+}
+
+/* ════════ ACCURATE MARKET-STRUCTURE DIAGRAMS ════════
+   A clean uptrend (HH/HL) that breaks the prior swing high = BOS; the last
+   red candle before the break = the Order Block. ChoCh shows a downtrend
+   breaking its last lower high. Real OHLC, real annotations. */
+const UP=[ {o:30,c:42},{o:42,c:55},{o:55,c:48},{o:48,c:43},{o:43,c:60},{o:60,c:69},{o:69,c:77} ];
+const DN=[ {o:80,c:67},{o:67,c:74},{o:74,c:57},{o:57,c:63},{o:63,c:49},{o:49,c:66} ];
+function wick(c){c.hi=Math.max(c.o,c.c)+3;c.lo=Math.min(c.o,c.c)-3;return c;}
+function drawStructure(cv,mode){
+  const x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);
+  cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;x.setTransform(dpr,0,0,dpr,0,0);
+  const W=cv.width/dpr,H=cv.height/dpr;x.clearRect(0,0,W,H);
+  const cs=(mode==='choch'?DN:UP).map(c=>wick({o:c.o,c:c.c}));
+  const padT=26,padB=24,padL=20,padR=20;
+  const lo=Math.min(...cs.map(c=>c.lo))-4,hi=Math.max(...cs.map(c=>c.hi))+4;
+  const X=i=>padL+i/(cs.length-1)*(W-padL-padR);
+  const Y=v=>padT+(1-(v-lo)/(hi-lo))*(H-padT-padB);
+  const cw=Math.min(20,(W-padL-padR)/cs.length*0.52);
+
+  // grid
+  x.strokeStyle='rgba(255,255,255,.04)';x.lineWidth=1;
+  for(let g=0;g<=3;g++){const gy=padT+g/3*(H-padT-padB);x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke();}
+
+  // structure line + BOS/ChoCh marker
+  if(mode==='choch'){
+    const lhIdx=3, lvl=cs[lhIdx].hi-1;                 // last lower high
+    dashed(x,padL,Y(lvl),W-padR,Y(lvl),'#ff9f43');
+    label(x,'LOWER HIGH',padL+2,Y(lvl)-6,'#ff9f43','left');
+    const bi=cs.length-1; arrow(x,X(bi),Y(cs[bi].c)+14,X(bi),Y(cs[bi].c)+2,'#4cc3ff');
+    tag(x,'ChoCh',X(bi)+8,Y(cs[bi].c)+8,'#4cc3ff');
+  }else{
+    const swingIdx=1, lvl=cs[swingIdx].hi-1;            // prior swing high
+    dashed(x,padL,Y(lvl),W-padR,Y(lvl),'#4cc3ff');
+    label(x,'STRUCTURE',padL+2,Y(lvl)-6,'#4cc3ff','left');
+    const bi=4; arrow(x,X(bi),Y(cs[bi].c)+16,X(bi),Y(lvl)+2,'#4cc3ff');
+    tag(x,'BOS',X(bi)+8,Y(lvl)+2,'#4cc3ff');
+    // higher-low marker
+    label(x,'HL',X(3),Y(cs[3].lo)+12,'#7d8aa0','center');
+  }
+
+  // order block highlight (last red before the bullish break = candle 3)
+  if(mode==='ob'){
+    const oi=3,oc=cs[oi];const ox=X(oi)-cw/2-3,oy=Y(Math.max(oc.o,oc.c))-3;
+    x.fillStyle='rgba(168,85,247,.16)';x.fillRect(ox,oy,cw+6,Y(Math.min(oc.o,oc.c))-Y(Math.max(oc.o,oc.c))+6);
+    x.strokeStyle='#a855f7';x.lineWidth=1.6;x.strokeRect(ox,oy,cw+6,Y(Math.min(oc.o,oc.c))-Y(Math.max(oc.o,oc.c))+6);
+    tag(x,'ORDER BLOCK',X(oi),Y(oc.hi)-8,'#a855f7');
+  }
+
+  // candles
+  cs.forEach((c,i)=>{
+    const up=c.c>=c.o,col=up?'#16c784':'#ea3943',cx=X(i);
+    x.strokeStyle=col;x.lineWidth=1.3;x.beginPath();x.moveTo(cx,Y(c.hi));x.lineTo(cx,Y(c.lo));x.stroke();
+    const bt=Y(Math.max(c.o,c.c)),bb=Y(Math.min(c.o,c.c));
+    x.fillStyle=col;x.fillRect(cx-cw/2,bt,cw,Math.max(2,bb-bt));
+  });
+}
+function dashed(x,x1,y1,x2,y2,col){x.strokeStyle=col;x.lineWidth=1.3;x.setLineDash([5,4]);x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();x.setLineDash([]);}
+function label(x,t,px,py,col,al){x.fillStyle=col;x.font='700 9px '+'-apple-system,sans-serif';x.textAlign=al||'left';x.fillText(t,px,py);}
+function tag(x,t,px,py,col){x.font='800 9.5px -apple-system,sans-serif';const w=x.measureText(t).width;x.fillStyle=col+'22';x.fillRect(px-2,py-9,w+6,13);x.fillStyle=col;x.textAlign='left';x.fillText(t,px+1,py+1);}
+function arrow(x,x1,y1,x2,y2,col){x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();const a=Math.atan2(y2-y1,x2-x1);x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-6*Math.cos(a-0.5),y2-6*Math.sin(a-0.5));x.lineTo(x2-6*Math.cos(a+0.5),y2-6*Math.sin(a+0.5));x.closePath();x.fillStyle=col;x.fill();}
+
+/* ── lesson detail ── */
+function openLesson(i){
+  const l=LESSONS[i];
+  $('#lTitle').firstChild.textContent=l.name;
+  $('#lSub').textContent=l.tag+' · '+l.sub;
+  $('#lBody').innerHTML=`<p class="lead">${l.lead}</p>`+
+    l.keys.map(([c,t])=>`<div class="lkey"><span class="dot" style="background:${c}"></span><span class="kt">${t}</span></div>`).join('');
+  $('#lov').classList.add('on');
+  requestAnimationFrame(()=>drawStructure($('#ldiagram'),l.diagram));
+}
+$('#lClose').addEventListener('click',()=>$('#lov').classList.remove('on'));
+$('#lov').addEventListener('click',e=>{if(e.target.id==='lov')$('#lov').classList.remove('on');});
+
+/* ════════ REPLAY (time-based rAF — flawless) ════════ */
+const R={raf:0,trade:null,t0:0,mode:'replay',opts:{entry:true,sl:true,tp:true,vwap:true},done:false,tEnd:0};
+function openReplay(t){
+  R.trade=t;
+  $('#shTitle').firstChild.textContent=(t.side==='long'?'Long':'Short')+' · '+t.setup;
+  $('#shSub').textContent=(t.win?'Take-profit hit  ·  +':'Stop-loss hit  ·  −')+Math.abs(t.delta)+' shells';
+  $('#rov').classList.add('on');renderLegend();sizeChart();startReplay();
+}
+function closeReplay(){cancelAnimationFrame(R.raf);$('#rov').classList.remove('on');$('#outcome').classList.remove('show');}
+function sizeChart(){const cv=$('#chart'),box=$('#chartWrap'),dpr=Math.min(devicePixelRatio||1,2);cv.width=box.clientWidth*dpr;cv.height=box.clientHeight*dpr;cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);}
+function renderLegend(){
+  const items=[['entry','ENTRY','#ffd60a'],['sl','STOP','#ea3943'],['tp','TARGET','#16c784'],['vwap','VWAP','#ff9f43']];
+  $('#legend').innerHTML=items.map(([k,l,c])=>{const on=R.opts[k];return `<button data-k="${k}" style="border-color:${on?c:'#28384c'};color:${on?c:'#4a5666'};background:${on?c+'1e':'transparent'}">${on?'●':'○'} ${l}</button>`;}).join('');
+}
+$('#legend').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;R.opts[b.dataset.k]=!R.opts[b.dataset.k];renderLegend();if(R.mode==='details')drawChart(R.trade.candles.length);});
+function startReplay(){
+  cancelAnimationFrame(R.raf);R.mode='replay';R.done=false;R.t0=performance.now();
+  $('#outcome').classList.remove('show');$('#btnReplay').textContent='⏸ PLAYING';
+  const t=R.trade,total=t.candles.length,perCandle=150,holdEnd=900,revealStart=t.entryIdx+1;
+  function tick(now){
+    const revealed=Math.min(total,revealStart+Math.floor((now-R.t0)/perCandle));
+    drawChart(revealed);
+    if(revealed>=total){
+      if(!R.done){R.done=true;R.tEnd=now;}
+      if(now-R.tEnd>250){const o=$('#outcome');o.textContent=t.win?'✓ TAKE-PROFIT':'✗ STOP-LOSS';o.className='outcome show '+(t.win?'win':'loss');}
+      if(now-R.tEnd<holdEnd)R.raf=requestAnimationFrame(tick);else $('#btnReplay').textContent='▶ REPLAY';
+      return;
+    }
+    R.raf=requestAnimationFrame(tick);
+  }
+  R.raf=requestAnimationFrame(tick);
+}
+function showDetails(){cancelAnimationFrame(R.raf);R.mode='details';drawChart(R.trade.candles.length);const o=$('#outcome');o.textContent=R.trade.win?'✓ TAKE-PROFIT':'✗ STOP-LOSS';o.className='outcome show '+(R.trade.win?'win':'loss');$('#btnReplay').textContent='▶ REPLAY';}
+function drawChart(n){
+  const t=R.trade,cv=$('#chart'),x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);
+  const W=cv.width/dpr,H=cv.height/dpr;x.clearRect(0,0,W,H);
+  const padL=8,padR=46,padT=16,padB=14,cs=t.candles;
+  let lo=Math.min(t.sl,t.tp,...cs.map(c=>c.lo)),hi=Math.max(t.sl,t.tp,...cs.map(c=>c.hi));const p=(hi-lo)*0.08;lo-=p;hi+=p;
+  const X=i=>padL+i/(cs.length-1)*(W-padL-padR),Y=v=>padT+(1-(v-lo)/(hi-lo))*(H-padT-padB);
+  x.strokeStyle='rgba(255,255,255,0.04)';x.lineWidth=1;for(let g=0;g<=4;g++){const gy=padT+g/4*(H-padT-padB);x.beginPath();x.moveTo(0,gy);x.lineTo(W-padR+6,gy);x.stroke();}
+  if(R.opts.vwap){x.strokeStyle='#ff9f43';x.lineWidth=1.4;x.globalAlpha=.85;x.beginPath();let sum=0;for(let i=0;i<n;i++){sum+=cs[i].c;const vy=Y(sum/(i+1));i?x.lineTo(X(i),vy):x.moveTo(X(i),vy);}x.stroke();x.globalAlpha=1;}
+  const ey=Y(t.ep);
+  if(R.opts.tp){x.fillStyle='rgba(22,199,132,0.07)';const ty=Y(t.tp);x.fillRect(padL,Math.min(ey,ty),W-padL-padR,Math.abs(ey-ty));}
+  if(R.opts.sl){x.fillStyle='rgba(234,57,67,0.07)';const sy=Y(t.sl);x.fillRect(padL,Math.min(ey,sy),W-padL-padR,Math.abs(ey-sy));}
+  const lvl=(v,col,lbl)=>{const yy=Y(v);x.strokeStyle=col;x.lineWidth=1.2;x.setLineDash([5,3]);x.beginPath();x.moveTo(padL,yy);x.lineTo(W-padR,yy);x.stroke();x.setLineDash([]);x.fillStyle=col;x.font='700 8.5px sans-serif';x.textAlign='left';x.fillText(lbl,W-padR+3,yy+3);};
+  if(R.opts.tp)lvl(t.tp,'#16c784','TP');if(R.opts.sl)lvl(t.sl,'#ea3943','SL');if(R.opts.entry)lvl(t.ep,'#ffd60a','ENTRY');
+  const cw=Math.max(2.5,(W-padL-padR)/cs.length*0.6);
+  for(let i=0;i<n;i++){const c=cs[i],up=c.c>=c.o,col=up?'#16c784':'#ea3943',cx=X(i);x.strokeStyle=col;x.lineWidth=1;x.beginPath();x.moveTo(cx,Y(c.hi));x.lineTo(cx,Y(c.lo));x.stroke();const bt=Y(Math.max(c.o,c.c)),bb=Y(Math.min(c.o,c.c));x.fillStyle=col;x.fillRect(cx-cw/2,bt,cw,Math.max(1.5,bb-bt));}
+  if(t.entryIdx<n){const exx=X(t.entryIdx);x.fillStyle='#ffd60a';x.strokeStyle='#04060b';x.lineWidth=1.5;x.beginPath();x.arc(exx,Y(t.ep),3.6,0,7);x.fill();x.stroke();}
+  if(n>=1){const li=n-1,pc=cs[li];x.fillStyle=pc.c>=pc.o?'#16c784':'#ea3943';x.beginPath();x.arc(X(li),Y(pc.c),3,0,7);x.fill();x.strokeStyle=x.fillStyle;x.globalAlpha=.4;x.setLineDash([2,3]);x.beginPath();x.moveTo(X(li),Y(pc.c));x.lineTo(W-padR,Y(pc.c));x.stroke();x.setLineDash([]);x.globalAlpha=1;}
+}
+$('#shClose').addEventListener('click',closeReplay);
+$('#rov').addEventListener('click',e=>{if(e.target.id==='rov')closeReplay();});
+$('#btnReplay').addEventListener('click',startReplay);
+$('#btnDetails').addEventListener('click',()=>{R.mode==='details'?startReplay():showDetails();});
+window.addEventListener('resize',()=>{if($('#rov').classList.contains('on')){sizeChart();drawChart(R.trade.candles.length);}if($('#lov').classList.contains('on')){drawStructure($('#ldiagram'),'bos');}});
+
+$('#dReplay').addEventListener('click',()=>openReplay(STATE.trades[0]));
+$('#dLesson').addEventListener('click',()=>openLesson(0));
+render();
+</script>
+</body>
+</html>

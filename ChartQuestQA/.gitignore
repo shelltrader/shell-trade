@@ -1,0 +1,23 @@
+# Xcode / build
+*.xcodeproj
+DerivedData/
+build/
+.build/
+dist/
+*.xcarchive
+*.dmg
+*.zip
+ChartQuestQA.app/
+*.xcuserstate
+xcuserdata/
+
+# macOS
+.DS_Store
+
+# App data created at runtime (lives in ~/Documents/ChartQuest QA by default)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shal
+
+# Secrets — the Claude API key lives in the macOS Keychain, never in the repo
+Secrets.plist

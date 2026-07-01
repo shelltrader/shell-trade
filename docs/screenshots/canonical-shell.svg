@@ -1,0 +1,39 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chart Quest canonical shell">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="54%" r="55%">
+      <stop offset="0%" stop-color="#96f5ff" stop-opacity="0.55"/>
+      <stop offset="55%" stop-color="#40d2eb" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#40d2eb" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f2feff"/>
+      <stop offset="42%" stop-color="#6fe9f2"/>
+      <stop offset="100%" stop-color="#1597a8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- magical ocean glow -->
+  <circle cx="100" cy="108" r="92" fill="url(#glow)"/>
+
+  <!-- ribbed scallop fan: hinge at the bottom, opening upward -->
+  <g>
+    <path d="M100 150
+             L 28 96 L 40 90 L 53 84 L 66 80 L 80 77 L 100 76
+             L 120 77 L 134 80 L 147 84 L 160 90 L 172 96 Z"
+          fill="url(#body)" stroke="#f0fdff" stroke-width="3" stroke-linejoin="round"/>
+    <!-- radiating ribs -->
+    <g stroke="#0c5f70" stroke-opacity="0.34" stroke-width="2.4" stroke-linecap="round">
+      <line x1="100" y1="150" x2="44"  y2="92"/>
+      <line x1="100" y1="150" x2="62"  y2="84"/>
+      <line x1="100" y1="150" x2="80"  y2="80"/>
+      <line x1="100" y1="150" x2="100" y2="78"/>
+      <line x1="100" y1="150" x2="120" y2="80"/>
+      <line x1="100" y1="150" x2="138" y2="84"/>
+      <line x1="100" y1="150" x2="156" y2="92"/>
+    </g>
+    <!-- hinge knob -->
+    <circle cx="100" cy="150" r="9" fill="#0e6b78"/>
+    <!-- pearl sheen -->
+    <ellipse cx="78" cy="98" rx="16" ry="9" transform="rotate(-28 78 98)" fill="#ffffff" fill-opacity="0.6"/>
+  </g>
+</svg>

@@ -145,12 +145,14 @@
   .update-card .title{font-size:14px; font-weight:700; color:#fff; margin-bottom:6px;}
   .update-card .body{font-size:12.5px; line-height:1.6; color:var(--text); margin-bottom:10px;}
   .shot-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .shot-row.triptych{grid-template-columns:1fr 1fr 1fr;}
   .shot-box{
     background:var(--panel-2); border:1px solid var(--border); border-radius:7px;
     min-height:70px; display:flex; align-items:center; justify-content:center;
     font-size:10.5px; color:var(--muted); text-align:center; padding:8px;
   }
   .shot-box img{max-width:100%; border-radius:5px; display:block;}
+  .shot-cv{width:100%; height:150px; border-radius:5px; background:#06070d; display:block;}
   .shot-label{font-size:9.5px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); margin-bottom:4px;}
 
   /* ---------- Content panel (V2 placeholder) ---------- */
@@ -168,9 +170,88 @@
   .v2-item .d{font-size:11.5px; color:var(--muted); line-height:1.5;}
 
   footer{text-align:center; font-size:10.5px; color:var(--muted); padding:24px 22px 40px;}
+
+  /* ---------- Mini Games ---------- */
+  .mg-agg{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px;}
+  @media (max-width:1000px){.mg-agg{grid-template-columns:repeat(2,1fr);}}
+  .mg-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(218px,1fr)); gap:14px;}
+  .mg-card{position:relative; background:var(--panel); border:1px solid var(--border); border-radius:12px; overflow:hidden; transition:transform .15s, box-shadow .22s, border-color .22s;}
+  .mg-card:hover{transform:translateY(-3px); border-color:var(--acc); box-shadow:0 12px 30px -12px var(--acc);}
+  .mg-card .tile{width:100%; height:126px; display:block; background:#06080e; border-bottom:1px solid var(--border);}
+  .mg-card .body{padding:11px 13px 13px;}
+  .mg-card .title{font-size:13px; font-weight:700; color:#fff;}
+  .mg-card .tags{display:flex; gap:6px; margin-top:7px; flex-wrap:wrap;}
+  .mg-card .tg{font-size:8.5px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; padding:2px 7px; border-radius:5px; background:#142235; color:var(--blue);}
+  .mg-card .tg.fw{background:#1c1730; color:#b794f6;}
+  .mg-card .skill{font-size:10.5px; color:#9fb0c4; margin-top:9px; line-height:1.45;}
+  .mg-card .mstats{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:11px; border-top:1px solid var(--border); padding-top:10px;}
+  .mg-card .mstat{text-align:center;}
+  .mg-card .mstat .mv{font-size:13px; font-weight:700; color:#fff; font-family:var(--font-mono);}
+  .mg-card .mstat .mk{font-size:7.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin-top:2px;}
+
+  /* ===== QA Testing Center ===== */
+  #panel-qa .qa-wrap{display:grid; grid-template-columns:minmax(0,1fr) 432px; gap:18px; align-items:start;}
+  @media(max-width:1100px){#panel-qa .qa-wrap{grid-template-columns:1fr;}}
+  #panel-qa .qa-controls{display:flex; flex-direction:column; gap:15px; min-width:0;}
+  #panel-qa .qa-side{position:sticky; top:12px; display:flex; flex-direction:column; gap:12px;}
+  .qa-card{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px 15px;}
+  /* Collapsible sections — click any card header to fold it away and free up space. */
+  .qa-card > h3{ cursor:pointer; user-select:none; }
+  .qa-card > h3::before{ content:'▾'; display:inline-block; width:14px; font-size:10px; color:var(--muted); }
+  .qa-card.collapsed > h3::before{ content:'▸'; }
+  .qa-card.collapsed > *:not(h3){ display:none !important; }
+  .qa-card h3{margin:0 0 4px; font-size:13px; color:#fff; letter-spacing:.3px;}
+  .qa-card .hint{font-size:10.5px; color:var(--muted); margin-bottom:11px; line-height:1.45;}
+  .qa-row{display:flex; flex-wrap:wrap; gap:7px; align-items:center;}
+  .qa-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(158px,1fr)); gap:9px;}
+  .qa-item{background:var(--panel-2); border:1px solid var(--border); border-radius:9px; padding:10px;}
+  .qa-item .t{font-size:12px; font-weight:700; color:#fff; margin-bottom:2px; line-height:1.2;}
+  .qa-item .s{font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:7px;}
+  .qa-realm{display:block; width:100%; height:88px; border-radius:7px; margin-bottom:8px; background:#06070d; border:1px solid var(--border);}
+  /* Boss portrait shown over the live realm backdrop (realm = fallback if the art is missing) */
+  .qa-realm-wrap{position:relative; width:100%; height:118px; border-radius:7px; overflow:hidden; margin-bottom:8px; border:1px solid var(--border); background:#06070d;}
+  .qa-realm-wrap .qa-realm{position:absolute; inset:0; width:100%; height:100%; margin:0; border:none; border-radius:0;}
+  .qa-realm-wrap .qa-boss-pic{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 30%; z-index:1;}
+  .qa-realm-wrap::after{content:""; position:absolute; inset:0; z-index:2; pointer-events:none; background:linear-gradient(180deg, transparent 55%, rgba(6,7,13,0.55));}
+  .qa-item .lesson-line{font-size:9px; color:var(--muted); line-height:1.3; margin:-3px 0 7px;}
+  .qa-item .rate{font-size:9.5px; color:var(--muted); margin-bottom:7px; font-family:var(--font-mono);}
+  .qa-item .btns{display:flex; flex-wrap:wrap; gap:5px;}
+  .qa-btn{font:600 11px inherit; padding:7px 11px; border-radius:7px; border:1px solid var(--border); background:var(--panel-2); color:#cdd8e6; cursor:pointer; transition:border-color .15s,color .15s;}
+  .qa-btn:hover{border-color:var(--green); color:#fff;}
+  .qa-btn.go{background:#11271a; border-color:#1f6f43; color:var(--green);}
+  .qa-btn.danger{background:#2a1316; border-color:#5a2630; color:#ff8088;}
+  .qa-btn.sm{padding:5px 8px; font-size:10px;}
+  .qa-sel{background:var(--panel-2); border:1px solid var(--border); border-radius:7px; color:#cdd8e6; font-size:11px; padding:6px 8px;}
+  .qa-frame-wrap{background:#04060b; border:1px solid var(--border); border-radius:12px; overflow:hidden; height:680px;}
+  .qa-frame-wrap iframe{width:100%; height:100%; border:0; display:block;}
+  .qa-state{display:grid; grid-template-columns:repeat(3,1fr); gap:7px;}
+  .qa-state .c{background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:7px; text-align:center;}
+  .qa-state .c .v{font-size:13px; font-weight:700; color:#fff; font-family:var(--font-mono); line-height:1.1;}
+  .qa-state .c .k{font-size:8px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:3px;}
+  .qa-log{max-height:210px; overflow-y:auto; font-family:var(--font-mono); font-size:10.5px; line-height:1.55;}
+  .qa-log .ln{padding:3px 2px; border-bottom:1px solid rgba(255,255,255,.04);}
+  .qa-log .pass{color:var(--green);} .qa-log .fail{color:#ff8088;} .qa-log .info{color:#8aa0b8;} .qa-log .warn{color:var(--amber);}
+  .qa-out{background:#04060b; border:1px solid var(--border); border-radius:9px; padding:11px; font-family:var(--font-mono); font-size:10.5px; color:#aebdcf; white-space:pre-wrap; word-break:break-word; max-height:300px; overflow:auto;}
+  .qa-out b{color:#fff;} .qa-out .k{color:var(--green);}
+  .qa-cov{display:flex; flex-direction:column; gap:9px;}
+  .qa-cov .lbl{display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); margin-bottom:3px;}
+  .qa-cov .bar{height:7px; background:var(--panel-2); border-radius:4px; overflow:hidden;}
+  .qa-cov .bar > i{display:block; height:100%; background:var(--green); transition:width .3s;}
+  .qa-toggle{display:flex; align-items:center; gap:6px; font-size:11px; color:#cdd8e6;}
 </style>
 </head>
 <body>
+<!-- Admin sign-in gate: nothing loads until a verified admin session exists. -->
+<div id="adminGate" style="position:fixed;inset:0;z-index:99999;background:#0b1017;display:flex;align-items:center;justify-content:center;">
+  <form id="adminGateForm" style="background:#131b26;border:1px solid #223042;border-radius:12px;padding:28px;width:300px;max-width:90vw;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <div style="color:#fff;font-size:18px;font-weight:700;margin-bottom:4px;">Chart Quest — Admin</div>
+    <div style="color:#7d8aa0;font-size:12px;margin-bottom:16px;">Founder access only. Sign in.</div>
+    <input id="adminEmail" type="email" placeholder="Email" autocomplete="username" style="width:100%;box-sizing:border-box;margin-bottom:8px;padding:10px;border-radius:8px;border:1px solid #2a3442;background:#0b1017;color:#d7e0ee;">
+    <input id="adminPass" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;box-sizing:border-box;margin-bottom:12px;padding:10px;border-radius:8px;border:1px solid #2a3442;background:#0b1017;color:#d7e0ee;">
+    <button id="adminSignInBtn" type="submit" style="width:100%;padding:10px;border-radius:8px;border:none;background:#2b6cb0;color:#fff;font-weight:600;cursor:pointer;">Sign in</button>
+    <div id="adminErr" style="color:#ff6b6b;font-size:12px;margin-top:10px;min-height:16px;"></div>
+  </form>
+</div>
 
 <header>
   <div class="brand">
@@ -190,6 +271,8 @@
   <button class="tab-btn" data-tab="issues">🛠 Issues</button>
   <button class="tab-btn" data-tab="updates">📦 Updates</button>
   <button class="tab-btn" data-tab="content">🎬 Content</button>
+  <button class="tab-btn" data-tab="minigames">🎮 Mini Games</button>
+  <button class="tab-btn" data-tab="qa">🧪 QA Testing Center</button>
 </nav>
 
 <main>
@@ -206,7 +289,7 @@
     <div class="stat-grid" id="primaryStats">
       <div class="stat-card"><div class="label">Current Players</div><div class="value" id="s_active24">—</div><div class="note">Unique players active in the last 24h. No real-time "online now" tracking yet — this is the closest live proxy.</div></div>
       <div class="stat-card"><div class="label">Total Sign-Ups</div><div class="value green" id="s_signups">—</div><div class="note">Accounts created (email/password or guest-converted).</div></div>
-      <div class="stat-card"><div class="label">Reached The End</div><div class="value" id="s_reachedend">—</div><div class="note">Players who completed all 6 Hours of the curriculum.</div></div>
+      <div class="stat-card"><div class="label">Reached The End</div><div class="value" id="s_reachedend">—</div><div class="note">Players who completed all 10 Hours of the curriculum.</div></div>
       <div class="stat-card"><div class="label">Total Downloads</div><div class="value muted" id="s_downloads">N/A</div><div class="note">Browser game, no installable build yet — nothing to count as a "download."</div></div>
       <div class="stat-card"><div class="label">Total Revenue</div><div class="value muted" id="s_revenue">$0</div><div class="note">No monetization is live yet (course/paid tier is on the roadmap).</div></div>
     </div>
@@ -249,17 +332,198 @@
 
   <!-- ============ CONTENT (V2 placeholder) ============ -->
   <section class="panel" id="panel-content">
-    <div class="v2-card">
-      <div class="icon">🎬</div>
-      <h3>Content &amp; Social — coming in Dashboard V2</h3>
-      <p>This panel lights up once the content/social system is built. Planned for V2:</p>
-      <div class="v2-list">
-        <div class="v2-item"><div class="t">Replay Manager</div><div class="d">Browse and pull any recorded run/trade replay for clipping.</div></div>
-        <div class="v2-item"><div class="t">Content Export System</div><div class="d">One-click export of gameplay moments in social-ready formats.</div></div>
-        <div class="v2-item"><div class="t">Special Events Log</div><div class="d">Auto-captures stand-out in-game moments worth turning into content.</div></div>
-        <div class="v2-item"><div class="t">"Record Everything" System</div><div class="d">Background capture pipeline so nothing worth posting gets missed.</div></div>
-        <div class="v2-item"><div class="t">Content Instrumentation</div><div class="d">Tagging/metadata on captured moments so they're searchable later.</div></div>
-        <div class="v2-item"><div class="t">AI Marketing/Social Pipeline</div><div class="d">An AI pipeline to help draft and schedule social content from captured moments.</div></div>
+    <div class="section-head">
+      <h2>Content Production Engine</h2>
+      <span class="meta">Live capture → scoring → AI triage → export. Reads the game's Content Event Logger (content-events/schema.md).</span>
+    </div>
+    <div class="qa-row" id="cStatusBar" style="margin-bottom:14px;gap:10px;align-items:center;">
+      <span class="status-pill" id="cCapture">● Record-Everything: starting…</span>
+      <span class="status-pill" id="cSource">Source: —</span>
+      <button class="qa-btn sm" id="cRefresh">↻ Refresh</button>
+      <span style="flex:1;"></span>
+      <button class="qa-btn" id="cMaster" title="Turn the entire content-capture system ON or OFF. While OFF, the game records nothing and the dashboard stays empty.">SYSTEM: …</button>
+      <button class="qa-btn danger" id="cClearAll" title="Delete all captured events &amp; replays (local cache + queue).">🗑 Clear all content</button>
+      <button class="qa-btn danger" id="cClearCache" title="Purge ALL cached data on this device: the app/service-worker caches AND the content cache. Forces a fresh load.">🧹 CLEAR CACHE</button>
+    </div>
+    <div class="stat-grid" id="cStats" style="grid-template-columns:repeat(5,1fr);margin-bottom:16px;">
+      <div class="stat-card"><div class="label">Events Captured</div><div class="value" id="cTotal">—</div></div>
+      <div class="stat-card"><div class="label">Special Moments</div><div class="value green" id="cSpecial">—</div></div>
+      <div class="stat-card"><div class="label">Clip Candidates</div><div class="value" id="cClips">—</div></div>
+      <div class="stat-card"><div class="label">Replays Stored</div><div class="value" id="cReplays">—</div></div>
+      <div class="stat-card"><div class="label">Director Briefs</div><div class="value amber" id="cBriefs">—</div></div>
+    </div>
+    <div class="qa-wrap">
+      <div class="qa-controls">
+        <div class="qa-card">
+          <div class="qa-row" style="margin-bottom:10px;">
+            <button class="qa-btn go" data-cview="events">Event Log</button>
+            <button class="qa-btn" data-cview="special">Special Events</button>
+            <button class="qa-btn" data-cview="briefs">AI Director Briefs</button>
+            <button class="qa-btn" data-cview="replays">Replay Manager</button>
+          </div>
+          <div class="qa-row" style="margin-bottom:10px;">
+            <input class="qa-sel" id="cSearch" placeholder="Search concept / boss / setup / text…" style="flex:1;min-width:160px;">
+            <select class="qa-sel" id="cFilterType"><option value="">All types</option></select>
+            <select class="qa-sel" id="cFilterPlat">
+              <option value="general">Export: General</option><option value="tiktok">TikTok</option><option value="youtube_shorts">YT Shorts</option><option value="instagram">IG Reels</option><option value="x">X</option><option value="newsletter">Newsletter</option>
+            </select>
+            <button class="qa-btn sm" id="cExport">⤓ Export</button>
+          </div>
+          <div id="cList" class="qa-log" style="max-height:560px;"></div>
+        </div>
+      </div>
+      <div class="qa-side">
+        <div class="qa-card" style="padding:11px;">
+          <h3 style="margin-bottom:8px;">Capture Source <span id="cFrameStatus" style="font-size:10px;font-weight:600;color:var(--muted);">· connecting…</span><button class="qa-btn sm danger" id="cResetGame" style="float:right;">⟲ Reset</button></h3>
+          <div class="qa-frame-wrap" style="height:420px;"><iframe id="cFrame" title="Chart Quest — capture"></iframe></div>
+          <div class="hint" style="margin-top:8px;">This embedded session captures live events. Real cross-device data flows through Supabase <code>content_events</code> once the migration is applied.</div>
+        </div>
+        <div class="qa-card"><h3>Instrumentation / Detail</h3><div class="hint" id="cDetailHint">Click any event to inspect its full metadata, scores, and content flags.</div><div class="qa-out" id="cDetail" style="display:none;"></div></div>
+        <div class="qa-card"><h3>Export Output</h3><div class="qa-out" id="cOut" style="display:none;"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MINI GAMES ============ -->
+  <section class="panel" id="panel-minigames">
+    <div class="section-head">
+      <h2>Mini-Game Library</h2>
+      <span class="meta">Internal tracker — not yet shown to players. Reserved for a future in-game "Arcade" mode.</span>
+    </div>
+    <div class="mg-agg">
+      <div class="stat-card"><div class="label">Total Games</div><div class="value" id="mg_total">19</div><div class="note">Built on 5 reusable frameworks — adding one is a config change.</div></div>
+      <div class="stat-card"><div class="label">Frameworks</div><div class="value green" id="mg_fw">5</div><div class="note">Annotate · Predict · Calculate · Classify · Build.</div></div>
+      <div class="stat-card"><div class="label">Total Plays</div><div class="value muted" id="mg_plays">—</div><div class="note">Fills in once the Arcade ships and scores sync to Supabase.</div></div>
+      <div class="stat-card"><div class="label">Avg Score</div><div class="value muted" id="mg_avg">—</div><div class="note">Across all games &amp; difficulties, once data exists.</div></div>
+    </div>
+    <div class="subhead">🎮 Catalog <span class="count-badge">19</span></div>
+    <div class="mg-grid" id="mgGrid"></div>
+    <div class="founder-note" style="margin-top:20px;">
+      <b>Status:</b> all 19 mini games are built and playable in the prototype, but intentionally <b>not</b> surfaced anywhere players can reach them yet. This tab is your tracker.<br><br>
+      <b>Next:</b> when the Arcade ships and per-attempt scores write to a <code>minigame_scores</code> table, the <b>Plays / Avg / Best / Done</b> fields on each card fill in automatically, per game and per difficulty.
+    </div>
+  </section>
+
+  <!-- ============ QA TESTING CENTER ============ -->
+  <section class="panel" id="panel-qa">
+    <div class="section-head">
+      <h2>QA Testing Center</h2>
+      <span class="meta">Drives the live game (chart-quest.html?qa=1) over postMessage — launch any boss, mini-game, lesson, level, concept or scenario instantly. No progression required.</span>
+    </div>
+    <div id="qaBootMsg" class="empty-state" style="margin-bottom:14px;">Connecting to game engine… if this persists, click <b>↻ Reload Game</b>.</div>
+    <div class="qa-wrap">
+      <div class="qa-controls">
+
+        <div class="qa-card">
+          <h3>Global Test Settings</h3>
+          <div class="hint">Difficulty applies to launches that accept one. <b>Reveal Answer Mode</b> pulls the correct answer, accepted answers, validation logic and objective into the panel on the right whenever you launch or inspect a mini-game.</div>
+          <div class="qa-row">
+            <label class="qa-toggle">Difficulty
+              <select class="qa-sel" id="qaDiff"><option value="beginner">beginner</option><option value="intermediate" selected>intermediate</option><option value="advanced">advanced</option><option value="expert">expert</option></select>
+            </label>
+            <label class="qa-toggle"><input type="checkbox" id="qaReveal"> Reveal Answer Mode</label>
+            <button class="qa-btn" id="qaReload">↻ Reload Game</button>
+          </div>
+        </div>
+
+        <div class="qa-card">
+          <h3>① Level / Lesson Testing</h3>
+          <div class="hint">Jump straight into any curriculum Hour (world), or force any lesson / educational module to appear in-game.</div>
+          <div class="subhead" style="margin:4px 0 8px; font-size:11px;">Levels · Worlds · Chapters</div>
+          <div class="qa-grid" id="qaLevels"></div>
+          <div class="subhead" style="margin:16px 0 8px; font-size:11px;">Lessons · Educational Modules</div>
+          <div class="qa-grid" id="qaLessons"></div>
+        </div>
+
+        <div class="qa-card">
+          <h3>② Boss Testing</h3>
+          <div class="hint">Launch any boss at any difficulty. View its educational concepts, force outcomes, reset progress. Pass/fail rates accrue from this session's logged results.</div>
+          <div class="qa-grid" id="qaBosses"></div>
+        </div>
+
+        <div class="qa-card">
+          <h3>③ Mini Game Testing</h3>
+          <div class="hint">All 20 games. Launch, reveal answer, force success/failure (logs a synthetic result), reset stats.</div>
+          <div class="qa-grid" id="qaGames"></div>
+        </div>
+
+        <div class="qa-card">
+          <h3>🎮 Guardian Trials (movement bosses)</h3>
+          <div class="hint">Guardian Trials V2 — all three play out <b>ON the live Trade-Mode chart</b> (real movement, jetpack, Trader-View camera; no separate screen). The "full boss" runs all three crystals; each button drops you into one trial to feel it fast.</div>
+          <div class="qa-row" style="margin-top:8px;">
+            <button class="qa-btn go" data-qa="trial" data-level="0" data-idx="0">🎮 Full boss — The Gambler</button>
+          </div>
+          <div class="qa-grid" style="margin-top:8px;">
+            <button class="qa-btn" data-qa="trial" data-trial="green_ascent">1 · Green Ascent</button>
+            <button class="qa-btn" data-qa="trial" data-trial="red_descent">2 · Red Descent</button>
+            <button class="qa-btn" data-qa="trial" data-trial="liquidity">3 · Liquidity Climb</button>
+          </div>
+        </div>
+
+        <div class="qa-card">
+          <h3>④ Player State Testing</h3>
+          <div class="hint">Simulate any progression instantly — set rank, XP and coins, or jump to a preset state.</div>
+          <div class="qa-row" style="margin-bottom:11px;">
+            <label class="qa-toggle">Rank <select class="qa-sel" id="qaRank"></select></label>
+            <label class="qa-toggle">XP <input class="qa-sel" id="qaXP" type="number" value="0" style="width:84px;"></label>
+            <label class="qa-toggle">Coins <input class="qa-sel" id="qaCoins" type="number" value="0" style="width:104px;"></label>
+            <button class="qa-btn go" id="qaSetState">Apply State</button>
+          </div>
+          <div class="qa-row">
+            <button class="qa-btn go" data-state="unlockAll">Unlock All Content</button>
+            <button class="qa-btn" data-state="maxProgress">Max Progress</button>
+            <button class="qa-btn danger" data-state="lockAll">Lock All Content</button>
+            <button class="qa-btn danger" data-state="resetProgress">Reset Progress</button>
+          </div>
+        </div>
+
+        <div class="qa-card">
+          <h3>⑤ Trading Concept Testing</h3>
+          <div class="hint">Launch the drill that teaches each concept individually.</div>
+          <div class="qa-row" id="qaConcepts"></div>
+        </div>
+
+        <div class="qa-card">
+          <h3>⑥ Chart Scenario Generator</h3>
+          <div class="hint">Generate a market scenario and launch it directly into its matching mini-game.</div>
+          <div class="qa-row" id="qaScenarios"></div>
+        </div>
+
+      </div>
+
+      <div class="qa-side">
+        <div class="qa-card" style="padding:11px;">
+          <h3 style="margin-bottom:8px;">Live Game <span id="qaStatus" style="font-size:10px;font-weight:600;color:var(--muted);">· connecting…</span><a id="qaOpenTab" href="chart-quest.html?qa=1" target="_blank" style="float:right;font-size:10px;color:var(--green);text-decoration:none;">open in tab ↗</a></h3>
+          <!-- Co-located reset + Guardian-Trial launchers so you launch, watch, and reset in one place (no scrolling). -->
+          <div class="qa-row" style="margin-bottom:8px;gap:6px;flex-wrap:wrap;">
+            <button class="qa-btn sm danger" id="qaResetGame">⟲ Reset</button>
+            <button class="qa-btn go sm" data-qa="trial" data-level="0" data-idx="0">🎮 Boss</button>
+            <button class="qa-btn sm" data-qa="trial" data-trial="green_ascent">T1 Ascent</button>
+            <button class="qa-btn sm" data-qa="trial" data-trial="red_descent">T2 Descent</button>
+            <button class="qa-btn sm" data-qa="trial" data-trial="liquidity">T3 Liquidity</button>
+          </div>
+          <div class="qa-frame-wrap"><iframe id="qaFrame" title="Chart Quest — QA"></iframe></div>
+        </div>
+        <div class="qa-card">
+          <h3>Player State</h3>
+          <div class="qa-state" id="qaStateBox"><div class="c"><div class="v">—</div><div class="k">Rank</div></div><div class="c"><div class="v">—</div><div class="k">Level</div></div><div class="c"><div class="v">—</div><div class="k">Coins</div></div></div>
+        </div>
+        <div class="qa-card">
+          <h3>Educational Validation</h3>
+          <div class="hint" id="qaValHint">Turn on Reveal Answer Mode, then launch or inspect any mini-game to see its correct answer, accepted answers, validation logic and objective.</div>
+          <div class="qa-out" id="qaVal" style="display:none;"></div>
+        </div>
+        <div class="qa-card">
+          <h3>Test Coverage</h3>
+          <div class="qa-cov" id="qaCov"></div>
+        </div>
+        <div class="qa-card">
+          <h3>Session Log
+            <button class="qa-btn sm" id="qaExport" style="float:right;">⤓ Export</button>
+            <button class="qa-btn sm" id="qaClearLog" style="float:right; margin-right:6px;">Clear</button>
+          </h3>
+          <div class="qa-log" id="qaLog"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -276,10 +540,55 @@ function esc(s){
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// ── Admin auth ──────────────────────────────────────────────────────────────
+// This dashboard is founder-only. Every data read uses a signed-in admin's JWT,
+// not the public anon key. The RPCs and content tables are admin-gated server-
+// side (migration 0009), so a non-admin JWT — or the bare anon key — gets 403.
+let ADMIN_TOKEN = null;
+try { ADMIN_TOKEN = sessionStorage.getItem('cq_admin_tok') || null; } catch (e) {}
+const authBearer = () => `Bearer ${ADMIN_TOKEN || SUPA_ANON}`;
+
+async function adminSignIn(email, password) {
+  const r = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { apikey: SUPA_ANON, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  if (!r.ok) throw new Error('Wrong email or password.');
+  const d = await r.json();
+  ADMIN_TOKEN = d.access_token;
+  // Confirm this account is actually an admin (get_dashboard_stats 403s otherwise).
+  const chk = await fetch(`${SUPA_URL}/rest/v1/rpc/get_dashboard_stats`, {
+    method: 'POST',
+    headers: { apikey: SUPA_ANON, Authorization: authBearer(), 'Content-Type': 'application/json' },
+    body: '{}'
+  });
+  if (!chk.ok) { ADMIN_TOKEN = null; throw new Error('This account is not an admin.'); }
+  try { sessionStorage.setItem('cq_admin_tok', ADMIN_TOKEN); } catch (e) {}
+}
+
+async function verifyAdminToken() {
+  if (!ADMIN_TOKEN) return false;
+  try {
+    const r = await fetch(`${SUPA_URL}/rest/v1/rpc/get_dashboard_stats`, {
+      method: 'POST',
+      headers: { apikey: SUPA_ANON, Authorization: authBearer(), 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    return r.ok;
+  } catch (e) { return false; }
+}
+
+function adminSignOut() {
+  ADMIN_TOKEN = null;
+  try { sessionStorage.removeItem('cq_admin_tok'); } catch (e) {}
+  location.reload();
+}
+
 async function rpc(name, body = {}) {
   const res = await fetch(`${SUPA_URL}/rest/v1/rpc/${name}`, {
     method: 'POST',
-    headers: { apikey: SUPA_ANON, Authorization: `Bearer ${SUPA_ANON}`, 'Content-Type': 'application/json' },
+    headers: { apikey: SUPA_ANON, Authorization: authBearer(), 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
   if (!res.ok) throw new Error(name + ' returned ' + res.status);
@@ -293,8 +602,609 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'minigames') drawMGTiles();
+    if (btn.dataset.tab === 'qa') initQA();
+    if (btn.dataset.tab === 'content') initContent();
   });
 });
+
+/* ── Collapsible sections + game-frame resets ──────────────────────────────
+   Click any card header to fold the section away and free up space (state
+   persists across reloads). Each embedded "playable" frame has a ⟲ Reset that
+   reloads it, clearing any stuck trial / boss / lesson. */
+(function(){
+  const KEY = 'cq_dash_collapsed_v1';
+  let store; try { store = JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ store = {}; }
+  const keyOf = card => { const h = card.querySelector(':scope > h3'); return h ? (h.textContent || '').trim().slice(0,48) : ''; };
+  const applyAll = () => document.querySelectorAll('.qa-card').forEach(card => {
+    const k = keyOf(card); if (k && store[k]) card.classList.add('collapsed');
+  });
+  // Toggle on header click (ignore clicks on interactive controls inside the header).
+  document.addEventListener('click', e => {
+    const h = e.target.closest('.qa-card > h3'); if (!h) return;
+    if (e.target.closest('a,button,input,select,textarea')) return;
+    const card = h.parentElement; card.classList.toggle('collapsed');
+    const k = keyOf(card);
+    if (k) { store[k] = card.classList.contains('collapsed'); try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e2){} }
+  });
+  // Reset buttons on the playable frames → reload the iframe.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('#qaResetGame, #cResetGame'); if (!b) return;
+    const f = document.getElementById(b.id === 'qaResetGame' ? 'qaFrame' : 'cFrame');
+    if (f) f.src = 'chart-quest.html?qa=1&_=' + Date.now();
+  });
+  // Re-apply persisted collapse state after panels rebuild their cards.
+  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => setTimeout(applyAll, 60)));
+  applyAll();
+})();
+
+/* ════════════════════════════════════════════════════════════════════════
+   ARCADE TILES — each mini game gets a thematic "cabinet" card: blockchain
+   hex-grid backdrop, neon candle illustration, big readable game name, a
+   kicker + what-you-do line, and a faction-crypto watermark. Matches the
+   Chart Quest "Lost in the Blockchain" aesthetic. Shared by app + dashboard.
+   ════════════════════════════════════════════════════════════════════════ */
+const TF='-apple-system,BlinkMacSystemFont,system-ui,sans-serif';
+const ARCADE={
+  bos:{accent:'#16c784',art:'break',dir:1,kicker:'STRUCTURE',skill:'Spot the candle that breaks the swing high'},
+  choch:{accent:'#ff9f43',art:'break',dir:-1,kicker:'STRUCTURE',skill:'Catch the first counter-trend break'},
+  ob:{accent:'#a855f7',art:'zone',pos:'low',kicker:'SMART MONEY',skill:'Mark the last candle before the break'},
+  support:{accent:'#16c784',art:'zone',pos:'low',kicker:'KEY LEVELS',skill:'Shade the zone buyers defend'},
+  resistance:{accent:'#ea3943',art:'zone',pos:'high',kicker:'KEY LEVELS',skill:'Shade the zone sellers defend'},
+  liquidity:{accent:'#a855f7',art:'equal',kicker:'SMART MONEY',skill:'Find resting stops at equal highs'},
+  sl:{accent:'#ea3943',art:'stop',kicker:'RISK',skill:'Place a logical stop beyond structure'},
+  trend:{accent:'#4cc3ff',art:'trend',kicker:'KEY LEVELS',skill:'Connect the swing lows'},
+  vwap:{accent:'#ff9f43',art:'vwap',kicker:'EXECUTION',skill:'Enter on the VWAP bounce'},
+  error:{accent:'#ea3943',art:'glitch',kicker:'CHART IQ',skill:'Spot the impossible candle'},
+  candle:{accent:'#16c784',art:'bigcandle',kicker:'BASICS',skill:'Build the candle from its story'},
+  fake:{accent:'#ff5d8f',art:'fakeout',kicker:'TRAPS',skill:'Real breakout, or a fakeout?'},
+  predict:{accent:'#4cc3ff',art:'predict',kicker:'EXECUTION',skill:'Predict the next move'},
+  manage:{accent:'#ffd60a',art:'manage',kicker:'EXECUTION',skill:'Hold, trim, or exit?'},
+  mtf:{accent:'#4cc3ff',art:'mtf',kicker:'TOP-DOWN',skill:'Align with the higher-timeframe bias'},
+  rr:{accent:'#16c784',art:'rr',kicker:'RISK',skill:'Build at least a 2R trade'},
+  possize:{accent:'#ffd60a',art:'size',kicker:'RISK',skill:'Size the trade to 1% risk'},
+  struct:{accent:'#4cc3ff',art:'structure',kicker:'STRUCTURE',skill:'Uptrend, downtrend, or range?'},
+  pattern:{accent:'#a855f7',art:'pattern',kicker:'PATTERNS',skill:'Name the chart pattern'},
+};
+const SYMS=['₿','Ξ','◎','Ð','✕'];
+function hexA(h,a){const n=parseInt(h.slice(1),16);return'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
+function shadeC(h,amt){let n=parseInt(h.slice(1),16),r=(n>>16)&255,g=(n>>8)&255,b=n&255;if(amt<0){r*=1+amt;g*=1+amt;b*=1+amt;}else{r+=(255-r)*amt;g+=(255-g)*amt;b+=(255-b)*amt;}return'rgb('+(r|0)+','+(g|0)+','+(b|0)+')';}
+function rrp(x,X,Y,W,H,R){x.beginPath();if(x.roundRect)x.roundRect(X,Y,W,H,R);else x.rect(X,Y,W,H);}
+function wrapLines(x,t,maxW){const words=t.split(' '),lines=[];let line='';for(const w of words){const tt=line?line+' '+w:w;if(x.measureText(tt).width>maxW&&line){lines.push(line);line=w;}else line=tt;}if(line)lines.push(line);return lines;}
+function hexPath(x,cx,cy,r){x.beginPath();for(let i=0;i<6;i++){const a=Math.PI/3*i+Math.PI/6,px=cx+Math.cos(a)*r,py=cy+Math.sin(a)*r;i?x.lineTo(px,py):x.moveTo(px,py);}x.closePath();}
+function drawHexGrid(x,W,H,acc,al){x.save();x.globalAlpha=al;x.strokeStyle=acc;x.lineWidth=1;const r=10,vert=r*1.5,horiz=r*Math.sqrt(3);let ri=0;for(let cy=0;cy<H+r;cy+=vert,ri++){const off=(ri%2)?horiz/2:0;for(let cx=off;cx<W+horiz;cx+=horiz){hexPath(x,cx,cy,r);x.stroke();}}x.restore();}
+function tArrow(x,x1,y1,x2,y2,col){x.strokeStyle=col;x.lineWidth=1.7;x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();const a=Math.atan2(y2-y1,x2-x1);x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-5*Math.cos(a-0.5),y2-5*Math.sin(a-0.5));x.lineTo(x2-5*Math.cos(a+0.5),y2-5*Math.sin(a+0.5));x.closePath();x.fillStyle=col;x.fill();}
+function boxCandles(x,bx,by,bw,bh,closes,acc){const lo=Math.min.apply(0,closes),hi=Math.max.apply(0,closes),Y=v=>by+bh-((v-lo)/((hi-lo)||1))*bh,n=closes.length,cw=Math.max(2.5,bw/n*0.55);x.shadowColor=acc;x.shadowBlur=5;for(let i=0;i<n;i++){const o=i?closes[i-1]:closes[0],c=closes[i],up=c>=o,cx=bx+(n<2?bw/2:i/(n-1)*bw);x.strokeStyle=up?'#1fe08a':'#ff4d5e';x.lineWidth=1.3;const bt=Y(Math.max(o,c)),bb=Y(Math.min(o,c));x.beginPath();x.moveTo(cx,bt-2);x.lineTo(cx,bb+2);x.stroke();x.fillStyle=x.strokeStyle;x.fillRect(cx-cw/2,bt,cw,Math.max(2,bb-bt));}x.shadowBlur=0;return Y;}
+const ART={
+  break:(x,bx,by,bw,bh,a,m)=>{const dir=(m&&m.dir)||1,cl=dir>0?[2,3,4.2,3.6,4,5.4,6.2]:[7,6,5,5.8,5.2,4.2,5.6],Y=boxCandles(x,bx,by,bw,bh,cl,a),lvl=dir>0?4.2:5.9;x.strokeStyle=a;x.setLineDash([4,3]);x.lineWidth=1.2;x.beginPath();x.moveTo(bx,Y(lvl));x.lineTo(bx+bw,Y(lvl));x.stroke();x.setLineDash([]);tArrow(x,bx+bw-4,Y(lvl)+8,bx+bw-4,Y(cl[cl.length-1])-2,a);},
+  zone:(x,bx,by,bw,bh,a,m)=>{const Y=boxCandles(x,bx,by,bw,bh,[3,4,3.4,4.2,3.6,4.4,3.8],a),zc=(m&&m.pos==='high')?4.5:3.1,zh=bh*0.22;x.fillStyle=hexA(a,0.25);x.fillRect(bx,Y(zc)-zh/2,bw,zh);x.strokeStyle=a;x.lineWidth=1.2;x.strokeRect(bx,Y(zc)-zh/2,bw,zh);},
+  equal:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[3,4,5,4,5,4.2],a);x.strokeStyle=a;x.setLineDash([3,3]);x.lineWidth=1.2;x.beginPath();x.moveTo(bx,Y(5));x.lineTo(bx+bw,Y(5));x.stroke();x.setLineDash([]);x.fillStyle=a;[2,4].forEach(i=>{x.beginPath();x.arc(bx+i/5*bw,Y(5)-3,2.4,0,7);x.fill();});},
+  stop:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[4,4.6,4.2,5,4.6,5.4],a);x.strokeStyle=a;x.lineWidth=1.5;x.setLineDash([4,3]);x.beginPath();x.moveTo(bx,Y(2.8));x.lineTo(bx+bw,Y(2.8));x.stroke();x.setLineDash([]);x.fillStyle=a;x.font='800 8px '+TF;x.textAlign='left';x.fillText('SL',bx+2,Y(2.8)-3);},
+  trend:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[2.5,3.5,3,4.2,3.8,5,4.6,5.6],a);x.strokeStyle=a;x.shadowColor=a;x.shadowBlur=6;x.lineWidth=1.8;x.beginPath();x.moveTo(bx,Y(2.3));x.lineTo(bx+bw,Y(5.3));x.stroke();x.shadowBlur=0;},
+  vwap:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[4,4.6,4,4.6,4.1,4.7],a);x.strokeStyle=a;x.shadowColor=a;x.shadowBlur=6;x.lineWidth=1.8;x.beginPath();for(let i=0;i<=24;i++){const t=i/24,xx=bx+t*bw,yy=Y(4.3+Math.sin(t*6)*0.4);i?x.lineTo(xx,yy):x.moveTo(xx,yy);}x.stroke();x.shadowBlur=0;},
+  glitch:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[3,3.6,3.2,3.8,3.4,4],a),gx=bx+3/5*bw;x.strokeStyle=a;x.shadowColor=a;x.shadowBlur=8;x.lineWidth=2;x.beginPath();x.moveTo(gx,Y(5.6));x.lineTo(gx,Y(2.4));x.stroke();x.fillStyle=a;x.fillRect(gx-3.5,Y(5.4),7,9);x.shadowBlur=0;x.fillStyle='#fff';x.font='900 13px '+TF;x.textAlign='center';x.fillText('!',gx,Y(2.4)-1);},
+  bigcandle:(x,bx,by,bw,bh,a)=>{const cx=bx+bw/2;x.strokeStyle='#1fe08a';x.shadowColor='#1fe08a';x.shadowBlur=8;x.lineWidth=2.4;x.beginPath();x.moveTo(cx,by+2);x.lineTo(cx,by+bh-2);x.stroke();x.fillStyle='#1fe08a';x.fillRect(cx-11,by+bh*0.2,22,bh*0.58);x.shadowBlur=0;x.fillStyle='#ffd60a';x.beginPath();x.arc(cx-18,by+bh*0.78,4,0,7);x.fill();x.fillStyle='#4cc3ff';x.beginPath();x.arc(cx+18,by+bh*0.2,4,0,7);x.fill();},
+  fakeout:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[3,3.6,4.2,5.2,4,3.2,2.6],a);x.strokeStyle='#4cc3ff';x.setLineDash([3,3]);x.lineWidth=1.1;x.beginPath();x.moveTo(bx,Y(4.6));x.lineTo(bx+bw,Y(4.6));x.stroke();x.setLineDash([]);x.strokeStyle=a;x.shadowColor=a;x.shadowBlur=6;x.lineWidth=1.9;x.beginPath();x.arc(bx+bw*0.62,Y(4.7),7,-1.5,1.3);x.stroke();tArrow(x,bx+bw*0.62+2,Y(4.7)+7,bx+bw*0.54,Y(3.4),a);x.shadowBlur=0;},
+  predict:(x,bx,by,bw,bh,a)=>{boxCandles(x,bx,by,bw*0.56,bh,[3,3.6,3.2,4,3.6,4.2],a);x.fillStyle=a;x.shadowColor=a;x.shadowBlur=8;x.font='900 '+(bh*0.7)+'px '+TF;x.textAlign='center';x.textBaseline='middle';x.fillText('?',bx+bw*0.8,by+bh*0.5);x.shadowBlur=0;x.textBaseline='alphabetic';},
+  manage:(x,bx,by,bw,bh,a)=>{boxCandles(x,bx,by,bw*0.6,bh,[3,3.6,4.2,4.8,5.2],a);x.font=(bh*0.34)+'px '+TF;x.textAlign='center';x.textBaseline='middle';x.fillText('🤝',bx+bw*0.83,by+bh*0.32);x.fillText('🚪',bx+bw*0.83,by+bh*0.7);x.textBaseline='alphabetic';},
+  mtf:(x,bx,by,bw,bh,a)=>{boxCandles(x,bx,by,bw,bh*0.4,[2,3,4,5],a);x.fillStyle='#8aa0b8';x.font='700 7px '+TF;x.textAlign='left';x.fillText('HTF ▲',bx+1,by+bh*0.52);boxCandles(x,bx,by+bh*0.56,bw,bh*0.44,[5,4,3,4,5,6],a);},
+  rr:(x,bx,by,bw,bh,a)=>{[['#ffd60a',0.5,'E'],['#ff4d5e',0.82,'SL'],['#1fe08a',0.16,'TP']].forEach(p=>{const y=by+p[1]*bh;x.strokeStyle=p[0];x.setLineDash([4,3]);x.lineWidth=1.3;x.beginPath();x.moveTo(bx,y);x.lineTo(bx+bw-20,y);x.stroke();x.setLineDash([]);x.fillStyle=p[0];x.font='800 7px '+TF;x.textAlign='left';x.fillText(p[2],bx+1,y-2);});x.fillStyle=a;x.shadowColor=a;x.shadowBlur=6;x.font='900 14px '+TF;x.textAlign='right';x.fillText('2R',bx+bw-1,by+bh*0.56);x.shadowBlur=0;},
+  size:(x,bx,by,bw,bh,a)=>{const cx=bx+bw/2,cy=by+bh/2;x.strokeStyle=hexA(a,0.5);x.lineWidth=2;x.beginPath();x.arc(cx,cy,bh*0.4,0,6.283);x.stroke();x.fillStyle=a;x.shadowColor=a;x.shadowBlur=8;x.font='900 '+(bh*0.46)+'px '+TF;x.textAlign='center';x.textBaseline='middle';x.fillText('1%',cx,cy);x.shadowBlur=0;x.textBaseline='alphabetic';},
+  pattern:(x,bx,by,bw,bh,a)=>{const pts=[[0,0.75],[0.2,0.28],[0.35,0.5],[0.5,0.16],[0.65,0.5],[0.8,0.28],[1,0.75]];x.strokeStyle=a;x.shadowColor=a;x.shadowBlur=6;x.lineWidth=2;x.beginPath();pts.forEach((p,i)=>{const xx=bx+p[0]*bw,yy=by+p[1]*bh;i?x.lineTo(xx,yy):x.moveTo(xx,yy);});x.stroke();x.shadowBlur=0;},
+  structure:(x,bx,by,bw,bh,a)=>{x.textAlign='center';x.textBaseline='middle';x.font='800 '+(bh*0.5)+'px '+TF;x.fillStyle='#1fe08a';x.fillText('▲',bx+bw*0.25,by+bh*0.5);x.fillStyle='#ff4d5e';x.fillText('▼',bx+bw*0.5,by+bh*0.5);x.fillStyle='#4cc3ff';x.fillText('↔',bx+bw*0.75,by+bh*0.5);x.textBaseline='alphabetic';},
+};
+function drawArcadeTile(cv,id,title,idx){
+  const m=ARCADE[id]||{accent:'#4cc3ff',art:'break',kicker:'PRACTICE',skill:''},acc=m.accent;
+  const dpr=Math.min(devicePixelRatio||1,2);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);const W=cv.width/dpr,H=cv.height/dpr;
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,shadeC(acc,-0.5));g.addColorStop(0.55,'#0a0e17');g.addColorStop(1,'#06080f');x.fillStyle=g;x.fillRect(0,0,W,H);
+  drawHexGrid(x,W,H,acc,0.05);
+  const rg=x.createRadialGradient(W*0.82,0,2,W*0.82,0,W);rg.addColorStop(0,hexA(acc,0.3));rg.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=rg;x.fillRect(0,0,W,H);
+  x.save();x.globalAlpha=0.07;x.fillStyle='#fff';x.font='900 '+(H*0.9)+'px '+TF;x.textAlign='center';x.textBaseline='middle';x.fillText(SYMS[idx%SYMS.length],W*0.8,H*0.4);x.restore();x.textBaseline='alphabetic';
+  const ay=8,ah=H*0.44,ax=10,aw=W-20;
+  x.fillStyle='rgba(2,4,9,0.45)';rrp(x,ax,ay,aw,ah,7);x.fill();x.strokeStyle=hexA(acc,0.45);x.lineWidth=1;rrp(x,ax,ay,aw,ah,7);x.stroke();
+  x.save();rrp(x,ax,ay,aw,ah,7);x.clip();(ART[m.art]||ART.break)(x,ax+8,ay+7,aw-16,ah-14,acc,m);x.restore();
+  const sc=x.createLinearGradient(0,ay+ah-8,0,H);sc.addColorStop(0,'rgba(5,7,13,0)');sc.addColorStop(0.4,'rgba(5,7,13,0.9)');sc.addColorStop(1,'rgba(5,7,13,0.99)');x.fillStyle=sc;x.fillRect(0,ay+ah-8,W,H-(ay+ah)+8);
+  x.font='800 8px '+TF;const kw=x.measureText(m.kicker).width;x.fillStyle=hexA(acc,0.16);rrp(x,14,14,kw+13,15,4);x.fill();x.strokeStyle=hexA(acc,0.55);x.lineWidth=1;rrp(x,14,14,kw+13,15,4);x.stroke();x.fillStyle=acc;x.textAlign='left';x.fillText(m.kicker,20.5,24.5);
+  const maxW=W-24,skillY=H-10;x.textAlign='left';
+  let fs=title.length>15?15:17;x.font='900 '+fs+'px '+TF;let lines=wrapLines(x,title.toUpperCase(),maxW);if(lines.length>2){fs=13;x.font='900 13px '+TF;lines=wrapLines(x,title.toUpperCase(),maxW);}
+  const nameBottom=skillY-13,ny=nameBottom-(lines.length-1)*(fs+1);
+  x.fillStyle='#fff';x.shadowColor=acc;x.shadowBlur=12;lines.forEach((ln,i)=>x.fillText(ln,12,ny+i*(fs+1)));x.shadowBlur=0;
+  x.fillStyle='rgba(200,214,230,0.82)';x.font='600 9.5px '+TF;x.fillText(m.skill,12,skillY);
+}
+
+/* ---------------- Mini Games (catalog + tiles) ---------------- */
+const MG_GAMES=[
+  ['bos','Break of Structure','Structure','Annotate'],
+  ['choch','ChoCh Placement','Structure','Annotate'],
+  ['ob','Order Block Trade','Structure','Sequence'],
+  ['support','Support Zone','Levels','Annotate'],
+  ['resistance','Resistance Zone','Levels','Annotate'],
+  ['liquidity','Liquidity ID','Structure','Annotate'],
+  ['sl','Stop-Loss Placement','Risk','Annotate'],
+  ['trend','Trendline','Levels','Annotate'],
+  ['vwap','VWAP Reaction','Execution','Annotate'],
+  ['error','Spot the Error','Patterns','Annotate'],
+  ['candle','Candle Lab','Patterns','Sequence'],
+  ['fake','Break Trader','Patterns','Sequence'],
+  ['predict','Trade Prediction','Execution','Predict'],
+  ['manage','Trade Management Sim','Execution','Sequence'],
+  ['mtf','Multi-Timeframe','Execution','Predict'],
+  ['rr','Risk-Reward Builder','Risk','Calculate'],
+  ['possize','Position Size','Risk','Calculate'],
+  ['struct','Market-Structure','Structure','Classify'],
+  ['pattern','Pattern Recognition','Patterns','Classify'],
+  ['exec','Trade Execution Challenge','Execution','Sequence'],
+];
+function renderMiniGames(){
+  const grid=document.getElementById('mgGrid');if(!grid)return;
+  grid.innerHTML=MG_GAMES.map((g,i)=>{
+    const m=ARCADE[g[0]]||{};
+    return '<div class="mg-card" style="--acc:'+(m.accent||'#4cc3ff')+'"><canvas class="tile" data-id="'+g[0]+'" data-i="'+i+'"></canvas>'+
+      '<div class="body"><div class="tags"><span class="tg">'+esc(g[2])+'</span><span class="tg fw">'+esc(g[3])+'</span></div>'+
+      '<div class="skill">'+esc(m.skill||'')+'</div>'+
+      '<div class="mstats">'+
+        '<div class="mstat"><div class="mv">—</div><div class="mk">Plays</div></div>'+
+        '<div class="mstat"><div class="mv">—</div><div class="mk">Avg</div></div>'+
+        '<div class="mstat"><div class="mv">—</div><div class="mk">Best</div></div>'+
+        '<div class="mstat"><div class="mv">—</div><div class="mk">Done</div></div>'+
+      '</div></div></div>';
+  }).join('');
+}
+function drawMGTiles(){
+  document.querySelectorAll('#mgGrid .tile').forEach(cv=>{const g=MG_GAMES[+cv.dataset.i];drawArcadeTile(cv,cv.dataset.id,g[1],+cv.dataset.i);});
+}
+renderMiniGames();
+
+
+/* ════════════════════════ QA TESTING CENTER ════════════════════════
+   Drives the real game in an iframe (chart-quest.html?qa=1) via postMessage.
+   Renders catalog-driven controls, records results, tracks coverage, and
+   exports session reports. */
+const QA = (function () {
+  let booted = false, ready = false, cat = null;
+  function load(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  const stats = load('cq_qa_stats', { boss: {}, game: {} });
+  const cov   = load('cq_qa_cov', { levels: [], lessons: [], bosses: [], games: [], concepts: [], scenarios: [] });
+  let log     = load('cq_qa_log', []);
+
+  const CONCEPTS = [['bos','BOS'],['choch','CHOCH'],['vwap','VWAP'],['trendlines','Trendlines'],['support','Support'],['resistance','Resistance'],['liquidity','Liquidity'],['risk','Risk Management'],['replay','Trade Replay'],['pattern','Pattern Recognition'],['structure','Market Structure']];
+  const SCENARIOS = [['bullish','Bullish Trend'],['bearish','Bearish Trend'],['range','Range'],['fakeout','Fakeout'],['bos','BOS Scenario'],['choch','CHOCH Scenario'],['liquidity','Liquidity Sweep'],['support','Support Test'],['resistance','Resistance Test'],['trendline','Trendline Setup'],['orderblock','Order Block Setup']];
+
+  /* Built-in catalog so every list is clickable INSTANTLY, before/without the
+     game iframe connecting. When the live game connects it sends a richer
+     catalog (accurate round ids etc.) that replaces this. */
+  function defaultCat() {
+    // SINGLE SOURCE OF TRUTH: there is intentionally NO hard-coded boss / lesson /
+    // curriculum data here. The LIVE game catalog (sourced from guardianMasterData,
+    // CURRICULUM and LESSON_LIBRARY, see the 'catalog' message handler) always wins.
+    // This offline fallback only renders a "connecting…" shell before the game iframe
+    // loads, so the dashboard can never drift from the game again.
+    const bosses = [];
+    for (let i = 0; i <= 10; i++) bosses.push({ level: i, position: i, name: 'Guardian ' + i, emoji: '·', arena: '—', realm: '—', lesson: '(connecting to live game…)', difficulty: '', rounds: 0, roundIds: [], lives: 3, portrait: 'bosses/boss-' + i + '.webp' });
+    const levels = [];
+    for (let n = 1; n <= 10; n++) levels.push({ n: n, title: 'HOUR ' + n, subtitle: '(connecting…)', focus: [] });
+    const rankMeta = [['DRIFTER','🌊'],['PLANKTON','🦠'],['MINNOW','🐟'],['CRAB','🦀'],['PUFFERFISH','🐡'],['OCTOPUS','🐙'],['DOLPHIN','🐬'],['SHARK','🦈'],['WHALE','🐋'],['LEVIATHAN','🐲'],['TRADER','👑']];
+    let games = [];
+    try { games = MG_GAMES.map(g => ({ id: g[0], title: g[1], category: g[2], framework: g[3] })); } catch (e) {}
+    return {
+      bosses: bosses,
+      lessons: [],          // live catalog provides the lessons
+      levels: levels,
+      games: games,
+      ranks: rankMeta.map((m, i) => ({ i: i, name: m[0], emoji: m[1] })),
+    };
+  }
+
+  const $id = id => document.getElementById(id);
+  function frame() { return $id('qaFrame'); }
+  let pending = null;   // latest command held until the game connects
+  function send(cmd, args) {
+    const m = { source: 'cq-qa', cmd: cmd, args: args || {} };
+    const f = frame();
+    if (ready && f && f.contentWindow) { f.contentWindow.postMessage(m, '*'); }
+    else { pending = m; setStatus('connecting… (queued ' + cmd + ')', 'warn'); }
+  }
+  function flush() { const f = frame(); if (pending && f && f.contentWindow) { f.contentWindow.postMessage(pending, '*'); pending = null; } }
+  // KEYBOARD PASS-THROUGH — forward gameplay keys (WASD / arrows / Space) to the embedded game so
+  // you can actually PLAY it from the dashboard without first clicking into the frame. Skipped when
+  // the frame already has focus (it gets the real key then) or when typing in a field.
+  (function () {
+    const PLAY = { KeyW: 1, KeyA: 1, KeyS: 1, KeyD: 1, ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1, Space: 1 };
+    window.addEventListener('keydown', function (e) {
+      if (!PLAY[e.code]) return;
+      const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      const f = frame(); if (!f || !f.contentWindow) return;
+      if (document.activeElement === f) return;   // frame focused → it receives the real key
+      f.contentWindow.postMessage({ source: 'cq-qa', cmd: 'key', type: 'keydown', code: e.code }, '*');
+      if (e.code === 'Space' || e.code.indexOf('Arrow') === 0) e.preventDefault();   // stop page scroll / button activation during play
+    }, true);
+  })();
+  function setStatus(txt, cls) { const el = $id('qaStatus'); if (!el) return; el.textContent = '· ' + txt; el.style.color = cls === 'ok' ? 'var(--green)' : cls === 'warn' ? 'var(--amber)' : 'var(--muted)'; }
+  function diff() { return ($id('qaDiff') || {}).value || 'intermediate'; }
+  function reveal() { return !!($id('qaReveal') || {}).checked; }
+
+  function logLine(cls, text) { log.unshift({ t: Date.now(), cls: cls, text: text }); if (log.length > 400) log.length = 400; save('cq_qa_log', log); renderLog(); }
+  function renderLog() {
+    const el = $id('qaLog'); if (!el) return;
+    if (!log.length) { el.innerHTML = '<div class="ln info">No test activity yet.</div>'; return; }
+    el.innerHTML = log.slice(0, 200).map(l => { const d = new Date(l.t), ts = ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2); return '<div class="ln '+l.cls+'">['+ts+'] '+esc(l.text)+'</div>'; }).join('');
+  }
+  function covAdd(group, key) { key = String(key); if (cov[group] && cov[group].indexOf(key) < 0) { cov[group].push(key); save('cq_qa_cov', cov); renderCov(); } }
+
+  /* ---- result + stats ---- */
+  function recordResult(r) {
+    if (!r) return;
+    if (r.kind === 'boss') {
+      const b = stats.boss[r.level] = stats.boss[r.level] || { win: 0, lose: 0 };
+      if (r.outcome === 'win') b.win++; else b.lose++;
+      covAdd('bosses', r.level);
+      logLine(r.outcome === 'win' ? 'pass' : 'fail', 'Boss ' + r.level + (r.name ? ' (' + r.name + ')' : '') + ' → ' + String(r.outcome).toUpperCase());
+      renderBosses();
+    } else if (r.kind === 'mini') {
+      const g = stats.game[r.id] = stats.game[r.id] || { pass: 0, fail: 0 };
+      if (r.passed) g.pass++; else g.fail++;
+      covAdd('games', r.id);
+      logLine(r.passed ? 'pass' : 'fail', 'Mini "' + r.id + '" [' + r.diff + '] → ' + (r.passed ? 'PASS' : 'FAIL') + ' (' + r.score + ')' + (r.synthetic ? ' [forced]' : ''));
+      renderGames();
+    }
+    save('cq_qa_stats', stats);
+  }
+  function bossRate(lvl) { const s = stats.boss[lvl]; if (!s || (s.win + s.lose) === 0) return 'no runs'; const n = s.win + s.lose; return s.win + 'W / ' + s.lose + 'L · ' + Math.round(100 * s.win / n) + '% pass'; }
+  function gameRate(id) { const s = stats.game[id]; if (!s || (s.pass + s.fail) === 0) return 'no runs'; const n = s.pass + s.fail; return s.pass + '✓ / ' + s.fail + '✗ · ' + Math.round(100 * s.pass / n) + '% pass'; }
+
+  /* ---- renders ---- */
+  function renderState(s) {
+    const el = $id('qaStateBox'); if (!el || !s) return;
+    el.innerHTML =
+      '<div class="c"><div class="v">' + esc((s.rankEmoji || '') + ' ' + (s.rank || '—')) + '</div><div class="k">Rank</div></div>' +
+      '<div class="c"><div class="v">' + esc(s.level != null ? s.level : '—') + '</div><div class="k">Level</div></div>' +
+      '<div class="c"><div class="v">' + esc(s.shells != null ? Number(s.shells).toLocaleString() : '—') + '</div><div class="k">Coins 🐚</div></div>';
+  }
+  function renderLevels() {
+    const el = $id('qaLevels'); if (!el || !cat) return;
+    el.innerHTML = cat.levels.map(L =>
+      '<div class="qa-item"><div class="t">Hour ' + L.n + ' — ' + esc(L.title) + '</div><div class="s">' + esc(L.subtitle || '') + '</div><div class="btns">' +
+      '<button class="qa-btn go" data-qa="lvl" data-n="' + L.n + '">Launch</button>' +
+      '<button class="qa-btn sm" data-qa="lvl-restart" data-n="' + L.n + '">Restart</button>' +
+      '<button class="qa-btn sm" data-qa="lvl-skip" data-n="' + L.n + '">Skip →</button>' +
+      '<button class="qa-btn sm" data-qa="lvl-complete" data-n="' + L.n + '">Mark Done</button>' +
+      '</div></div>').join('');
+  }
+  function renderLessons() {
+    const el = $id('qaLessons'); if (!el || !cat) return;
+    el.innerHTML = cat.lessons.map(L =>
+      '<div class="qa-item"><div class="t">' + esc(L.title) + '</div><div class="s">' + esc(L.key) + '</div><div class="btns">' +
+      '<button class="qa-btn go" data-qa="lesson" data-key="' + esc(L.key) + '">Launch</button>' +
+      '<button class="qa-btn sm" data-qa="lesson" data-key="' + esc(L.key) + '">Restart</button>' +
+      '</div></div>').join('');
+  }
+  function renderBosses() {
+    const el = $id('qaBosses'); if (!el || !cat) return;
+    el.innerHTML = cat.bosses.map(b =>
+      '<div class="qa-item"><div class="qa-realm-wrap">' +
+        '<canvas class="qa-realm" data-level="' + b.level + '" title="Live realm: ' + esc(b.realm || b.arena || '') + '"></canvas>' +
+        '<img class="qa-boss-pic" src="bosses/boss-' + b.level + '.webp" alt="" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">' +
+      '</div>' +
+      '<div class="t">' + esc(b.emoji + ' ' + b.name) + '</div><div class="s">' + esc(b.realm || b.arena || ('Hour ' + b.level)) + ' · ' + b.rounds + ' rounds · ' + (b.lives||3) + '♥</div>' +
+      (b.lesson ? '<div class="lesson-line">' + esc(b.lesson) + '</div>' : '') +
+      '<div class="rate">' + esc(bossRate(b.level)) + '</div><div class="btns">' +
+      '<button class="qa-btn go" data-qa="boss" data-level="' + b.level + '">Launch</button>' +
+      '<button class="qa-btn sm" data-qa="boss-concepts" data-level="' + b.level + '">Concepts</button>' +
+      '<button class="qa-btn sm" data-qa="boss-fw" data-level="' + b.level + '">Force Win</button>' +
+      '<button class="qa-btn sm" data-qa="boss-fl" data-level="' + b.level + '">Force Lose</button>' +
+      '<button class="qa-btn danger sm" data-qa="boss-reset" data-level="' + b.level + '">Reset</button>' +
+      '</div></div>').join('');
+    try { if (window.RealmPreview) window.RealmPreview.mount(); } catch (e) {}
+  }
+  function renderGames() {
+    const el = $id('qaGames'); if (!el || !cat) return;
+    el.innerHTML = cat.games.map(g =>
+      '<div class="qa-item"><div class="t">' + esc(g.title) + '</div><div class="s">' + esc(g.category + ' · ' + g.framework) + '</div>' +
+      '<div class="rate">' + esc(gameRate(g.id)) + '</div><div class="btns">' +
+      '<button class="qa-btn go" data-qa="mini" data-id="' + esc(g.id) + '">Launch</button>' +
+      '<button class="qa-btn sm" data-qa="mini-reveal" data-id="' + esc(g.id) + '">Reveal</button>' +
+      '<button class="qa-btn sm" data-qa="mini-pass" data-id="' + esc(g.id) + '">Pass✓</button>' +
+      '<button class="qa-btn sm" data-qa="mini-fail" data-id="' + esc(g.id) + '">Fail✗</button>' +
+      '<button class="qa-btn danger sm" data-qa="mini-resetstats" data-id="' + esc(g.id) + '">Reset</button>' +
+      '</div></div>').join('');
+  }
+  function renderConcepts() {
+    const el = $id('qaConcepts'); if (!el) return;
+    el.innerHTML = CONCEPTS.map(c => '<button class="qa-btn" data-qa="concept" data-key="' + c[0] + '">' + esc(c[1]) + '</button>').join('');
+  }
+  function renderScenarios() {
+    const el = $id('qaScenarios'); if (!el) return;
+    el.innerHTML = SCENARIOS.map(s => '<button class="qa-btn" data-qa="scenario" data-type="' + s[0] + '">' + esc(s[1]) + '</button>').join('');
+  }
+  function renderRanks() {
+    const el = $id('qaRank'); if (!el) return;
+    const ranks = (cat && cat.ranks) || [];
+    el.innerHTML = ranks.length ? ranks.map(r => '<option value="' + r.i + '">' + esc(r.emoji + ' ' + r.name) + '</option>').join('') : '<option value="0">Rank 0</option>';
+  }
+  function renderCov() {
+    const el = $id('qaCov'); if (!el) return;
+    const tot = cat ? { levels: cat.levels.length, lessons: cat.lessons.length, bosses: cat.bosses.length, games: cat.games.length } : { levels: 10, lessons: 20, bosses: 11, games: 20 };
+    const rows = [
+      ['Levels', cov.levels.length, tot.levels], ['Lessons', cov.lessons.length, tot.lessons],
+      ['Bosses', cov.bosses.length, tot.bosses], ['Mini Games', cov.games.length, tot.games],
+      ['Concepts', cov.concepts.length, CONCEPTS.length], ['Scenarios', cov.scenarios.length, SCENARIOS.length],
+    ];
+    let html = rows.map(r => { const pct = r[2] ? Math.round(100 * r[1] / r[2]) : 0; return '<div><div class="lbl"><span>' + r[0] + ' tested</span><span>' + r[1] + ' / ' + r[2] + '</span></div><div class="bar"><i style="width:' + pct + '%"></i></div></div>'; }).join('');
+    // educational concepts covered / missing (by category of tested games)
+    if (cat) {
+      const allCats = Array.from(new Set(cat.games.map(g => g.category)));
+      const coveredCats = Array.from(new Set(cat.games.filter(g => cov.games.indexOf(g.id) >= 0).map(g => g.category)));
+      const missing = allCats.filter(c => coveredCats.indexOf(c) < 0);
+      html += '<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5;"><b style="color:var(--green)">Concepts covered:</b> ' + (coveredCats.join(', ') || 'none yet') + '<br><b style="color:var(--amber)">Concepts missing:</b> ' + (missing.join(', ') || 'none — full coverage') + '</div>';
+    }
+    el.innerHTML = html;
+  }
+  function renderAnswer(d) {
+    const el = $id('qaVal'), hint = $id('qaValHint'); if (!el) return;
+    if (hint) hint.style.display = 'none';
+    el.style.display = 'block';
+    if (d.error) { el.innerHTML = '<span style="color:#ff8088">' + esc(d.error) + '</span>'; return; }
+    let h = '<b>' + esc(d.title) + '</b>  <span class="k">[' + esc(d.difficulty) + ']</span>\n';
+    h += '<span class="k">Category:</span> ' + esc(d.category) + ' · ' + esc(d.framework) + (d.variant ? '/' + esc(d.variant) : '') + '\n\n';
+    h += '<span class="k">🎯 Objective:</span>\n' + esc(d.objective || '—') + '\n\n';
+    if (d.correctAnswer != null) h += '<span class="k">✅ Correct answer:</span> ' + esc(d.correctAnswer) + '\n';
+    if (d.acceptedAnswers) h += '<span class="k">Accepted:</span> ' + esc(d.acceptedAnswers.join('  |  ')) + '\n';
+    if (d.why) h += '\n<span class="k">Why:</span> ' + esc(d.why) + '\n';
+    h += '\n<span class="k">⚙ Validation logic:</span>\n' + esc(d.validation || '—');
+    el.innerHTML = h;
+  }
+  function showBossConcepts(level) {
+    const el = $id('qaVal'), hint = $id('qaValHint'); if (!el || !cat) return;
+    const b = cat.bosses.find(x => x.level === level); if (!b) return;
+    if (hint) hint.style.display = 'none'; el.style.display = 'block';
+    const lines = (b.roundIds || []).map((id, i) => { const g = cat.games.find(x => x.id === id); return '  Round ' + (i + 1) + ': ' + (g ? g.title + ' (' + g.category + ')' : id); });
+    el.innerHTML = '<b>' + esc(b.emoji + ' ' + b.name) + '</b>\n<span class="k">Arena:</span> ' + esc(b.arena) + '\n<span class="k">Educational concepts tested across ' + b.rounds + ' rounds:</span>\n' + esc(lines.join('\n'));
+  }
+
+  function renderAll() { renderLevels(); renderLessons(); renderBosses(); renderGames(); renderConcepts(); renderScenarios(); renderRanks(); renderCov(); }
+
+  /* ---- export ---- */
+  function exportReport() {
+    const report = {
+      tool: 'Chart Quest — QA Testing Center', generatedAt: new Date().toISOString(),
+      coverage: cov, stats: stats,
+      summary: {
+        bossesTested: cov.bosses.length, gamesTested: cov.games.length, lessonsTested: cov.lessons.length,
+        levelsTested: cov.levels.length, conceptsTested: cov.concepts.length, scenariosTested: cov.scenarios.length,
+      },
+      sessionLog: log,
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'qa-report-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    logLine('info', 'Exported QA report.');
+  }
+
+  /* ---- click routing ---- */
+  function onClick(e) {
+    const t = e.target.closest('[data-qa]'); if (!t) return;
+    const a = t.dataset, n = +a.n, lvl = +a.level;
+    switch (a.qa) {
+      case 'lvl': case 'lvl-restart': send('level', { n: n }); covAdd('levels', n); logLine('info', 'Launch Hour ' + n); break;
+      case 'lvl-skip': send('level', { n: n + 1 }); covAdd('levels', n + 1); logLine('info', 'Skip → Hour ' + (n + 1)); break;
+      case 'lvl-complete': send('setState', { level: n }); logLine('info', 'Mark Hour ' + n + ' complete (set level ' + n + ')'); break;
+      case 'lesson': send('lesson', { key: a.key }); covAdd('lessons', a.key); logLine('info', 'Launch lesson ' + a.key); break;
+      case 'boss': send('boss', { level: lvl, diff: diff() }); covAdd('bosses', lvl); logLine('info', 'Launch boss ' + lvl + ' (' + diff() + ')'); break;
+      case 'trial': send('trial', { level: lvl || 0, idx: +a.idx || 0, trial: a.trial }); covAdd('bosses', lvl || 0); logLine('info', 'Guardian Trial → ' + (a.trial || ('full boss ' + (lvl || 0)))); break;
+      case 'boss-concepts': showBossConcepts(lvl); break;
+      case 'boss-fw': send('forceWin'); logLine('info', 'Force WIN boss ' + lvl); break;
+      case 'boss-fl': send('forceLose'); logLine('info', 'Force LOSE boss ' + lvl); break;
+      case 'boss-reset': send('resetBoss', { level: lvl }); delete stats.boss[lvl]; save('cq_qa_stats', stats); renderBosses(); logLine('warn', 'Reset boss ' + lvl + ' progress + stats'); break;
+      case 'mini': send('mini', { id: a.id, diff: diff() }); if (reveal()) send('answerData', { id: a.id, diff: diff() }); covAdd('games', a.id); logLine('info', 'Launch mini ' + a.id + ' (' + diff() + ')'); break;
+      case 'mini-reveal': send('answerData', { id: a.id, diff: diff() }); break;
+      case 'mini-pass': recordResult({ kind: 'mini', id: a.id, diff: diff(), score: 100, passed: true, synthetic: true }); break;
+      case 'mini-fail': recordResult({ kind: 'mini', id: a.id, diff: diff(), score: 0, passed: false, synthetic: true }); break;
+      case 'mini-resetstats': delete stats.game[a.id]; save('cq_qa_stats', stats); renderGames(); logLine('warn', 'Reset stats for ' + a.id); break;
+      case 'concept': send('concept', { key: a.key, diff: diff() }); covAdd('concepts', a.key); logLine('info', 'Launch concept ' + a.key); break;
+      case 'scenario': send('scenario', { type: a.type, diff: diff() }); covAdd('scenarios', a.type); logLine('info', 'Launch scenario ' + a.type); break;
+    }
+  }
+
+  function wireControls() {
+    const reloadBtn = $id('qaReload'); if (reloadBtn) reloadBtn.onclick = () => { ready = false; setStatus('connecting…', ''); const f = frame(); if (f) f.src = 'chart-quest.html?qa=1&_=' + Date.now(); logLine('info', 'Reloading game…'); setTimeout(() => { if (!ready) setStatus('not connected — try “open in tab”', 'warn'); }, 5000); };
+    const setBtn = $id('qaSetState'); if (setBtn) setBtn.onclick = () => { const rank = +($id('qaRank') || {}).value, xp = +($id('qaXP') || {}).value, coins = +($id('qaCoins') || {}).value; send('setState', { rank: rank, xp: xp, coins: coins }); logLine('info', 'Set state — rank ' + rank + ', xp ' + xp + ', coins ' + coins); };
+    document.querySelectorAll('#panel-qa [data-state]').forEach(b => b.onclick = () => { send(b.dataset.state); logLine('warn', 'Player state → ' + b.dataset.state); });
+    const exp = $id('qaExport'); if (exp) exp.onclick = exportReport;
+    const clr = $id('qaClearLog'); if (clr) clr.onclick = () => { log = []; save('cq_qa_log', log); renderLog(); };
+    document.getElementById('panel-qa').addEventListener('click', onClick);
+  }
+
+  window.addEventListener('message', function (ev) {
+    const d = ev.data; if (!d || d.source !== 'cq-qa-game') return;
+    if (d.type === 'ready') { ready = true; setStatus('connected ✓', 'ok'); const bm = $id('qaBootMsg'); if (bm) bm.style.display = 'none'; if (d.state) renderState(d.state); logLine('info', 'Game engine connected.'); flush(); }
+    else if (d.type === 'catalog') { const c = d.data || {}; const dc = defaultCat(); ['bosses','lessons','levels','games','ranks'].forEach(k => { if (!c[k] || !c[k].length) c[k] = dc[k]; }); cat = c; renderAll(); }
+    else if (d.type === 'state') { renderState(d.data); logLine('info', 'State updated.'); }
+    else if (d.type === 'answer') { renderAnswer(d.data); }
+    else if (d.type === 'result') { recordResult(d.result); }
+    else if (d.type === 'ack') { logLine('info', '✓ ' + d.cmd + (d.id ? ' ' + d.id : '') + (d.level != null ? ' L' + d.level : '') + (d.n != null ? ' h' + d.n : '') + (d.diff ? ' (' + d.diff + ')' : '')); }
+    else if (d.type === 'error') { logLine('warn', '⚠ ' + d.msg); }
+  });
+
+  function init() {
+    if (!booted) {
+      booted = true;
+      if (!cat) cat = defaultCat();      // populate every list instantly
+      renderAll();
+      const bm = $id('qaBootMsg'); if (bm) bm.style.display = 'none';
+      wireControls(); renderLog(); renderCov();
+      const f = frame(); if (f && !f.src) f.src = 'chart-quest.html?qa=1';
+      setStatus('connecting…', '');
+      setTimeout(() => { if (!ready) setStatus('not connected — click ↻ Reload Game, or “open in tab”', 'warn'); }, 5000);
+    } else if (ready) { send('state'); }
+  }
+  return { init: init };
+})();
+function initQA() { QA.init(); }
+
+/* ════════════════════════ CONTENT PRODUCTION ENGINE (dashboard) ════════════════════════
+   Reads the game's Content Event Logger over the 'cq-content' bridge (live capture,
+   shared localStorage origin) and from Supabase content_events when present
+   (persistent / cross-device). Renders Event Log, Special Events, AI Director
+   Briefs, Replay Manager, instrumentation detail, and platform-shaped export. */
+const Content = (function () {
+  const SUPA_URL = 'https://ymxppzhczvmiuoncuqqu.supabase.co';
+  const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
+  const PILLAR = { boss_defeated:'Turtle Journey', boss_failed:'Turtle Journey', boss_encounter:'Turtle Journey', trade_win:'Trading Education', trade_loss:'Trading Education', risk_management_success:'Trading Education', risk_management_failure:'Trading Education', lesson_completed:'Market Education', pattern_identified:'Trading Education', level_up:'Turtle Journey', achievement_unlocked:'Build In Public', mini_game_completed:'Trading Education', mini_game_failed:'Trading Education' };
+  let booted=false, ready=false, view='events', source='live', events=[], replays=[];
+  const $id = id => document.getElementById(id);
+  const frame = () => $id('cFrame');
+  const waiters = {};
+  // ── MASTER SWITCH (shared with the game via same-origin localStorage 'cq_content_enabled') ──
+  function masterOn(){ try { return localStorage.getItem('cq_content_enabled') === '1'; } catch (e) { return false; } }
+  function setMaster(on){ try { localStorage.setItem('cq_content_enabled', on ? '1' : '0'); } catch (e) {} send('setEnabled', { on }); setMasterBtn(); }
+  function setMasterBtn(){ const b=$id('cMaster'); if(!b) return; const on=masterOn(); b.textContent = on ? '⏺ SYSTEM: ON' : '⏸ SYSTEM: OFF'; b.classList.toggle('go', on); b.classList.toggle('danger', !on); }
+  function send(cmd, args){ const f=frame(); if(f&&f.contentWindow) f.contentWindow.postMessage({source:'cq-content',cmd,args:args||{}},'*'); }
+  function req(cmd, args){ return new Promise(res=>{ waiters[cmd]=res; send(cmd,args); setTimeout(()=>{ if(waiters[cmd]){ waiters[cmd]=null; res(null);} },2500); }); }
+  window.addEventListener('message', function(ev){ const d=ev.data; if(!d||d.source!=='cq-content-game') return; if(d.cmd==='__ready'){ready=true;setStatus();return;} const w=waiters[d.cmd]; if(w){ waiters[d.cmd]=null; w(d.data);} });
+
+  async function fetchSupabase(){
+    try{ const r=await fetch(SUPA_URL+'/rest/v1/content_events?select=*&order=ts.desc&limit=500',{headers:{apikey:SUPA_ANON,Authorization:authBearer()}});
+      if(!r.ok) return null; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return null;
+      return rows.map(x=>({event_id:x.event_id,event_type:x.event_type,timestamp:x.ts,faction:x.faction,player_level:x.player_level,player_rank:x.player_rank,payload:x.payload||{},educational_metadata:x.educational_metadata||{},content_flags:x.content_flags||{}}));
+    }catch(e){ return null; }
+  }
+  let healthData=null;
+  async function fetchSupabaseReplays(){
+    try{ const r=await fetch(SUPA_URL+'/rest/v1/content_replays?select=*&order=created_at.desc&limit=200',{headers:{apikey:SUPA_ANON,Authorization:authBearer()}});
+      if(!r.ok) return null; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return null;
+      return rows.map(x=>({replay_id:x.replay_id, created:x.created_at, meta:x.meta||{}, data:x.data||{}}));
+    }catch(e){ return null; }
+  }
+  async function loadAll(){
+    // MASTER SWITCH off → the system is not recording; keep the dashboard empty (don't pull
+    // local or cloud) so "OFF" truly means nothing is shown or saved until it's turned back on.
+    if (!masterOn()) { events=[]; replays=[]; source='off'; healthData=(await req('health'))||null; setStatus(); renderStats(); renderTypeFilter(); render(); return; }
+    const sb = await fetchSupabase();
+    if (sb) { events=sb; source='supabase'; }
+    else { events=(await req('query',{}))||[]; source='live'; }
+    const sbR = await fetchSupabaseReplays();
+    replays = sbR || (await req('replays')) || [];
+    healthData = (await req('health')) || null;        // P1: sync monitoring
+    setStatus(); renderStats(); renderTypeFilter(); render();
+  }
+  function setStatus(){
+    const cap=$id('cCapture'), src=$id('cSource'), fs=$id('cFrameStatus');
+    setMasterBtn();
+    if(cap){ if(!masterOn()){ cap.textContent='● Capture: OFF — not recording'; cap.style.color='var(--muted)'; }
+      else { const n=events.length; cap.textContent = '● Capture: ON '+(n>0?('· '+n+' events ✓'):'· no events yet'); cap.style.color = n>0?'var(--green)':'var(--amber)'; } }
+    if(src){ const h=healthData; let txt='Source: '+(source==='supabase'?'Supabase (source of truth)':'Live cache (this session)');
+      if(h){ txt += '  ·  Cloud sync: '+(h.queued?('⏳ '+h.queued+' queued'):'✓ flushed '+h.flushed)+(h.failed?(' · '+h.failed+' retried'):'')+(h.dropped?(' · ⚠ '+h.dropped+' dropped'):''); }
+      src.textContent=txt; src.style.color = (h&&h.queued>50)?'var(--amber)':'var(--muted)'; }
+    if(fs){ fs.textContent = ready?'· connected ✓':'· connecting…'; fs.style.color = ready?'var(--green)':'var(--muted)'; }
+  }
+  function briefs(){
+    return events.filter(e=>(e.content_flags.clip_candidate||((e.content_flags.significance_score||0)>=55)))
+      .map(e=>{ const cf=e.content_flags||{}, p=e.payload||{}; const s=cf.significance_score||0;
+        return { e, pillar:PILLAR[e.event_type]||'Trading Education', urgency:s>=85?'immediate':s>=55?'this-week':'evergreen',
+          sig:s, vir:cf.virality_score||0, prio:cf.priority_score||0, tags:cf.special_tags||[],
+          angle: angleFor(e) }; })
+      .sort((a,b)=>b.prio-a.prio);
+  }
+  function angleFor(e){ const p=e.payload||{}, t=e.event_type;
+    if(t==='boss_defeated') return (p.clean_win?'Flawless takedown of ':'Hard-won win over ')+(p.boss_name||'the boss');
+    if(t==='trade_win') return (p.grade==='A'?'A-grade ':'')+(p.setup_type||'setup')+' for +'+(p.pnl_shells||0);
+    if(t==='trade_loss') return 'Clean stop-out — “good setups still lose”';
+    if(t==='risk_management_success') return 'Stop-loss saved ~'+(p.capital_saved_shells||0)+' shells';
+    if(t==='level_up') return p.rank_changed?('Rank up → '+p.new_rank):'Level '+p.new_level;
+    if(t==='lesson_completed') return 'Explainer: '+(p.lesson_title||p.lesson_id);
+    if(t==='pattern_identified') return 'Spot the '+(p.pattern_type||'pattern');
+    return e.content_flags.special_tags && e.content_flags.special_tags[0] || t;
+  }
+  function renderStats(){
+    const sp=events.filter(e=>e.content_flags.special).length, cl=events.filter(e=>e.content_flags.clip_candidate).length;
+    $id('cTotal').textContent=events.length; $id('cSpecial').textContent=sp; $id('cClips').textContent=cl;
+    $id('cReplays').textContent=replays.length; $id('cBriefs').textContent=briefs().length;
+  }
+  function renderTypeFilter(){
+    const sel=$id('cFilterType'); if(!sel) return; const cur=sel.value;
+    const types=Array.from(new Set(events.map(e=>e.event_type))).sort();
+    sel.innerHTML='<option value="">All types</option>'+types.map(t=>'<option value="'+t+'">'+t+' ('+events.filter(e=>e.event_type===t).length+')</option>').join('');
+    sel.value=cur;
+  }
+  function filtered(){
+    const q=($id('cSearch').value||'').toLowerCase().trim(), ty=$id('cFilterType').value;
+    return events.filter(e=>{ if(ty&&e.event_type!==ty) return false; if(q){ if(JSON.stringify(e).toLowerCase().indexOf(q)<0) return false; } return true; });
+  }
+  function row(e){ const cf=e.content_flags||{}, ts=new Date(e.timestamp); const tt=('0'+ts.getHours()).slice(-2)+':'+('0'+ts.getMinutes()).slice(-2);
+    const tag = (cf.special_tags&&cf.special_tags.length)?(' <span style="color:var(--green)">★ '+esc(cf.special_tags.join(', '))+'</span>'):'';
+    return '<div class="ln" data-eid="'+esc(e.event_id)+'" style="cursor:pointer;display:flex;justify-content:space-between;gap:8px;"><span>['+tt+'] <b style="color:#cdd8e6">'+esc(e.event_type)+'</b>'+tag+'</span><span style="color:var(--muted)">sig '+(cf.significance_score||0)+' · vir '+(cf.virality_score||0)+'</span></div>'; }
+  function render(){
+    const el=$id('cList'); if(!el) return;
+    document.querySelectorAll('#panel-content [data-cview]').forEach(b=>b.classList.toggle('go', b.dataset.cview===view));
+    if(view==='events'){ const f=filtered(); el.innerHTML = f.length? f.map(row).join('') : '<div class="ln info">No events captured yet. Play the game (or use the QA tab to launch bosses/mini-games) — events stream in here.</div>'; }
+    else if(view==='special'){ const f=filtered().filter(e=>e.content_flags.special); el.innerHTML = f.length? f.map(row).join('') : '<div class="ln info">No special moments yet. Clean boss wins, big trades, risk saves and rank-ups land here automatically.</div>'; }
+    else if(view==='briefs'){ const b=briefs(); el.innerHTML = b.length? b.map(x=>'<div class="ln" data-eid="'+esc(x.e.event_id)+'" style="cursor:pointer;"><b style="color:#cdd8e6">'+esc(x.pillar)+'</b> · <span style="color:var(--amber)">'+esc(x.urgency)+'</span> · <span style="color:var(--muted)">prio '+x.prio+'</span><br><span style="color:#aebdcf">'+esc(x.angle)+'</span></div>').join('') : '<div class="ln info">No briefs yet — the Content Director surfaces clip-worthy events here as they happen.</div>'; }
+    else if(view==='replays'){ el.innerHTML = replays.length? replays.slice().reverse().map(r=>{ const m=r.meta||{}; return '<div class="ln" data-rid="'+esc(r.replay_id)+'" style="cursor:pointer;">🎞 <b style="color:#cdd8e6">'+esc(m.kind||'replay')+'</b> · '+esc(m.setup||m.dir||'')+' '+esc(m.result||'')+' <span style="color:var(--muted)">'+(r.data&&r.data.candles?r.data.candles.length+' candles':'')+'</span></div>'; }).join('') : '<div class="ln info">No replays captured yet. Trade replays (entry context + outcome film) are stored automatically on each closed trade.</div>'; }
+  }
+  function showDetail(eid){ const e=events.find(x=>x.event_id===eid); if(!e) return; const d=$id('cDetail'), h=$id('cDetailHint'); if(h)h.style.display='none'; d.style.display='block';
+    d.innerHTML = '<b>'+esc(e.event_type)+'</b>  <span class="k">'+esc(new Date(e.timestamp).toLocaleString())+'</span>\n'
+      +'<span class="k">faction</span> '+esc(e.faction)+' · <span class="k">lvl</span> '+esc(e.player_level)+' · <span class="k">rank</span> '+esc(e.player_rank)+'\n\n'
+      +'<span class="k">scores</span> significance '+(e.content_flags.significance_score||0)+' · priority '+(e.content_flags.priority_score||0)+' · virality '+(e.content_flags.virality_score||0)+' · educational '+(e.content_flags.educational_value_score||0)+'\n'
+      +'<span class="k">special</span> '+((e.content_flags.special_tags||[]).join(', ')||'—')+'\n\n'
+      +'<span class="k">payload</span>\n'+esc(JSON.stringify(e.payload,null,2))+'\n\n'
+      +'<span class="k">educational_metadata</span>\n'+esc(JSON.stringify(e.educational_metadata,null,2));
+  }
+  function showReplayDetail(rid){ const r=replays.find(x=>x.replay_id===rid); if(!r) return; const d=$id('cDetail'), h=$id('cDetailHint'); if(h)h.style.display='none'; d.style.display='block';
+    d.innerHTML='<b>Replay '+esc(r.replay_id)+'</b>\n<span class="k">meta</span>\n'+esc(JSON.stringify(r.meta,null,2))+'\n\n<span class="k">candles</span> '+((r.data&&r.data.candles)?r.data.candles.length:0)+' frames · entry idx '+((r.data&&r.data.entryIdx)!=null?r.data.entryIdx:'—'); }
+  function doExport(){
+    const plat=$id('cFilterPlat').value, list=filtered();
+    const pkg={ platform:plat, generated:new Date().toISOString(), schema:'content-events/schema.md', source, count:list.length,
+      briefs: briefs().filter(b=>list.some(e=>e.event_id===b.e.event_id)).map(b=>({event_id:b.e.event_id,pillar:b.pillar,urgency:b.urgency,angle:b.angle,priority:b.prio})),
+      events:list };
+    const out=$id('cOut'); out.style.display='block'; out.textContent='Exported '+list.length+' events ('+plat+'). Logged to content_exports + content_generated. Download starting…';
+    const blob=new Blob([JSON.stringify(pkg,null,2)],{type:'application/json'}); const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download='content-export-'+plat+'-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    // P2: real write to content_exports + content_generated (export history)
+    send('logExport',{platform:plat, eventCount:list.length, filter:{}});
+    setTimeout(()=>{ req('health').then(h=>{ healthData=h; setStatus(); }); }, 600);
+  }
+  function wire(){
+    document.querySelectorAll('#panel-content [data-cview]').forEach(b=>b.onclick=()=>{ view=b.dataset.cview; render(); });
+    $id('cSearch').oninput=()=>render(); $id('cFilterType').onchange=()=>render();
+    $id('cExport').onclick=doExport; $id('cRefresh').onclick=loadAll;
+    // MASTER ON/OFF — flips the whole capture system (game stops recording; dashboard empties while off).
+    $id('cMaster').onclick=()=>{ const on=!masterOn(); setMaster(on); loadAll(); };
+    // CLEAR ALL — wipe local events/replays/queue (bridge + same-origin localStorage), then refresh.
+    $id('cClearAll').onclick=()=>{
+      if(!confirm('Delete ALL captured content events and replays from the local cache & queue? This cannot be undone.')) return;
+      send('clear');
+      ['cq_content_events_v1','cq_content_replays_v1','cq_content_queue_v1','cq_content_mon_v1'].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+      events=[]; replays=[]; healthData=null; setStatus(); renderStats(); renderTypeFilter(); render();
+      const out=$id('cOut'); if(out){ out.style.display='block'; out.textContent='✓ Cleared all local content events & replays.'; }
+    };
+    // CLEAR CACHE — nuke every cache on this device: the Cache Storage (service-worker app caches)
+    // AND the content cache/queue. Forces a fully fresh load next time. (Does not touch player progress.)
+    $id('cClearCache').onclick=async ()=>{
+      if(!confirm('CLEAR CACHE on this device?\n\nThis deletes:\n• all app / service-worker caches (Cache Storage)\n• all cached content events, replays & sync queue\n\nThe next load fetches everything fresh. This cannot be undone.')) return;
+      let nCaches=0;
+      try{ if(window.caches&&caches.keys){ const ks=await caches.keys(); for(const k of ks){ try{ await caches.delete(k); nCaches++; }catch(e){} } } }catch(e){}
+      // content cache + queue (this origin)
+      ['cq_content_events_v1','cq_content_replays_v1','cq_content_queue_v1','cq_content_mon_v1'].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+      send('clear');
+      events=[]; replays=[]; healthData=null; setStatus(); renderStats(); renderTypeFilter(); render();
+      const out=$id('cOut'); if(out){ out.style.display='block'; out.textContent='🧹 Cache cleared — deleted '+nCaches+' app cache'+(nCaches===1?'':'s')+' + the content cache & queue on this device. Reload for a fully fresh fetch.'; }
+    };
+    $id('cList').addEventListener('click',e=>{ const r=e.target.closest('[data-eid]'); if(r){ showDetail(r.dataset.eid); return;} const rp=e.target.closest('[data-rid]'); if(rp) showReplayDetail(rp.dataset.rid); });
+  }
+  function init(){
+    if(!booted){ booted=true; const f=frame(); if(f&&!f.src) f.src='chart-quest.html?qa=1'; wire(); setStatus();
+      // give the iframe a moment to boot, then load
+      setTimeout(()=>{ ready=true; setStatus(); loadAll(); }, 1200);
+      setInterval(()=>{ if(document.getElementById('panel-content').classList.contains('active')) loadAll(); }, 15000);
+    } else { loadAll(); }
+  }
+  return { init };
+})();
+function initContent(){ Content.init(); }
 
 /* ---------------- Statistics ---------------- */
 async function loadStats() {
@@ -426,61 +1336,364 @@ function renderIssues() {
 }
 
 /* ---------------- Update log (static — edit this array to add entries) ---------------- */
-const updatesLog = [
-  {
-    date: '2026-06-16',
-    title: "Added a \"Report a Bug\" button + anonymous visit tracking",
-    body: "Players can now flag a problem right from inside the account panel — no need to message you separately. Also added a simple, anonymous counter so you can see how many times the game has actually been opened (no personal info collected)."
-  },
-  {
-    date: '2026-06-16',
-    title: "Fixed the visit counter — it wasn't actually counting",
-    body: "Caught and fixed a bug where the counter above looked fine but never saved anything. Confirmed it now records every page load correctly."
-  },
-  {
-    date: '2026-06-16',
-    title: "Cleaned up the bottom toolbar + added your wallet balance on screen",
-    body: "Daily Drill, Journal, Wallet, and Sign-in buttons now sit in one neat row instead of being scattered, and your Shell balance is now visible at all times."
-  },
-  {
-    date: '2026-06-16',
-    title: "Fixed coin logos + a crash that was hiding the turtle",
-    body: "Coin icons (BTC, ETH, SOL, etc.) now show the correct logo everywhere, and fixed a bug that was silently breaking the turtle/portal animation under certain conditions."
-  },
-  {
-    date: '2026-06-15',
-    title: "Locked the game down for public launch",
-    body: "Ran a full security review and fixed everything it found: players can no longer cheat their stats by editing values in the browser, the code is now scrambled before it's published, and the site only runs on the official domain."
-  },
-  {
-    date: '2026-06-15',
-    title: "Fixed the login screen + made game-start reliable",
-    body: "You can now actually type into the email/password fields, and the game reliably starts fresh every time after signing in, playing as a guest, or picking a faction."
-  },
-  {
-    date: '2026-06-15',
-    title: "Added faction selection (pick your coin)",
-    body: "New players now choose a faction — BTC, ETH, SOL, XRP, or DOGE — at the start, each with its own real chart data and look."
-  },
-  {
-    date: '2026-06-15',
-    title: "Renamed Shell Trade → Chart Quest",
-    body: "Gave the game its current name and updated the branding to match."
+const DEMOS = (function(){
+  var nice=[[30,34],[34,31],[31,38],[38,35],[35,42],[42,39],[39,47],[47,52],[52,49],[49,57],[57,54],[54,63]].map(function(q){var o=q[0],c=q[1];return {o:o,c:c,hi:Math.max(o,c)+2.6,lo:Math.min(o,c)-2.6};});
+  // chart-fix BEFORE: a broken candle (low sits ABOVE the body) then a price GAP back down
+  var buggy=[{o:30,c:33,hi:36,lo:28},{o:33,c:31,hi:35,lo:29},{o:31,c:36,hi:38,lo:29},{o:36,c:34,hi:39,lo:32},{o:34,c:40,hi:42,lo:32},{o:40,c:37,hi:43,lo:35},{o:37,c:60,hi:63,lo:49},{o:34,c:37,hi:40,lo:31},{o:37,c:34,hi:40,lo:31},{o:34,c:38,hi:41,lo:31},{o:38,c:35,hi:41,lo:33},{o:35,c:39,hi:42,lo:33}];
+  // chart-fix AFTER: valid impulse + continuous retrace, no gap, no broken candle
+  var fixed=[{o:30,c:33,hi:36,lo:28},{o:33,c:31,hi:35,lo:29},{o:31,c:36,hi:38,lo:29},{o:36,c:34,hi:39,lo:32},{o:34,c:40,hi:42,lo:32},{o:40,c:37,hi:43,lo:35},{o:37,c:60,hi:63,lo:35},{o:60,c:54,hi:62,lo:52},{o:54,c:49,hi:56,lo:47},{o:49,c:51,hi:53,lo:47},{o:51,c:46,hi:53,lo:44},{o:46,c:48,hi:50,lo:44}];
+  function draw(cv,cs,style){
+    var x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2),W=cv.clientWidth||300,H=cv.clientHeight||150;
+    cv.width=W*dpr;cv.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0);
+    var padL=8,padR=8,padT=12,padB=12,lo=Infinity,hi=-Infinity;
+    cs.forEach(function(c){lo=Math.min(lo,c.lo,c.o,c.c);hi=Math.max(hi,c.hi,c.o,c.c);});
+    var pad=(hi-lo)*0.12||1;lo-=pad;hi+=pad;
+    var X=function(i){return padL+i/Math.max(1,cs.length-1)*(W-padL-padR);};
+    var Y=function(v){return padT+(1-(v-lo)/(hi-lo))*(H-padT-padB);};
+    var cw=Math.max(3,(W-padL-padR)/cs.length*0.62),last=cs.length-1,i;
+    x.clearRect(0,0,W,H);
+    for(i=0;i<cs.length;i++){
+      var c=cs[i],up=c.c>=c.o,base=up?'#16c784':'#ea3943',bright=up?'#3ff0ad':'#ff5d6c',px=X(i),
+        bt=Y(Math.max(c.o,c.c)),bb=Y(Math.min(c.o,c.c)),bh=Math.max(1.5,bb-bt),live=(i===last);
+      if(style==='raw'){
+        x.strokeStyle=base;x.lineWidth=1;x.beginPath();x.moveTo(px,Y(c.hi));x.lineTo(px,Y(c.lo));x.stroke();
+        x.fillStyle=base;x.fillRect(px-cw/2,bt,cw,bh);
+      }else if(style==='plain'){
+        var chi=Math.max(c.hi,c.o,c.c),clo=Math.min(c.lo,c.o,c.c);
+        x.strokeStyle=base;x.lineWidth=1;x.beginPath();x.moveTo(px,Y(chi));x.lineTo(px,Y(clo));x.stroke();
+        x.fillStyle=base;x.fillRect(px-cw/2,bt,cw,bh);
+      }else if(style==='world'){
+        // matches the in-world drawCandle: faint colour halo on every candle,
+        // a stronger pulse on the newest (forming) candle + a white close glow.
+        var c4=Math.max(c.hi,c.o,c.c),l4=Math.min(c.lo,c.o,c.c),ex=live?3:2;
+        x.fillStyle=base;x.globalAlpha=live?0.15:0.05;x.fillRect(px-cw/2-ex,bt-ex,cw+ex*2,bh+ex*2);x.globalAlpha=1;
+        x.strokeStyle=base;x.lineWidth=1;x.beginPath();x.moveTo(px,Y(c4));x.lineTo(px,Y(l4));x.stroke();
+        x.fillStyle=base;x.fillRect(px-cw/2,bt,cw,bh);
+        x.fillStyle=bright;x.fillRect(px-cw/2,bt,Math.max(2,cw*0.2),bh);
+        if(live){var cy=up?bt:bb;x.save();x.shadowColor=base;x.shadowBlur=9;x.globalAlpha=0.72;x.fillStyle='#fff';x.beginPath();x.arc(px,cy,Math.max(2,cw*0.16),0,6.3);x.fill();x.restore();x.globalAlpha=1;}
+      }else{
+        var c2=Math.max(c.hi,c.o,c.c),l2=Math.min(c.lo,c.o,c.c),bw=Math.max(2,cw*0.86),hw=bw/2;
+        x.globalAlpha=live?0.22:0.1;x.fillStyle=base;x.fillRect(px-hw-1.5,bt-1.5,bw+3,bh+3);x.globalAlpha=1;
+        x.globalAlpha=0.28;x.strokeStyle=base;x.lineWidth=2;x.beginPath();x.moveTo(px,Y(c2));x.lineTo(px,Y(l2));x.stroke();x.globalAlpha=1;
+        x.strokeStyle=base;x.lineWidth=1;x.beginPath();x.moveTo(px,Y(c2));x.lineTo(px,Y(l2));x.stroke();
+        x.fillStyle=base;x.fillRect(px-hw,bt,bw,bh);
+        if(live){x.globalAlpha=0.3;x.fillStyle=base;x.fillRect(px-hw-2,bt-2,bw+4,bh+4);x.globalAlpha=1;x.save();x.shadowColor='#fff';x.shadowBlur=10;x.globalAlpha=0.85;x.fillStyle='#fff';x.beginPath();x.arc(px,Y(c.c),Math.max(1.6,bw*0.36),0,6.3);x.fill();x.restore();x.globalAlpha=1;}
+      }
+    }
   }
+  function rrect(x,bx,by,bw,bh,r){x.beginPath();if(x.roundRect){x.roundRect(bx,by,bw,bh,r);}else{x.moveTo(bx+r,by);x.arcTo(bx+bw,by,bx+bw,by+bh,r);x.arcTo(bx+bw,by+bh,bx,by+bh,r);x.arcTo(bx,by+bh,bx,by,r);x.arcTo(bx,by,bx+bw,by,r);x.closePath();}}
+  function fit(cv){var x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2),W=cv.clientWidth||300,H=cv.clientHeight||150;cv.width=W*dpr;cv.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);return {x:x,W:W,H:H};}
+  // Bottom toolbar: BEFORE has the cyan SCAN button, AFTER drops it.
+  function toolbarDemo(cv,withScan){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H;
+    var labels=withScan?['🔥 DAILY','🔍 SCAN','📖 JOURNAL','🐚 WALLET']:['🔥 DAILY','📖 JOURNAL','🐚 WALLET'];
+    var n=labels.length,pad=14,gap=8,bh=36,bw=(W-pad*2-gap*(n-1))/n,by=(H-bh)/2;
+    for(var i=0;i<n;i++){var bx=pad+i*(bw+gap),isScan=labels[i].indexOf('SCAN')>=0;
+      x.fillStyle=isScan?'#0d1320':'#0a1622';x.strokeStyle=isScan?'#22d3ee':'#26384a';x.lineWidth=1.5;
+      rrect(x,bx,by,bw,bh,9);x.fill();x.stroke();
+      x.fillStyle=isScan?'#22d3ee':'#aebccd';x.font='600 11px sans-serif';x.textAlign='center';x.textBaseline='middle';
+      x.fillText(labels[i],bx+bw/2,by+bh/2);}
+  }
+  // Space under the chart: BEFORE has stray green/red volume bars crowding the
+  // mission panel; AFTER is clean.
+  function underchartDemo(cv,withVol){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H,gy=Math.round(H*0.42),pad=10;
+    var cs2=[[20,26],[26,23],[23,30],[30,34],[34,31],[31,38],[38,42],[42,39],[39,46]],n=cs2.length;
+    var cw=(W-pad*2)/n*0.6,lo=15,hi=49;
+    function CY(v){return gy-4-((v-lo)/(hi-lo))*(gy-14);}
+    for(var i=0;i<n;i++){var o=cs2[i][0],c=cs2[i][1],up=c>=o,col=up?'#16c784':'#ea3943',px=pad+(i+0.5)*((W-pad*2)/n);
+      x.strokeStyle=col;x.lineWidth=1;x.beginPath();x.moveTo(px,CY(Math.max(o,c)+3));x.lineTo(px,CY(Math.min(o,c)-3));x.stroke();
+      var bt=CY(Math.max(o,c)),bb=CY(Math.min(o,c));x.fillStyle=col;x.fillRect(px-cw/2,bt,cw,Math.max(2,bb-bt));}
+    x.strokeStyle='#243244';x.lineWidth=1;x.beginPath();x.moveTo(0,gy+0.5);x.lineTo(W,gy+0.5);x.stroke();
+    if(withVol){for(var j=0;j<n;j++){var oj=cs2[j][0],cj=cs2[j][1],colj=cj>=oj?'#16c784':'#ea3943',pj=pad+(j+0.5)*((W-pad*2)/n),bh2=4+((j*37)%9);
+      x.globalAlpha=0.5;x.fillStyle=colj;x.fillRect(pj-cw/2,gy+4,cw,bh2);x.globalAlpha=1;}}
+    var ty=gy+(withVol?26:22);
+    x.textBaseline='alphabetic';x.textAlign='left';x.fillStyle='#7d8aa0';x.font='bold 10px monospace';x.fillText('MISSION — HOUR 1',10,ty);
+    x.fillStyle='#c7d1de';x.font='11px monospace';x.fillText('Reach 1,250 SHELLS · 43 min left',10,ty+15);
+    x.fillStyle='#13202e';x.fillRect(10,ty+22,W-20,7);x.fillStyle='#4cc3ff';x.fillRect(10,ty+22,(W-20)*0.45,7);
+    x.font='9px monospace';x.fillStyle='#ea3943';x.fillText('BUST 900',10,ty+44);
+    x.fillStyle='#e6edf3';x.textAlign='center';x.fillText('NOW 1,060',W/2,ty+44);
+    x.fillStyle='#16c784';x.textAlign='right';x.fillText('GOAL 1,250',W-10,ty+44);x.textAlign='left';
+  }
+  // Chart scale: BEFORE = a few fat candles + a big turtle (zoomed in, no context);
+  // AFTER = ~20 slim candles + a small turtle + fog into the future (you see the market).
+  function chartScaleDemo(cv,many){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H,pad=10;
+    var n=many?20:6,cw=(W-pad*2)/n,bw=Math.max(2,cw*(many?0.6:0.66));
+    var baseY=H*0.8,amp=H*0.52;
+    function path(i){return baseY-amp*(i/(n-1))+Math.sin(i*0.9+(many?1:2))*H*0.05;}
+    for(var i=0;i<n;i++){
+      var cy=path(i),prev=i>0?path(i-1):cy+8,up=cy<=prev,col=up?'#16c784':'#ea3943';
+      var bodyH=Math.max(3,Math.abs(Math.sin(i*1.3+(many?0.5:1.5)))*H*(many?0.15:0.2)+H*0.05);
+      var px=pad+(i+0.5)*cw,bt=cy-bodyH/2,wick=H*(many?0.07:0.05);
+      x.strokeStyle=col;x.lineWidth=1;x.beginPath();x.moveTo(px,bt-wick);x.lineTo(px,bt+bodyH+wick*0.6);x.stroke();
+      x.fillStyle=col;x.fillRect(px-bw/2,bt,bw,bodyH);
+    }
+    // turtle marker — big when zoomed in, small against the larger market
+    var ti=Math.round(n*0.6),tcy=path(ti),tpx=pad+(ti+0.5)*cw,tw=many?20:46,th=tw*0.62,ty=tcy-14-th;
+    x.fillStyle='#2bb455';rrect(x,tpx-tw/2,ty,tw,th,th*0.42);x.fill();
+    x.strokeStyle='#0f5c2e';x.lineWidth=1.5;rrect(x,tpx-tw/2,ty,tw,th,th*0.42);x.stroke();
+    x.fillStyle='#0b0f16';x.fillRect(tpx-tw*0.22,ty+th*0.3,tw*0.42,th*0.2); // shades
+    // fog into the unknown on the right (present in both, softer/wider in 'after')
+    var fx=W*(many?0.7:0.78),gr=x.createLinearGradient(fx-(many?40:24),0,W,0);
+    gr.addColorStop(0,'rgba(10,14,20,0)');gr.addColorStop(1,'rgba(10,14,20,0.93)');
+    x.fillStyle=gr;x.fillRect(fx-(many?40:24),0,W-fx+40,H);
+    x.fillStyle='rgba(76,195,255,0.45)';x.font='7px monospace';x.textAlign='left';x.fillText(many?'≈ 20 candles · fog ahead':'≈ 6 candles',pad,12);
+  }
+  // Intermission: BEFORE = bull/bear mascots + trade-gate + quiz; AFTER = stat tiles + lessons + trade history.
+  function imOldDemo(cv){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H; x.textAlign='center';
+    x.fillStyle='#16c784';x.font='800 12px sans-serif';x.fillText('HOUR 1 CLEARED 🎉',W/2,16);
+    x.fillStyle='#16c784';x.beginPath();x.arc(W*0.3,40,13,0,7);x.fill();
+    x.fillStyle='#ea3943';x.beginPath();x.arc(W*0.7,40,13,0,7);x.fill();
+    x.fillStyle='#7d8aa0';x.font='7px sans-serif';x.fillText('BULL',W*0.3,62);x.fillText('BEAR',W*0.7,62);
+    x.fillStyle='rgba(201,160,255,.10)';rrect(x,W/2-95,70,190,18,6);x.fill();x.strokeStyle='#c9a0ff';x.lineWidth=1;rrect(x,W/2-95,70,190,18,6);x.stroke();
+    x.fillStyle='#c9a0ff';x.font='700 9px monospace';x.fillText('🔒 GATE 0/3 trades · 0/2 wins',W/2,82);
+    x.fillStyle='#0d1421';rrect(x,12,96,W-24,H-104,7);x.fill();x.strokeStyle='#1e3050';rrect(x,12,96,W-24,H-104,7);x.stroke();
+    x.fillStyle='#c9b3ff';x.font='700 9px sans-serif';x.fillText('QUICK QUIZ',W/2,112);
+    x.fillStyle='#c7d1de';x.font='9px sans-serif';x.fillText('Q1: A GREEN candle means…',W/2,128);
+    [['Went UP',W*0.3],['Gapped',W*0.7]].forEach(function(a){x.fillStyle='#15202e';rrect(x,a[1]-46,136,92,15,4);x.fill();x.fillStyle='#9fb2c8';x.font='8px sans-serif';x.fillText(a[0],a[1],146);});
+  }
+  function imNewDemo(cv){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H; x.textAlign='center';
+    x.fillStyle='rgba(22,199,132,.14)';rrect(x,W/2-66,8,132,17,9);x.fill();x.fillStyle='#16c784';x.font='700 9px sans-serif';x.fillText('◆ HOUR 1 CLEARED',W/2,20);
+    var tw=(W-24-12)/3,vals=['1,840','+127','2/3'],ks=['SHELLS','P&L','WON'],cols=['#ffd60a','#16c784','#e6edf3'];
+    for(var i=0;i<3;i++){var tx=12+i*(tw+6);x.fillStyle='#111a28';rrect(x,tx,30,tw,36,9);x.fill();x.strokeStyle='#1b2738';x.lineWidth=1;rrect(x,tx,30,tw,36,9);x.stroke();x.fillStyle='#56657a';x.font='700 7px sans-serif';x.textAlign='center';x.fillText(ks[i],tx+tw/2,42);x.fillStyle=cols[i];x.font='800 12px sans-serif';x.fillText(vals[i],tx+tw/2,58);}
+    x.fillStyle='#9fb2c8';x.font='700 8px sans-serif';x.textAlign='left';x.fillText('📚 Lessons Completed',12,82);
+    [['⚡ Break of Structure'],['🧱 Order Blocks']].forEach(function(l,i){var ly=88+i*20;x.fillStyle='#0d131f';rrect(x,12,ly,W-24,17,5);x.fill();x.fillStyle='#16c784';x.beginPath();x.arc(24,ly+8.5,4,0,7);x.fill();x.fillStyle='#e6edf3';x.font='9px sans-serif';x.textAlign='left';x.fillText(l[0],34,ly+12);x.fillStyle='#56657a';x.textAlign='right';x.fillText('›',W-18,ly+12);});
+    x.fillStyle='#9fb2c8';x.font='700 8px sans-serif';x.textAlign='left';x.fillText('📊 Trade History',12,142);
+    [[W*0.27,'#16c784','+59'],[W*0.73,'#16c784','+71']].forEach(function(t){var cx=t[0],cw2=W*0.42;x.fillStyle='#0d131f';rrect(x,cx-cw2/2,146,cw2,H-150,5);x.fill();x.strokeStyle=t[1];x.lineWidth=2;x.beginPath();x.moveTo(cx-cw2/2,146);x.lineTo(cx-cw2/2,H-4);x.stroke();x.strokeStyle=t[1];x.lineWidth=1.4;x.beginPath();for(var k=0;k<8;k++){var px=cx-cw2/2+6+k*(cw2-12)/7,py=H-12-k*1.4-(k%2)*2;k?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();x.fillStyle=t[1];x.font='800 9px sans-serif';x.textAlign='right';x.fillText(t[2],cx+cw2/2-5,158);});
+  }
+  // A small green turtle (dome + shades) standing so its base rests on topY.
+  function miniTurtle(x,cx,topY,size){
+    var w=size,h=size*0.66,ty=topY-h;
+    x.fillStyle='#2bb455';rrect(x,cx-w/2,ty,w,h,h*0.42);x.fill();
+    x.strokeStyle='#0f5c2e';x.lineWidth=1.5;rrect(x,cx-w/2,ty,w,h,h*0.42);x.stroke();
+    x.fillStyle='#0b0f16';x.fillRect(cx-w*0.12,ty+h*0.32,w*0.34,h*0.2);
+  }
+  // SCALE COMPARISON — renders N candles exactly like the in-game world chart:
+  // body inset to ~0.84 of the slot, longer wicks, living halo, left stripe,
+  // green/red, turtle on the live candle, fog hiding the future on the right.
+  function gameScaleDemo(cv,N){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H;
+    x.fillStyle='#070b12';x.fillRect(0,0,W,H);
+    var slot=W/N, bw=Math.max(8,slot*0.84);
+    var seed=N*7+3; function rnd(){seed=(seed*9301+49297)%233280;return seed/233280;}
+    var cs=[],price=44,lo=1e9,hi=-1e9;
+    for(var i=0;i<N;i++){ var ph=i/(N-1); var trend=(ph<0.5?0.7:2.3); var d=trend+(rnd()-0.5)*5.2;
+      var o=price,c=Math.max(6,price+d), wkU=3+rnd()*8, wkD=3+rnd()*7;
+      var Hi=Math.max(o,c)+wkU, Lo=Math.min(o,c)-wkD;
+      cs.push({o:o,c:c,H:Hi,L:Lo,up:c>=o}); lo=Math.min(lo,Lo); hi=Math.max(hi,Hi); price=c; }
+    var padT=14,padB=14, Y=function(v){return padT+(1-(v-lo)/(hi-lo))*(H-padT-padB);};
+    var liveIdx=N-2;
+    for(var i=0;i<N;i++){ var cd=cs[i],col=cd.up?'#16c784':'#ea3943',strp=cd.up?'#3ff0ad':'#ff5d6c';
+      var cx=i*slot+slot/2,bx=cx-bw/2,bt=Y(Math.max(cd.o,cd.c)),bb=Y(Math.min(cd.o,cd.c)),bh=Math.max(2,bb-bt),live=(i===liveIdx);
+      x.globalAlpha=live?0.16:0.05;x.fillStyle=col;x.fillRect(bx-(live?3:2),bt-(live?3:2),bw+(live?6:4),bh+(live?6:4));x.globalAlpha=1;
+      x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(cx,Y(cd.H));x.lineTo(cx,Y(cd.L));x.stroke();
+      x.fillStyle=col;x.fillRect(bx,bt,bw,bh);
+      x.fillStyle=strp;x.fillRect(bx,bt,Math.max(2,bw*0.22),bh); }
+    var tc=cs[liveIdx]; miniTurtle(x, liveIdx*slot+slot/2, Y(Math.max(tc.o,tc.c)), Math.max(18,slot*0.92));
+    var fx=W*0.84,gr=x.createLinearGradient(fx-18,0,W,0); gr.addColorStop(0,'rgba(8,11,18,0)');gr.addColorStop(1,'rgba(8,11,18,0.96)');
+    x.fillStyle=gr;x.fillRect(fx-18,0,W-fx+18,H);
+    x.fillStyle='rgba(76,195,255,.5)';x.font='700 8px sans-serif';x.textAlign='left';x.fillText(N+' candles',8,13);
+  }
+  // Vertical framing: BEFORE = candles float high with a big black gap beneath;
+  // AFTER = camera auto-fits so the price action is centred, mission pinned at bottom.
+  function chartCenterDemo(cv,centered){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H; x.fillStyle='#070b12';x.fillRect(0,0,W,H);
+    var missionH=Math.round(H*0.2), n=10, slot=(W-16)/n, bw=Math.max(6,slot*0.82);
+    var seed=7; function rnd(){seed=(seed*9301+49297)%233280;return seed/233280;}
+    var cs=[],p=0,lo=1e9,hi=-1e9;
+    for(var i=0;i<n;i++){var d=(i<5?-0.5:1.9)+(rnd()-0.5)*3;var o=p,c=p+d,wkU=2+rnd()*4,wkD=2+rnd()*3;cs.push({o:o,c:c,Hh:Math.max(o,c)+wkU,Ll:Math.min(o,c)-wkD,up:c>=o});lo=Math.min(lo,Math.min(o,c)-wkD);hi=Math.max(hi,Math.max(o,c)+wkU);p=c;}
+    var rangePx=H*0.34, bandTop = centered ? (H-missionH)/2 - rangePx/2 : H*0.05;
+    var Y=function(v){return bandTop + (1-(v-lo)/(hi-lo))*rangePx;};
+    if(!centered){ x.fillStyle='rgba(234,57,67,0.06)'; x.fillRect(0, bandTop+rangePx+4, W, (H-missionH)-(bandTop+rangePx+4)); }
+    for(var i=0;i<n;i++){var c=cs[i],col=c.up?'#16c784':'#ea3943',cx=8+i*slot+slot/2,bxx=cx-bw/2;var bt=Y(Math.max(c.o,c.c)),bb=Y(Math.min(c.o,c.c)),bh=Math.max(2,bb-bt);
+      x.strokeStyle=col;x.lineWidth=1.5;x.beginPath();x.moveTo(cx,Y(c.Hh));x.lineTo(cx,Y(c.Ll));x.stroke(); x.fillStyle=col;x.fillRect(bxx,bt,bw,bh);}
+    var ti=7,tc=cs[ti]; miniTurtle(x, 8+ti*slot+slot/2, Y(Math.max(tc.o,tc.c)), Math.max(15,slot*0.9));
+    var my=H-missionH; x.fillStyle='rgba(6,9,16,0.97)';x.fillRect(0,my,W,missionH);x.strokeStyle='rgba(76,195,255,0.12)';x.lineWidth=1;x.beginPath();x.moveTo(0,my+0.5);x.lineTo(W,my+0.5);x.stroke();
+    x.fillStyle='#7d8aa0';x.font='700 8px monospace';x.textAlign='left';x.fillText('MISSION — HOUR 1',10,my+16);
+    x.fillStyle='#c7d1de';x.font='9px monospace';x.fillText('Reach 1,250 SHELLS · 23 min',10,my+30);
+    x.fillStyle=centered?'rgba(22,199,132,.65)':'rgba(234,57,67,.6)';x.font='700 8px sans-serif';x.fillText(centered?'centred — no dead space':'big black gap below',8,12);
+  }
+  // Concept gating: BEFORE = a Level-1 player sees pro jargon (BOS label, GRADE B);
+  // AFTER = terms hidden until learned (cue-only candle + high/low-probability banner).
+  function conceptGateDemo(cv,gated){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H; x.fillStyle='#070b12';x.fillRect(0,0,W,H);
+    // a glowing 'structure break' candle in the middle
+    var cx=W*0.5, bw=Math.max(10,W*0.06), bt=H*0.30, bh=H*0.34;
+    x.fillStyle='#16c784'; x.globalAlpha=0.16; x.fillRect(cx-bw/2-3,bt-3,bw+6,bh+6); x.globalAlpha=1;
+    x.strokeStyle='#16c784';x.lineWidth=2;x.beginPath();x.moveTo(cx,bt-14);x.lineTo(cx,bt+bh+8);x.stroke();
+    x.fillStyle='#16c784';x.fillRect(cx-bw/2,bt,bw,bh);
+    // a couple of neighbour candles for context
+    [[-2,'#ea3943'],[-1,'#16c784'],[2,'#16c784']].forEach(function(n){var px=cx+n[0]*(bw+6);x.fillStyle=n[1];x.fillRect(px-bw/2,H*0.42,bw,H*0.16);});
+    // label on the break candle
+    if(!gated){ x.fillStyle='#c9b3ff';x.font='bold 11px monospace';x.textAlign='center';x.fillText('BOS',cx,bt-20); }
+    // setup banner pill at the bottom
+    var by=H-34, bwid=W-24;
+    x.fillStyle='rgba(124,77,255,0.12)'; rrect(x,12,by,bwid,24,8); x.fill();
+    x.strokeStyle=gated?'#7c4dff':'#ffd60a'; x.lineWidth=1.5; rrect(x,12,by,bwid,24,8); x.stroke();
+    x.fillStyle=gated?'#c9b3ff':'#ffd60a'; x.font='700 10px sans-serif'; x.textAlign='center';
+    x.fillText(gated?'⚡ HIGH-PROBABILITY SETUP — TAP TO TRADE':'⚡ VWAP BOUNCE — GRADE B — TAP TO TRADE', W/2, by+15);
+    x.fillStyle=gated?'rgba(22,199,132,.6)':'rgba(234,57,67,.6)';x.font='700 8px sans-serif';x.textAlign='left';
+    x.fillText(gated?'Hour 1 — terms hidden, cue only':'Hour 1 — jargon shown too early',8,12);
+  }
+  // ── Guardian 1 victory: lesson summary (before) → boss defeat + rank up (after) ──
+  function victoryDemo(cv,isNew){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H; x.fillStyle='#0a0a0f'; x.fillRect(0,0,W,H); x.textAlign='center';
+    if(!isNew){
+      x.fillStyle='#16c784'; x.font='800 11px sans-serif'; x.fillText('🐢 CANDLE READER UNLOCKED', W/2, 20);
+      x.fillStyle='#9fb0c4'; x.font='700 8px sans-serif'; x.fillText('📘 WHAT YOU LEARNED', W/2, 42);
+      x.textAlign='left'; x.fillStyle='#cdd9e6'; x.font='9px sans-serif';
+      ['Green candle = price went UP','Red candle = price went DOWN','A strong close = MOMENTUM','Predict the next candle'].forEach(function(t,i){x.fillText('✅ '+t, 26, 60+i*13);});
+      x.fillStyle='#0e9b64'; rrect(x,W/2-74,H-26,148,18,9); x.fill();
+      x.fillStyle='#04130c'; x.font='800 9px sans-serif'; x.textAlign='center'; x.fillText('I CAN READ CANDLES →', W/2, H-13);
+    } else {
+      x.fillStyle='#fff'; x.font='900 17px sans-serif'; x.fillText('THE GAMBLER FALLS', W/2, 24);
+      x.fillStyle='#16c784'; x.font='800 8px sans-serif'; x.fillText('FIRST GUARDIAN CLEARED · 1 / 11', W/2, 38);
+      x.fillStyle='rgba(255,214,10,0.12)'; x.strokeStyle='rgba(255,214,10,0.55)'; x.lineWidth=1; rrect(x,W/2-92,46,184,34,8); x.fill(); x.stroke();
+      x.fillStyle='#ffd60a'; x.font='900 8px sans-serif'; x.fillText('★ NEW TITLE UNLOCKED ★', W/2, 59);
+      x.fillStyle='#fff'; x.font='900 14px sans-serif'; x.fillText('🐢 CANDLE READER', W/2, 75);
+      x.fillStyle='#c9a6ff'; x.font='900 8px sans-serif'; x.fillText('NEXT GUARDIAN  🔒', W/2, 99);
+      x.fillStyle='#cdd4dd'; x.font='italic 9px sans-serif'; x.fillText('Some candles lie. Spot the fake-out.', W/2, 113);
+      x.fillStyle='#19d08a'; rrect(x,W/2-74,H-26,148,18,9); x.fill();
+      x.fillStyle='#04130c'; x.font='900 9px sans-serif'; x.fillText('CONTINUE TRAINING →', W/2, H-13);
+    }
+  }
+  // ── Educational chart: subtle/ambiguous (before) → dominant candle, obvious (after) ──
+  function eduChartDemo(cv,isNew){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H; x.fillStyle='#070b12'; x.fillRect(0,0,W,H);
+    var n=8, pad=16, slot=(W-pad*2)/n, lo=20, hi=82; function CY(v){return H-20-((v-lo)/(hi-lo))*(H-44);}
+    var cs; x.textAlign='center'; x.font='700 9px sans-serif';
+    if(!isNew){ cs=[[40,44],[44,41],[41,45],[45,42],[42,46],[46,43],[43,47],[47,45]]; x.fillStyle='#6a7686'; x.fillText('next move?  …maybe up?', W/2, 14); }
+    else { cs=[[40,41],[41,42],[42,41],[42,43],[43,44],[44,45],[45,70],[70,70]]; x.fillStyle='#16c784'; x.fillText('obvious — it keeps going UP', W/2, 14); }
+    for(var i=0;i<n;i++){var o=cs[i][0],c=cs[i][1],up=c>=o,col=up?'#16c784':'#ea3943',px=pad+(i+0.5)*slot,bw=(isNew&&i===6)?slot*0.92:slot*0.55;
+      if(isNew&&i===6){x.save();x.shadowColor=col;x.shadowBlur=9;}
+      x.strokeStyle=col;x.lineWidth=1;x.beginPath();x.moveTo(px,CY(Math.max(o,c)+2));x.lineTo(px,CY(Math.min(o,c)-2));x.stroke();
+      var bt=CY(Math.max(o,c)),bb=CY(Math.min(o,c));x.fillStyle=col;x.fillRect(px-bw/2,bt,bw,Math.max(2,bb-bt));
+      if(isNew&&i===6)x.restore();}
+  }
+  // ── First trade: lines only (before) → guided "you're in" walkthrough (after) ──
+  function firstTradeDemo(cv,isNew){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H; x.fillStyle='#080c12'; x.fillRect(0,0,W,H);
+    var tY=H*0.20, eY=H*0.50, sY=H*0.80;
+    x.setLineDash([6,4]); x.lineWidth=1.5;
+    x.strokeStyle='#16c784';x.beginPath();x.moveTo(0,tY);x.lineTo(W,tY);x.stroke();
+    x.strokeStyle='#ffd60a';x.beginPath();x.moveTo(0,eY);x.lineTo(W,eY);x.stroke();
+    x.strokeStyle='#ea3943';x.beginPath();x.moveTo(0,sY);x.lineTo(W,sY);x.stroke();
+    x.setLineDash([]); x.font='700 8px sans-serif'; x.textAlign='left';
+    x.fillStyle='#16c784';x.fillText('TAKE PROFIT',6,tY-3);
+    x.fillStyle='#ffd60a';x.fillText('ENTRY',6,eY-3);
+    x.fillStyle='#ea3943';x.fillText('STOP LOSS',6,sY-3);
+    x.font='15px sans-serif'; x.fillText('🐢', W*0.60, eY-3);
+    if(!isNew){ x.fillStyle='#6a7686';x.font='italic 9px sans-serif';x.textAlign='center';x.fillText('player: "…did anything happen?"',W/2,H-12); }
+    else {
+      x.fillStyle='#ffd60a'; rrect(x,W-94,eY-10,82,20,6); x.fill();
+      x.fillStyle='#04130c';x.font='800 9px sans-serif';x.textAlign='center';x.fillText('YOUR ENTRY',W-53,eY+3);
+      x.fillStyle='rgba(9,13,22,0.96)';x.strokeStyle='#ffd60a';x.lineWidth=1;rrect(x,14,H-42,W-28,32,8);x.fill();x.stroke();
+      x.fillStyle='#ffd60a';x.font='900 11px sans-serif';x.fillText('🎉 YOU’RE IN — your first trade!',W/2,H-27);
+      x.fillStyle='#cfdae8';x.font='9px sans-serif';x.fillText('You’re standing on your entry candle.',W/2,H-15);
+    }
+  }
+  // ── Guardian gate: trades only (before) → mastery proofs (after) ──
+  function gateDemo(cv,isNew){
+    var g=fit(cv),x=g.x,W=g.W,H=g.H; x.fillStyle='#0a0a0f'; x.fillRect(0,0,W,H); x.textAlign='center';
+    x.fillStyle='#c9a0ff';x.font='900 11px sans-serif';x.fillText('🔒 GUARDIAN GATE',W/2,24);
+    if(!isNew){
+      x.fillStyle='#cdd9e6';x.font='700 12px monospace';x.fillText('3 / 3 trades · 2 / 2 wins',W/2,H/2+4);
+      x.fillStyle='#6a7686';x.font='italic 9px sans-serif';x.fillText('opens after a few trades (a timer)',W/2,H-14);
+    } else {
+      x.textAlign='left';x.fillStyle='#16c784';x.font='700 11px sans-serif';
+      ['✓ 3 correct chart reads','✓ 3 trades · 2 wins','✓ reviewed a trade in the Notebook'].forEach(function(t,i){x.fillText(t,W/2-86,48+i*19);});
+      x.textAlign='center';x.fillStyle='#ffd60a';x.font='700 8px sans-serif';x.fillText('the Guardian opens after MASTERY',W/2,H-12);
+    }
+  }
+  return {
+    candles:{before:function(cv){draw(cv,nice,'plain');},after:function(cv){draw(cv,nice,'glow');}},
+    worldcandles:{before:function(cv){draw(cv,nice,'plain');},after:function(cv){draw(cv,nice,'world');}},
+    conceptgate:{before:function(cv){conceptGateDemo(cv,false);},after:function(cv){conceptGateDemo(cv,true);}},
+    chartcenter:{before:function(cv){chartCenterDemo(cv,false);},after:function(cv){chartCenterDemo(cv,true);}},
+    intermission:{before:function(cv){imOldDemo(cv);},after:function(cv){imNewDemo(cv);}},
+    scale8:{after:function(cv){gameScaleDemo(cv,8);}},
+    scale10:{after:function(cv){gameScaleDemo(cv,10);}},
+    scale12:{after:function(cv){gameScaleDemo(cv,12);}},
+    chartscale:{before:function(cv){chartScaleDemo(cv,false);},after:function(cv){chartScaleDemo(cv,true);}},
+    scanbtn:{before:function(cv){toolbarDemo(cv,true);},after:function(cv){toolbarDemo(cv,false);}},
+    underchart:{before:function(cv){underchartDemo(cv,true);},after:function(cv){underchartDemo(cv,false);}},
+    chartfix:{before:function(cv){draw(cv,buggy,'raw');},after:function(cv){draw(cv,fixed,'glow');}},
+    victory:{before:function(cv){victoryDemo(cv,false);},after:function(cv){victoryDemo(cv,true);}},
+    educhart:{before:function(cv){eduChartDemo(cv,false);},after:function(cv){eduChartDemo(cv,true);}},
+    firsttrade:{before:function(cv){firstTradeDemo(cv,false);},after:function(cv){firstTradeDemo(cv,true);}},
+    masterygate:{before:function(cv){gateDemo(cv,false);},after:function(cv){gateDemo(cv,true);}}
+  };
+})();
+
+const updatesLog = [
+  { date:"2026-06-24", title:"Guardian 1 victory screen rebuilt — it now feels like defeating a boss and ranking up, not finishing a quiz", demo:"victory",
+    body:"The old completion screen communicated information (a 'WHAT YOU LEARNED' checklist and a 'Candle Reader Unlocked' badge) but not achievement — it read like a course module. Rebuilt around emotional progression in a new order: (1) a big VICTORY moment — a larger, dimmed 'DEFEATED' boss portrait and bold 'THE GAMBLER FALLS'; (2) a NEW IDENTITY — a glowing '★ NEW TITLE UNLOCKED ★ → CANDLE READER' rank panel; (3) capability language instead of definitions — 'YOU CAN NOW: read green candles, read red candles, spot momentum, predict the next move'; (4) a mysterious NEXT-GUARDIAN teaser (locked, 'Some candles lie — spot the fake-out') to pull the player forward; (5) a natural call-to-action, 'CONTINUE TRAINING →' (replacing the awkward 'I CAN READ CANDLES'). Rewards now explain their value (shells 'fuel your next trades', XP 'closer to your next rank') and the dialogue is trimmed to two short lines. The player should leave feeling 'I'm becoming a trader,' not 'I completed a quiz.'" },
+  { date:"2026-06-24", title:"Guardian 1 & 2 charts are now EDUCATIONAL, not realistic — the right answer is obvious in one second", demo:"educhart",
+    body:"For the first two Guardians we stopped optimizing the practice charts for realism and started optimizing them for learning. The exercises used to generate subtle, lifelike charts where a beginner could reasonably argue either answer — which feels like guessing, not understanding. Now the teaching candle is exaggerated and dominant (a single candle ~3× the others), trends are clean one-colour runs, and noise is stripped out, so a complete beginner can read the answer instantly and explain WHY they picked it. We also added a 'Read the Close' exercise for Guardian 2 (a candle that spikes one way on a long wick but closes the other — teaching confirmation) and removed an off-topic round it shouldn't have had. Realistic charts return automatically for Guardian 3 onward. Expected beginner success: Guardian 1 ~90%, Guardian 2 ~80% — they should feel smart, not lucky." },
+  { date:"2026-06-24", title:"The first real trade is now a guided 'big moment' — the chart freezes and walks you through it", demo:"firsttrade",
+    body:"Previously, a brand-new player tapped a direction and was dropped straight back to the chart — the entry line, stop and target appeared, but most beginners never noticed they were even in a trade. Now the very first trade pauses everything and walks the player through it with pointing arrows: 'YOU'RE IN — you're standing on your entry candle' → your STOP LOSS (your safety net) → your TAKE PROFIT (your goal). They tap through at their own pace, then it resumes so they watch it play out. This is the single biggest hook in the onboarding — it turns a confusing moment into the exciting one that gets a player invested in their first win. (Also fixed the arrows to land exactly on the real chart lines and hid an overlapping button.)" },
+  { date:"2026-06-24", title:"Guardians now open after demonstrated MASTERY, not a timer — and the free run is longer", demo:"masterygate",
+    body:"The free experience reached the paywall too fast (~5–7 minutes), before real confidence could form. Each Guardian now unlocks only once the player has PROVEN the skills — a few correct chart reads, real trades with wins, and at least one trade reviewed in the Notebook — instead of just running out the clock. Levels are also longer, and the very first Guardian now ends with a short 'prove you can read' practice beat. Together this stretches the free journey toward 15–25 minutes of genuine learning before any ask, so players arrive at the paywall transformed rather than rushed. All requirements are earned naturally through normal play, so no one ever gets stuck." },
+  { date:"2026-06-22", title:"Boss fights are now cinematic — a video world-transition, and the whole fight plays inside that world",
+    body:"Reaching a Guardian now punches through a portal into the boss's own world: a 6-second cinematic clip plays fullscreen (a real 'different world' transition), the boss's name rises up, and then — instead of cutting to a flat menu — the clip stays on as the living, dimmed background for the ENTER screen, every quiz round, and the victory celebration. The old static realm backdrops are gone for these bosses; you're inside the boss's world the entire encounter. Clips are wired for The Gambler, The False-Breakout Eel, The Trend Crab and The Market Maker so far; every other boss falls back to the existing art until its clip is dropped in. (The clips were also compressed ~70%, so they start almost instantly instead of stalling on a black screen.)" },
+  { date:"2026-06-22", title:"Dashboard boss cards now show the actual boss art",
+    body:"The Boss Testing grid here used to show a generic animated backdrop for every Guardian. Each card now displays that boss's real portrait, so you can see who you're launching at a glance (it falls back to the animated realm if a portrait is ever missing)." },
+  { date:"2026-06-21", title:"Fixed the FLASH QUIZ portal for good — it no longer runs away from you",
+    body:"The in-level portal you boost into for a quiz had a long-running bug: it would drift under the chart, or — worse — flee upward every time the turtle jumped toward it, making it impossible to hit. The root cause was that its height was tied to the turtle's position, so jumping at it pushed it away (a carrot on a stick). It's now anchored only to the candle surface at a fixed, reachable height, so it holds perfectly still while you jump in. This is a structural fix — the turtle dependency is gone from the code, so it can't come back." },
+  { date:"2026-06-20", title:"The goal of a level is now simply to reach its Guardian",
+    body:"Removed the old '+2% shells' level target and the 'bust' fail line entirely — they were confusing and undercut the real fantasy. Every level is now about one thing: survive the chart and reach its Guardian. Shells still grow as you trade well, but there's no per-level quota to hit and no busting out. The mission readout reflects it: '⚔ Reach GUARDIAN N · X candles to go.'" },
+  { date:"2026-06-20", title:"BTC price on the chart stays consistent now (no more 109k ↔ 64k jumps)",
+    body:"The price shown on the live chart was jumping between very different values depending on whether the live price feed loaded or fell back to a stale built-in number. It now remembers the last real price it fetched and uses that as the anchor, so the number stays steady and believable across loads — keeping the 'live chart' illusion intact even when the feed is briefly unavailable." },
+  { date:"2026-06-18", title:"Progression foundation: concept-unlock system + curriculum re-aligned to the bosses", demo:"conceptgate",
+    body:"Phase 1 of the curriculum rebalance (framework only — bosses, names, art, ranks, economy and the trading loop are untouched). Three things shipped: (1) a concept-unlock system — every chart concept now has three tiers: cue-only (just a glow) → plain words ('broke the high') → professional term ('BOS'), tied to how far you've progressed. A new player at Hour 1 sees no BOS, OB, VWAP, ChoCh, Confluence or grades at all. (2) The 10-hour curriculum was re-sequenced so each Hour now teaches exactly what its Guardian tests — e.g. Hour 4 is now the Order-Block world (the Golem's concept), Hour 6 is VWAP (the Oracle), Hour 8 is higher-timeframes (the Titan). (3) The setup banner drops 'good/bad trade' and letter grades for a high-probability / low-probability framing until the player has earned the vocabulary. Next phase: rebuild onboarding for a winning trade in the first ~90 seconds, on top of this foundation." },
+  { date:"2026-06-18", title:"Fixed chart centering — no more dead black space below the candles", demo:"chartcenter",
+    body:"The candles were floating high on the screen with a large black gap beneath them before the mission bar. The vertical camera only panned up (for the jetpack) and otherwise sat still, so when price drifted up the action bunched at the top. Now the camera auto-fits: it keeps the visible price action (candles + turtle) vertically centred in the play area every frame, and the mission panel is pinned as a fixed bottom strip instead of floating in the world. Pan-only — candle sizes, the turtle and all jump physics are unchanged." },
+  { date:"2026-06-18", title:"Chart scale rebalanced (V3) — landed on ~10 candles", panels:[{label:"8 candles",demo:"scale8"},{label:"10 candles ✓ shipped",demo:"scale10"},{label:"12 candles",demo:"scale12"}],
+    body:"The first zoom-out pass (~18-22 candles) felt too much like a trading app; the original (~6) had no context. V3 splits the difference. These three panels render candles exactly like the in-game world chart — body inset, longer wicks, living halo, the turtle standing on the live candle, and fog hiding the future. We shipped the middle one (~10 visible): enough to read trend and structure, while the turtle still clearly stands on the market. Also: Level-1 players no longer see advanced terms (BOS, ChoCh, Order Block, VWAP Bounce, Confluence) — the setup banner now just reads 'Trade Opportunity', so beginners learn the concept before the jargon." },
+  { date:"2026-06-18", title:"Rebuilt the hour-end intermission (the redesign is finally in the game)", demo:"intermission",
+    body:"The old intermission — bull/bear mascots, a trade-gate bar, and a pop quiz — has been replaced with the redesign we'd prototyped. It now opens with clean stat tiles (Total Shells, Session P&L, Trades Won), a 'Lessons Completed' list where each lesson opens an accurate market-structure diagram (Break of Structure, Order Blocks, Change of Character, candle anatomy, trend), and a 'Trade History' grid where every card replays your actual trade — candles animating in with entry, stop, target and VWAP you can toggle. It teaches from what you just did instead of quizzing you. (Separately confirmed: the opening intro + first-play tutorial are intact — they only show for brand-new players, gated by a 'has played' flag, which is why they stop appearing once you've played.)" },
+  { date:"2026-06-18", title:"Zoomed the chart out — the market now feels large (trading first)", demo:"chartscale",
+    body:"Big change to reinforce that Chart Quest is a trading game, not a platformer. The chart was too zoomed in (only ~6 fat candles on screen). Now ~18-22 slim, TradingView-style candles are visible, so you can read trend, structure and momentum at a glance. The turtle is much smaller relative to the market, so it reads as navigating the market rather than walking a level. Candle bodies are slimmer with longer wicks, the walk pace is calmer, and the future stays hidden behind a soft fog so you're always moving into uncertainty. The turtle still hops candle-to-candle — just at a smaller, market-scale. (Next pass: replacing the BOS/OB labels with subtle 'opportunity ahead' hints and hiding advanced terms in early levels.)" },
+  { date:"2026-06-18", title:"Removed the free SCAN button (mini-games now come through bosses & lessons)", demo:"scanbtn",
+    body:"The SCAN button let players open practice mini-games at any time, which pulled focus away from the main journey. It's gone from the bottom bar for now — the mini-games still exist and are served up through lessons and boss fights, where they have context. The bottom bar is now just Daily / Journal / Wallet. The scanner can be brought back later as its own deliberate feature." },
+  { date:"2026-06-18", title:"Cleaned up the space under the chart", demo:"underchart",
+    body:"The strip beneath the chart floor — where the MISSION goal, progress bar and BUST/NOW/GOAL numbers live — had small green/red volume bars sitting in it. They read as stray 'extra candles' and made the area look busy. Removed them so the mission readout sits in clean space and is easy to scan at a glance." },
+  { date:"2026-06-18", title:"Living candles now live in the world (lesson candles stay plain)", demo:"worldcandles",
+    body:"The subtle living look now belongs to the world chart the turtle jumps across — a soft green/red halo on every candle and a gentle white pulse on the newest, still-forming candle at the live edge. The mini-game lesson charts were put back to clean, plain candles so nothing distracts while you're learning. Candles stay real trading candles everywhere: green is green, red is red, readability first." },
+  { date:"2026-06-18", title:"Fixed a chart-rendering glitch (gaps + broken candles)", demo:"chartfix",
+    body:"The Order-Block chart had two bugs: a price GAP after the breakout (price teleported back down) and candles whose low sat above the body (rendering broken). Both are fixed — the series now flows continuously — plus a render guard so a bad candle can never draw wrong again." },
+  { date:"2026-06-18", title:"Guardian realms now sit behind the gameplay",
+    body:"Each boss is now a contained presence in its realm (Institutional Ruins, Liquidation Abyss, etc.) instead of a stretched poster, and the realm shows behind the chart during rounds. Also fixed the mini-game library bleeding through and a duplicate HUD over the chart." },
+  { date:"2026-06-18", title:"This changelog now shows live before/after",
+    body:"From here on, visual changes are logged here with a live before/after you can compare directly, rendered with the game's own drawing code. (Screenshots can't be saved in the build environment, so these demos are pixel-exact to what ships.)" },
+  { date:"2026-06-16", title:"Added a \"Report a Bug\" button + anonymous visit tracking", body:"Players can now flag a problem right from inside the account panel — no need to message you separately. Also added a simple, anonymous counter so you can see how many times the game has actually been opened (no personal info collected)." },
+  { date:"2026-06-16", title:"Fixed the visit counter — it wasn't actually counting", body:"Caught and fixed a bug where the counter above looked fine but never saved anything. Confirmed it now records every page load correctly." },
+  { date:"2026-06-16", title:"Cleaned up the bottom toolbar + added your wallet balance on screen", body:"Daily Drill, Journal, Wallet, and Sign-in buttons now sit in one neat row instead of being scattered, and your Shell balance is now visible at all times." },
+  { date:"2026-06-16", title:"Fixed coin logos + a crash that was hiding the turtle", body:"Coin icons (BTC, ETH, SOL, etc.) now show the correct logo everywhere, and fixed a bug that was silently breaking the turtle/portal animation under certain conditions." },
+  { date:"2026-06-15", title:"Locked the game down for public launch", body:"Ran a full security review and fixed everything it found: players can no longer cheat their stats by editing values in the browser, the code is now scrambled before it's published, and the site only runs on the official domain." },
+  { date:"2026-06-15", title:"Fixed the login screen + made game-start reliable", body:"You can now actually type into the email/password fields, and the game reliably starts fresh every time after signing in, playing as a guest, or picking a faction." },
+  { date:"2026-06-15", title:"Added faction selection (pick your coin)", body:"New players now choose a faction — BTC, ETH, SOL, XRP, or DOGE — at the start, each with its own real chart data and look." },
+  { date:"2026-06-15", title:"Renamed Shell Trade -> Chart Quest", body:"Gave the game its current name and updated the branding to match." }
 ];
 
 function renderUpdates() {
-  document.getElementById('updatesList').innerHTML = updatesLog.map((u, i) => `
-    <div class="update-card">
-      <div class="date">${esc(u.date)}</div>
-      <div class="title">${esc(u.title)}</div>
-      <div class="body">${esc(u.body)}</div>
-      ${i === 0 ? `<div class="shot-row">
-        <div class="shot-box"><div><div class="shot-label">Before</div>screenshot logging starts with this dashboard — none captured yet</div></div>
-        <div class="shot-box"><div><div class="shot-label">After</div>screenshot logging starts with this dashboard — none captured yet</div></div>
-      </div>` : ''}
-    </div>
-  `).join('');
+  var el=document.getElementById('updatesList');
+  el.innerHTML = updatesLog.map(function(u){
+    var shots='';
+    if(u.panels){ shots='<div class="shot-row triptych">'+u.panels.map(function(p){return '<div class="shot-box"><div style="width:100%"><div class="shot-label">'+esc(p.label)+'</div><canvas class="shot-cv" data-demo="'+p.demo+'" data-side="after"></canvas></div></div>';}).join('')+'</div>'; }
+    else if(u.demo){ shots='<div class="shot-row"><div class="shot-box"><div style="width:100%"><div class="shot-label">Before</div><canvas class="shot-cv" data-demo="'+u.demo+'" data-side="before"></canvas></div></div><div class="shot-box"><div style="width:100%"><div class="shot-label">After</div><canvas class="shot-cv" data-demo="'+u.demo+'" data-side="after"></canvas></div></div></div>'; }
+    else if(u.beforeImg||u.afterImg){ shots='<div class="shot-row"><div class="shot-box"><div style="width:100%"><div class="shot-label">Before</div>'+(u.beforeImg?'<img src="'+u.beforeImg+'">':'&mdash;')+'</div></div><div class="shot-box"><div style="width:100%"><div class="shot-label">After</div>'+(u.afterImg?'<img src="'+u.afterImg+'">':'&mdash;')+'</div></div></div>'; }
+    return '<div class="update-card"><div class="date">'+esc(u.date)+'</div><div class="title">'+esc(u.title)+'</div><div class="body">'+esc(u.body)+'</div>'+shots+'</div>';
+  }).join('');
+  el.querySelectorAll('canvas.shot-cv').forEach(function(cv){
+    var d=DEMOS[cv.dataset.demo]; if(!d) return;
+    var fn=(cv.dataset.side==='before'?d.before:d.after);
+    try{ var ro=new ResizeObserver(function(){ if(cv.clientWidth>0) fn(cv); }); ro.observe(cv); }catch(e){}
+    requestAnimationFrame(function(){ if(cv.clientWidth>0) fn(cv); });
+  });
 }
 
 /* ---------------- Boot ---------------- */
@@ -494,8 +1707,104 @@ async function loadAll() {
 
 renderIssues();
 renderUpdates();
-loadAll();
-setInterval(loadAll, 60000);
+
+// Boot only after an admin session is verified.
+(function initAdminGate(){
+  const gate = document.getElementById('adminGate');
+  const form = document.getElementById('adminGateForm');
+  const err  = document.getElementById('adminErr');
+  let booted = false;
+  function start(){
+    if (booted) return; booted = true;
+    gate.style.display = 'none';
+    loadAll();
+    setInterval(loadAll, 60000);
+  }
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault(); err.textContent = '';
+    const btn = document.getElementById('adminSignInBtn');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    try {
+      await adminSignIn(
+        document.getElementById('adminEmail').value.trim(),
+        document.getElementById('adminPass').value
+      );
+      start();
+    } catch (ex) {
+      err.textContent = ex.message || 'Sign-in failed.';
+      btn.disabled = false; btn.textContent = 'Sign in';
+    }
+  });
+  // Resume a still-valid session without re-typing.
+  verifyAdminToken().then(ok => { if (ok) start(); });
+})();
+</script>
+<script>
+/* Guardian Realm live previews — self-contained mirror of the in-game BossArena
+   realm renderers, drawn into each boss card's canvas so every Guardian's live
+   environment shows in the dashboard without launching the full fight. Colours
+   match each realm's in-game accent. Animates only while the QA tab is open. */
+window.RealmPreview = (function () {
+  const ACC = {0:'#ffd60a',1:'#ff4fd8',2:'#16c784',3:'#22d3ee',4:'#ff7a1a',5:'#ea3943',6:'#9ef0c8',7:'#f5a623',8:'#4c7fff',9:'#a855f7',10:'#14b8a6'};
+  const rnd = (a,b)=>a+Math.random()*(b-a);
+  function hexA(h,a){ h=(h||'#888888').replace('#',''); const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16); return 'rgba('+r+','+g+','+b+','+a+')'; }
+  let reduced=false; try{ reduced=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+  const REALMS = {
+    0:{count:13, mk:(W,H)=>({x:rnd(0,W),y:rnd(0,H),r:rnd(5,10),vy:rnd(-8,-18),vx:rnd(-9,9),sp:rnd(0,6.28)}),
+       back(x,col,t,W,H){const cx=W*0.5,cy=H*0.5,R=Math.min(W,H)*0.42;x.save();x.translate(cx,cy);x.rotate(t*0.2);x.globalAlpha=0.08;x.strokeStyle=col;x.lineWidth=1.4;x.beginPath();x.arc(0,0,R,0,6.3);x.stroke();for(let i=0;i<12;i++){x.rotate(Math.PI/6);x.beginPath();x.moveTo(R*0.6,0);x.lineTo(R,0);x.stroke();}x.restore();x.globalAlpha=1;},
+       draw(x,p,col,t,W,H){p.y+=p.vy/60;p.x+=p.vx/60;p.sp+=0.05;if(p.y<-10){p.y=H+10;p.x=rnd(0,W);}const sq=0.4+0.6*Math.abs(Math.cos(p.sp));x.globalAlpha=0.22;x.fillStyle=col;x.beginPath();x.ellipse(p.x,p.y,p.r*sq,p.r,0,0,6.3);x.fill();x.globalAlpha=0.32;x.strokeStyle='#fff';x.lineWidth=1;x.beginPath();x.ellipse(p.x,p.y,p.r*0.6*sq,p.r*0.6,0,0,6.3);x.stroke();x.globalAlpha=1;}},
+    1:{count:9, mk:(W,H)=>({x:rnd(0,W),y:rnd(0,H),w:rnd(5,10),h:rnd(16,40),v:rnd(8,20),up:Math.random()<0.5}),
+       back(x,col,t,W,H){for(let i=0;i<4;i++){const bx=((i+1)/5)*W+Math.sin(t*0.4+i)*8;const g=x.createLinearGradient(bx-10,0,bx+10,0);g.addColorStop(0,hexA(col,0));g.addColorStop(0.5,hexA(col,0.1));g.addColorStop(1,hexA(col,0));x.fillStyle=g;x.fillRect(bx-10,0,20,H);}},
+       draw(x,p,col,t,W,H){p.y+=(p.up?-p.v:p.v)/60;if(p.y<-p.h)p.y=H+p.h;if(p.y>H+p.h)p.y=-p.h;x.globalAlpha=0.18;x.fillStyle=col;x.fillRect(p.x,p.y,p.w,p.h);x.globalAlpha=1;}},
+    2:{count:20, mk:(W,H)=>({x:rnd(0,W),y:rnd(0,H),s:rnd(2,4),v:rnd(12,30),ph:rnd(0,6.28)}),
+       back(x,col,t,W,H){x.globalAlpha=0.11;x.strokeStyle=col;x.lineWidth=1.2;for(let j=0;j<4;j++){const yy=H*(0.2+j*0.2);x.beginPath();for(let i=0;i<=W;i+=16)x.lineTo(i,yy+Math.sin(i*0.04+t*0.8+j)*6);x.stroke();}x.globalAlpha=1;},
+       draw(x,p,col,t,W,H){p.x+=p.v/60;p.y+=Math.sin(t*1.5+p.ph)*0.2;if(p.x>W+8){p.x=-8;p.y=rnd(0,H);}x.globalAlpha=0.28;x.fillStyle=col;x.beginPath();x.moveTo(p.x,p.y);x.lineTo(p.x-p.s,p.y-p.s*0.6);x.lineTo(p.x-p.s,p.y+p.s*0.6);x.closePath();x.fill();x.globalAlpha=1;}},
+    3:{count:16, mk:(W,H)=>({x:rnd(0,W),y:rnd(-H,H),v:rnd(26,60),s:rnd(1.5,3.5),rot:rnd(0,6.28),vr:rnd(-2,2)}),
+       back(x,col,t,W,H){x.globalAlpha=0.13;x.strokeStyle=col;x.lineWidth=1.3;const yy=H*0.5,brk=(t*30)%W;x.beginPath();x.moveTo(0,yy);x.lineTo(brk-16,yy);x.moveTo(brk+16,yy+7);x.lineTo(W,yy+7);x.stroke();for(let i=0;i<3;i++){const cx=(i+1)/4*W;x.beginPath();x.moveTo(cx,0);x.lineTo(cx+8,H*0.4);x.lineTo(cx-5,H);x.stroke();}x.globalAlpha=1;},
+       draw(x,p,col,t,W,H){p.y+=p.v/60;p.rot+=p.vr/60;if(p.y>H+6){p.y=-6;p.x=rnd(0,W);}x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.globalAlpha=0.28;x.fillStyle=col;x.fillRect(-p.s,-p.s,p.s*2,p.s*2);x.restore();x.globalAlpha=1;}},
+    4:{count:10, mk:(W,H)=>({x:rnd(0,W),y:rnd(0,H),w:rnd(14,30),h:rnd(9,16),ph:rnd(0,6.28)}),
+       back(x,col,t,W,H){x.globalAlpha=0.07;x.fillStyle=col;const bw=W*0.5;for(let i=0;i<5;i++)x.fillRect((i%2)*(W-bw),i*H/5,bw,H/5-3);x.globalAlpha=1;},
+       draw(x,p,col,t,W,H){const pulse=0.08+0.09*(0.5+0.5*Math.sin(t*1.5+p.ph));x.globalAlpha=0.1;x.strokeStyle=col;x.lineWidth=1;x.strokeRect(p.x,p.y,p.w,p.h);x.globalAlpha=pulse;x.fillStyle=col;x.fillRect(p.x,p.y+p.h*0.5-1,p.w,2);x.globalAlpha=1;}},
+    5:{count:26, mk:(W,H)=>({x:rnd(0,W),y:rnd(0,H),v:rnd(220,520),len:rnd(7,16)}),
+       back(x,col,t,W,H){const m=Math.max(W,H),r=(t*70)%(m*0.8);x.globalAlpha=Math.max(0,0.18-r/(m*7));x.strokeStyle='#ff3b46';x.lineWidth=1.6;x.beginPath();x.arc(W/2,H,r+18,Math.PI,6.3);x.stroke();x.globalAlpha=0.05+0.05*(0.5+0.5*Math.sin(t*4));x.fillStyle='#ff2a35';x.fillRect(0,0,W,H);x.globalAlpha=1;},
+       draw(x,p,col,t,W,H){p.y+=p.v/60;if(p.y>H+12){p.y=-12;p.x=rnd(0,W);}x.globalAlpha=0.36;x.strokeStyle='#ff5560';x.lineWidth=1.2;x.beginPath();x.moveTo(p.x,p.y);x.lineTo(p.x+1,p.y+p.len);x.stroke();x.globalAlpha=1;}},
+    6:{count:9, mk:(W,H)=>({a:rnd(0,6.28),rad:rnd(8,Math.min(W,H)*0.42),v:(rnd(-0.5,0.5)||0.3),r:rnd(1.5,3)}),
+       back(x,col,t,W,H){const cx=W/2,cy=H*0.5,u=Math.min(W,H)*0.12;x.globalAlpha=0.11;x.strokeStyle=col;x.lineWidth=1.1;for(let i=1;i<=3;i++){x.beginPath();x.arc(cx,cy,i*u,0,6.3);x.stroke();}x.globalAlpha=0.15;x.beginPath();x.moveTo(0,cy);x.lineTo(W,cy);x.stroke();x.globalAlpha=1;},
+       draw(x,p,col,t,W,H){const cx=W/2,cy=H*0.5;p.a+=p.v/60;const px=cx+Math.cos(p.a)*p.rad,py=cy+Math.sin(p.a)*p.rad*0.7;x.globalAlpha=0.36;x.fillStyle=col;x.beginPath();x.arc(px,py,p.r,0,6.3);x.fill();x.globalAlpha=1;}},
+    7:{count:14, mk:(W,H)=>({x:rnd(0,W),y:rnd(-H,0),v:rnd(30,70),r:rnd(2,5),rot:rnd(0,6.28),vr:rnd(-3,3)}),
+       back(x,col,t,W,H){x.globalAlpha=0.08;x.fillStyle=col;for(let i=0;i<7;i++){const bw=W/9,bx=(i+1)*W/9-bw/2,bh=H*(0.2+0.5*(0.5+0.5*Math.sin(i*1.3)));x.fillRect(bx,H-bh,bw*0.7,bh);}x.globalAlpha=1;},
+       draw(x,p,col,t,W,H){p.y+=p.v/60;p.rot+=p.vr/60;if(p.y>H+8){p.y=-8;p.x=rnd(0,W);}x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.globalAlpha=0.32;x.fillStyle='#ffd24a';x.beginPath();x.moveTo(-p.r,p.r);x.lineTo(-p.r,-p.r*0.4);x.lineTo(0,-p.r);x.lineTo(p.r,-p.r*0.4);x.lineTo(p.r,p.r);x.closePath();x.fill();x.restore();x.globalAlpha=1;}},
+    8:{count:18, mk:(W,H)=>({x:rnd(0,W),y:rnd(0,H),v:rnd(8,24),r:rnd(1,2.5),clock:Math.random()<0.2,cr:rnd(8,16),a:rnd(0,6.28)}),
+       draw(x,p,col,t,W,H){if(p.clock){x.globalAlpha=0.14;x.strokeStyle=col;x.lineWidth=1.2;x.beginPath();x.arc(p.x,p.y,p.cr,0,6.3);x.stroke();x.beginPath();x.moveTo(p.x,p.y);x.lineTo(p.x+Math.cos(t+p.a)*p.cr*0.8,p.y+Math.sin(t+p.a)*p.cr*0.8);x.moveTo(p.x,p.y);x.lineTo(p.x+Math.cos(t*0.2+p.a)*p.cr*0.5,p.y+Math.sin(t*0.2+p.a)*p.cr*0.5);x.stroke();x.globalAlpha=1;}else{p.y+=p.v/60;if(p.y>H+3){p.y=-3;p.x=rnd(0,W);}x.globalAlpha=0.26;x.fillStyle=col;x.fillRect(p.x,p.y,p.r,p.r);x.globalAlpha=1;}}},
+    9:{count:14, mk:(W,H)=>({edge:Math.floor(rnd(0,4)),q:rnd(0,1),v:rnd(0.1,0.35),off:rnd(-20,20)}),
+       back(x,col,t,W,H){const cx=W/2,cy=H*0.5,gl=0.13+0.1*(0.5+0.5*Math.sin(t*2)),rr=Math.min(W,H)*0.4;const g=x.createRadialGradient(cx,cy,0,cx,cy,rr);g.addColorStop(0,hexA(col,gl));g.addColorStop(1,hexA(col,0));x.fillStyle=g;x.beginPath();x.arc(cx,cy,rr,0,6.3);x.fill();},
+       draw(x,p,col,t,W,H){const cx=W/2,cy=H*0.5;p.q+=p.v/60;if(p.q>1)p.q-=1;let sx,sy;if(p.edge===0){sx=0;sy=cy+p.off;}else if(p.edge===1){sx=W;sy=cy+p.off;}else if(p.edge===2){sx=cx+p.off;sy=0;}else{sx=cx+p.off;sy=H;}const px=sx+(cx-sx)*p.q,py=sy+(cy-sy)*p.q;x.globalAlpha=0.34*(1-Math.abs(p.q-0.5)*0.6);x.fillStyle=col;x.beginPath();x.arc(px,py,1.8,0,6.3);x.fill();x.globalAlpha=1;}},
+    10:{count:20, mk:(W,H)=>({x:rnd(0,W),y:rnd(0,H),s:rnd(1,2.4),fl:Math.random()<0.14,ph:rnd(0,6.28)}),
+       back(x,col,t,W,H){x.globalAlpha=0.07;x.fillStyle=col;for(let r=0;r<3;r++){const ty=H*(0.2+r*0.3),off=(t*(20+r*10))%50;for(let bx=-50+off;bx<W;bx+=50)x.fillRect(bx,ty,24,3);}x.globalAlpha=1;},
+       draw(x,p,col,t,W,H){if(p.fl&&!reduced&&Math.random()<0.02){x.globalAlpha=0.45;x.strokeStyle=Math.random()<0.5?'#16c784':'#ea3943';x.lineWidth=1.2;x.beginPath();x.moveTo(p.x,p.y);x.lineTo(p.x+rnd(-6,6),p.y-rnd(6,14));x.stroke();}else{x.globalAlpha=0.14+0.1*Math.sin(t*3+p.ph);x.fillStyle=col;x.fillRect(p.x,p.y,p.s,p.s);}x.globalAlpha=1;}}
+  };
+  const items=[]; let raf=null;
+  function seedItem(it){ const R=REALMS[it.level]; it.P=[]; if(!R) return; const dens=Math.min(2.4,Math.max(0.6,(it.W*it.H)/(160*88))); const n=Math.round(R.count*dens*1.6*(reduced?0.55:1)); for(let i=0;i<n;i++) it.P.push(R.mk(it.W,it.H)); }
+  function sizeItem(it){ const r=it.cv.getBoundingClientRect(); it.W=it.cv.width=Math.max(40,Math.round(r.width||160)); it.H=it.cv.height=Math.max(40,Math.round(r.height||88)); seedItem(it); }
+  function mount(){
+    const cvs=document.querySelectorAll('canvas.qa-realm'); items.length=0;
+    cvs.forEach(function(cv){ const it={cv:cv,ctx:cv.getContext('2d'),level:+cv.getAttribute('data-level'),t:Math.random()*4,W:0,H:0,P:[]}; items.push(it); sizeItem(it); });
+    if(!raf) loop();
+  }
+  function shown(){ try{ const pq=document.getElementById('panel-qa'); return !!(pq && pq.offsetParent!==null); }catch(e){ return true; } }
+  function loop(){
+    raf=requestAnimationFrame(loop);
+    if(!items.length || !shown()) return;
+    for(const it of items){ if(!it.ctx) continue;
+      const r=it.cv.getBoundingClientRect(); if(r.width && Math.abs(r.width-it.W)>4) sizeItem(it);
+      it.t+=1.32/60; const x=it.ctx,W=it.W,H=it.H,col=ACC[it.level]||'#888888';
+      x.clearRect(0,0,W,H);
+      const g=x.createRadialGradient(W/2,H*0.5,0,W/2,H*0.5,Math.max(W,H)*0.8); g.addColorStop(0,hexA(col,0.32)); g.addColorStop(0.55,hexA(col,0.12)); g.addColorStop(1,hexA(col,0)); x.fillStyle=g; x.fillRect(0,0,W,H);
+      const R=REALMS[it.level]; if(!R) continue; if(R.back) R.back(x,col,it.t,W,H); for(const p of it.P) R.draw(x,p,col,it.t,W,H);
+    }
+  }
+  return { mount: mount };
+})();
 </script>
 </body>
 </html>

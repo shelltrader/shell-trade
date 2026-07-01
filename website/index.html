@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chart Quest — Learn to Trade, One Boss Fight at a Time</title>
+<meta name="description" content="Chart Quest is a side-scrolling trading RPG starring Shell the turtle. Hop across live crypto charts, take simulated trades, beat 11 Guardian bosses across 10 worlds, and learn to trade for real — free, in your browser.">
+<meta name="theme-color" content="#04060f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chart Quest">
+<meta property="og:title" content="Chart Quest — Learn to Trade, One Boss Fight at a Time">
+<meta property="og:description" content="A turtle named Shell hops across live crypto charts and learns to trade. 10 worlds, 11 Guardian bosses, zero real money. Play free.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/chartquest-poster.jpg">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/config.js"></script>
+</head>
+<body data-page="home">
+<div id="nav"></div>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero wrap">
+  <div class="reveal">
+    <span class="ticker"><span class="pulse"></span>LIVE ON-CHAIN · BTC/USD · BLOCK #840,127</span>
+    <h1 class="display" style="margin:18px auto 0;max-width:15ch">Learn to trade, <span class="grad-text">inside the chain</span>.</h1>
+    <p class="lead measure">Meet <b>Shell</b> — a turtle who hops across <b>real, live crypto charts</b> and learns to trade. Climb 10 worlds, defeat 11 Guardian bosses, and pick up genuine skills with <b>zero real money</b> on the line.</p>
+    <div class="btn-row" style="justify-content:center;margin-top:28px">
+      <a class="btn btn-primary btn-lg" href="play.html">▶ Play Free</a>
+      <a class="btn btn-ghost btn-lg" href="#how">See how it works</a>
+    </div>
+    <div class="trust-line">
+      <span class="stars">★★★★★</span> Loved by new traders
+      <span class="dot-sep"></span> No download
+      <span class="dot-sep"></span> Play money only
+      <span class="dot-sep"></span> Starts in 5 seconds
+    </div>
+  </div>
+
+  <!-- animated chart stage -->
+  <div class="stage reveal" aria-label="Shell the turtle hopping across a live candlestick chart">
+    <div class="stage-grid"></div>
+    <span class="stage-tag">● BTC/USDT · LIVE</span>
+    <span class="stage-hp">SHELL HP <span class="bar"><i></i></span></span>
+    <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice">
+      <polyline class="glowline" fill="none" stroke="#46e0ff" stroke-width="3" stroke-linejoin="round"
+        points="70,360 122,330 174,345 226,300 278,270 330,300 382,240 434,210 486,185 538,218 590,158 642,128"/>
+      <g stroke-linecap="round">
+        <line x1="70" y1="345" x2="70" y2="420" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="57" y="360" width="26" height="50" rx="4" fill="#16f29a" style="animation-delay:.05s"/>
+        <line x1="122" y1="315" x2="122" y2="388" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="109" y="330" width="26" height="45" rx="4" fill="#16f29a" style="animation-delay:.12s"/>
+        <line x1="174" y1="320" x2="174" y2="378" stroke="#ef5f66" stroke-width="3" opacity=".55"/><rect class="candle" x="161" y="330" width="26" height="35" rx="4" fill="#ef5f66" style="animation-delay:.19s"/>
+        <line x1="226" y1="288" x2="226" y2="358" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="213" y="300" width="26" height="45" rx="4" fill="#16f29a" style="animation-delay:.26s"/>
+        <line x1="278" y1="258" x2="278" y2="325" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="265" y="270" width="26" height="42" rx="4" fill="#16f29a" style="animation-delay:.33s"/>
+        <line x1="330" y1="258" x2="330" y2="312" stroke="#ef5f66" stroke-width="3" opacity=".55"/><rect class="candle" x="317" y="268" width="26" height="32" rx="4" fill="#ef5f66" style="animation-delay:.4s"/>
+        <line x1="382" y1="228" x2="382" y2="298" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="369" y="240" width="26" height="45" rx="4" fill="#16f29a" style="animation-delay:.47s"/>
+        <line x1="434" y1="198" x2="434" y2="265" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="421" y="210" width="26" height="42" rx="4" fill="#16f29a" style="animation-delay:.54s"/>
+        <line x1="486" y1="172" x2="486" y2="238" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="473" y="185" width="26" height="40" rx="4" fill="#16f29a" style="animation-delay:.61s"/>
+        <line x1="538" y1="178" x2="538" y2="230" stroke="#ef5f66" stroke-width="3" opacity=".55"/><rect class="candle" x="525" y="188" width="26" height="30" rx="4" fill="#ef5f66" style="animation-delay:.68s"/>
+        <line x1="590" y1="146" x2="590" y2="210" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="577" y="158" width="26" height="40" rx="4" fill="#16f29a" style="animation-delay:.75s"/>
+        <line x1="642" y1="116" x2="642" y2="182" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="629" y="128" width="26" height="42" rx="4" fill="#16f29a" style="animation-delay:.82s"/>
+      </g>
+    </svg>
+    <div class="stage-turtle bob" data-turtle="mascot"></div>
+    <div class="stage-pop">LONG · +2.4R 🎯</div>
+    <div class="stage-pop b">STOP-LOSS SAVED YOU 🛡️</div>
+  </div>
+
+  <!-- stats -->
+  <div class="stats reveal" style="margin-top:38px;max-width:880px;margin-left:auto;margin-right:auto">
+    <div class="stat"><div class="n">10</div><div class="l">Worlds to climb</div></div>
+    <div class="stat"><div class="n">11</div><div class="l">Guardian bosses</div></div>
+    <div class="stat"><div class="n">38</div><div class="l">Trading terms</div></div>
+    <div class="stat"><div class="n">6</div><div class="l">Crypto factions</div></div>
+  </div>
+</header>
+
+<!-- ===================== HOW IT WORKS ===================== -->
+<section class="section" id="how">
+  <div class="wrap center">
+    <span class="eyebrow reveal">How it works</span>
+    <h2 class="big reveal" style="margin-top:14px">Three simple moves. That's the whole game.</h2>
+    <p class="lead measure reveal">If you can play a platformer, you can learn to trade. Here's the loop you repeat — and master — as you climb.</p>
+  </div>
+  <div class="wrap grid g-3" style="margin-top:48px">
+    <div class="card reveal"><div class="step-num">1</div><h3>Run the chart</h3><p>Shell sprints along a <b>live candlestick chart</b> — every candle is a platform. Green means buyers won that round, red means sellers did. You're reading the market just by playing.</p></div>
+    <div class="card reveal"><div class="step-num">2</div><h3>Take the trade</h3><p>Spot a setup and place a <b>practice trade</b>: go long or short, choose your risk, and set a stop-loss. It's the real decision a trader makes — with play money, so mistakes are free.</p></div>
+    <div class="card reveal"><div class="step-num">3</div><h3>Beat the Guardian</h3><p>Each world ends with a <b>Guardian boss</b> — a fast quiz-fight that tests the exact skill you just learned. Win, rank up, and the next layer of the ocean unlocks.</p></div>
+  </div>
+</section>
+
+<!-- ===================== WHAT IS IT ===================== -->
+<section class="section" id="game">
+  <div class="wrap center">
+    <span class="eyebrow reveal">The whole game</span>
+    <h2 class="big reveal measure" style="margin-top:14px">A real game that teaches a real skill</h2>
+    <p class="lead measure reveal">Most people learn trading the painful way — by losing money. Chart Quest flips that. You learn <b>risk management before you ever risk a dollar</b>, wrapped in an adventure you'll actually want to finish.</p>
+  </div>
+
+  <div class="wrap" style="margin-top:60px;display:flex;flex-direction:column;gap:clamp(52px,8vw,96px)">
+
+    <div class="split reveal">
+      <div class="splat">
+        <span class="kicker">▍LIVE CHARTS AS LEVELS</span>
+        <h3 class="big" style="font-size:clamp(25px,3.4vw,36px)">The market <em>is</em> the map</h3>
+        <p class="lead">The terrain isn't made up. Candles are pulled from real crypto market data, so the wicks, bodies, and trends you jump across are the same ones pro traders stare at all day. Learn the chart by living in it.</p>
+      </div>
+      <div class="feature-visual" aria-hidden="true">
+        <div class="stage-grid"></div>
+        <svg viewBox="0 0 600 450" style="position:absolute;inset:0;width:100%;height:100%">
+          <g stroke-linecap="round">
+            <line x1="80" y1="250" x2="80" y2="330" stroke="#16f29a" stroke-width="4" opacity=".55"/><rect x="64" y="265" width="32" height="52" rx="5" fill="#16f29a"/>
+            <line x1="160" y1="210" x2="160" y2="300" stroke="#16f29a" stroke-width="4" opacity=".55"/><rect x="144" y="225" width="32" height="55" rx="5" fill="#16f29a"/>
+            <line x1="240" y1="220" x2="240" y2="290" stroke="#ef5f66" stroke-width="4" opacity=".55"/><rect x="224" y="232" width="32" height="40" rx="5" fill="#ef5f66"/>
+            <line x1="320" y1="170" x2="320" y2="255" stroke="#16f29a" stroke-width="4" opacity=".55"/><rect x="304" y="185" width="32" height="52" rx="5" fill="#16f29a"/>
+            <line x1="400" y1="140" x2="400" y2="220" stroke="#16f29a" stroke-width="4" opacity=".55"/><rect x="384" y="152" width="32" height="50" rx="5" fill="#16f29a"/>
+            <line x1="480" y1="150" x2="480" y2="215" stroke="#ef5f66" stroke-width="4" opacity=".55"/><rect x="464" y="160" width="32" height="36" rx="5" fill="#ef5f66"/>
+          </g>
+          <line x1="40" y1="300" x2="560" y2="300" stroke="#46e0ff" stroke-width="2" stroke-dasharray="6 8" opacity=".55"/>
+          <text x="46" y="292" fill="#7fd4ff" font-size="13" font-family="JetBrains Mono" font-weight="700">support</text>
+        </svg>
+        <div class="stage-turtle bob" style="left:53%;top:16%;width:96px" data-turtle="mascot"></div>
+      </div>
+    </div>
+
+    <div class="split rev reveal">
+      <div class="splat">
+        <span class="kicker">▍SIMULATED TRADES</span>
+        <h3 class="big" style="font-size:clamp(25px,3.4vw,36px)">Make every mistake for free</h3>
+        <p class="lead">Long or short. Choose your risk. Set a stop-loss and a take-profit. Reach for leverage — if you dare. Every trade is play money, so blowing up an account teaches you a lesson instead of emptying your wallet. Then you see exactly what would've happened.</p>
+        <div class="chips" style="justify-content:flex-start;margin-top:18px"><span class="chip">Long / Short</span><span class="chip">Stop-loss</span><span class="chip">Risk sizing</span><span class="chip">Leverage math</span></div>
+      </div>
+      <div class="feature-visual" style="display:flex;align-items:center;justify-content:center">
+        <div style="width:78%;background:rgba(10,18,38,.85);border:1px solid var(--line-2);border-radius:18px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.5)">
+          <div style="display:flex;justify-content:space-between;color:#9fb4cf;font-family:'JetBrains Mono';font-size:12px;font-weight:700">NEW TRADE<span style="color:var(--green)">● READY</span></div>
+          <div style="display:flex;gap:10px;margin:14px 0">
+            <div style="flex:1;background:linear-gradient(180deg,#1cffa6,#11d588);color:#022417;text-align:center;padding:12px;border-radius:12px;font-weight:800">LONG ▲</div>
+            <div style="flex:1;background:rgba(120,160,230,.1);color:#7e93b0;text-align:center;padding:12px;border-radius:12px;font-weight:800">SHORT ▼</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;color:#cfe1f2;font-size:14px;padding:8px 0;border-top:1px solid var(--line)"><span>Risk</span><b class="mono">2%</b></div>
+          <div style="display:flex;justify-content:space-between;color:#cfe1f2;font-size:14px;padding:8px 0;border-top:1px solid var(--line)"><span>Stop-loss</span><b class="mono" style="color:#ef9298">−1.1%</b></div>
+          <div style="display:flex;justify-content:space-between;color:#cfe1f2;font-size:14px;padding:8px 0;border-top:1px solid var(--line)"><span>Take-profit</span><b class="mono" style="color:var(--green)">+2.6%</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="split reveal">
+      <div class="splat">
+        <span class="kicker">▍THE TRADING JOURNAL</span>
+        <h3 class="big" style="font-size:clamp(25px,3.4vw,36px)">Everything you do is logged</h3>
+        <p class="lead">A built-in journal records every trade, every term, and every lesson — and lets you <b>replay each trade</b> with annotations showing your entry, stop, and what actually happened. With a <b>38-term glossary</b> built in, the habit that separates real traders from gamblers is baked right into the game.</p>
+        <div class="chips" style="justify-content:flex-start;margin-top:18px"><span class="chip">📖 Terms</span><span class="chip">🎓 Lessons</span><span class="chip">📊 Trade replays</span><span class="chip">📝 Notes</span></div>
+      </div>
+      <div class="feature-visual" style="display:flex;align-items:center;justify-content:center">
+        <div style="width:80%;display:flex;flex-direction:column;gap:10px">
+          <div style="background:rgba(10,18,38,.85);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;color:#dce7f2;font-weight:700;font-size:14px">BTC · Long <span class="mono" style="color:var(--green)">+2.4R ✓</span></div>
+          <div style="background:rgba(10,18,38,.85);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;color:#dce7f2;font-weight:700;font-size:14px">ETH · Short <span class="mono" style="color:#ef9298">−1.0R</span></div>
+          <div style="background:rgba(10,18,38,.85);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;color:#dce7f2;font-weight:700;font-size:14px">SOL · Long <span class="mono" style="color:var(--green)">+1.8R ✓</span></div>
+          <div style="text-align:center;color:#7fd4ff;font-size:13px;font-weight:700;margin-top:4px;font-family:'JetBrains Mono'">▶ tap any trade to replay it</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== THE 10 WORLDS AS A BLOCKCHAIN ===================== -->
+<section class="section" id="worlds">
+  <div class="wrap center">
+    <span class="eyebrow reveal">The curriculum, on-chain</span>
+    <h2 class="big reveal measure" style="margin-top:14px">10 worlds. One linked chain of skills.</h2>
+    <p class="lead measure reveal">Each world is a block in the chain — a single trading skill that builds on the last. You can't skip ahead; every block is sealed by a Guardian until you prove you've learned it. Here's the whole climb.</p>
+  </div>
+
+  <div class="chain reveal" style="margin-top:48px">
+    <div class="block"><div class="bidx"><span class="h">BLOCK</span><span class="n">00</span></div><div><h4>Enter the Ocean <span style="color:var(--ink-faint);font-weight:500">· tutorial</span></h4><div class="sub">Your very first candles — what green and red really mean.</div><div class="tip">A candle is a fight between buyers and sellers — not a coin flip.</div></div><div class="boss-tag">🎲 The Gambler</div></div>
+    <div class="chain-link"></div>
+    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">01</span></div><div><h4>Your First Trades</h4><div class="sub">Read a candle, take a trade, wait for the close.</div><div class="tip">Green = up, red = down. Wait for the candle to CLOSE before you commit.</div></div><div class="boss-tag">🌀 False-Breakout Eel</div></div>
+    <div class="chain-link"></div>
+    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">02</span></div><div><h4>Trend &amp; Levels</h4><div class="sub">Direction, and the levels price reacts at.</div><div class="tip">Trade WITH the trend. Higher highs + higher lows = up.</div></div><div class="boss-tag">🦀 Trend Crab</div></div>
+    <div class="chain-link"></div>
+    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">03</span></div><div><h4>Market Structure</h4><div class="sub">Breaks that continue (BOS) vs breaks that flip (ChoCh).</div><div class="tip">A break WITH the trend continues. A break AGAINST it may be a reversal.</div></div><div class="boss-tag">🐉 Structure Serpent</div></div>
+    <div class="chain-link"></div>
+    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">04</span></div><div><h4>The Big-Player Zones</h4><div class="sub">Where institutions entered — and price returns.</div><div class="tip">The purple zone is where giants entered. Price often comes back to it.</div></div><div class="boss-tag">🧱 Order-Block Golem</div></div>
+    <div class="chain-link"></div>
+    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">05</span></div><div><h4>Manage Your Risk</h4><div class="sub">Stop loss, sizing &amp; living to trade again.</div><div class="tip">A stop loss is your safety exit. Never risk it all on one trade.</div></div><div class="boss-tag">🐙 Risk Hydra</div></div>
+    <div class="chain-link"></div>
+    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">06</span></div><div><h4>The Fair-Value Line</h4><div class="sub">Trade around the average price (VWAP).</div><div class="tip">The yellow line is the average price — price keeps returning to it.</div></div><div class="boss-tag">🔮 VWAP Oracle</div></div>
+    <div class="chain-link"></div>
+    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">07</span></div><div><h4>Leverage &amp; Edge</h4><div class="sub">Borrowed power — handle with care.</div><div class="tip">Only reach for leverage when your setup is high-probability.</div></div><div class="boss-tag">👑 Margin King</div></div>
+    <div class="chain-link"></div>
+    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">08</span></div><div><h4>Zoom Out</h4><div class="sub">Always check the bigger picture.</div><div class="tip">Tap the 5m / 15m / 1h panel before every trade.</div></div><div class="boss-tag">🌊 Timeframe Titan</div></div>
+    <div class="chain-link"></div>
+    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">09</span></div><div><h4>Chart Patterns</h4><div class="sub">Flags, triangles &amp; head-and-shoulders.</div><div class="tip">A pattern is price drawing the same story again — spot the shape.</div></div><div class="boss-tag">🦑 Confluence Kraken</div></div>
+    <div class="chain-link"></div>
+    <div class="block" style="border-color:rgba(22,242,154,.4);box-shadow:0 0 30px rgba(22,242,154,.12)"><div class="bidx" style="background:linear-gradient(180deg,rgba(22,242,154,.25),rgba(22,242,154,.06));border-color:rgba(22,242,154,.5)"><span class="h" style="color:var(--green)">FINAL</span><span class="n">10</span></div><div><h4>Confluence Mastery</h4><div class="sub">Stack every signal you've learned into one decision.</div><div class="tip">One signal is a guess. Three aligned signals is a plan.</div></div><div class="boss-tag">🎩 Market Maker</div></div>
+  </div>
+
+  <div class="center" style="margin-top:36px" data-boss-gated>
+    <a class="btn btn-ghost btn-lg reveal" href="bosses.html">Meet all 11 Guardians →</a>
+  </div>
+</section>
+
+<!-- ===================== FACTIONS ===================== -->
+<section class="section">
+  <div class="wrap center">
+    <span class="eyebrow reveal">Pick your faction</span>
+    <h2 class="big reveal" style="margin-top:14px">Choose your coin, choose your chaos</h2>
+    <p class="lead measure reveal">Every run is built on a real crypto asset with its own personality and volatility. Start with three; unlock the rest as you level up.</p>
+  </div>
+  <div class="wrap grid g-3" style="margin-top:44px">
+    <div class="faction reveal" style="--fc:#f7931a"><div class="sym">₿</div><div><h4>Bitcoin</h4><div class="t">The Original · Digital Gold</div></div><div class="lock">START</div></div>
+    <div class="faction reveal" style="--fc:#7b9cff"><div class="sym">Ξ</div><div><h4>Ethereum</h4><div class="t">World Computer · DeFi Native</div></div><div class="lock">START</div></div>
+    <div class="faction reveal" style="--fc:#19e0b4"><div class="sym">◎</div><div><h4>Solana</h4><div class="t">Speed Demon · High Beta</div></div><div class="lock">START</div></div>
+    <div class="faction reveal" style="--fc:#46e0ff"><div class="sym">✕</div><div><h4>XRP</h4><div class="t">Global Payments · Institutional</div></div><div class="lock">🔒 UNLOCK</div></div>
+    <div class="faction reveal" style="--fc:#ffce5c"><div class="sym">Ð</div><div><h4>Dogecoin</h4><div class="t">Meme Legend · Pure Chaos</div></div><div class="lock">🔒 UNLOCK</div></div>
+    <div class="faction reveal" style="--fc:#f3ba2f"><div class="sym">B</div><div><h4>BNB</h4><div class="t">Exchange Coin · DeFi Power</div></div><div class="lock">🔒 UNLOCK</div></div>
+  </div>
+</section>
+
+<!-- ===================== MEET SHELL ===================== -->
+<section class="section">
+  <div class="wrap split">
+    <div class="splat reveal center"><div class="holo bob" style="display:inline-block;width:min(330px,74vw)" data-turtle="mascot"></div></div>
+    <div class="reveal">
+      <span class="eyebrow">Your guide</span>
+      <h2 class="big" style="margin:14px 0 0">Shell, the turtle who trades</h2>
+      <p class="lead">In a world obsessed with bulls, apes, and diamond hands, your teacher is a turtle — on purpose. Shell is calm under pressure, allergic to FOMO, and never panics on a red candle. Slow and steady really does win this race.</p>
+      <p class="lead">Shell is learning right alongside you. Every lesson you pick up, Shell picks up too — which is exactly why a total beginner can keep up the whole way.</p>
+      <div class="chips" style="justify-content:flex-start;margin-top:8px"><span class="chip">🐢 Slow and steady</span><span class="chip">🛡️ Protect the shell</span><span class="chip">🚫 Never trade naked</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RANK LADDER ===================== -->
+<section class="section">
+  <div class="wrap center">
+    <span class="eyebrow reveal">Your climb</span>
+    <h2 class="big reveal" style="margin-top:14px">From Drifter to Trader</h2>
+    <p class="lead measure reveal">Every Guardian you beat earns a new rank — a real, visible marker of how far your skills have come.</p>
+    <div class="ladder reveal" style="margin-top:40px">
+      <div class="rank"><span class="em">🌊</span><span class="nm">DRIFTER</span></div>
+      <div class="rank"><span class="em">🦠</span><span class="nm">PLANKTON</span></div>
+      <div class="rank"><span class="em">🐟</span><span class="nm">MINNOW</span></div>
+      <div class="rank"><span class="em">🦀</span><span class="nm">CRAB</span></div>
+      <div class="rank"><span class="em">🐡</span><span class="nm">PUFFER</span></div>
+      <div class="rank"><span class="em">🐙</span><span class="nm">OCTOPUS</span></div>
+      <div class="rank"><span class="em">🐬</span><span class="nm">DOLPHIN</span></div>
+      <div class="rank"><span class="em">🦈</span><span class="nm">SHARK</span></div>
+      <div class="rank"><span class="em">🐋</span><span class="nm">WHALE</span></div>
+      <div class="rank"><span class="em">🐲</span><span class="nm">LEVIATHAN</span></div>
+      <div class="rank final"><span class="em">👑</span><span class="nm">TRADER</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WHY IT WORKS ===================== -->
+<section class="section">
+  <div class="wrap center">
+    <span class="eyebrow reveal">Why it actually works</span>
+    <h2 class="big reveal measure" style="margin-top:14px">Built like a game. Rigorous like a course.</h2>
+  </div>
+  <div class="wrap grid g-2" style="margin-top:46px;max-width:920px">
+    <div class="card reveal"><span class="ico">🧠</span><h3>Learn by doing, not cramming</h3><p>You don't memorize definitions — you make the trade, see the result, and the lesson sticks. That's why it works for a curious 12-year-old and a 65-year-old new to crypto alike.</p></div>
+    <div class="card reveal"><span class="ico">💸</span><h3>Risk-free reps</h3><p>The fastest way to get good at a risky skill is to practice where mistakes are free. Blow up as many practice accounts as you need — that's the point.</p></div>
+    <div class="card reveal"><span class="ico">⏱️</span><h3>Five minutes a day</h3><p>Bite-sized worlds and a daily streak mean you make progress in a coffee break, and keep coming back like your favorite learning app.</p></div>
+    <div class="card reveal"><span class="ico">🌍</span><h3>No jargon left behind</h3><p>VWAP, order blocks, leverage — every scary term is introduced in plain English the moment you need it, never before. You're never lost.</p></div>
+  </div>
+</section>
+
+<!-- ===================== INSTALL ===================== -->
+<section class="section" id="install">
+  <div class="wrap split">
+    <div class="reveal">
+      <span class="eyebrow">Take Shell anywhere</span>
+      <h2 class="big" style="margin:14px 0 0">Install it like a real app</h2>
+      <p class="lead">Chart Quest runs in any browser — but you can also add it to your home screen and it opens full-screen, just like an App Store app. <b>No store, no download, no waiting.</b> Works on iPhone, iPad, Android, and desktop.</p>
+      <div class="btn-row" style="margin-top:24px"><button class="btn btn-primary btn-lg" onclick="cqInstall()">⬇ Install the app</button><a class="btn btn-ghost btn-lg" href="play.html">Or play in browser</a></div>
+      <p class="faint" style="font-size:14px;margin-top:14px;font-family:'JetBrains Mono'">iPhone: Share → Add to Home Screen. Android: tap Install when it pops up.</p>
+    </div>
+    <div class="reveal center"><img src="assets/chartquest-poster.jpg" alt="Chart Quest app tile" style="width:min(320px,74vw);border-radius:30px;box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 50px rgba(22,242,154,.18);margin:0 auto"></div>
+  </div>
+</section>
+
+<!-- ===================== TESTIMONIALS ===================== -->
+<section class="section">
+  <div class="wrap center">
+    <span class="eyebrow reveal">What early players say</span>
+    <h2 class="big reveal" style="margin-top:14px">People who "never got" charts — now get them</h2>
+    <div class="trust-line reveal" style="justify-content:center;margin-top:14px"><span class="stars">★★★★★</span> from new traders learning the ropes</div>
+  </div>
+  <div class="wrap grid g-3" style="margin-top:44px">
+    <div class="card reveal"><div class="stars" style="margin-bottom:10px">★★★★★</div><p style="color:#eaf1ff;font-size:16.5px">"I got liquidated once and swore off crypto. Chart Quest taught me what a stop-loss actually does in about 20 minutes. The turtle is now my financial advisor."</p><p class="mono" style="margin-top:14px;font-weight:700;font-size:13px;color:var(--green)">Luis, 24 · came back from a blow-up</p></div>
+    <div class="card reveal"><div class="stars" style="margin-bottom:10px">★★★★★</div><p style="color:#eaf1ff;font-size:16.5px">"I treat it like Duolingo for trading — five minutes on my commute. I finally understand VWAP and I'm not scared of the jargon anymore."</p><p class="mono" style="margin-top:14px;font-weight:700;font-size:13px;color:var(--green)">Casey, 29 · total beginner</p></div>
+    <div class="card reveal"><div class="stars" style="margin-bottom:10px">★★★★★</div><p style="color:#eaf1ff;font-size:16.5px">"My nephew was about to YOLO his savings off a Discord call. I sent him this instead. Now he won't shut up about 'protecting the shell.'"</p><p class="mono" style="margin-top:14px;font-weight:700;font-size:13px;color:var(--green)">Wendy, 45 · worried aunt</p></div>
+  </div>
+  <p class="center faint reveal" style="font-size:13px;margin-top:24px">Sample reviews shown for illustration — swap in your real player quotes any time.</p>
+</section>
+
+<!-- ===================== COURSES TEASER ===================== -->
+<section class="section">
+  <div class="wrap center">
+    <span class="eyebrow reveal">Ready to go deeper?</span>
+    <h2 class="big reveal measure" style="margin-top:14px">The game is free. The mastery is optional.</h2>
+    <p class="lead measure reveal">Beat the game and want the full playbook? <b>Chart Quest Academy</b> takes you from confident beginner to a trader with a real, written plan — two courses, your pace, lifetime access.</p>
+    <div class="btn-row" style="justify-content:center;margin-top:26px"><a class="btn btn-primary btn-lg reveal" href="courses.html">Explore the courses →</a></div>
+    <div class="chips reveal" style="margin-top:26px"><span class="chip">🎓 Foundations · $39.99</span><span class="chip">👑 Pro Trader Mastery · $149.99</span><span class="chip">✅ 30-day money-back</span></div>
+  </div>
+</section>
+
+<!-- ===================== FAQ ===================== -->
+<section class="section" id="faq">
+  <div class="wrap center"><span class="eyebrow reveal">Questions, answered</span><h2 class="big reveal" style="margin-top:14px">Everything you might be wondering</h2></div>
+  <div class="faq reveal" style="margin-top:40px">
+    <div class="qa"><button>Is it really free? <span class="pls">+</span></button><div class="ans"><p>Yes — the full game is free to play, with no sign-up required to start. The optional paid courses (Chart Quest Academy) are a separate, deeper product for people who want to go further.</p></div></div>
+    <div class="qa"><button>Do I trade real money? <span class="pls">+</span></button><div class="ans"><p>Never. Every trade in Chart Quest uses play money on top of real chart data. You get all the learning and none of the risk — that's the entire idea.</p></div></div>
+    <div class="qa"><button>I'm a complete beginner. Will I be lost? <span class="pls">+</span></button><div class="ans"><p>Not at all. Chart Quest starts with "what is a candle?" and introduces every term in plain English exactly when you need it. Whether you're 12 or 65, you'll be fine.</p></div></div>
+    <div class="qa"><button>What devices does it work on? <span class="pls">+</span></button><div class="ans"><p>Any modern web browser — iPhone, iPad, Android phone or tablet, Mac, or PC. You can also add it to your home screen so it opens full-screen like an installed app, no app store needed.</p></div></div>
+    <div class="qa"><button>Do I need a crypto account or wallet? <span class="pls">+</span></button><div class="ans"><p>No. There's no wallet, no exchange, and no KYC to play. Chart Quest is a game and a teacher, not an exchange. We never touch your money.</p></div></div>
+    <div class="qa"><button>Is this financial advice? <span class="pls">+</span></button><div class="ans"><p>No. Chart Quest is educational entertainment. It teaches how charts and trading mechanics work, but nothing here is a recommendation to buy or sell anything. Real trading carries real risk — always do your own research.</p></div></div>
+  </div>
+</section>
+
+<!-- ===================== FINAL CTA ===================== -->
+<section class="section">
+  <div class="wrap"><div class="cta-band reveal">
+    <div class="holo bob" style="display:inline-block;width:140px;margin-bottom:8px" data-turtle="mascot"></div>
+    <h2 class="display">Your first trade is one hop away.</h2>
+    <p class="lead" style="margin:14px auto 0">Free to play. No download. No real money. Just you, a turtle, and a live chart.</p>
+    <div class="btn-row" style="justify-content:center;margin-top:28px"><a class="btn btn-primary btn-lg" href="play.html">▶ Play Chart Quest Free</a><button class="btn btn-ghost btn-lg" onclick="cqInstall()">⬇ Install the app</button></div>
+  </div></div>
+</section>
+
+<div id="footer"></div>
+
+<div class="sticky-cta" id="cqSticky">
+  <div><div class="sc-label">Play Chart Quest 🐢</div><div class="sc-sub">Free · no download</div></div>
+  <a class="btn btn-primary" href="play.html">▶ Play Free</a>
+</div>
+
+<div class="modal" id="cqInstallModal"><div class="modal-card">
+  <div style="width:90px;margin:0 auto 6px" data-turtle="mascot"></div>
+  <h3>Add Chart Quest to your phone</h3>
+  <div data-iostext><p class="muted">On iPhone &amp; iPad, in Safari:</p><div class="steps2"><div><b>1</b><span>Tap the <b>Share</b> button (square with an arrow).</span></div><div><b>2</b><span>Scroll and tap <b>Add to Home Screen</b>.</span></div><div><b>3</b><span>Tap <b>Add</b> — Shell now lives on your home screen.</span></div></div></div>
+  <div data-andtext><p class="muted">On Android, in Chrome:</p><div class="steps2"><div><b>1</b><span>Tap the <b>⋮</b> menu (top-right).</span></div><div><b>2</b><span>Tap <b>Install app</b> / <b>Add to Home screen</b>.</span></div><div><b>3</b><span>Confirm — Chart Quest installs like any app.</span></div></div></div>
+  <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="cqCloseModal()">Got it 🐢</button>
+</div></div>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

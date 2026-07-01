@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Chart Quest — Mini-Game Library (Preview)</title>
+<style>
+  :root{
+    --bg:#080b12;--panel:#0d131f;--panel2:#111a28;--line:#1b2738;--ink:#e6edf3;--sub:#8b97a8;--mut:#56657a;
+    --green:#16c784;--red:#ea3943;--blue:#4cc3ff;--gold:#ffd60a;--purp:#a855f7;--orange:#ff9f43;
+    --font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--mono:'SF Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;background:#04060b;font-family:var(--font);color:var(--ink);}
+  body{display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  #stage{position:relative;width:420px;height:880px;max-height:100vh;
+    background:radial-gradient(120% 60% at 50% 0%,#101a2e 0%,var(--bg) 55%);
+    overflow:hidden;box-shadow:0 0 0 1px #11161f,0 30px 90px rgba(0,0,0,.6);display:flex;flex-direction:column;}
+
+  .lib{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .lib-h{padding:18px 18px 10px;}
+  .lib-h .t{font-size:21px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:8px;}
+  .lib-h .t .pill{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--purp);background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);padding:3px 8px;border-radius:999px;}
+  .lib-h .s{font-size:11.5px;color:var(--sub);margin-top:3px;}
+  .stats{display:flex;gap:9px;margin-top:13px;}
+  .stat{flex:1;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:11px;padding:9px;text-align:center;}
+  .stat .v{font-size:16px;font-weight:800;} .stat .v.g{color:var(--green);} .stat .v.y{color:var(--gold);}
+  .stat .k{font-size:8.5px;letter-spacing:.8px;color:var(--mut);text-transform:uppercase;margin-top:3px;}
+  .search{margin:13px 0 9px;position:relative;}
+  .search input{width:100%;padding:11px 12px 11px 34px;border-radius:11px;background:var(--panel);border:1px solid var(--line);color:var(--ink);font:13px var(--font);outline:none;}
+  .search input:focus{border-color:#2f4a66;}
+  .search .ic{position:absolute;left:12px;top:11px;color:var(--mut);font-size:13px;}
+  .cats{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;}
+  .cats::-webkit-scrollbar{height:0;}
+  .cat{white-space:nowrap;font-size:11px;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--sub);cursor:pointer;}
+  .cat.on{border-color:var(--blue);color:var(--blue);background:rgba(76,195,255,.1);}
+  .grid{flex:1;overflow-y:auto;padding:13px 16px 24px;display:grid;grid-template-columns:1fr 1fr;gap:11px;align-content:start;}
+  .grid::-webkit-scrollbar{width:0;}
+  .game{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .22s,border-color .22s;}
+  .game:hover{transform:translateY(-3px);border-color:var(--acc);box-shadow:0 12px 32px -12px var(--acc);}
+  .game .tile{width:100%;height:132px;display:block;}
+  .game .foot{display:flex;align-items:center;justify-content:space-between;padding:8px 11px 9px;border-top:1px solid var(--line);background:#0a0f18;}
+  .game .pips{display:flex;gap:3px;} .game .pip{width:13px;height:4px;border-radius:2px;background:#22324a;} .game .pip.on{background:var(--acc);box-shadow:0 0 5px -1px var(--acc);}
+  .game .play{font-size:9px;font-weight:800;letter-spacing:.7px;color:var(--acc);}
+  .game .done{position:absolute;top:8px;right:8px;z-index:3;width:20px;height:20px;border-radius:50%;background:var(--green);color:#04130c;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #0a0f18;}
+
+  #play{position:absolute;inset:0;z-index:60;background:var(--bg);transform:translateX(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;}
+  #play.on{transform:translateX(0);}
+  .ph{padding:14px 16px 10px;border-bottom:1px solid var(--line);}
+  .ph .top{display:flex;align-items:center;justify-content:space-between;}
+  .ph .bk{background:none;border:none;color:var(--sub);font:600 13px var(--font);cursor:pointer;padding:0;}
+  .ph .cat2{font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--purp);}
+  .ph h2{margin:9px 0 3px;font-size:18px;font-weight:800;}
+  .ph .obj{font-size:12px;color:var(--sub);line-height:1.5;}
+  .diffs{display:flex;gap:6px;margin-top:11px;}
+  .diff{flex:1;font-size:10px;font-weight:700;padding:7px 0;text-align:center;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--sub);cursor:pointer;}
+  .diff.on{border-color:var(--gold);color:var(--gold);background:rgba(255,214,10,.1);}
+  #gameArea{flex:1;position:relative;margin:12px;border:1px solid var(--line);border-radius:14px;background:#070b12;overflow:hidden;}
+  #gcanvas{display:block;width:100%;height:100%;touch-action:none;}
+  .prompt{position:absolute;top:10px;left:12px;right:12px;font-size:12px;font-weight:600;color:#d4dde8;text-align:center;
+    background:rgba(8,12,20,.7);padding:7px 10px;border-radius:9px;border:1px solid var(--line);backdrop-filter:blur(2px);}
+  .hint{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:10.5px;color:var(--mut);}
+  .timer{position:absolute;top:46px;right:14px;font:700 12px var(--mono);color:var(--gold);}
+  .choices{position:absolute;bottom:14px;left:14px;right:14px;display:flex;flex-wrap:wrap;gap:9px;}
+  .choices button{flex:1 1 44%;padding:13px 0;border-radius:11px;font:800 12.5px var(--font);border:1px solid;cursor:pointer;}
+  .ch-up{background:rgba(22,199,132,.12);border-color:var(--green);color:var(--green);}
+  .ch-dn{background:rgba(234,57,67,.12);border-color:var(--red);color:var(--red);}
+  .ch-n{background:rgba(76,195,255,.1);border-color:var(--blue);color:var(--blue);}
+  .ch-opt{background:#111a28;border-color:#2a3a4e;color:#c7d1de;}
+  .sliders{position:absolute;bottom:12px;left:14px;right:14px;background:rgba(8,12,20,.9);border:1px solid var(--line);border-radius:12px;padding:11px 13px;}
+  .sliders .rdg{display:flex;justify-content:space-between;font:700 12px var(--mono);margin-bottom:9px;}
+  .sliders label{display:block;font-size:10px;color:var(--sub);margin:7px 0 3px;}
+  .sliders input[type=range]{width:100%;accent-color:var(--blue);}
+  .pf{padding:0 16px 16px;}
+  .submit{width:100%;padding:15px 0;border-radius:12px;font:800 14px var(--font);letter-spacing:.4px;cursor:pointer;border:1px solid var(--blue);background:rgba(76,195,255,.12);color:var(--blue);}
+  .submit:disabled{opacity:.45;cursor:not-allowed;}
+
+  #result{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(4,6,11,.86);backdrop-filter:blur(4px);padding:28px;text-align:center;}
+  #result.on{display:flex;}
+  #result .ring{width:120px;height:120px;margin-bottom:18px;}
+  #result .verdict{font-size:20px;font-weight:800;margin-bottom:6px;}
+  #result .why{font-size:13px;color:var(--sub);line-height:1.55;max-width:300px;margin-bottom:22px;}
+  #result .acts{display:flex;gap:11px;}
+  #result .acts button{padding:13px 22px;border-radius:11px;font:800 13px var(--font);cursor:pointer;border:1px solid;}
+  #result .again{background:rgba(76,195,255,.12);border-color:var(--blue);color:var(--blue);}
+  #result .next{background:linear-gradient(180deg,#19d08a,#0e9b64);border-color:var(--green);color:#04130c;}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="lib" id="lib">
+    <div class="lib-h">
+      <div class="t">Practice Library <span class="pill">BETA</span></div>
+      <div class="s">Learn by doing. Drill the real skills, any time.</div>
+      <div class="stats" id="stats"></div>
+      <div class="search"><span class="ic">🔍</span><input id="q" placeholder="Search skills — bos, risk, fakeout…"></div>
+      <div class="cats" id="cats"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div id="play">
+    <div class="ph">
+      <div class="top"><button class="bk" id="back">‹ Library</button><span class="cat2" id="pCat"></span></div>
+      <h2 id="pTitle"></h2>
+      <div class="obj" id="pObj"></div>
+      <div class="diffs" id="pDiffs"></div>
+    </div>
+    <div id="gameArea"><canvas id="gcanvas"></canvas></div>
+    <div class="pf"><button class="submit" id="pSubmit">SUBMIT</button></div>
+    <div id="result">
+      <svg class="ring" id="ring" viewBox="0 0 120 120"></svg>
+      <div class="verdict" id="rVerdict"></div>
+      <div class="why" id="rWhy"></div>
+      <div class="acts"><button class="again" id="rAgain">↻ Try again</button><button class="next" id="rNext">Library →</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ════════════════════════════════════════════════════════════════════════
+   CHART QUEST — MINI-GAME LIBRARY (preview)
+   1 chart substrate + 4 config-driven frameworks (annotate · predict ·
+   calculate · classify) + a 5th tiny "build" verb for candle construction.
+   19 games, each a data object with gen()/overlays()/validate(). Adding a
+   game = adding one entry to REG.
+   ════════════════════════════════════════════════════════════════════════ */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const DIFFS=['beginner','intermediate','advanced','expert'];
+const DIFF_N={beginner:14,intermediate:22,advanced:32,expert:46};
+const DIFF_VOL={beginner:2.2,intermediate:3.0,advanced:3.8,expert:4.6};
+const DIFF_TIME={beginner:0,intermediate:0,advanced:25,expert:18};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+const store=(()=>{try{localStorage.setItem('_t','1');localStorage.removeItem('_t');return localStorage;}catch(e){const m={};return{getItem:k=>m[k]??null,setItem:(k,v)=>m[k]=v};}})();
+const PROGRESS=JSON.parse(store.getItem('cq_minigames_v1')||'{}');
+function saveScore(id,diff,score){const k=id+':'+diff,cur=PROGRESS[k]||{best:0,attempts:0};PROGRESS[k]={best:Math.max(cur.best,score),attempts:cur.attempts+1,done:cur.done||score>=70};store.setItem('cq_minigames_v1',JSON.stringify(PROGRESS));}
+const bestOf=id=>Math.max(0,...DIFFS.map(d=>(PROGRESS[id+':'+d]||{}).best||0));
+const doneOf=id=>DIFFS.some(d=>(PROGRESS[id+':'+d]||{}).done);
+
+/* ── seeded candles ── */
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function candles(seed,n,vol,trend){const r=rng(seed);let p=100;const out=[];for(let i=0;i<n;i++){const d=(r()-0.5)*vol+trend;const o=p,c=p+d;out.push({o,c,hi:Math.max(o,c)+r()*vol*0.4,lo:Math.min(o,c)-r()*vol*0.4});p=c;}return out;}
+function fromPath(seed,levels,wick){const r=rng(seed);const cs=[];for(let i=0;i<levels.length;i++){const o=i?cs[i-1].c:levels[0];const c=levels[i]+(r()-0.5)*0.8;cs.push({o,c,hi:Math.max(o,c)+wick*(0.6+r()*0.6),lo:Math.min(o,c)-wick*(0.6+r()*0.6)});}return cs;}
+// pad a clean pattern with leading noise so difficulty scales without losing the shape
+function padLead(seed,n,base,cs){const lead=Math.max(0,n-cs.length);const pre=candles(seed,lead,1.6,(cs[0].c-base)/Math.max(1,lead));pre.forEach(c=>{c.c=c.c-(pre.length?pre[pre.length-1].c:0)+0;});return cs;}
+
+/* ════════ CHART SUBSTRATE ════════ */
+function ChartView(cv,cs,opts){
+  opts=opts||{};const dpr=Math.min(devicePixelRatio||1,2);
+  cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
+  const W=cv.width/dpr,H=cv.height/dpr,padL=8,padR=48,padT=40,padB=20;
+  let lo=Math.min(...cs.map(c=>c.lo)),hi=Math.max(...cs.map(c=>c.hi));
+  if(opts.extra)opts.extra.forEach(v=>{if(isFinite(v)){lo=Math.min(lo,v);hi=Math.max(hi,v);}});
+  const pad=(hi-lo)*0.1||1;lo-=pad;hi+=pad;
+  const X=i=>padL+i/Math.max(1,cs.length-1)*(W-padL-padR);
+  const Y=v=>padT+(1-(v-lo)/(hi-lo))*(H-padT-padB);
+  const priceAt=py=>lo+(1-(py-padT)/(H-padT-padB))*(hi-lo);
+  const indexAt=px=>clamp(Math.round((px-padL)/(W-padL-padR)*(cs.length-1)),0,cs.length-1);
+  const cw=Math.max(2.5,(W-padL-padR)/cs.length*0.6);
+  const o={x,W,H,padL,padR,padT,padB,X,Y,priceAt,indexAt,cw,lo,hi,cs};
+  o.grid=()=>{x.clearRect(0,0,W,H);x.strokeStyle='rgba(255,255,255,.04)';x.lineWidth=1;for(let g=0;g<=4;g++){const gy=padT+g/4*(H-padT-padB);x.beginPath();x.moveTo(0,gy);x.lineTo(W-padR+6,gy);x.stroke();}};
+  o.candlesN=(n)=>{n=n==null?cs.length:Math.floor(n);for(let i=0;i<n;i++){const c=cs[i],up=c.c>=c.o,col=up?'#16c784':'#ea3943',px=X(i);x.strokeStyle=col;x.lineWidth=1;x.beginPath();x.moveTo(px,Y(c.hi));x.lineTo(px,Y(c.lo));x.stroke();const bt=Y(Math.max(c.o,c.c)),bb=Y(Math.min(c.o,c.c));x.fillStyle=col;x.fillRect(px-cw/2,bt,cw,Math.max(1.5,bb-bt));}};
+  o.hline=(v,col,label,dash)=>{x.strokeStyle=col;x.lineWidth=1.3;if(dash!==false)x.setLineDash([5,3]);x.beginPath();x.moveTo(padL,Y(v));x.lineTo(W-padR,Y(v));x.stroke();x.setLineDash([]);if(label){x.fillStyle=col;x.font='700 9px sans-serif';x.textAlign='left';x.fillText(label,W-padR+3,Y(v)+3);}};
+  o.zone=(v1,v2,col)=>{x.fillStyle=col+'22';const y1=Y(Math.max(v1,v2)),y2=Y(Math.min(v1,v2));x.fillRect(padL,y1,W-padL-padR,y2-y1);x.strokeStyle=col;x.lineWidth=1.3;x.strokeRect(padL,y1,W-padL-padR,y2-y1);};
+  o.marker=(i,col,lbl)=>{const px=X(i),c=cs[i];x.fillStyle=col;x.strokeStyle='#04060b';x.lineWidth=2;x.beginPath();x.arc(px,Y(c.hi)-10,8,0,7);x.fill();x.stroke();x.fillStyle='#04060b';x.font='800 9px sans-serif';x.textAlign='center';x.fillText(lbl||'?',px,Y(c.hi)-7);};
+  o.ray=(i1,v1,i2,v2,col)=>{x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(X(i1),Y(v1));x.lineTo(X(i2),Y(v2));x.stroke();};
+  o.vline=(i,col)=>{x.strokeStyle=col;x.lineWidth=1.2;x.setLineDash([3,3]);x.beginPath();x.moveTo(X(i),padT);x.lineTo(X(i),H-padB);x.stroke();x.setLineDash([]);};
+  o.vwap=(n)=>{n=n==null?cs.length:Math.floor(n);x.strokeStyle='#ff9f43';x.lineWidth=1.4;x.globalAlpha=.9;x.beginPath();let s=0;for(let i=0;i<n;i++){s+=cs[i].c;const vy=Y(s/(i+1));i?x.lineTo(X(i),vy):x.moveTo(X(i),vy);}x.stroke();x.globalAlpha=1;};
+  o.vwapAt=(i)=>{let s=0;for(let k=0;k<=i;k++)s+=cs[k].c;return s/(i+1);};
+  return o;
+}
+const iou=(a,b)=>{const inter=Math.max(0,Math.min(a[1],b[1])-Math.max(a[0],b[0]));const uni=Math.max(a[1],b[1])-Math.min(a[0],b[0]);return uni>0?inter/uni:0;};
+
+/* ════════ shared structure generators ════════ */
+/* ── real fractal swing pivots: a high with k lower highs each side (and lows) ── */
+function pivots(cs,k){const H=[],L=[];for(let i=k;i<cs.length-k;i++){let ph=true,pl=true;for(let j=1;j<=k;j++){if(cs[i].hi<cs[i-j].hi||cs[i].hi<cs[i+j].hi)ph=false;if(cs[i].lo>cs[i-j].lo||cs[i].lo>cs[i+j].lo)pl=false;}if(ph)H.push(i);if(pl)L.push(i);}return{H,L};}
+
+/* BOS: real swing-high pivot, first close above it (varies by seed) */
+function genBOS(seed,diff){const n=DIFF_N[diff],vol=DIFF_VOL[diff],cs=candles(seed,n,vol,0.85);const pv=pivots(cs,2);const cand=pv.H.filter(i=>i>=2&&i<=n*0.62);let swingIdx=cand.length?cand[cand.length-1]:Math.floor(n*0.4),swing=cs[swingIdx].hi,ans=-1;for(let i=swingIdx+1;i<n;i++){if(cs[i].c>swing){ans=i;break;}}if(ans<0){ans=Math.min(swingIdx+3,n-2);cs[ans].c=swing+vol;cs[ans].hi=cs[ans].c+1;}return{cs,swing,swingIdx,ans,extra:[swing]};}
+/* ChoCh: genuine up-leg then first close BELOW the most recent higher-low (varies) */
+function genChoCh(seed,diff){const n=DIFF_N[diff],vol=DIFF_VOL[diff],cs=candles(seed,n,vol,0.6),r=rng(seed+9);const pv=pivots(cs,2);const lows=pv.L.filter(i=>i>=2&&i<=n*0.65);let hlIdx=lows.length?lows[lows.length-1]:Math.floor(n*0.45),hl=cs[hlIdx].lo;const start=Math.min(hlIdx+2,n-4),breakAt=clamp(start+1+Math.floor(r()*(n-2-start)),start+1,n-2);let p=cs[start-1].c;for(let i=start;i<breakAt;i++){p=p-(p-(hl+vol*0.7))*0.4;cs[i].o=cs[i-1].c;cs[i].c=Math.max(hl+vol*0.4,p+(r()-0.5)*vol*0.3);cs[i].hi=Math.max(cs[i].o,cs[i].c)+vol*0.3;cs[i].lo=Math.min(cs[i].o,cs[i].c)-vol*0.2;}cs[breakAt].o=cs[breakAt-1].c;cs[breakAt].c=hl-vol*0.7;cs[breakAt].lo=cs[breakAt].c-vol*0.3;cs[breakAt].hi=Math.max(cs[breakAt].o,cs[breakAt].c)+vol*0.2;return{cs,hl,hlIdx,ans:breakAt,extra:[hl]};}
+/* Zone: a level price reacts from 2-3 times (varied positions) */
+function genZone(seed,diff,side){const n=DIFF_N[diff],vol=DIFF_VOL[diff],r=rng(seed),range=vol*5+8,S=100-range/2,R=100+range/2,cs=[];let p=100;for(let i=0;i<n;i++){const o=p;let c=p+(r()-0.5)*vol*1.5;if(c<S+vol*0.5)c=S+vol*0.7;if(c>R-vol*0.5)c=R-vol*0.7;cs.push({o,c,hi:Math.max(o,c)+r()*vol*0.4,lo:Math.min(o,c)-r()*vol*0.4});p=c;}const level=side==='support'?S:R,band=vol*0.8,touchN=2+(r()>0.5?1:0);for(let k=0;k<touchN;k++){const ti=clamp(Math.floor((0.18+0.72*r())*n),1,n-2);if(side==='support'){cs[ti].lo=level-vol*0.2;cs[ti].c=level+vol*0.8;cs[ti].o=level+vol*0.2;}else{cs[ti].hi=level+vol*0.2;cs[ti].c=level-vol*0.8;cs[ti].o=level-vol*0.2;}}return{cs,zone:[level-band,level+band],side,level,extra:[level-band,level+band]};}
+/* Liquidity: near-equal highs at varied positions, any one accepted */
+function genLiquidity(seed,diff){const n=DIFF_N[diff],vol=DIFF_VOL[diff],r=rng(seed),cs=candles(seed,n,vol,0.4),lvl=Math.max.apply(0,cs.slice(0,Math.floor(n*0.35)).map(c=>c.hi))+vol*0.5,cnt=2+(r()>0.6?1:0),idxs=[];let pos=Math.floor(n*0.28);for(let k=0;k<cnt;k++){pos+=2+Math.floor(r()*Math.max(2,(n-3-pos)/(cnt-k)));pos=clamp(pos,1,n-2);cs[pos].hi=lvl+(r()-0.5)*vol*0.2;cs[pos].c=Math.min(cs[pos].c,lvl-vol*0.3);idxs.push(pos);}return{cs,idxs,level:lvl,extra:[lvl]};}
+
+const PATTERNS={
+  'Double Top':[36,50,66,58,65,52,40,34],'Double Bottom':[64,50,34,42,35,48,60,66],
+  'Head & Shoulders':[38,50,45,64,45,52,40,34],'Bull Flag':[28,42,60,76,72,69,66,71,80],
+  'Ascending Triangle':[40,56,46,58,50,60,55,62,66],'Range':[48,60,42,58,44,60,43,58,46],
+};
+
+const REG={};const reg=o=>REG[o.id]=o;
+
+/* —— ANNOTATE —— */
+reg({id:'bos',title:'Break of Structure',category:'Structure',framework:'annotate',variant:'marker',
+  objective:'Tap the candle whose CLOSE first breaks the marked swing high.',prompt:'Where does structure break?',
+  gen:(s,d)=>genBOS(s,d),overlays:(V,st)=>{V.hline(st.swing,'#4cc3ff','swing high');V.marker(st.swingIdx,'#4cc3ff','◆');},
+  reveal:(V,st)=>V.marker(st.ans,'#16c784','✓'),
+  validate:(st,r)=>{const d=Math.abs(r-st.ans),score=d===0?100:d===1?75:d===2?45:15;return{score,why:d<=1?'Right — first CLOSE above the marked swing high. Confirmed BOS.':'BOS = the FIRST candle to CLOSE above the marked swing high (blue ◆).'};}});
+
+reg({id:'choch',title:'ChoCh Placement',category:'Structure',framework:'annotate',variant:'marker',
+  objective:'This trend made higher lows. Tap the candle that first breaks the most recent higher low.',prompt:'Where does character change?',
+  gen:(s,d)=>genChoCh(s,d),overlays:(V,st)=>{V.hline(st.hl,'#ff9f43','higher low');V.marker(st.hlIdx,'#ff9f43','◆');},
+  reveal:(V,st)=>V.marker(st.ans,'#16c784','✓'),
+  validate:(st,r)=>{const d=Math.abs(r-st.ans),score=d===0?100:d===1?75:d===2?45:15;return{score,why:d<=1?'Right — first CLOSE below the most recent higher low. Character has changed.':'ChoCh = the first close BELOW the most recent higher low (orange ◆).'};}});
+
+reg({id:'ob',title:'Order Block Trade',category:'Structure',framework:'sequence',variant:'zone',
+  objective:'Mark the structure break, shade the order block, choose your direction, then watch price retest the block.',
+  gen:function(s,d){var n=DIFF_N[d],vol=DIFF_VOL[d],r=rng(s),cs=candles(s,n,vol,0.35),pv=pivots(cs,2),ch=pv.H.filter(function(i){return i>=2&&i<=n*0.5;}),sw=ch.length?ch[ch.length-1]:Math.floor(n*0.35),swing=cs[sw].hi,imp=clamp(sw+3+Math.floor(r()*3),sw+2,n-3),ob=imp-1,i;while(ob>1&&cs[ob].c>=cs[ob].o)ob--;cs[ob].o=cs[ob-1].c;cs[ob].c=cs[ob].o-vol*1.1;cs[ob].hi=cs[ob].o+vol*0.3;cs[ob].lo=cs[ob].c-vol*0.3;for(i=ob+1;i<=imp;i++){cs[i].o=cs[i-1].c;cs[i].c=Math.max(cs[i-1].c+vol*1.6,swing+vol*0.6);cs[i].lo=Math.max(cs[i].o,cs[ob].hi+vol*0.3);cs[i].hi=cs[i].c+vol*0.3;}var obZone=[cs[ob].lo,cs[ob].hi],entryP=cs[n-1].c,obMid=(obZone[0]+obZone[1])/2,fut=[],p=entryP,m=10;for(i=0;i<m;i++){var t=i/(m-1),tgt=t<0.4?entryP+(obMid-entryP)*(t/0.4):obMid+((swing+vol*4)-obMid)*((t-0.4)/0.6),o=p,c=tgt+(r()-0.5)*vol*0.3;fut.push({o:o,c:c,hi:Math.max(o,c)+vol*0.3,lo:Math.min(o,c)-vol*0.3});p=c;}return {cs:cs,full:cs.concat(fut),swing:swing,swingIdx:sw,breakIdx:imp,obZone:obZone,obIdx:ob,entryP:entryP,extra:[obZone[0],obZone[1],swing+vol*4]};},
+  draw:function(V,st,SEQ){V.hline(st.swing,'#4cc3ff','swing high');if(SEQ.brk!=null)V.marker(SEQ.brk,'#4cc3ff','BOS');if(SEQ.obz)V.zone(SEQ.obz[0],SEQ.obz[1],'#a855f7');},
+  steps:[
+    {kind:'marker',key:'brk',prompt:'Tap the impulsive candle that BREAKS the swing high',hint:'the big breakout candle',score:function(st,SEQ,r){var d=Math.abs(r-st.breakIdx);return{pts:d===0?25:d===1?15:0,max:25,why:d<=1?'':'The break is the strong candle that closes above the swing high.'};}},
+    {kind:'zone',key:'obz',prompt:'Shade the order block — the last DOWN candle before that break',hint:'drag across the red candle',score:function(st,SEQ,r){if(!r)return{pts:0,max:30,why:'Shade the order-block candle.'};var v=iou(r,st.obZone);return{pts:Math.round(v*30),max:30,why:v>0.5?'':'The order block is the last red candle before the impulsive move.'};}},
+    {kind:'choice',key:'dir',prompt:'Price will retrace into the block. Which way do you trade?',choices:[['up','📈 LONG from the block','ch-up'],['down','📉 SHORT from the block','ch-dn']],score:function(st,SEQ,r){return{pts:r==='up'?15:0,max:15,why:r==='up'?'':'After a bullish break, the order block is a LONG (demand) zone.'};}},
+    {kind:'replay',prompt:'Watch the retest',outcome:function(st,SEQ){var win=SEQ.dir==='up';return{pts:win?30:0,max:30,win:win,title:win?'✓ OB HELD — rallied':'✗ wrong side',why:win?'Price returned to the order block and continued up — a textbook OB entry.':'In a bullish break you go LONG from the order block on the retrace.'};}}
+  ]});
+
+reg({id:'support',title:'Support Zone',category:'Levels',framework:'annotate',variant:'zone',
+  objective:'Shade the demand zone — the level price keeps bouncing UP from.',prompt:'Shade support',
+  gen:(s,d)=>genZone(s,d,'support'),reveal:(V,st)=>V.zone(st.zone[0],st.zone[1],'#16c784'),
+  validate:(st,r)=>{if(!r)return{score:0,why:'Drag across the level price keeps bouncing from.'};const v=iou(r,st.zone);return{score:Math.round(v*100),why:v>0.5?'Good — that band held as demand on repeated tests.':'Support is the band the lows keep bouncing off — note the repeated tests, and draw a zone not a line.'};}});
+
+reg({id:'resistance',title:'Resistance Zone',category:'Levels',framework:'annotate',variant:'zone',
+  objective:'Shade the supply zone — the level price keeps rejecting DOWN from.',prompt:'Shade resistance',
+  gen:(s,d)=>genZone(s,d,'resistance'),reveal:(V,st)=>V.zone(st.zone[0],st.zone[1],'#ea3943'),
+  validate:(st,r)=>{if(!r)return{score:0,why:'Drag across the level price keeps rejecting from.'};const v=iou(r,st.zone);return{score:Math.round(v*100),why:v>0.5?'Good — that band capped price on repeated tests.':'Resistance is the band the highs keep rejecting from — note the repeated tests.'};}});
+
+reg({id:'liquidity',title:'Liquidity ID',category:'Structure',framework:'annotate',variant:'marker',
+  objective:'Tap one of the (near-)equal highs where stop orders rest.',prompt:'Where is liquidity resting?',
+  gen:(s,d)=>genLiquidity(s,d),overlays:(V,st)=>V.hline(st.level,'#a855f7','equal highs'),
+  reveal:(V,st)=>st.idxs.forEach(i=>V.marker(i,'#16c784','✓')),
+  validate:(st,r)=>{const dist=Math.min.apply(0,st.idxs.map(i=>Math.abs(r-i))),score=dist===0?100:dist===1?70:25;return{score,why:dist<=1?'Right — (near-)equal highs stack resting stop orders; price is drawn to sweep them.':'Liquidity sits at the equal highs (or lows) — that\'s where stops cluster.'};}});
+
+reg({id:'sl',title:'Stop-Loss Placement',category:'Risk',framework:'annotate',variant:'line',
+  objective:'Drag the stop to a LOGICAL level — just beyond structure, clear of the noise.',prompt:'Place your stop-loss',
+  gen:(s,d)=>{const n=DIFF_N[d],cs=candles(s,n,DIFF_VOL[d],0.7),swingLo=Math.min.apply(0,cs.slice(-8).map(c=>c.lo)),atr=DIFF_VOL[d];return{cs,swingLo,goodLo:swingLo-atr*1.5,goodHi:swingLo-atr*0.1,entry:cs[n-1].c,start:swingLo-atr*0.05,extra:[swingLo]};},
+  overlays:(V,st)=>V.hline(st.swingLo,'#7d8aa0','swing low'),
+  reveal:(V,st)=>V.hline((st.goodLo+st.goodHi)/2,'#16c784','good stop'),
+  validate:(st,r)=>{const ok=r<st.goodHi&&r>st.goodLo,tight=r>=st.swingLo,score=ok?100:tight?20:55;return{score,why:ok?'Logical stop — just beyond structure, clear of the wicks.':tight?'Too tight — a stop inside the noise gets hunted out.':'Valid but far — you\'re risking more than the trade needs.'};}});
+
+reg({id:'trend',title:'Trendline',category:'Levels',framework:'annotate',variant:'ray',
+  objective:'Connect swing lows so the line supports the up-move and respects 2–3 touches.',prompt:'Tap two swing lows',
+  gen:(s,d)=>{const n=DIFF_N[d],vol=DIFF_VOL[d],r=rng(s),base=60,slope=vol*0.5+1.0,cs=[];for(let i=0;i<n;i++){const lineLo=base+i*slope,c=lineLo+(1.6+r()*3)*vol*0.4+Math.sin(i*0.8)*vol*0.5,o=i?cs[i-1].c:c;cs.push({o,c,hi:Math.max(o,c)+vol*0.4,lo:Math.min(o,c,lineLo+r()*0.4*vol)-vol*0.2});}const pv=pivots(cs,2),lows=pv.L.length>=2?pv.L:[Math.floor(n*0.2),Math.floor(n*0.6)];return{cs,lows,extra:[]};},
+  validate:(st,resp,d)=>{if(!resp||resp.length<2)return{score:0,why:'Tap two swing lows to draw the line.'};const pp=resp.slice().sort((a,b)=>a.i-b.i),a=pp[0],b=pp[1];if(b.i===a.i)return{score:0,why:'Pick two different points.'};const slope=(b.v-a.v)/(b.i-a.i);if(slope<=0)return{score:25,why:'An up-trendline must RISE — connect rising swing lows.'};const at=i=>a.v+slope*(i-a.i);let touches=0,cuts=0;for(const li of st.lows){const lv=at(li),lo=st.cs[li].lo;if(Math.abs(lo-lv)<DIFF_VOL[d]*1.2)touches++;if(lv>lo+DIFF_VOL[d]*1.4)cuts++;}const score=clamp((touches>=3?100:touches===2?78:50)-cuts*20,0,100);return{score,why:touches>=2&&cuts===0?'Valid trendline — it rests under price and respects '+touches+' swing lows.':'A good trendline touches 2–3 swing lows and stays below price'+(cuts?' — yours cut through price '+cuts+'×.':'.')};}});
+
+reg({id:'vwap',title:'VWAP Reaction',category:'Execution',framework:'annotate',variant:'marker',
+  objective:'Tap a candle that tags VWAP and rejects — the bounce entry.',prompt:'Where does price react to VWAP?',
+  gen:(s,d)=>{const n=DIFF_N[d],vol=DIFF_VOL[d],cs=candles(s,n,vol,0.5),vw=[];let sum=0;for(let i=0;i<n;i++){sum+=cs[i].c;vw.push(sum/(i+1));}const valid=[];for(let i=3;i<n-1;i++)if(Math.abs(cs[i].lo-vw[i])<vol*0.6&&cs[i+1].c>cs[i].c+vol*0.2)valid.push(i);if(!valid.length){const bi=clamp(Math.floor((0.45+rng(s)()*0.3)*n),3,n-2);let s2=0;for(let k=0;k<=bi;k++)s2+=cs[k].c;const v=s2/(bi+1);cs[bi].lo=v-vol*0.2;cs[bi].c=v+vol*0.7;cs[bi].o=v-vol*0.1;if(cs[bi+1])cs[bi+1].c=cs[bi].c+vol*0.5;valid.push(bi);}return{cs,valid,extra:[]};},
+  overlays:(V)=>V.vwap(),reveal:(V,st)=>st.valid.forEach(i=>V.marker(i,'#16c784','✓')),
+  validate:(st,r)=>{const dist=Math.min.apply(0,st.valid.map(i=>Math.abs(r-i))),score=dist===0?100:dist===1?70:dist===2?35:10;return{score,why:dist<=1?'Good — price tagged VWAP and pushed off it. A clean mean-reversion entry.':'Find a candle whose wick TOUCHES the orange VWAP line, then closes higher.'};}});
+
+reg({id:'error',title:'Spot the Error',category:'Patterns',framework:'annotate',variant:'marker',
+  objective:'One candle is impossible (its body breaks its own wick). Tap it.',prompt:'Find the corrupt candle',
+  gen:(s,d)=>{const n=DIFF_N[d],cs=candles(s,n,DIFF_VOL[d],0.3),bad=4+Math.floor(rng(s)()*(n-6));cs[bad].c=cs[bad].hi+DIFF_VOL[d]*1.4;return{cs,ans:bad,extra:[]};},
+  reveal:(V,st)=>V.marker(st.ans,'#16c784','✓'),
+  validate:(st,r)=>({score:r===st.ans?100:0,why:r===st.ans?'Right — that candle closes ABOVE its own high, which is impossible. Bad data.':'One candle\'s body pokes OUTSIDE its wick — that\'s the impossible one.'})});
+
+/* —— BUILD —— (now O/H/L/C + real candle archetypes) */
+reg({id:'candle',title:'Candle Lab',category:'Patterns',framework:'sequence',
+  objective:'Construct the candle from its description, then read what it signals.',
+  gen:function(s,d){var r=rng(s),t=['bull','bear','doji','hammer','star'][Math.floor(r()*5)],j=function(){return (r()-0.5)*6;},O,C,H,L,desc,signal;
+    if(t==='bull'){O=28+j();C=72+j();H=C+5+r()*5;L=O-4-r()*4;desc='Build a STRONG BULLISH candle — open low, close much higher, small wicks.';signal='bullish';}
+    else if(t==='bear'){O=72+j();C=28+j();H=O+4+r()*4;L=C-5-r()*5;desc='Build a STRONG BEARISH candle — open high, close much lower, small wicks.';signal='bearish';}
+    else if(t==='doji'){var m=48+j();O=m;C=m+3;H=m+22+r()*8;L=m-22-r()*8;desc='Build a DOJI — open about equal to close, long wicks both sides.';signal='indecision';}
+    else if(t==='hammer'){O=60+j();C=66+j();H=Math.max(O,C)+4+r()*3;L=Math.min(O,C)-26-r()*8;desc='Build a HAMMER — small body up top, long LOWER wick.';signal='bullish';}
+    else{O=64+j();C=60+j();H=Math.max(O,C)+26+r()*8;L=Math.min(O,C)-4-r()*3;desc='Build a SHOOTING STAR — small body down low, long UPPER wick.';signal='bearish';}
+    return {t:t,target:{open:clamp(O,8,92),close:clamp(C,8,92),high:clamp(Math.max(O,C,H),10,98),low:clamp(Math.min(O,C,L),2,90)},desc:desc,signal:signal};},
+  steps:[
+    {kind:'build',key:'cd',prompt:function(st){return st.desc;},score:function(st,SEQ,r){var tg=st.target,e=function(a,b){return Math.abs(a-b);},err=e(r.open,tg.open)+e(r.close,tg.close)+e(r.high,tg.high)+e(r.low,tg.low),colorOk=st.t==='doji'||((tg.close>tg.open)===(r.close>r.open));return{pts:colorOk?clamp(Math.round(60-err*0.7),0,60):Math.max(0,20-err),max:60,why:!colorOk?'Wrong direction — check which way it closes.':err<14?'':'Watch the exact open, close and wick lengths.'};}},
+    {kind:'choice',key:'sig',prompt:'What does this candle signal?',choices:[['bullish','🟢 Bullish','ch-up'],['bearish','🔴 Bearish','ch-dn'],['indecision','⚖️ Indecision','ch-opt']],score:function(st,SEQ,r){return{pts:r===st.signal?40:0,max:40,why:r===st.signal?'':'A '+st.t+' candle signals '+st.signal+(st.t==='hammer'?' (rejection of lower prices)':st.t==='star'?' (rejection of higher prices)':'')+'.'};}}
+  ]});
+
+/* —— PREDICT —— */
+reg({id:'fake',title:'Break Trader',category:'Patterns',framework:'sequence',
+  objective:'Mark resistance, judge the break (close above = real, wick & close back = fake), choose your play, then watch it resolve.',
+  gen:function(s,d){var n=DIFF_N[d],vol=DIFF_VOL[d],r=rng(s),real=r()>0.5,cs=candles(s,n,vol*0.7,0.2),pv=pivots(cs,2),hh=pv.H.filter(function(i){return i<=n*0.6;}),resIdx=hh.length?hh[hh.length-1]:Math.floor(n*0.4),res=cs[resIdx].hi,dec=clamp(Math.floor(n*0.7),resIdx+3,n-1),i;
+    if(real){cs[dec].o=res-vol*0.4;cs[dec].c=res+vol*1.4;cs[dec].hi=cs[dec].c+vol*0.2;cs[dec].lo=cs[dec].o-vol*0.2;}else{cs[dec].o=res-vol*0.3;cs[dec].hi=res+vol*1.7;cs[dec].c=res-vol*0.4;cs[dec].lo=cs[dec].o-vol*0.2;}
+    var hist=cs.slice(0,dec+1),fut=[],p=cs[dec].c,m=9;for(i=0;i<m;i++){var tgt=real?res+vol*(1.5+i*0.7):res-vol*(0.8+i*0.7),o=p,c=tgt+(r()-0.5)*vol*0.3;fut.push({o:o,c:c,hi:Math.max(o,c)+vol*0.3,lo:Math.min(o,c)-vol*0.3});p=c;}
+    return {cs:hist,full:hist.concat(fut),res:res,resIdx:resIdx,dec:dec,real:real,extra:[res]};},
+  draw:function(V,st,SEQ){V.hline(st.res,'#4cc3ff','resistance');if(SEQ.rsw!=null)V.marker(SEQ.rsw,'#4cc3ff','R');},
+  steps:[
+    {kind:'marker',key:'rsw',prompt:'Tap the swing high that forms resistance',hint:'the prior high price keeps hitting',score:function(st,SEQ,r){var dd=Math.abs(r-st.resIdx);return{pts:dd<=1?20:0,max:20,why:dd<=1?'':'Resistance is the prior swing high the blue line marks.'};}},
+    {kind:'choice',key:'call',prompt:'Read the break candle. Real break or fakeout?',choices:[['real','✅ REAL — closed above','ch-up'],['fake','🎭 FAKE — wicked & closed back','ch-n']],score:function(st,SEQ,r){var ans=st.real?'real':'fake';return{pts:r===ans?35:0,max:35,why:r===ans?'':'Read the CLOSE: closed above = real; wicked above but closed back below = fake.'};}},
+    {kind:'choice',key:'act',prompt:'So what is your play?',choices:[['long','📈 Buy the breakout','ch-up'],['fade','📉 Fade the rejection','ch-dn'],['wait','✋ Stand aside','ch-opt']],score:function(st,SEQ,r){var best=st.real?'long':'fade',ok=r===best,half=r==='wait';return{pts:ok?15:half?9:0,max:15,why:ok?'':'A real break → buy the retest; a fakeout → fade it (or stand aside).'};}},
+    {kind:'replay',prompt:'Resolve',outcome:function(st,SEQ){var win=(SEQ.call===(st.real?'real':'fake'));return{pts:win?30:0,max:30,win:win,title:win?(st.real?'✓ REAL — ran':'✓ FAKE — reversed'):'✗ misread',why:win?(st.real?'It closed above and followed through — a real break.':'It wicked above but closed back below, then reversed — a trap.'):(st.real?'It was real — the close held above resistance.':'It was a fakeout — the close came back below. Wait for the close.')};}}
+  ]});
+
+reg({id:'predict',title:'Trade Prediction',category:'Execution',framework:'predict',
+  objective:'Read momentum (and watch for an exhaustion wick). Predict the next move.',prompt:'Next move — up or down?',
+  choices:[['up','📈 UP','ch-up'],['down','📉 DOWN','ch-dn']],
+  gen:(s,d)=>{const r=rng(s),n=DIFF_N[d],vol=DIFF_VOL[d],trend=(r()>0.5?1:-1)*(0.7+r()*0.8),cs=candles(s,n,vol,trend),dec=n-6,follow=r()<0.82,dir=follow?(trend>0?1:-1):(trend>0?-1:1);
+    if(!follow){if(trend>0)cs[dec].hi=cs[dec].c+vol*2.4;else cs[dec].lo=cs[dec].c-vol*2.4;}
+    for(let i=dec+1;i<n;i++){cs[i].o=cs[i-1].c;cs[i].c=cs[i-1].c+dir*vol*0.9+(rng(s+i)()-0.5)*vol*0.5;cs[i].hi=Math.max(cs[i].o,cs[i].c)+1;cs[i].lo=Math.min(cs[i].o,cs[i].c)-1;}
+    return{cs,dec,answer:cs[n-1].c>cs[dec].c?'up':'down',follow,extra:[]};},
+  overlays:(V,st)=>V.vline(st.dec,'#7d8aa0'),
+  why:(st,ok)=>ok?(st.follow?'Correct — momentum continued with the trend.':'Correct — you read the exhaustion wick and the reversal.'):(st.follow?'It continued with the trend — with no exhaustion signal, trade WITH momentum.':'It reversed — the long rejection wick before the decision warned of exhaustion.')});
+
+reg({id:'manage',title:'Trade Management Sim',category:'Execution',framework:'sequence',
+  objective:'You are in profit. Scale out as price climbs into resistance — three live decisions.',
+  gen:function(s,d){var n=DIFF_N[d]+6,vol=DIFF_VOL[d],r=rng(s),cs=[],p=100,entry=100,r1=100+vol*5,r2=100+vol*9,i;
+    for(i=0;i<n;i++){var t=i/(n-1),target=t<0.5?100+(r2-100)*(t/0.5):r2-(r2-r1)*((t-0.5)/0.5)*1.4,o=p,c=target+(r()-0.5)*vol*0.6;cs.push({o:o,c:c,hi:Math.max(o,c)+vol*0.4,lo:Math.min(o,c)-vol*0.4});p=c;}
+    cs[Math.floor(n*0.5)].hi=r2+vol*1.6;
+    return {cs:cs,entry:entry,r1:r1,r2:r2,d1:Math.floor(n*0.32),d2:Math.floor(n*0.5),d3:Math.floor(n*0.7),shown0:Math.floor(n*0.32),extra:[r1,r2,entry]};},
+  draw:function(V,st,SEQ){V.hline(st.entry,'#ffd60a','entry');V.hline(st.r1,'#ff9f43','resistance 1');V.hline(st.r2,'#ea3943','resistance 2');},
+  steps:[
+    {kind:'choice',key:'m1',revealTo:function(st){return st.d1;},prompt:'In profit, climbing, still below resistance. Manage:',choices:[['hold','🤝 HOLD','ch-up'],['trim','✂️ TRIM','ch-n'],['exit','🚪 EXIT','ch-dn']],score:function(st,SEQ,r){var m={hold:33,trim:26,exit:13};return{pts:m[r],max:33,why:r==='hold'?'':'Early, with room to resistance — holding (or a small trim) is best.'};}},
+    {kind:'choice',key:'m2',revealTo:function(st){return st.d2;},prompt:'Price is testing major resistance with an exhaustion wick. Manage:',choices:[['hold','🤝 HOLD','ch-up'],['trim','✂️ TRIM','ch-n'],['exit','🚪 EXIT','ch-dn']],score:function(st,SEQ,r){var m={trim:33,exit:30,hold:16};return{pts:m[r],max:33,why:r==='trim'||r==='exit'?'':'Into resistance with exhaustion — trim or start exiting; don\'t add risk.'};}},
+    {kind:'choice',key:'m3',revealTo:function(st){return st.d3;},prompt:'Price is rejecting and rolling over. Manage:',choices:[['hold','🤝 HOLD','ch-up'],['trim','✂️ TRIM','ch-n'],['exit','🚪 EXIT','ch-dn']],score:function(st,SEQ,r){var m={exit:34,trim:26,hold:8};return{pts:m[r],max:34,why:r==='exit'?'':'Clear rejection from resistance — close the trade and bank it.'};}}
+  ],
+  summary:function(st,SEQ,total){return total>=85?'Great management — you scaled out into strength and protected the gains.':total>=60?'Decent — but review where you held too long or exited too early.':'You gave back profit — read the resistance overhead and scale out as price stalls.';}});
+
+reg({id:'mtf',title:'Multi-Timeframe',category:'Execution',framework:'predict',
+  objective:'Check the higher-timeframe bias first, then trade the lower timeframe with it.',prompt:'Trade with the higher-timeframe bias',
+  choices:[['up','📈 LONG','ch-up'],['down','📉 SHORT','ch-dn']],
+  gen:(s,d)=>{const bias=rng(s)()>0.5?'up':'down',n=DIFF_N[d],htf=candles(s+1,10,DIFF_VOL[d]*1.1,bias==='up'?1.4:-1.4),cs=candles(s,n,DIFF_VOL[d],bias==='up'?0.6:-0.6);return{cs,htf,bias,dec:n-1,answer:bias,extra:[]};},
+  noReveal:true,
+  overlays:(V,st)=>{const x=V.x,bw=104,bh=46,bx=V.padL+4,by=V.padT+2;x.fillStyle='rgba(8,12,20,.85)';x.fillRect(bx,by,bw,bh);x.strokeStyle='#2a3a4e';x.strokeRect(bx,by,bw,bh);const hs=st.htf,lo=Math.min.apply(0,hs.map(c=>c.lo)),hi=Math.max.apply(0,hs.map(c=>c.hi)),HX=i=>bx+6+i/(hs.length-1)*(bw-12),HY=v=>by+8+(1-(v-lo)/(hi-lo))*(bh-22);x.strokeStyle=st.bias==='up'?'#16c784':'#ea3943';x.lineWidth=1.5;x.beginPath();hs.forEach((c,i)=>i?x.lineTo(HX(i),HY(c.c)):x.moveTo(HX(i),HY(c.c)));x.stroke();x.fillStyle=st.bias==='up'?'#16c784':'#ea3943';x.font='800 8px sans-serif';x.textAlign='left';x.fillText('HTF: '+(st.bias==='up'?'UPTREND':'DOWNTREND'),bx+4,by+bh-4);},
+  why:(st,ok)=>ok?'Correct — align with the higher-timeframe bias for the highest-probability trades.':'Trade WITH the higher timeframe — the inset showed the dominant direction.'});
+
+/* —— CALCULATE —— */
+reg({id:'rr',title:'Risk-Reward Builder',category:'Risk',framework:'calculate',
+  objective:'Stop beyond structure, target at the resistance level. Build at least 2R.',prompt:'Build the trade',
+  gen:(s,d)=>{const cs=candles(s,20,DIFF_VOL[d],0.5),entry=cs[19].c,swingLo=Math.min.apply(0,cs.slice(-8).map(c=>c.lo)),res=Math.max.apply(0,cs.slice(0,16).map(c=>c.hi))+DIFF_VOL[d]*0.6;return{cs,entry,swingLo,res,extra:[entry,swingLo,res]};},
+  setup:(st,V,host,finish)=>{const e=st.entry;let stop=st.swingLo-1,target=e+(e-st.swingLo)*2;
+    host.innerHTML+=`<div class="sliders"><div class="rdg"><span>R:R <b id="rrv">–</b></span><span>target the red level</span></div>
+      <label>Stop</label><input type="range" id="s-stop" min="5" max="95" value="40"><label>Target</label><input type="range" id="s-tgt" min="5" max="95" value="62"></div>`;
+    function upd(){const sp=+$('#s-stop').value,tp=+$('#s-tgt').value;stop=e-(e-V.lo)*(sp/100)*0.9;target=e+(V.hi-e)*(tp/100)*0.9;const rr=(target-e)/(e-stop);
+      V.grid();V.candlesN();V.hline(e,'#ffd60a','ENTRY');V.hline(stop,'#ea3943','STOP');V.hline(target,'#16c784','TARGET');V.hline(st.res,'#4cc3ff','resistance',false);V.hline(st.swingLo,'#7d8aa0','structure',false);
+      $('#rrv').textContent=rr.toFixed(1)+'R';$('#rrv').style.color=rr>=2?'#16c784':'#ffd60a';}
+    $('#s-stop').oninput=upd;$('#s-tgt').oninput=upd;upd();
+    return()=>{const rr=(target-e)/(e-stop),stopOk=stop<st.swingLo+0.6,atLevel=Math.abs(target-st.res)<(V.hi-V.lo)*0.06,base=clamp(Math.round((rr/2)*60),0,60),score=clamp(base+(stopOk?20:0)+(atLevel?20:0),0,100);
+      return{score,why:rr>=2&&stopOk&&atLevel?`Great — ${rr.toFixed(1)}R, stop beyond structure, target at the resistance level.`:!stopOk?'Stop is inside structure — logical stops sit beyond the swing.':!atLevel?'Target should sit at a real level (the blue resistance), not floating in space.':'Under 2R — aim for ≥2R.'};};}});
+
+reg({id:'possize',title:'Position Size',category:'Risk',framework:'calculate',
+  objective:'Risk 1%: compute size = (1% × account) ÷ stop distance, then dial it in.',prompt:'Size the trade to 1% risk',
+  gen:(s,d)=>{const r=rng(s),account=[5000,10000,25000][Math.floor(r()*3)],cs=candles(s,18,DIFF_VOL[d],0.5),entry=cs[17].c,swingLo=Math.min.apply(0,cs.slice(-6).map(c=>c.lo)),stopDist=Math.max(1,entry-swingLo),correct=account*0.01/stopDist,maxSize=correct*(1.5+r()*1.8);return{cs,entry,swingLo,stopDist,account,correct,maxSize,extra:[entry,swingLo]};},
+  setup:(st,V,host,finish)=>{let size=0;
+    host.innerHTML+=`<div class="sliders"><div class="rdg"><span>ACCT $${st.account.toLocaleString()}</span><span>STOP ${st.stopDist.toFixed(1)} pts</span></div>
+      <label>Solve 1% × $${st.account.toLocaleString()} ÷ ${st.stopDist.toFixed(1)}, then set the size:</label><input type="range" id="s-size" min="0" max="1000" value="300"><div class="rdg"><span></span><span id="szv"></span></div></div>`;
+    function upd(){const v=+$('#s-size').value;size=st.maxSize*(v/1000);$('#szv').textContent=size.toFixed(2)+' units';V.grid();V.candlesN();V.hline(st.entry,'#ffd60a','ENTRY');V.hline(st.swingLo,'#ea3943','STOP');}
+    $('#s-size').oninput=upd;upd();
+    return()=>{const err=Math.abs(size-st.correct)/st.correct,score=clamp(Math.round(100-err*120),0,100);return{score,why:err<0.08?`Correct — ${size.toFixed(2)} units risks exactly 1%. Size = (1% × account) ÷ stop distance.`:`You set ${size.toFixed(2)}; the answer is ${st.correct.toFixed(2)} = (1% × $${st.account.toLocaleString()}) ÷ ${st.stopDist.toFixed(1)}.`};};}});
+
+/* —— CLASSIFY —— */
+reg({id:'struct',title:'Market-Structure Classify',category:'Structure',framework:'classify',
+  objective:'Read the structure: uptrend, downtrend, or range?',prompt:'Classify the structure',
+  gen:(s,d)=>{const kind=['up','down','range'][Math.floor(rng(s)()*3)],trend=kind==='up'?1:kind==='down'?-1:0,cs=candles(s,DIFF_N[d],DIFF_VOL[d],trend);if(kind==='range'){const mid=cs[0].c;cs.forEach((c,i)=>{c.c=mid+Math.sin(i*0.7)*DIFF_VOL[d]*1.6;c.o=mid+Math.sin((i-1)*0.7)*DIFF_VOL[d]*1.6;c.hi=Math.max(c.o,c.c)+1.2;c.lo=Math.min(c.o,c.c)-1.2;});}return{cs,answer:kind};},
+  choices:()=>[['up','▲ Uptrend','#16c784'],['down','▼ Downtrend','#ea3943'],['range','↔ Range','#4cc3ff']],
+  why:(st,ok)=>ok?'Correct — that\'s a clean '+st.answer+'.':'That was a '+st.answer+'. Read the sequence of highs and lows.'});
+
+reg({id:'pattern',title:'Pattern Recognition',category:'Patterns',framework:'classify',
+  objective:'Name the chart pattern forming.',prompt:'What pattern is this?',
+  gen:(s,d)=>{const keys=Object.keys(PATTERNS),ans=keys[Math.floor(rng(s)()*keys.length)],cs=fromPath(s,PATTERNS[ans],Math.min(DIFF_VOL[d]*0.5,1.8)),decoys=keys.filter(k=>k!==ans).sort(()=>rng(s+9)()-0.5).slice(0,3),opts=[ans].concat(decoys).sort(()=>rng(s+3)()-0.5);return{cs,answer:ans,opts};},
+  choices:(st)=>st.opts.map(o=>[o,o,'']),
+  why:(st,ok)=>ok?'Correct — '+st.answer+'. The shape gives it away.':'That was a '+st.answer+'.'});
+
+/* 20) TRADE EXECUTION CHALLENGE — sequence (capstone) */
+function execOutcome(st,sl,tp){
+  if(sl==null||tp==null)return{win:false,reason:'invalid'};
+  const slBeyond=st.dir==='up'?sl<st.entryP:sl>st.entryP, tpAhead=st.dir==='up'?tp>st.entryP:tp<st.entryP;
+  if(!slBeyond||!tpAhead)return{win:false,reason:'invalid'};
+  const stopped=st.dir==='up'?st.futAdv<=sl:st.futAdv>=sl;
+  if(stopped)return{win:false,reason:'stopped'};
+  const tpHit=st.dir==='up'?st.futFav>=tp:st.futFav<=tp;
+  return tpHit?{win:true,reason:'tp'}:{win:false,reason:'timeout'};
+}
+reg({id:'exec',title:'Trade Execution Challenge',category:'Execution',framework:'sequence',
+  objective:'The capstone: read the trend, mark the break, pick your entry, set stop & target, execute — then watch it play out.',
+  gen:function(seed,diff){
+    var r=rng(seed),dir=r()>0.5?'up':'down',sign=dir==='up'?1:-1,n=Math.round(DIFF_N[diff]*0.78),vol=DIFF_VOL[diff];
+    var cs=candles(seed,n,vol,sign*0.85),sh=Math.floor(n*0.4),swing,breakIdx,struct,i;
+    if(dir==='up'){swing=Math.max.apply(0,cs.slice(0,sh+1).map(function(c){return c.hi;}));breakIdx=-1;for(i=sh+2;i<n;i++)if(cs[i].c>swing){breakIdx=i;break;}if(breakIdx<0){breakIdx=n-3;cs[breakIdx].c=swing+vol;cs[breakIdx].hi=cs[breakIdx].c+1;}struct=Math.min.apply(0,cs.slice(0,breakIdx+1).map(function(c){return c.lo;}));}
+    else{swing=Math.min.apply(0,cs.slice(0,sh+1).map(function(c){return c.lo;}));breakIdx=-1;for(i=sh+2;i<n;i++)if(cs[i].c<swing){breakIdx=i;break;}if(breakIdx<0){breakIdx=n-3;cs[breakIdx].c=swing-vol;cs[breakIdx].lo=cs[breakIdx].c-1;}struct=Math.max.apply(0,cs.slice(0,breakIdx+1).map(function(c){return c.hi;}));}
+    var entryP=cs[n-1].c,risk=Math.max(vol,Math.abs(entryP-struct)),entryBand=dir==='up'?[swing-vol,entryP+vol*1.3]:[entryP-vol*1.3,swing+vol];
+    var rRoom=diff==='expert'?2.2:diff==='advanced'?2.4:diff==='intermediate'?2.7:3.0;
+    var futAdv=dir==='up'?struct+0.35*risk:struct-0.35*risk,futFav=dir==='up'?entryP+rRoom*risk:entryP-rRoom*risk,fut=[],p=entryP,m=9;
+    for(i=0;i<m;i++){var t=i/(m-1),tgt=t<0.38?entryP+(futAdv-entryP)*(t/0.38):futAdv+(futFav-futAdv)*((t-0.38)/0.62),o=p,c=tgt+(r()-0.5)*vol*0.22;fut.push({o:o,c:c,hi:Math.max(o,c)+vol*0.3,lo:Math.min(o,c)-vol*0.3});p=c;}
+    if(dir==='up'){fut[1].lo=Math.min(fut[1].lo,futAdv);fut[m-1].hi=Math.max(fut[m-1].hi,futFav);}else{fut[1].hi=Math.max(fut[1].hi,futAdv);fut[m-1].lo=Math.min(fut[m-1].lo,futFav);}
+    return {cs:cs,full:cs.concat(fut),dir:dir,sign:sign,swing:swing,breakIdx:breakIdx,struct:struct,entryP:entryP,risk:risk,entryBand:entryBand,futAdv:futAdv,futFav:futFav,fut:fut,extra:[struct,futFav,entryP]};
+  },
+  draw:function(V,st,SEQ){V.hline(st.swing,'#7d8aa0',st.dir==='up'?'swing high':'swing low');if(SEQ.brk!=null)V.marker(SEQ.brk,'#4cc3ff','B');if(SEQ.ent!=null){V.marker(SEQ.ent,'#ffd60a','E');V.hline(st.entryP,'#ffd60a','ENTRY');}if(SEQ.sl!=null)V.hline(SEQ.sl,'#ea3943','SL');if(SEQ.tp!=null)V.hline(SEQ.tp,'#16c784','TP');},
+  steps:[
+    {kind:'choice',key:'trend',prompt:'Which way is structure pointing?',choices:[['up','📈 LONG · uptrend','ch-up'],['down','📉 SHORT · downtrend','ch-dn']],score:function(st,SEQ,r){return{pts:r===st.dir?15:0,max:15,why:r===st.dir?'':'You traded against the trend.'};}},
+    {kind:'marker',key:'brk',prompt:'Tap the candle that BREAKS structure',hint:'tap the break candle',score:function(st,SEQ,r){var d=Math.abs(r-st.breakIdx);return{pts:d===0?20:d===1?12:0,max:20,why:d<=1?'':'The BOS is the first close beyond the swing high.'};}},
+    {kind:'marker',key:'ent',prompt:'Tap your ENTRY — the retest near the broken level',hint:'tap your entry',score:function(st,SEQ,r){var p=st.cs[r].c,inb=p>=Math.min.apply(0,st.entryBand)&&p<=Math.max.apply(0,st.entryBand);return{pts:inb?15:(r>=st.breakIdx-1?8:0),max:15,why:inb?'':'Enter on the retest near the broken level, not chasing.'};}},
+    {kind:'line',key:'sl',color:'#ea3943',label:'SL',prompt:'Drag your STOP-LOSS to a logical level',hint:'beyond structure',startVal:function(st){return st.dir==='up'?st.struct-st.risk*0.4:st.struct+st.risk*0.4;},score:function(st,SEQ,r){var beyond=st.dir==='up'?r<st.struct:r>st.struct;return{pts:beyond?10:0,max:10,why:beyond?'':'Place the stop BEYOND structure so noise can\'t hit it.'};}},
+    {kind:'line',key:'tp',color:'#16c784',label:'TP',prompt:'Drag your TAKE-PROFIT target',hint:'aim about 2R',startVal:function(st){return st.dir==='up'?st.entryP+st.risk*2:st.entryP-st.risk*2;},score:function(st,SEQ,r){var R=st.dir==='up'?(r-st.entryP)/Math.max(0.01,st.entryP-SEQ.sl):(st.entryP-r)/Math.max(0.01,SEQ.sl-st.entryP);return{pts:(R>=1.5&&R<=3.5)?10:(R>=1?6:0),max:10,why:''};}},
+    {kind:'replay',prompt:'Execute',outcome:function(st,SEQ){var o=execOutcome(st,SEQ.sl,SEQ.tp),why=o.reason==='invalid'?'Invalid — stop and target must straddle entry.':o.reason==='stopped'?'Stopped out — your stop sat inside the pullback. Place it beyond structure.':o.reason==='timeout'?'Target never filled — too greedy; aim about 2R.':'Winner — sound entry, stop beyond structure, target hit.';return{pts:o.win?30:0,max:30,win:o.win,title:o.win?'✓ TARGET HIT':o.reason==='stopped'?'✗ STOPPED OUT':o.reason==='timeout'?'✗ TARGET NEVER FILLED':'✗ INVALID',why:why};}}
+  ]});
+
+const CATS=['All','Structure','Levels','Risk','Patterns','Execution'];
+
+/* ════════════════════════════════════════════════════════════════════════
+   ARCADE TILES — each mini game gets a thematic "cabinet" card: blockchain
+   hex-grid backdrop, neon candle illustration, big readable game name, a
+   kicker + what-you-do line, and a faction-crypto watermark. Matches the
+   Chart Quest "Lost in the Blockchain" aesthetic. Shared by app + dashboard.
+   ════════════════════════════════════════════════════════════════════════ */
+const TF='-apple-system,BlinkMacSystemFont,system-ui,sans-serif';
+const ARCADE={
+  bos:{accent:'#16c784',art:'break',dir:1,kicker:'STRUCTURE',skill:'Spot the candle that breaks the swing high'},
+  choch:{accent:'#ff9f43',art:'break',dir:-1,kicker:'STRUCTURE',skill:'Catch the first counter-trend break'},
+  ob:{accent:'#a855f7',art:'zone',pos:'low',kicker:'SMART MONEY',skill:'Mark the last candle before the break'},
+  support:{accent:'#16c784',art:'zone',pos:'low',kicker:'KEY LEVELS',skill:'Shade the zone buyers defend'},
+  resistance:{accent:'#ea3943',art:'zone',pos:'high',kicker:'KEY LEVELS',skill:'Shade the zone sellers defend'},
+  liquidity:{accent:'#a855f7',art:'equal',kicker:'SMART MONEY',skill:'Find resting stops at equal highs'},
+  sl:{accent:'#ea3943',art:'stop',kicker:'RISK',skill:'Place a logical stop beyond structure'},
+  trend:{accent:'#4cc3ff',art:'trend',kicker:'KEY LEVELS',skill:'Connect the swing lows'},
+  vwap:{accent:'#ff9f43',art:'vwap',kicker:'EXECUTION',skill:'Enter on the VWAP bounce'},
+  error:{accent:'#ea3943',art:'glitch',kicker:'CHART IQ',skill:'Spot the impossible candle'},
+  candle:{accent:'#16c784',art:'bigcandle',kicker:'BASICS',skill:'Build the candle from its story'},
+  fake:{accent:'#ff5d8f',art:'fakeout',kicker:'TRAPS',skill:'Real breakout, or a fakeout?'},
+  predict:{accent:'#4cc3ff',art:'predict',kicker:'EXECUTION',skill:'Predict the next move'},
+  manage:{accent:'#ffd60a',art:'manage',kicker:'EXECUTION',skill:'Hold, trim, or exit?'},
+  mtf:{accent:'#4cc3ff',art:'mtf',kicker:'TOP-DOWN',skill:'Align with the higher-timeframe bias'},
+  rr:{accent:'#16c784',art:'rr',kicker:'RISK',skill:'Build at least a 2R trade'},
+  possize:{accent:'#ffd60a',art:'size',kicker:'RISK',skill:'Size the trade to 1% risk'},
+  struct:{accent:'#4cc3ff',art:'structure',kicker:'STRUCTURE',skill:'Uptrend, downtrend, or range?'},
+  pattern:{accent:'#a855f7',art:'pattern',kicker:'PATTERNS',skill:'Name the chart pattern'},
+  exec:{accent:'#2dd4bf',art:'rr',kicker:'★ CAPSTONE',skill:'Plan & execute a full trade, then watch it play out'},
+};
+const SYMS=['₿','Ξ','◎','Ð','✕'];
+function hexA(h,a){const n=parseInt(h.slice(1),16);return'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
+function shadeC(h,amt){let n=parseInt(h.slice(1),16),r=(n>>16)&255,g=(n>>8)&255,b=n&255;if(amt<0){r*=1+amt;g*=1+amt;b*=1+amt;}else{r+=(255-r)*amt;g+=(255-g)*amt;b+=(255-b)*amt;}return'rgb('+(r|0)+','+(g|0)+','+(b|0)+')';}
+function rrp(x,X,Y,W,H,R){x.beginPath();if(x.roundRect)x.roundRect(X,Y,W,H,R);else x.rect(X,Y,W,H);}
+function wrapLines(x,t,maxW){const words=t.split(' '),lines=[];let line='';for(const w of words){const tt=line?line+' '+w:w;if(x.measureText(tt).width>maxW&&line){lines.push(line);line=w;}else line=tt;}if(line)lines.push(line);return lines;}
+function hexPath(x,cx,cy,r){x.beginPath();for(let i=0;i<6;i++){const a=Math.PI/3*i+Math.PI/6,px=cx+Math.cos(a)*r,py=cy+Math.sin(a)*r;i?x.lineTo(px,py):x.moveTo(px,py);}x.closePath();}
+function drawHexGrid(x,W,H,acc,al){x.save();x.globalAlpha=al;x.strokeStyle=acc;x.lineWidth=1;const r=10,vert=r*1.5,horiz=r*Math.sqrt(3);let ri=0;for(let cy=0;cy<H+r;cy+=vert,ri++){const off=(ri%2)?horiz/2:0;for(let cx=off;cx<W+horiz;cx+=horiz){hexPath(x,cx,cy,r);x.stroke();}}x.restore();}
+function tArrow(x,x1,y1,x2,y2,col){x.strokeStyle=col;x.lineWidth=1.7;x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();const a=Math.atan2(y2-y1,x2-x1);x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-5*Math.cos(a-0.5),y2-5*Math.sin(a-0.5));x.lineTo(x2-5*Math.cos(a+0.5),y2-5*Math.sin(a+0.5));x.closePath();x.fillStyle=col;x.fill();}
+function boxCandles(x,bx,by,bw,bh,closes,acc){const lo=Math.min.apply(0,closes),hi=Math.max.apply(0,closes),Y=v=>by+bh-((v-lo)/((hi-lo)||1))*bh,n=closes.length,cw=Math.max(2.5,bw/n*0.55);x.shadowColor=acc;x.shadowBlur=5;for(let i=0;i<n;i++){const o=i?closes[i-1]:closes[0],c=closes[i],up=c>=o,cx=bx+(n<2?bw/2:i/(n-1)*bw);x.strokeStyle=up?'#1fe08a':'#ff4d5e';x.lineWidth=1.3;const bt=Y(Math.max(o,c)),bb=Y(Math.min(o,c));x.beginPath();x.moveTo(cx,bt-2);x.lineTo(cx,bb+2);x.stroke();x.fillStyle=x.strokeStyle;x.fillRect(cx-cw/2,bt,cw,Math.max(2,bb-bt));}x.shadowBlur=0;return Y;}
+const ART={
+  break:(x,bx,by,bw,bh,a,m)=>{const dir=(m&&m.dir)||1,cl=dir>0?[2,3,4.2,3.6,4,5.4,6.2]:[7,6,5,5.8,5.2,4.2,5.6],Y=boxCandles(x,bx,by,bw,bh,cl,a),lvl=dir>0?4.2:5.9;x.strokeStyle=a;x.setLineDash([4,3]);x.lineWidth=1.2;x.beginPath();x.moveTo(bx,Y(lvl));x.lineTo(bx+bw,Y(lvl));x.stroke();x.setLineDash([]);tArrow(x,bx+bw-4,Y(lvl)+8,bx+bw-4,Y(cl[cl.length-1])-2,a);},
+  zone:(x,bx,by,bw,bh,a,m)=>{const Y=boxCandles(x,bx,by,bw,bh,[3,4,3.4,4.2,3.6,4.4,3.8],a),zc=(m&&m.pos==='high')?4.5:3.1,zh=bh*0.22;x.fillStyle=hexA(a,0.25);x.fillRect(bx,Y(zc)-zh/2,bw,zh);x.strokeStyle=a;x.lineWidth=1.2;x.strokeRect(bx,Y(zc)-zh/2,bw,zh);},
+  equal:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[3,4,5,4,5,4.2],a);x.strokeStyle=a;x.setLineDash([3,3]);x.lineWidth=1.2;x.beginPath();x.moveTo(bx,Y(5));x.lineTo(bx+bw,Y(5));x.stroke();x.setLineDash([]);x.fillStyle=a;[2,4].forEach(i=>{x.beginPath();x.arc(bx+i/5*bw,Y(5)-3,2.4,0,7);x.fill();});},
+  stop:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[4,4.6,4.2,5,4.6,5.4],a);x.strokeStyle=a;x.lineWidth=1.5;x.setLineDash([4,3]);x.beginPath();x.moveTo(bx,Y(2.8));x.lineTo(bx+bw,Y(2.8));x.stroke();x.setLineDash([]);x.fillStyle=a;x.font='800 8px '+TF;x.textAlign='left';x.fillText('SL',bx+2,Y(2.8)-3);},
+  trend:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[2.5,3.5,3,4.2,3.8,5,4.6,5.6],a);x.strokeStyle=a;x.shadowColor=a;x.shadowBlur=6;x.lineWidth=1.8;x.beginPath();x.moveTo(bx,Y(2.3));x.lineTo(bx+bw,Y(5.3));x.stroke();x.shadowBlur=0;},
+  vwap:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[4,4.6,4,4.6,4.1,4.7],a);x.strokeStyle=a;x.shadowColor=a;x.shadowBlur=6;x.lineWidth=1.8;x.beginPath();for(let i=0;i<=24;i++){const t=i/24,xx=bx+t*bw,yy=Y(4.3+Math.sin(t*6)*0.4);i?x.lineTo(xx,yy):x.moveTo(xx,yy);}x.stroke();x.shadowBlur=0;},
+  glitch:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[3,3.6,3.2,3.8,3.4,4],a),gx=bx+3/5*bw;x.strokeStyle=a;x.shadowColor=a;x.shadowBlur=8;x.lineWidth=2;x.beginPath();x.moveTo(gx,Y(5.6));x.lineTo(gx,Y(2.4));x.stroke();x.fillStyle=a;x.fillRect(gx-3.5,Y(5.4),7,9);x.shadowBlur=0;x.fillStyle='#fff';x.font='900 13px '+TF;x.textAlign='center';x.fillText('!',gx,Y(2.4)-1);},
+  bigcandle:(x,bx,by,bw,bh,a)=>{const cx=bx+bw/2;x.strokeStyle='#1fe08a';x.shadowColor='#1fe08a';x.shadowBlur=8;x.lineWidth=2.4;x.beginPath();x.moveTo(cx,by+2);x.lineTo(cx,by+bh-2);x.stroke();x.fillStyle='#1fe08a';x.fillRect(cx-11,by+bh*0.2,22,bh*0.58);x.shadowBlur=0;x.fillStyle='#ffd60a';x.beginPath();x.arc(cx-18,by+bh*0.78,4,0,7);x.fill();x.fillStyle='#4cc3ff';x.beginPath();x.arc(cx+18,by+bh*0.2,4,0,7);x.fill();},
+  fakeout:(x,bx,by,bw,bh,a)=>{const Y=boxCandles(x,bx,by,bw,bh,[3,3.6,4.2,5.2,4,3.2,2.6],a);x.strokeStyle='#4cc3ff';x.setLineDash([3,3]);x.lineWidth=1.1;x.beginPath();x.moveTo(bx,Y(4.6));x.lineTo(bx+bw,Y(4.6));x.stroke();x.setLineDash([]);x.strokeStyle=a;x.shadowColor=a;x.shadowBlur=6;x.lineWidth=1.9;x.beginPath();x.arc(bx+bw*0.62,Y(4.7),7,-1.5,1.3);x.stroke();tArrow(x,bx+bw*0.62+2,Y(4.7)+7,bx+bw*0.54,Y(3.4),a);x.shadowBlur=0;},
+  predict:(x,bx,by,bw,bh,a)=>{boxCandles(x,bx,by,bw*0.56,bh,[3,3.6,3.2,4,3.6,4.2],a);x.fillStyle=a;x.shadowColor=a;x.shadowBlur=8;x.font='900 '+(bh*0.7)+'px '+TF;x.textAlign='center';x.textBaseline='middle';x.fillText('?',bx+bw*0.8,by+bh*0.5);x.shadowBlur=0;x.textBaseline='alphabetic';},
+  manage:(x,bx,by,bw,bh,a)=>{boxCandles(x,bx,by,bw*0.6,bh,[3,3.6,4.2,4.8,5.2],a);x.font=(bh*0.34)+'px '+TF;x.textAlign='center';x.textBaseline='middle';x.fillText('🤝',bx+bw*0.83,by+bh*0.32);x.fillText('🚪',bx+bw*0.83,by+bh*0.7);x.textBaseline='alphabetic';},
+  mtf:(x,bx,by,bw,bh,a)=>{boxCandles(x,bx,by,bw,bh*0.4,[2,3,4,5],a);x.fillStyle='#8aa0b8';x.font='700 7px '+TF;x.textAlign='left';x.fillText('HTF ▲',bx+1,by+bh*0.52);boxCandles(x,bx,by+bh*0.56,bw,bh*0.44,[5,4,3,4,5,6],a);},
+  rr:(x,bx,by,bw,bh,a)=>{[['#ffd60a',0.5,'E'],['#ff4d5e',0.82,'SL'],['#1fe08a',0.16,'TP']].forEach(p=>{const y=by+p[1]*bh;x.strokeStyle=p[0];x.setLineDash([4,3]);x.lineWidth=1.3;x.beginPath();x.moveTo(bx,y);x.lineTo(bx+bw-20,y);x.stroke();x.setLineDash([]);x.fillStyle=p[0];x.font='800 7px '+TF;x.textAlign='left';x.fillText(p[2],bx+1,y-2);});x.fillStyle=a;x.shadowColor=a;x.shadowBlur=6;x.font='900 14px '+TF;x.textAlign='right';x.fillText('2R',bx+bw-1,by+bh*0.56);x.shadowBlur=0;},
+  size:(x,bx,by,bw,bh,a)=>{const cx=bx+bw/2,cy=by+bh/2;x.strokeStyle=hexA(a,0.5);x.lineWidth=2;x.beginPath();x.arc(cx,cy,bh*0.4,0,6.283);x.stroke();x.fillStyle=a;x.shadowColor=a;x.shadowBlur=8;x.font='900 '+(bh*0.46)+'px '+TF;x.textAlign='center';x.textBaseline='middle';x.fillText('1%',cx,cy);x.shadowBlur=0;x.textBaseline='alphabetic';},
+  pattern:(x,bx,by,bw,bh,a)=>{const pts=[[0,0.75],[0.2,0.28],[0.35,0.5],[0.5,0.16],[0.65,0.5],[0.8,0.28],[1,0.75]];x.strokeStyle=a;x.shadowColor=a;x.shadowBlur=6;x.lineWidth=2;x.beginPath();pts.forEach((p,i)=>{const xx=bx+p[0]*bw,yy=by+p[1]*bh;i?x.lineTo(xx,yy):x.moveTo(xx,yy);});x.stroke();x.shadowBlur=0;},
+  structure:(x,bx,by,bw,bh,a)=>{x.textAlign='center';x.textBaseline='middle';x.font='800 '+(bh*0.5)+'px '+TF;x.fillStyle='#1fe08a';x.fillText('▲',bx+bw*0.25,by+bh*0.5);x.fillStyle='#ff4d5e';x.fillText('▼',bx+bw*0.5,by+bh*0.5);x.fillStyle='#4cc3ff';x.fillText('↔',bx+bw*0.75,by+bh*0.5);x.textBaseline='alphabetic';},
+};
+function drawArcadeTile(cv,id,title,idx){
+  const m=ARCADE[id]||{accent:'#4cc3ff',art:'break',kicker:'PRACTICE',skill:''},acc=m.accent;
+  const dpr=Math.min(devicePixelRatio||1,2);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);const W=cv.width/dpr,H=cv.height/dpr;
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,shadeC(acc,-0.5));g.addColorStop(0.55,'#0a0e17');g.addColorStop(1,'#06080f');x.fillStyle=g;x.fillRect(0,0,W,H);
+  drawHexGrid(x,W,H,acc,0.05);
+  const rg=x.createRadialGradient(W*0.82,0,2,W*0.82,0,W);rg.addColorStop(0,hexA(acc,0.3));rg.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=rg;x.fillRect(0,0,W,H);
+  x.save();x.globalAlpha=0.07;x.fillStyle='#fff';x.font='900 '+(H*0.9)+'px '+TF;x.textAlign='center';x.textBaseline='middle';x.fillText(SYMS[idx%SYMS.length],W*0.8,H*0.4);x.restore();x.textBaseline='alphabetic';
+  const ay=8,ah=H*0.44,ax=10,aw=W-20;
+  x.fillStyle='rgba(2,4,9,0.45)';rrp(x,ax,ay,aw,ah,7);x.fill();x.strokeStyle=hexA(acc,0.45);x.lineWidth=1;rrp(x,ax,ay,aw,ah,7);x.stroke();
+  x.save();rrp(x,ax,ay,aw,ah,7);x.clip();(ART[m.art]||ART.break)(x,ax+8,ay+7,aw-16,ah-14,acc,m);x.restore();
+  const sc=x.createLinearGradient(0,ay+ah-8,0,H);sc.addColorStop(0,'rgba(5,7,13,0)');sc.addColorStop(0.4,'rgba(5,7,13,0.9)');sc.addColorStop(1,'rgba(5,7,13,0.99)');x.fillStyle=sc;x.fillRect(0,ay+ah-8,W,H-(ay+ah)+8);
+  x.font='800 8px '+TF;const kw=x.measureText(m.kicker).width;x.fillStyle=hexA(acc,0.16);rrp(x,14,14,kw+13,15,4);x.fill();x.strokeStyle=hexA(acc,0.55);x.lineWidth=1;rrp(x,14,14,kw+13,15,4);x.stroke();x.fillStyle=acc;x.textAlign='left';x.fillText(m.kicker,20.5,24.5);
+  const maxW=W-24,skillY=H-10;x.textAlign='left';
+  let fs=title.length>15?15:17;x.font='900 '+fs+'px '+TF;let lines=wrapLines(x,title.toUpperCase(),maxW);if(lines.length>2){fs=13;x.font='900 13px '+TF;lines=wrapLines(x,title.toUpperCase(),maxW);}
+  const nameBottom=skillY-13,ny=nameBottom-(lines.length-1)*(fs+1);
+  x.fillStyle='#fff';x.shadowColor=acc;x.shadowBlur=12;lines.forEach((ln,i)=>x.fillText(ln,12,ny+i*(fs+1)));x.shadowBlur=0;
+  x.fillStyle='rgba(200,214,230,0.82)';x.font='600 9.5px '+TF;x.fillText(m.skill,12,skillY);
+}
+
+/* ════════ LIBRARY HUB ════════ */
+let catFilter='All',query='';
+function renderLib(){
+  const all=Object.values(REG);const live=all.length;
+  const done=all.filter(g=>doneOf(g.id)).length;
+  const stars=all.reduce((s,g)=>s+Math.round(bestOf(g.id)/34),0);
+  $('#stats').innerHTML=`<div class="stat"><div class="v g">${done}/${live}</div><div class="k">Completed</div></div>
+    <div class="stat"><div class="v y">★ ${stars}</div><div class="k">Stars</div></div>
+    <div class="stat"><div class="v">${live}</div><div class="k">Games</div></div>`;
+  $('#cats').innerHTML=CATS.map(c=>`<div class="cat ${c===catFilter?'on':''}" data-c="${c}">${c}</div>`).join('');
+  $$('#cats .cat').forEach(el=>el.onclick=()=>{catFilter=el.dataset.c;renderLib();});
+  const list=all.filter(g=>(catFilter==='All'||g.category===catFilter)&&(!query||(g.title+' '+g.category+' '+g.objective).toLowerCase().includes(query)));
+  $('#grid').innerHTML=list.map(g=>{const best=bestOf(g.id),pips=Math.round(best/25),acc=(ARCADE[g.id]||{}).accent||'#4cc3ff';
+    return `<div class="game" data-g="${g.id}" style="--acc:${acc}">${doneOf(g.id)?'<div class="done">✓</div>':''}
+      <canvas class="tile"></canvas>
+      <div class="foot"><div class="pips">${[0,1,2,3].map(i=>`<span class="pip ${i<pips?'on':''}"></span>`).join('')}</div>
+      <span class="play">${best?best+' PTS · ▶':'▶ PLAY'}</span></div></div>`;}).join('')
+    ||'<div style="grid-column:1/-1;text-align:center;color:var(--mut);padding:30px;font-size:12px">No games match.</div>';
+  list.forEach((g,idx)=>{const card=$$('#grid .game')[idx];if(!card)return;const cvt=card.querySelector('.tile');
+    requestAnimationFrame(()=>drawArcadeTile(cvt,g.id,g.title,idx));
+    card.onclick=()=>openGame(g.id);});
+}
+function thumb(cv,cs){const dpr=Math.min(devicePixelRatio||1,2);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);const W=cv.width/dpr,H=cv.height/dpr;x.clearRect(0,0,W,H);
+  const lo=Math.min(...cs.map(c=>c.lo)),hi=Math.max(...cs.map(c=>c.hi)),Y=v=>6+(1-(v-lo)/(hi-lo))*(H-12),X=i=>4+i/(cs.length-1)*(W-8),cw=Math.max(1.6,(W-8)/cs.length*0.6);
+  cs.forEach((c,i)=>{const up=c.c>=c.o,col=up?'#16c784':'#ea3943';x.strokeStyle=col;x.beginPath();x.moveTo(X(i),Y(c.hi));x.lineTo(X(i),Y(c.lo));x.stroke();const bt=Y(Math.max(c.o,c.c)),bb=Y(Math.min(c.o,c.c));x.fillStyle=col;x.fillRect(X(i)-cw/2,bt,cw,Math.max(1,bb-bt));});}
+
+/* ════════ RUNNER ════════ */
+let CUR=null,DIFF='beginner',STATE=null,RESP=null,V=null,timer=null,timeLeft=0,calcValidate=null;
+const cv=$('#gcanvas');
+function openGame(id){CUR=REG[id];DIFF='beginner';
+  $('#pCat').textContent=CUR.category;$('#pTitle').textContent=CUR.title;$('#pObj').textContent=CUR.objective;
+  $('#pDiffs').innerHTML=DIFFS.map(d=>`<div class="diff ${d===DIFF?'on':''}" data-d="${d}">${d[0].toUpperCase()+d.slice(1)}</div>`).join('');
+  $$('#pDiffs .diff').forEach(el=>el.onclick=()=>{DIFF=el.dataset.d;$$('#pDiffs .diff').forEach(e=>e.classList.toggle('on',e.dataset.d===DIFF));startGame();});
+  $('#play').classList.add('on');startGame();}
+function closeGame(){$('#play').classList.remove('on');stopTimer();cv.onpointerdown=cv.onpointermove=cv.onpointerup=null;renderLib();}
+function stopTimer(){if(timer){clearInterval(timer);timer=null;}$$('#gameArea .timer').forEach(e=>e.remove());}
+function clearArea(){$$('#gameArea .prompt,#gameArea .hint,#gameArea .choices,#gameArea .sliders,#gameArea .timer').forEach(e=>e.remove());cv.onpointerdown=cv.onpointermove=cv.onpointerup=null;}
+function addHTML(h){const d=document.createElement('div');d.innerHTML=h;while(d.firstChild)$('#gameArea').appendChild(d.firstChild);}
+function startGame(){stopTimer();RESP=null;calcValidate=null;$('#result').classList.remove('on');
+  STATE=CUR.gen((Date.now()&0xffff)^(Math.random()*9999|0),DIFF);
+  const sub=$('#pSubmit');sub.disabled=true;sub.textContent='SUBMIT';sub.style.display=(CUR.framework==='predict'||CUR.framework==='classify')?'none':'block';
+  FW[CUR.framework]();
+  const tl=DIFF_TIME[DIFF];if(tl&&CUR.framework!=='sequence'){timeLeft=tl;tickT();timer=setInterval(()=>{timeLeft--;tickT();if(timeLeft<=0){stopTimer();finish(0,false,'Out of time — speed comes with reps.');}},1000);}}
+function tickT(){let t=$('#gameArea .timer');if(!t){t=document.createElement('div');t.className='timer';$('#gameArea').appendChild(t);}t.textContent='⏱ '+timeLeft+'s';}
+
+function finish(score,correct,why){stopTimer();score=Math.round(clamp(score,0,100));saveScore(CUR.id,DIFF,score);
+  const col=score>=70?'#16c784':score>=40?'#ffd60a':'#ea3943';
+  $('#ring').innerHTML=`<circle cx="60" cy="60" r="50" fill="none" stroke="#1b2738" stroke-width="9"/>
+    <circle cx="60" cy="60" r="50" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${314*score/100} 314" transform="rotate(-90 60 60)"/>
+    <text x="60" y="58" text-anchor="middle" font-size="30" font-weight="800" fill="${col}">${score}</text>
+    <text x="60" y="78" text-anchor="middle" font-size="10" fill="#8b97a8">SCORE</text>`;
+  $('#rVerdict').textContent=score>=85?'Excellent':score>=70?'Solid':score>=40?'Close':'Keep practising';$('#rVerdict').style.color=col;
+  $('#rWhy').textContent=why;$('#result').classList.add('on');}
+
+/* ════════ FRAMEWORKS ════════ */
+const FW={
+  annotate(){clearArea();V=ChartView(cv,STATE.cs,{extra:STATE.extra});addHTML(`<div class="prompt">${CUR.prompt}</div>`);
+    const sub=$('#pSubmit');const variant=CUR.variant;let pts=[];
+    function base(){V.grid();V.candlesN();if(CUR.overlays)CUR.overlays(V,STATE);}
+    function draw(){base();
+      if(variant==='marker'&&RESP!=null)V.marker(RESP,'#ffd60a','✓');
+      if(variant==='line'&&RESP!=null)V.hline(RESP,'#ea3943','STOP');
+      if(variant==='zone'&&RESP)V.zone(RESP[0],RESP[1],CUR.id==='ob'?'#a855f7':CUR.id==='support'?'#16c784':'#ea3943');
+      if(variant==='ray'&&pts.length){pts.forEach(p=>V.marker(p.i,'#ffd60a','•'));if(pts.length===2){const slope=(pts[1].v-pts[0].v)/Math.max(1,pts[1].i-pts[0].i);V.ray(pts[0].i,pts[0].v,STATE.cs.length-1,pts[1].v+slope*(STATE.cs.length-1-pts[1].i),'#4cc3ff');}}}
+    draw();
+    const xy=e=>{const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};
+    if(variant==='marker'){addHTML('<div class="hint">tap the candle</div>');cv.onpointerdown=e=>{RESP=V.indexAt(xy(e).x);draw();sub.disabled=false;};}
+    else if(variant==='line'){RESP=STATE.start!=null?STATE.start:STATE.entry;draw();sub.disabled=false;addHTML('<div class="hint">drag up / down to move the stop</div>');
+      const mv=e=>{RESP=V.priceAt(xy(e).y);draw();};cv.onpointerdown=e=>{mv(e);cv.setPointerCapture(e.pointerId);cv.onpointermove=mv;};cv.onpointerup=()=>cv.onpointermove=null;}
+    else if(variant==='zone'){addHTML('<div class="hint">drag across the zone</div>');let y0=null;
+      cv.onpointerdown=e=>{y0=V.priceAt(xy(e).y);cv.setPointerCapture(e.pointerId);cv.onpointermove=ev=>{const yy=V.priceAt(xy(ev).y);RESP=[Math.min(y0,yy),Math.max(y0,yy)];draw();sub.disabled=false;};};cv.onpointerup=()=>cv.onpointermove=null;}
+    else if(variant==='ray'){addHTML('<div class="hint">tap two swing lows</div>');cv.onpointerdown=e=>{const i=V.indexAt(xy(e).x);pts.push({i,v:STATE.cs[i].lo});if(pts.length>2)pts=[pts[pts.length-1]];RESP=pts;draw();sub.disabled=pts.length<2;};}
+    sub.onclick=()=>{const r=CUR.validate(STATE,RESP,DIFF);
+      if(CUR.reveal&&RESP!=null){clearArea();base();CUR.reveal(V,STATE);
+        if(variant==='marker'&&typeof RESP==='number')V.marker(RESP,'#ffd60a','you');
+        else if(variant==='line'&&RESP!=null)V.hline(RESP,'#ea3943','you');
+        else if(variant==='zone'&&RESP)V.zone(RESP[0],RESP[1],'#ffd60a');
+        addHTML('<div class="hint">✓ green = the answer · gold = yours</div>');
+        addHTML('<div class="choices"><button class="ch-n" id="anSee">SEE SCORE →</button></div>');
+        document.getElementById('anSee').onclick=()=>{$$('#gameArea .choices').forEach(e=>e.remove());finish(r.score,r.score>=70,r.why);};
+      } else finish(r.score,r.score>=70,r.why);};
+  },
+
+  build(){clearArea();const sub=$('#pSubmit');sub.style.display='block';sub.disabled=false;sub.textContent='SUBMIT';
+    addHTML(`<div class="prompt">${STATE.desc}</div>`);
+    const x=cv.getContext('2d');const dpr=Math.min(devicePixelRatio||1,2);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;x.setTransform(dpr,0,0,dpr,0,0);
+    const W=cv.width/dpr,H=cv.height/dpr,top=58,bot=H-30,cx=W/2;
+    const Y=v=>top+(1-v/100)*(bot-top),priceAt=py=>clamp((1-(py-top)/(bot-top))*100,0,100);
+    RESP={open:42,close:58,high:72,low:28};let drag=null;
+    const handles=()=>[['high',cx,RESP.high,'#4cc3ff'],['low',cx,RESP.low,'#4cc3ff'],['open',cx-32,RESP.open,'#ffd60a'],['close',cx+32,RESP.close,'#16c784']];
+    function draw(){x.clearRect(0,0,W,H);x.strokeStyle='rgba(255,255,255,.05)';for(let g=0;g<=4;g++){const gy=top+g/4*(bot-top);x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke();}
+      const up=RESP.close>=RESP.open,col=up?'#16c784':'#ea3943';const hi=Math.max(RESP.high,RESP.open,RESP.close),lo=Math.min(RESP.low,RESP.open,RESP.close);
+      x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(cx,Y(hi));x.lineTo(cx,Y(lo));x.stroke();
+      const bt=Y(Math.max(RESP.open,RESP.close)),bb=Y(Math.min(RESP.open,RESP.close));x.fillStyle=col;x.fillRect(cx-22,bt,44,Math.max(2,bb-bt));
+      handles().forEach(([k,hx,v,c])=>{x.fillStyle=c;x.beginPath();x.arc(hx,Y(v),8,0,7);x.fill();x.fillStyle='#04060b';x.font='800 8px sans-serif';x.textAlign='center';x.fillText(k[0].toUpperCase(),hx,Y(v)+3);});
+      x.fillStyle='#7d8aa0';x.font='10px sans-serif';x.textAlign='center';x.fillText('drag  O · C · H · L',cx,bot+18);}
+    draw();
+    const xy=e=>{const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};
+    function pick(p){let best=null,bd=1e9;handles().forEach(([k,hx,v])=>{const d=Math.hypot(p.x-hx,p.y-Y(v));if(d<bd){bd=d;best=k;}});return best;}
+    cv.onpointerdown=e=>{const p=xy(e);drag=pick(p);RESP[drag]=priceAt(p.y);draw();cv.setPointerCapture(e.pointerId);cv.onpointermove=ev=>{RESP[drag]=priceAt(xy(ev).y);draw();};};cv.onpointerup=()=>cv.onpointermove=null;
+    sub.onclick=()=>{const r=CUR.validate(STATE,RESP,DIFF);finish(r.score,r.score>=70,r.why);};
+  },
+
+  predict(){clearArea();$('#pSubmit').style.display='none';addHTML(`<div class="prompt">${CUR.prompt}</div>`);
+    V=ChartView(cv,STATE.cs,{extra:STATE.extra});const dec=STATE.dec;
+    function frame(n){V.grid();V.candlesN(n);if(CUR.overlays)CUR.overlays(V,STATE);}
+    if(CUR.noReveal){frame(STATE.cs.length);ask();}
+    else{let shown=Math.max(4,dec-6);const reveal=()=>{frame(shown);if(shown<dec+1){shown+=0.6;requestAnimationFrame(reveal);}else ask();};requestAnimationFrame(reveal);}
+    function ask(){frame(CUR.noReveal?STATE.cs.length:dec+1);
+      addHTML('<div class="choices">'+CUR.choices.map(([k,l,cl])=>`<button data-c="${k}" class="${cl||'ch-opt'}">${l}</button>`).join('')+'</div>');
+      $$('#gameArea .choices button').forEach(b=>b.onclick=()=>{$$('#gameArea .choices').forEach(e=>e.remove());const c=b.dataset.c;
+        const reveal2=(then)=>{if(CUR.noReveal){then();return;}let n=dec+1;const p=()=>{frame(Math.floor(n));if(n<STATE.cs.length){n+=0.8;requestAnimationFrame(p);}else then();};requestAnimationFrame(p);};
+        reveal2(()=>{if(CUR.score){const r=CUR.score(STATE,c);finish(r.score,r.score>=70,r.why);}else{const ok=c===STATE.answer;finish(ok?100:0,ok,CUR.why(STATE,ok));}});});}
+  },
+
+  calculate(){clearArea();const host=$('#gameArea');addHTML(`<div class="prompt">${CUR.prompt}</div>`);
+    V=ChartView(cv,STATE.cs,{extra:STATE.extra});V.grid();V.candlesN();
+    const sub=$('#pSubmit');sub.style.display='block';sub.disabled=false;
+    calcValidate=CUR.setup(STATE,V,host,finish);
+    sub.onclick=()=>{const r=calcValidate();finish(r.score,r.score>=70,r.why);};
+  },
+
+  classify(){clearArea();$('#pSubmit').style.display='none';addHTML(`<div class="prompt">${CUR.prompt}</div>`);
+    V=ChartView(cv,STATE.cs,{});V.grid();V.candlesN();if(CUR.overlays)CUR.overlays(V,STATE);
+    const choices=CUR.choices(STATE);
+    addHTML('<div class="choices">'+choices.map(([k,l,c])=>`<button data-c="${k}" class="ch-opt" ${c?`style="border-color:${c};color:${c};background:${c}1e"`:''}>${l}</button>`).join('')+'</div>');
+    $$('#gameArea .choices button').forEach(b=>b.onclick=()=>{const ok=b.dataset.c===STATE.answer;finish(ok?100:0,ok,CUR.why(STATE,ok));});
+  },
+
+  /* multi-step practical trade: trend → break → entry → SL → TP → execute & replay */
+  /* generic config-driven multi-step game: steps[] of choice/marker/line/zone/build/replay */
+  sequence(){
+    clearArea();var st=STATE,sub=$('#pSubmit'),steps=CUR.steps,SEQ={},scores=[],si=0;
+    var data=st.cs||[],shown=(st.shown0!=null?st.shown0:data.length),active=null,resp=null;
+    V=data.length?ChartView(cv,data,{extra:st.extra}):null;
+    var xy=function(e){var r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};
+    function chartRender(){if(!V||!data.length)return;V.grid();V.candlesN(Math.floor(shown));if(CUR.draw)CUR.draw(V,st,SEQ);drawResp();}
+    function drawResp(){if(!active||!V)return;var k=active.kind;if(k==='marker'&&typeof resp==='number')V.marker(resp,'#ffd60a','✓');else if(k==='line'&&resp!=null)V.hline(resp,active.color||'#ea3943',active.label||'');else if(k==='zone'&&resp)V.zone(resp[0],resp[1],active.color||'#a855f7');}
+    function bar(t){$$('#gameArea .prompt').forEach(function(e){e.remove();});addHTML('<div class="prompt">STEP '+(si+1)+'/'+steps.length+' · '+t+'</div>');}
+    function clearUI(){$$('#gameArea .choices,#gameArea .hint').forEach(function(e){e.remove();});cv.onpointerdown=cv.onpointermove=cv.onpointerup=null;}
+    function reveal(toN,then){var s0=shown,t0=performance.now(),dur=Math.min(1100,Math.abs(toN-s0)*120);function fr(now){if(!$('#play').classList.contains('on'))return;var p=dur?Math.min(1,(now-t0)/dur):1;shown=s0+(toN-s0)*p;chartRender();if(p<1)requestAnimationFrame(fr);else{shown=toN;chartRender();then();}}requestAnimationFrame(fr);}
+    function startStep(){active=steps[si];resp=null;clearUI();sub.style.display='none';var pr=typeof active.prompt==='function'?active.prompt(st,SEQ):active.prompt;bar(pr);if(active.kind==='build')return runBuild();if(active.kind==='replay')return runReplay();if(active.revealTo!=null){reveal(active.revealTo(st,SEQ),activate);}else{chartRender();activate();}}
+    function activate(){var k=active.kind;
+      if(k==='choice'){var ch=typeof active.choices==='function'?active.choices(st,SEQ):active.choices;addHTML('<div class="choices">'+ch.map(function(c){return '<button data-c="'+c[0]+'" class="'+(c[2]||'ch-opt')+'">'+c[1]+'</button>';}).join('')+'</div>');$$('#gameArea .choices button').forEach(function(b){b.onclick=function(){resp=b.dataset.c;commit();};});}
+      else if(k==='marker'){if(active.hint)addHTML('<div class="hint">'+active.hint+'</div>');sub.style.display='block';sub.disabled=true;sub.textContent=active.btn||'CONFIRM';cv.onpointerdown=function(e){resp=V.indexAt(xy(e).x);chartRender();sub.disabled=false;};sub.onclick=commit;}
+      else if(k==='line'){resp=active.startVal?active.startVal(st,SEQ):data[Math.max(0,Math.floor(shown)-1)].c;chartRender();if(active.hint)addHTML('<div class="hint">'+active.hint+'</div>');sub.style.display='block';sub.disabled=false;sub.textContent=active.btn||'CONFIRM';var mv=function(e){resp=V.priceAt(xy(e).y);chartRender();};cv.onpointerdown=function(e){mv(e);cv.setPointerCapture(e.pointerId);cv.onpointermove=mv;};cv.onpointerup=function(){cv.onpointermove=null;};sub.onclick=commit;}
+      else if(k==='zone'){if(active.hint)addHTML('<div class="hint">'+active.hint+'</div>');sub.style.display='block';sub.disabled=true;sub.textContent=active.btn||'CONFIRM';var y0=null;cv.onpointerdown=function(e){y0=V.priceAt(xy(e).y);cv.setPointerCapture(e.pointerId);cv.onpointermove=function(ev){var yy=V.priceAt(xy(ev).y);resp=[Math.min(y0,yy),Math.max(y0,yy)];chartRender();sub.disabled=false;};};cv.onpointerup=function(){cv.onpointermove=null;};sub.onclick=commit;}}
+    function commit(){var sc=active.score?active.score(st,SEQ,resp):{pts:0,max:0};SEQ[active.key||('s'+si)]=resp;scores.push(sc);clearUI();si++;if(si<steps.length)startStep();else finishSeq();}
+    function runBuild(){sub.style.display='block';sub.disabled=false;sub.textContent='CONFIRM';var x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;x.setTransform(dpr,0,0,dpr,0,0);var W=cv.width/dpr,H=cv.height/dpr,top=58,bot=H-30,cx=W/2,Y=function(v){return top+(1-v/100)*(bot-top);},pAt=function(py){return clamp((1-(py-top)/(bot-top))*100,0,100);};resp={open:42,close:58,high:72,low:28};var drag=null,hs=function(){return [['high',cx,resp.high,'#4cc3ff'],['low',cx,resp.low,'#4cc3ff'],['open',cx-32,resp.open,'#ffd60a'],['close',cx+32,resp.close,'#16c784']];};function draw(){x.clearRect(0,0,W,H);x.strokeStyle='rgba(255,255,255,.05)';for(var g=0;g<=4;g++){var gy=top+g/4*(bot-top);x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke();}var up=resp.close>=resp.open,col=up?'#16c784':'#ea3943',hi=Math.max(resp.high,resp.open,resp.close),lo=Math.min(resp.low,resp.open,resp.close);x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(cx,Y(hi));x.lineTo(cx,Y(lo));x.stroke();var bt=Y(Math.max(resp.open,resp.close)),bb=Y(Math.min(resp.open,resp.close));x.fillStyle=col;x.fillRect(cx-22,bt,44,Math.max(2,bb-bt));hs().forEach(function(h){x.fillStyle=h[3];x.beginPath();x.arc(h[1],Y(h[2]),8,0,7);x.fill();x.fillStyle='#04060b';x.font='800 8px sans-serif';x.textAlign='center';x.fillText(h[0][0].toUpperCase(),h[1],Y(h[2])+3);});x.fillStyle='#7d8aa0';x.font='10px sans-serif';x.textAlign='center';x.fillText('drag  O · C · H · L',cx,bot+18);}draw();var pick=function(p){var b=null,bd=1e9;hs().forEach(function(h){var d=Math.hypot(p.x-h[1],p.y-Y(h[2]));if(d<bd){bd=d;b=h[0];}});return b;};cv.onpointerdown=function(e){var p=xy(e);drag=pick(p);resp[drag]=pAt(p.y);draw();cv.setPointerCapture(e.pointerId);cv.onpointermove=function(ev){resp[drag]=pAt(xy(ev).y);draw();};};cv.onpointerup=function(){cv.onpointermove=null;};sub.onclick=commit;}
+    function runReplay(){sub.style.display='none';$$('#gameArea .prompt').forEach(function(e){e.remove();});addHTML('<div class="prompt">⚡ Playing it out…</div>');data=st.full||st.cs;V=ChartView(cv,data,{extra:st.extra});var tot=data.length,last=performance.now();function loop(now){if(!$('#play').classList.contains('on'))return;if(now-last>=230){shown++;last=now;}V.grid();V.candlesN(Math.floor(Math.min(shown,tot)));if(CUR.draw)CUR.draw(V,st,SEQ);if(shown<tot)requestAnimationFrame(loop);else hold();}requestAnimationFrame(loop);function hold(){var oc=active.outcome(st,SEQ);scores.push({pts:oc.pts,max:oc.max,why:oc.why});var col=oc.win?'#16c784':'#ea3943';$$('#gameArea .prompt').forEach(function(e){e.remove();});addHTML('<div class="prompt" style="border-color:'+col+';color:'+col+';font-weight:800">'+(oc.title||(oc.win?'✓ WIN':'✗ LOSS'))+'</div>');addHTML('<div class="choices"><button class="ch-n" id="seqSee">SEE YOUR SCORE →</button></div>');SEQ._why=oc.why;document.getElementById('seqSee').onclick=function(){$$('#gameArea .choices').forEach(function(e){e.remove();});finishSeq();};}}
+    function finishSeq(){var got=0,max=0,worst=null;scores.forEach(function(s){got+=s.pts||0;max+=s.max||0;if(s.why&&s.max&&(!worst||(s.pts/s.max)<(worst.pts/worst.max)))worst=s;});var total=Math.round(got/(max||1)*100),why=SEQ._why||(worst?worst.why:'Nice run.');if(CUR.summary){var sm=CUR.summary(st,SEQ,total);if(sm)why=sm;}finish(total,total>=70,why);}
+    startStep();
+  },
+
+
+};
+
+/* wiring */
+$('#q').oninput=e=>{query=e.target.value.toLowerCase().trim();renderLib();};
+$('#back').onclick=closeGame;$('#rAgain').onclick=startGame;$('#rNext').onclick=closeGame;
+window.addEventListener('resize',()=>{if($('#play').classList.contains('on')&&CUR){try{FW[CUR.framework]();}catch(e){}}});
+renderLib();
+</script>
+</body>
+</html>

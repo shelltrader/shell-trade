@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>ChartQuest · LessonChart preview</title>
+<style>
+  :root{
+    --bg:#080b12;--panel:#0d131f;--panel2:#111a28;--line:#1b2738;--ink:#e6edf3;--sub:#8b97a8;--mut:#56657a;
+    --green:#16c784;--greenEdge:#0c9c69;--red:#ea3943;--redEdge:#c0212c;--blue:#4cc3ff;--gold:#ffd60a;--purp:#a855f7;--orange:#ff9f43;--shell:#36d9e0;
+    --font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;background:#04060b;color:var(--ink);font-family:var(--font);}
+  body{display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  #stage{position:relative;width:min(100vw,430px);height:100vh;height:100dvh;
+    background:radial-gradient(125% 62% at 50% 0%,#1b1030 0%,#0a0610 60%);
+    box-shadow:0 0 0 1px #2a1840;display:flex;flex-direction:column;overflow:hidden;}
+
+  /* top bar: a single dropdown to pick the lesson + a replay button */
+  .topbar{display:flex;gap:10px;align-items:center;padding:12px 14px 8px;flex-shrink:0;}
+  #sceneSel{flex:1;padding:13px 40px 13px 14px;border-radius:12px;background:#0d131f;border:1px solid #2a3a4e;color:#e6edf3;font:700 14px var(--font);cursor:pointer;outline:none;-webkit-appearance:none;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,#8b97a8 50%),linear-gradient(135deg,#8b97a8 50%,transparent 50%);background-position:calc(100% - 20px) 20px,calc(100% - 15px) 20px;background-size:5px 5px;background-repeat:no-repeat;}
+  .iconbtn{width:50px;flex-shrink:0;padding:13px 0;border-radius:12px;border:1px solid var(--blue);background:rgba(76,195,255,.12);color:var(--blue);font:800 17px var(--font);cursor:pointer;}
+
+  /* the chart fills almost the whole screen */
+  .chartWrap{position:relative;flex:1;min-height:0;margin:0 12px;border:1px solid var(--line);border-radius:16px;
+    background:linear-gradient(180deg,#070b12,#05080e);overflow:hidden;box-shadow:inset 0 0 40px rgba(0,0,0,.5);}
+  canvas{display:block;width:100%;height:100%;}
+
+  .meta{flex-shrink:0;padding:13px 18px 16px;}
+  .eyebrow{font:800 10px var(--font);letter-spacing:1.4px;color:var(--purp);text-transform:uppercase;display:flex;align-items:center;gap:6px;margin:0 0 4px;}
+  .title{font:800 23px var(--font);letter-spacing:-.3px;margin:0 0 8px;}
+  .caption{font:600 14px var(--font);line-height:1.5;color:#d7e0ec;}
+  .caption b{color:#fff;}
+  .note{font:600 10px var(--font);color:var(--mut);text-align:center;padding:0 16px 9px;}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="topbar">
+    <select id="sceneSel"></select>
+    <button class="iconbtn" id="replay" title="Replay">▸</button>
+  </div>
+  <div class="chartWrap"><canvas id="cv"></canvas></div>
+  <div class="meta">
+    <div class="eyebrow"><span id="eyebrowIcon">📘</span> <span id="eyebrow">STRUCTURE</span></div>
+    <div class="title" id="title">Liquidity ID</div>
+    <div class="caption" id="caption"></div>
+  </div>
+  <div class="note">LessonChart preview · pick a lesson above · the same renderer powers every in-game lesson</div>
+</div>
+
+<script>
+/* ============================================================================
+   LessonChart — a reusable, ANIMATED candlestick teaching diagram.
+   One renderer, data-driven "scenes". The same engine is intended to power:
+   every Hour lesson, every journal term pop-up, the boss-round intros, and the
+   fullscreen post-trade lessons (STOP DID ITS JOB / STOPPED OUT).
+
+   A scene is pure data:
+     { eyebrow, eyebrowIcon, title, caption, candles:[{o,h,l,c}], anns:[...] }
+   Prices are on an arbitrary 0..100 scale; the engine auto-frames them.
+   Annotations animate IN after the candles print, each with its own `at` time.
+   ========================================================================== */
+const C = {
+  green:'#16c784', greenEdge:'#0c9c69', greenWick:'#1fd790',
+  red:'#ea3943', redEdge:'#c0212c', redWick:'#ff5663',
+  grid:'rgba(255,255,255,0.045)', sub:'#8b97a8', purp:'#a855f7', gold:'#ffd60a',
+  blue:'#4cc3ff', shell:'#36d9e0', ink:'#e6edf3'
+};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const easeOut=t=>1-Math.pow(1-clamp(t,0,1),3);
+const easeIO=t=>{t=clamp(t,0,1);return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;};
+
+/* ---- SCENES ------------------------------------------------------------- */
+const SCENES = {
+  /* REFERENCE LESSON (shot 12): equal highs hold resting liquidity (a shell),
+     then a long wick spikes up to grab it and rejects — a sweep. */
+  liquidity:{
+    eyebrow:'STRUCTURE', eyebrowIcon:'📘', title:'Liquidity ID',
+    caption:'See the matching highs? Lots of traders hide a <b>stop loss</b> just above them. Price spikes up to grab those — a <b>liquidity sweep</b> — then drops back down.',
+    candles:[
+      {o:42,h:50,l:40,c:48},{o:48,h:71,l:46,c:55},{o:55,h:64,l:52,c:62},
+      {o:62,h:70,l:57,c:58},{o:58,h:63,l:54,c:61},{o:61,h:71,l:55,c:56},
+      {o:56,h:60,l:52,c:59},
+      {o:59,h:88,l:50,c:52,sweep:true}   // the sweep: long upper wick to 88, closes back red
+    ],
+    anns:[
+      {type:'eqHighs', y:70.5, from:1, to:6, at:1.7, color:C.purp, label:'EQUAL HIGHS · stop losses sit above'},
+      {type:'shell', candle:7, at:2.4, label:'LIQUIDITY'},
+      {type:'sweepFlag', candle:7, at:3.5}
+    ]
+  },
+  /* TREND (shot 4): tight candles, clearly higher highs + higher lows. */
+  uptrend:{
+    eyebrow:'TREND', eyebrowIcon:'📈', title:'Up Trend',
+    caption:'An <b>uptrend</b> makes <b>higher highs</b> and <b>higher lows</b> — like stairs going up. Trade with it (look for buys).',
+    candles:[{o:26,h:36,l:24,c:34},{o:34,h:38,l:28,c:30},{o:30,h:48,l:28,c:46},{o:46,h:50,l:39,c:41},{o:41,h:60,l:39,c:58},{o:58,h:62,l:51,c:53},{o:53,h:74,l:51,c:72},{o:72,h:80,l:67,c:78}],
+    anns:[{type:'hl',candle:1,at:1.6,label:'HL'},{type:'hh',candle:2,at:2.0,label:'HH'},{type:'hl',candle:3,at:2.4,label:'HL'},{type:'hh',candle:4,at:2.8,label:'HH'},{type:'hl',candle:5,at:3.2,label:'HL'},{type:'hh',candle:6,at:3.6,label:'HH'}]
+  },
+  downtrend:{
+    eyebrow:'TREND', eyebrowIcon:'📉', title:'Down Trend',
+    caption:'A <b>downtrend</b> makes <b>lower highs</b> and <b>lower lows</b> — like stairs going down. Trade with it (look for sells).',
+    candles:[{o:72,h:78,l:64,c:66},{o:66,h:72,l:60,c:62},{o:62,h:66,l:50,c:52},{o:52,h:60,l:50,c:58},{o:58,h:60,l:42,c:44},{o:44,h:52,l:42,c:50},{o:50,h:52,l:30,c:32},{o:32,h:38,l:24,c:28}],
+    anns:[{type:'tag',candle:1,side:'up',color:C.red,at:1.8,label:'LH'},{type:'tag',candle:2,side:'down',color:C.gold,at:2.2,label:'LL'},{type:'tag',candle:3,side:'up',color:C.red,at:2.6,label:'LH'},{type:'tag',candle:6,side:'down',color:C.gold,at:3.0,label:'LL'}]
+  },
+  sfp:{
+    eyebrow:'STRUCTURE', eyebrowIcon:'🎯', title:'Swing Failure (SFP)',
+    caption:'A <b>Swing Failure</b> pokes just above the last high to grab stop losses, then <b>closes back below</b>. The breakout failed — price often reverses.',
+    candles:[{o:40,h:46,l:38,c:44},{o:44,h:62,l:42,c:58},{o:58,h:60,l:48,c:50},{o:50,h:56,l:46,c:54},{o:54,h:58,l:50,c:52},{o:52,h:74,l:50,c:55,sweep:true}],
+    anns:[{type:'hline',y:62,at:1.4,color:C.sub,label:'last swing high'},{type:'sweepFlag',candle:5,at:3.0,color:C.red,text:'SFP → swept the high, closed back'}]
+  },
+  head_shoulders:{
+    eyebrow:'PATTERNS', eyebrowIcon:'🗿', title:'Head & Shoulders',
+    caption:'<b>Head &amp; Shoulders</b>: two smaller peaks (shoulders) beside one big peak (head). When price breaks the <b>neckline</b>, the uptrend often flips down.',
+    candles:[{o:22,h:28,l:20,c:26},{o:26,h:44,l:24,c:42},{o:42,h:44,l:34,c:36},{o:36,h:58,l:34,c:56},{o:56,h:58,l:36,c:38},{o:38,h:46,l:36,c:44},{o:44,h:48,l:34,c:36},{o:36,h:40,l:26,c:28}],
+    anns:[{type:'tag',candle:1,side:'up',color:C.blue,at:1.8,label:'SHOULDER'},{type:'tag',candle:3,side:'up',color:C.blue,at:2.3,label:'HEAD'},{type:'tag',candle:6,side:'up',color:C.blue,at:2.8,label:'SHOULDER'},{type:'hline',y:36,at:3.2,color:C.red,label:'neckline'}]
+  },
+  double_bottom:{
+    eyebrow:'PATTERNS', eyebrowIcon:'📊', title:'Double Bottom',
+    caption:'A <b>double bottom</b> is a <b>W</b> shape — price hits the same floor twice and can’t break it. Buyers step in, and it often turns up.',
+    candles:[{o:56,h:58,l:50,c:52},{o:52,h:54,l:38,c:40},{o:40,h:50,l:38,c:48},{o:48,h:54,l:46,c:52},{o:52,h:54,l:38,c:42},{o:42,h:56,l:40,c:54},{o:54,h:64,l:52,c:62}],
+    anns:[{type:'hline',y:38,at:1.6,color:C.green,label:'double bottom'},{type:'tag',candle:1,side:'down',color:C.gold,at:2.4,label:'LOW 1'},{type:'tag',candle:4,side:'down',color:C.gold,at:3.0,label:'LOW 2'}]
+  },
+  choch:{
+    eyebrow:'STRUCTURE', eyebrowIcon:'🔄', title:'Change of Character',
+    caption:'A <b>Change of Character</b> is the first warning a trend may flip. In an uptrend, price <b>closes below the last higher low</b> — buyers just lost control.',
+    candles:[{o:30,h:38,l:28,c:36},{o:36,h:48,l:34,c:46},{o:46,h:50,l:40,c:42},{o:42,h:58,l:40,c:56},{o:56,h:60,l:46,c:48},{o:48,h:52,l:36,c:40}],
+    anns:[{type:'hline',y:42,at:2.0,color:C.sub,label:'last higher low'},{type:'sweepFlag',candle:5,at:3.0,color:C.red,text:'ChoCh → closed below it'}]
+  },
+  vwap:{
+    eyebrow:'LEVELS', eyebrowIcon:'〰️', title:'VWAP Flip / Slap',
+    caption:'<b>VWAP</b> is the day’s average price. When price <b>flips</b> from above to below it, then <b>slaps</b> back into it and gets rejected, sellers are in control.',
+    candles:[{o:36,h:42,l:34,c:40},{o:40,h:50,l:38,c:48},{o:48,h:54,l:43,c:44},{o:44,h:50,l:40,c:42},{o:42,h:46,l:34,c:36},{o:36,h:44,l:35,c:41},{o:41,h:43,l:28,c:30}],
+    anns:[{type:'line',c1:0,p1:37,c2:6,p2:41,color:C.blue,dash:true,at:1.4,label:'VWAP'},{type:'tag',candle:4,side:'down',color:C.red,at:2.6,label:'FLIP ↓'},{type:'tag',candle:5,side:'up',color:C.red,at:3.2,label:'SLAP ✗'}]
+  },
+  ob:{
+    eyebrow:'STRUCTURE', eyebrowIcon:'🧱', title:'Order Blocks',
+    caption:'An <b>order block</b> is the last red candle before a big move up. Price often comes <b>back to it</b> and bounces — a good spot to buy.',
+    candles:[{o:48,h:54,l:46,c:52},{o:52,h:54,l:42,c:44},{o:44,h:64,l:42,c:62},{o:62,h:68,l:58,c:66},{o:66,h:68,l:52,c:54},{o:54,h:58,l:44,c:48},{o:48,h:66,l:46,c:64}],
+    anns:[{type:'zone',from:1,to:6,y1:42,y2:52,color:C.purp,at:1.6,label:'ORDER BLOCK'},{type:'tag',candle:5,side:'down',color:C.gold,at:2.8,label:'retest'},{type:'tag',candle:6,side:'up',color:C.green,at:3.3,label:'bounce ↑'}]
+  },
+  trendline:{
+    eyebrow:'LEVELS', eyebrowIcon:'📐', title:'Trendlines',
+    caption:'A <b>trendline</b> joins the rising lows. Price keeps <b>bouncing up off it</b> — until it finally breaks, which warns the trend may be ending.',
+    candles:[{o:30,h:36,l:28,c:34},{o:34,h:44,l:32,c:42},{o:42,h:46,l:34,c:36},{o:36,h:50,l:34,c:48},{o:48,h:54,l:42,c:44},{o:44,h:60,l:42,c:58},{o:58,h:64,l:50,c:52},{o:52,h:68,l:50,c:66}],
+    anns:[{type:'line',c1:2,p1:33,c2:6,p2:49,color:C.gold,extend:true,at:1.6,label:'TRENDLINE'},{type:'tag',candle:4,side:'down',color:C.gold,at:2.8,label:'bounce'}]
+  },
+  htf:{
+    eyebrow:'BIG PICTURE', eyebrowIcon:'🔭', title:'Higher Timeframes',
+    caption:'The <b>higher timeframe</b> is the big picture. Small red dips don’t change it. Always trade <b>with</b> the bigger trend, not against it.',
+    candles:[{o:24,h:34,l:22,c:32},{o:32,h:46,l:30,c:44},{o:44,h:50,l:38,c:40},{o:40,h:62,l:38,c:60},{o:60,h:70,l:56,c:66},{o:66,h:72,l:58,c:60},{o:60,h:84,l:58,c:80}],
+    anns:[{type:'line',c1:0,p1:26,c2:6,p2:78,color:C.green,at:1.6,label:'BIG TREND ↑'},{type:'tag',candle:2,side:'down',color:C.sub,at:2.8,label:'just a dip'},{type:'tag',candle:5,side:'down',color:C.sub,at:3.3,label:'just a dip'}]
+  },
+  /* BREAK OF STRUCTURE (shot 2): a swing high, then a candle CLOSES above it. */
+  bos:{
+    eyebrow:'STRUCTURE', eyebrowIcon:'📘', title:'Break of Structure',
+    caption:'A candle <b>closes above the swing high</b> — that’s a <b>Break of Structure</b>. The up-move is confirmed.',
+    candles:[
+      {o:36,h:44,l:32,c:42},{o:42,h:66,l:40,c:50},{o:50,h:56,l:38,c:40},
+      {o:40,h:50,l:36,c:47},{o:47,h:58,l:44,c:54},{o:54,h:63,l:50,c:52},
+      {o:52,h:80,l:50,c:76,bos:true}
+    ],
+    anns:[
+      {type:'swingHigh', y:66, candle:1, at:1.6, label:'SWING HIGH'},
+      {type:'bosFlag', candle:6, at:3.0, label:'BOS · closes above'}
+    ]
+  },
+  support:{
+    eyebrow:'LEVELS', eyebrowIcon:'📘', title:'Support',
+    caption:'See the <b>floor</b>? Buyers keep stepping in here, so price bounces back <b>UP</b>. That floor is called <b>support</b>.',
+    candles:[
+      {o:60,h:62,l:54,c:56},{o:56,h:58,l:46,c:48},{o:48,h:50,l:31,c:36},{o:36,h:42,l:30,c:40},
+      {o:40,h:44,l:31,c:34},{o:34,h:48,l:32,c:46},{o:46,h:56,l:44,c:54},{o:54,h:64,l:52,c:62}
+    ],
+    anns:[{type:'hline', y:31, at:1.7, color:C.green, label:'SUPPORT · buyers step in'}]
+  },
+  resistance:{
+    eyebrow:'LEVELS', eyebrowIcon:'📘', title:'Resistance',
+    caption:'See the <b>ceiling</b>? Sellers keep stepping in here, so price drops back <b>DOWN</b>. That ceiling is called <b>resistance</b>.',
+    candles:[
+      {o:40,h:44,l:38,c:43},{o:43,h:55,l:42,c:52},{o:52,h:69,l:50,c:60},{o:60,h:70,l:58,c:64},
+      {o:64,h:70,l:56,c:58},{o:58,h:62,l:48,c:50},{o:50,h:54,l:40,c:42},{o:42,h:46,l:34,c:36}
+    ],
+    anns:[{type:'hline', y:70, at:1.7, color:C.red, label:'RESISTANCE · sellers step in'}]
+  },
+  fake:{
+    eyebrow:'STRUCTURE', eyebrowIcon:'📘', title:'Fake Breakout',
+    caption:'A <b>fake breakout</b> pokes ABOVE the line but <b>closes back below</b> it — a trap. Always wait for the close.',
+    candles:[
+      {o:44,h:50,l:42,c:48},{o:48,h:64,l:46,c:55},{o:55,h:63,l:52,c:60},{o:60,h:64,l:54,c:57},
+      {o:57,h:62,l:53,c:59},{o:59,h:84,l:55,c:56,sweep:true}
+    ],
+    anns:[{type:'hline', y:64, at:1.6, color:C.sub, label:'the level'},{type:'sweepFlag', candle:5, at:3.2, fake:true}]
+  },
+  candle:{
+    eyebrow:'CANDLES', eyebrowIcon:'🕯️', title:'What Is a Candle?',
+    caption:'Each candle is one chunk of time. <b>Green</b> = price closed <b>UP</b>; <b>red</b> = it closed <b>DOWN</b>. The thin lines (wicks) show how far it poked.',
+    candles:[{o:30,h:40,l:28,c:38},{o:38,h:42,l:30,c:33},{o:33,h:48,l:31,c:46},{o:46,h:52,l:40,c:43},{o:43,h:58,l:41,c:56}],
+    anns:[{type:'tag',candle:2,side:'up',color:C.green,at:1.8,label:'GREEN = UP'},{type:'tag',candle:3,side:'down',color:C.red,at:2.5,label:'RED = DOWN'}]
+  },
+  doji:{
+    eyebrow:'CANDLES', eyebrowIcon:'➖', title:'The Doji',
+    caption:'A <b>doji</b> has almost no body — it opens and closes at nearly the same price. That’s a <b>tie</b> between buyers and sellers, and the trend often turns next.',
+    candles:[{o:30,h:40,l:28,c:38},{o:38,h:50,l:36,c:48},{o:48,h:60,l:46,c:58},{o:58,h:74,l:44,c:57}],
+    anns:[{type:'tag',candle:3,side:'up',color:C.gold,at:2.2,label:'DOJI · a tie'}]
+  },
+  longshort:{
+    eyebrow:'BASICS', eyebrowIcon:'↕️', title:'Long vs Short',
+    caption:'<b>Long</b> = you bet price goes <b>UP</b>. <b>Short</b> = you bet it goes <b>DOWN</b>. You can win in both directions.',
+    candles:[{o:30,h:38,l:28,c:36},{o:36,h:48,l:34,c:46},{o:46,h:58,l:44,c:56},{o:56,h:66,l:54,c:62},{o:62,h:64,l:50,c:52},{o:52,h:55,l:40,c:42},{o:42,h:46,l:30,c:32}],
+    anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.8,label:'LONG ↑ wins'},{type:'tag',candle:5,side:'down',color:C.red,at:2.8,label:'SHORT ↓ wins'}]
+  },
+  wait_close:{
+    eyebrow:'BASICS', eyebrowIcon:'⏳', title:'Wait for the Close',
+    caption:'While a candle forms it jumps around. <b>Only the close</b> tells you who really won — so wait for the candle to finish before you act.',
+    candles:[{o:40,h:48,l:38,c:46},{o:46,h:56,l:44,c:54},{o:54,h:80,l:52,c:57,sweep:true}],
+    anns:[{type:'sweepFlag',candle:2,at:3.0,color:C.gold,text:'spiked UP… but CLOSED here'}]
+  },
+  trade_win:{
+    eyebrow:'POST-TRADE', eyebrowIcon:'🏆', title:'Good Trade (Win)',
+    caption:'You bought after the pullback. Price dipped toward your <b>stop</b> but never hit it — then ran up to your <b>target</b>. Win!',
+    candles:[{o:40,h:48,l:38,c:46},{o:46,h:56,l:44,c:54},{o:54,h:56,l:46,c:50},{o:50,h:52,l:43,c:45},{o:45,h:54,l:43,c:52},{o:52,h:64,l:50,c:62},{o:62,h:72,l:60,c:70}],
+    anns:[{type:'hline',y:50,at:1.4,color:C.gold,label:'ENTRY'},{type:'hline',y:38,at:1.9,color:C.red,label:'STOP — your shield'},{type:'hline',y:70,at:2.4,color:C.green,label:'TARGET ✓'},{type:'tag',candle:3,side:'down',color:C.sub,at:3.2,label:'dipped, HELD'}]
+  },
+  trade_loss:{
+    eyebrow:'POST-TRADE', eyebrowIcon:'🛡️', title:'Stopped Out (Loss)',
+    caption:'Price went the other way and hit your <b>stop</b>. You only lost what you bet — the stop kept it small. Smart, not a mistake.',
+    candles:[{o:60,h:62,l:54,c:56},{o:56,h:60,l:50,c:52},{o:52,h:58,l:50,c:56},{o:56,h:58,l:46,c:48},{o:48,h:49,l:43,c:44}],
+    anns:[{type:'hline',y:56,at:1.4,color:C.gold,label:'ENTRY'},{type:'hline',y:44,at:1.9,color:C.red,label:'STOP — loss capped'},{type:'hline',y:72,at:2.4,color:C.sub,label:'TARGET (missed)'},{type:'tag',candle:4,side:'down',color:C.red,at:3.2,label:'stop did its job'}]
+  },
+  sl:{
+    eyebrow:'RISK', eyebrowIcon:'🛡️', title:'Stop Loss',
+    caption:'A <b>stop loss</b> is your safety net. If price goes the wrong way and touches it, you exit right away — so one bad trade stays small.',
+    candles:[{o:54,h:60,l:52,c:58},{o:58,h:60,l:48,c:50},{o:50,h:53,l:44,c:46},{o:46,h:48,l:40,c:42},{o:42,h:44,l:38,c:40}],
+    anns:[{type:'hline',y:58,at:1.5,color:C.gold,label:'ENTRY'},{type:'hline',y:40,at:2.0,color:C.red,label:'STOP LOSS'},{type:'tag',candle:4,side:'down',color:C.red,at:3.0,label:'exit — stay small'}]
+  },
+  tp:{
+    eyebrow:'RISK', eyebrowIcon:'🎯', title:'Take Profit',
+    caption:'A <b>take profit</b> is your goal price. When price reaches it, the trade closes and your win is locked in.',
+    candles:[{o:42,h:48,l:40,c:46},{o:46,h:54,l:44,c:52},{o:52,h:58,l:50,c:56},{o:56,h:66,l:54,c:64},{o:64,h:72,l:62,c:70}],
+    anns:[{type:'hline',y:46,at:1.5,color:C.gold,label:'ENTRY'},{type:'hline',y:70,at:2.0,color:C.green,label:'TAKE PROFIT ✓'},{type:'tag',candle:4,side:'up',color:C.green,at:3.0,label:'locked in'}]
+  },
+  rr:{
+    eyebrow:'RISK', eyebrowIcon:'⚖️', title:'Risk : Reward',
+    caption:'<b>Risk : reward</b> compares what you could lose to what you could win. Risk a little to make a lot — aim for at least <b>2×</b> your risk.',
+    candles:[{o:46,h:52,l:44,c:50},{o:50,h:56,l:48,c:54},{o:54,h:62,l:52,c:60},{o:60,h:70,l:58,c:68}],
+    anns:[{type:'zone',from:0,to:3,y1:42,y2:50,color:C.red,at:1.6,label:'1R RISK'},{type:'zone',from:0,to:3,y1:50,y2:66,color:C.green,at:2.2,label:'2R REWARD'},{type:'hline',y:50,at:1.3,color:C.gold,label:'ENTRY'}]
+  },
+  leverage:{
+    eyebrow:'RISK', eyebrowIcon:'⚡', title:'Leverage',
+    caption:'<b>Leverage</b> makes your wins AND losses bigger. A small price move turns into a big result — powerful, but risky.',
+    candles:[{o:44,h:50,l:42,c:48},{o:48,h:54,l:46,c:52},{o:52,h:58,l:50,c:56},{o:56,h:62,l:54,c:60}],
+    anns:[{type:'tag',candle:0,side:'down',color:C.sub,at:1.8,label:'small move'},{type:'tag',candle:3,side:'up',color:C.orange,at:2.6,label:'× LEVERAGE = BIG result'}]
+  },
+  bullflag:{
+    eyebrow:'PATTERNS', eyebrowIcon:'🚩', title:'Bull Flag',
+    caption:'A <b>bull flag</b>: a strong push up (the pole), a short rest that drifts down a little (the flag), then price <b>pops higher</b> again.',
+    candles:[{o:30,h:34,l:28,c:32},{o:32,h:52,l:30,c:50},{o:50,h:53,l:45,c:47},{o:47,h:49,l:43,c:45},{o:45,h:62,l:43,c:60},{o:60,h:70,l:58,c:68}],
+    anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.6,label:'POLE'},{type:'tag',candle:3,side:'down',color:C.sub,at:2.4,label:'flag (rest)'},{type:'tag',candle:5,side:'up',color:C.green,at:3.0,label:'GO ↑'}]
+  },
+  bearflag:{
+    eyebrow:'PATTERNS', eyebrowIcon:'🏴', title:'Bear Flag',
+    caption:'A <b>bear flag</b>: a strong push down (the pole), a short rest that drifts up a little (the flag), then price <b>drops lower</b> again.',
+    candles:[{o:70,h:72,l:66,c:68},{o:68,h:70,l:50,c:52},{o:52,h:57,l:50,c:55},{o:55,h:59,l:53,c:57},{o:57,h:59,l:40,c:42},{o:42,h:44,l:32,c:34}],
+    anns:[{type:'tag',candle:1,side:'down',color:C.red,at:1.6,label:'POLE'},{type:'tag',candle:3,side:'up',color:C.sub,at:2.4,label:'flag (rest)'},{type:'tag',candle:5,side:'down',color:C.red,at:3.0,label:'GO ↓'}]
+  },
+  confluence:{
+    eyebrow:'ADVANCED', eyebrowIcon:'🔎', title:'Confluence',
+    caption:'<b>Confluence</b> is when several clues point the same way — the trend, a level, and a setup all agree. More clues = a stronger trade.',
+    candles:[{o:34,h:40,l:32,c:38},{o:38,h:44,l:33,c:35},{o:35,h:48,l:33,c:46},{o:46,h:50,l:40,c:42},{o:42,h:56,l:40,c:54},{o:54,h:62,l:50,c:60}],
+    anns:[{type:'hline',y:33,at:1.6,color:C.green,label:'SUPPORT held'},{type:'line',c1:1,p1:34,c2:5,p2:50,color:C.gold,extend:true,at:2.2,label:'TRENDLINE'},{type:'tag',candle:5,side:'up',color:C.blue,at:3.0,label:'clues agree ✓'}]
+  }
+};
+
+/* ---- ENGINE ------------------------------------------------------------- */
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+let scene=SCENES.liquidity, t0=0, raf=0, dpr=1;
+
+function resize(){
+  dpr=Math.min(devicePixelRatio||1,2);
+  const r=cv.parentElement.getBoundingClientRect();
+  cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize',resize);
+
+function frame(){
+  const Wc=cv.width/dpr, Hc=cv.height/dpr;
+  const padX=30, padTop=24, padBot=22;
+  const x0=padX, x1=Wc-padX, yTop=padTop, yBot=Hc-padBot;
+  const cs=scene.candles, n=cs.length;
+
+  // auto-frame price range (include the sweep wick) with headroom
+  let lo=1e9, hi=-1e9;
+  cs.forEach(c=>{lo=Math.min(lo,c.l,c.o,c.c);hi=Math.max(hi,c.h,c.o,c.c);});
+  (scene.anns||[]).forEach(a=>{if(a.y!=null){lo=Math.min(lo,a.y);hi=Math.max(hi,a.y);}});
+  const pad=(hi-lo)*0.08; lo-=pad; hi+=pad;
+  // extra top headroom so a wick-tip shell + its "+5" never clip at the top edge
+  if((scene.anns||[]).some(a=>a.type==='shell')) hi+=(hi-lo)*0.20;
+  const Y=v=>yBot-(v-lo)/(hi-lo)*(yBot-yTop);
+
+  // tight, real-chart spacing: bigger candles sit side-by-side with a thin gap
+  const slot=(x1-x0)/n, bw=Math.min(48,slot*0.72);
+  const cx=i=>x0+slot*(i+0.5);
+
+  const t=(performance.now()-t0)/1000;
+  const printStep=0.26, allIn=n*printStep;
+
+  ctx.clearRect(0,0,Wc,Hc);
+
+  // grid
+  ctx.strokeStyle=C.grid; ctx.lineWidth=1;
+  for(let g=0;g<=4;g++){const gy=yTop+g/4*(yBot-yTop);ctx.beginPath();ctx.moveTo(x0-8,gy);ctx.lineTo(x1+8,gy);ctx.stroke();}
+
+  // candles (print in left→right; each grows from its open to its close)
+  for(let i=0;i<n;i++){
+    const appear=i*printStep, p=easeOut((t-appear)/printStep);
+    if(p<=0) continue;
+    const c=cs[i], up=c.c>=c.o, x=cx(i);
+    const col=up?C.green:C.red, edge=up?C.greenEdge:C.redEdge, wcol=up?C.greenWick:C.redWick;
+    // wick grows slightly after the body for the sweep candle (dramatic spike)
+    const bodyTopV=Math.max(c.o,c.c), bodyBotV=Math.min(c.o,c.c);
+    const curTop=lerp(c.o,bodyTopV,p), curBot=lerp(c.o,bodyBotV,p);
+    const wp=c.sweep?easeOut((t-appear-printStep*0.5)/(printStep*1.4)):p;   // wick spikes a beat later
+    const curHi=lerp(bodyTopV,c.h,wp), curLo=lerp(bodyBotV,c.l,p);
+    // wick
+    ctx.strokeStyle=wcol; ctx.lineWidth=c.sweep?3:1.6;
+    ctx.beginPath(); ctx.moveTo(x,Y(curHi)); ctx.lineTo(x,Y(curLo)); ctx.stroke();
+    // body
+    const bt=Y(curTop), bb=Y(curBot);
+    ctx.fillStyle=col; ctx.fillRect(x-bw/2,bt,bw,Math.max(2,bb-bt));
+    ctx.strokeStyle=edge; ctx.lineWidth=1; ctx.strokeRect(x-bw/2+.5,bt+.5,bw-1,Math.max(2,bb-bt)-1);
+    // subtle left sheen
+    ctx.fillStyle=up?'rgba(93,237,181,.5)':'rgba(255,120,130,.45)';
+    ctx.fillRect(x-bw/2+1,bt+1,Math.max(1.5,bw*.16),Math.max(1,(bb-bt)*.9));
+    c._x=x; c._hiY=Y(c.h); c._loY=Y(c.l); c._bt=bt; c._bb=bb;
+  }
+
+  // annotations
+  for(const a of (scene.anns||[])){
+    const ap=easeOut((t-a.at)/0.55); if(ap<=0) continue;
+    ctx.globalAlpha=ap;
+    if(a.type==='eqHighs'){
+      const xa=cx(a.from)-bw*0.7, xb=cx(a.to)+bw*0.7, y=Y(a.y);
+      ctx.strokeStyle=a.color; ctx.lineWidth=1.6; ctx.setLineDash([6,4]);
+      ctx.beginPath(); ctx.moveTo(xa,y); ctx.lineTo(xb,y); ctx.stroke(); ctx.setLineDash([]);
+      pill(xa+2,y-9,a.label,a.color);
+    } else if(a.type==='hline'){
+      const y=Y(a.y);
+      ctx.strokeStyle=a.color; ctx.lineWidth=1.7; ctx.setLineDash([7,4]);
+      ctx.beginPath(); ctx.moveTo(x0-8,y); ctx.lineTo(x1+8,y); ctx.stroke(); ctx.setLineDash([]);
+      pill(x0,y-9,a.label,a.color);
+    } else if(a.type==='shell'){
+      const c=cs[a.candle]; if(!c||c._hiY==null){ctx.globalAlpha=1;continue;}
+      const r=11, x=c._x, y=c._hiY-r-2;                 // pinned to the wick TIP, 2px gap
+      const glow=18+Math.sin(t*4)*9;                    // pulsing glow
+      drawShell(x,y,r,glow);
+      // LIQUIDITY label + arrow pointing at the shell
+      ctx.strokeStyle=C.shell; ctx.lineWidth=2;
+      const lx=x-92, ly=y-1;
+      arrow(lx+10,ly,x-r-3,y);
+      ctx.fillStyle=C.shell; ctx.font='800 12px -apple-system,system-ui,sans-serif'; ctx.textAlign='right';
+      ctx.fillText(a.label,lx+4,ly+4);
+      // the grab pays out — "+5" rises once the wick reaches the shell (≈ when the sweep wick tops out)
+      const gp=(t-(a.at+0.9));
+      if(gp>0){
+        const rise=easeOut(gp/0.9), fade=clamp(1-(gp-0.9)/1.2,0,1);
+        ctx.globalAlpha=ap*fade;
+        ctx.fillStyle=C.shell; ctx.font='900 14px -apple-system,system-ui,sans-serif'; ctx.textAlign='center';
+        ctx.fillText('+5 💎', x, y-14-rise*16);
+        ctx.globalAlpha=ap;
+      }
+    } else if(a.type==='hh'||a.type==='hl'){
+      const c=cs[a.candle]; if(!c||c._x==null){ctx.globalAlpha=1;continue;}
+      const isHH=a.type==='hh', y=isHH?c._hiY-12:c._loY+18;
+      ctx.fillStyle=isHH?C.green:C.gold; ctx.font='800 12px -apple-system,system-ui,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(a.label,c._x,y);
+      ctx.strokeStyle=ctx.fillStyle; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.moveTo(c._x,isHH?c._hiY-2:c._loY+2); ctx.lineTo(c._x,isHH?y+3:y-11); ctx.stroke();
+    } else if(a.type==='tag'){
+      const c=cs[a.candle]; if(!c||c._x==null){ctx.globalAlpha=1;continue;}
+      const up=a.side!=='down', y=up?c._hiY-12:c._loY+18;
+      ctx.fillStyle=a.color||C.blue; ctx.font='800 12px -apple-system,system-ui,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(a.label,c._x,y);
+      ctx.strokeStyle=ctx.fillStyle; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.moveTo(c._x,up?c._hiY-2:c._loY+2); ctx.lineTo(c._x,up?y+3:y-11); ctx.stroke();
+    } else if(a.type==='swingHigh'){
+      const y=Y(a.y);
+      ctx.strokeStyle=C.sub; ctx.lineWidth=1.4; ctx.setLineDash([6,4]);
+      ctx.beginPath(); ctx.moveTo(x0-8,y); ctx.lineTo(x1+8,y); ctx.stroke(); ctx.setLineDash([]);
+      pill(x0,y-9,a.label,C.sub);
+    } else if(a.type==='bosFlag'){
+      const c=cs[a.candle+1]||cs[a.candle];
+      const cc=cs[6]; const x=cc._x, y=cc._bt-10;
+      ctx.strokeStyle=C.green; ctx.lineWidth=1.6;
+      arrow(x-2,y-22,x,cc._bt-2);
+      pill(x-ctx.measureText(a.label).width*0.5-46,y-22,a.label,C.green,true);
+    } else if(a.type==='sweepFlag'){
+      const c=cs[a.candle]; const x=c._x;
+      // highlight the rejection: the wick grabbed liquidity / poked the level, then closed back
+      ctx.fillStyle=a.color||C.red; ctx.font='800 11px -apple-system,system-ui,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(a.text||(a.fake?'FAKEOUT → closed back below':'SWEPT → rejected'),x,c._bb+18);
+    } else if(a.type==='zone'){
+      const xa=cx(a.from)-bw*0.6, xb=cx(a.to)+bw*0.6, yt=Y(Math.max(a.y1,a.y2)), yb=Y(Math.min(a.y1,a.y2)), sa=ctx.globalAlpha;
+      ctx.globalAlpha=sa*0.16; ctx.fillStyle=a.color; ctx.fillRect(xa,yt,xb-xa,yb-yt);
+      ctx.globalAlpha=sa; ctx.strokeStyle=a.color; ctx.lineWidth=1.2; ctx.strokeRect(xa,yt,xb-xa,yb-yt);
+      if(a.label) pill(xa+2,yt-9,a.label,a.color);
+    } else if(a.type==='line'){
+      const xA=cx(a.c1), xB=a.extend?(x1+8):cx(a.c2), yA=Y(a.p1), sl=(Y(a.p2)-yA)/((cx(a.c2)-xA)||1), yB=yA+sl*(xB-xA);
+      ctx.strokeStyle=a.color; ctx.lineWidth=1.8; if(a.dash){ctx.setLineDash([6,4]);}
+      ctx.beginPath(); ctx.moveTo(xA,yA); ctx.lineTo(xB,yB); ctx.stroke(); ctx.setLineDash([]);
+      if(a.label) pill(xA,yA-9,a.label,a.color);
+    }
+    ctx.globalAlpha=1;
+  }
+
+  // loop the scene with a hold at the end
+  if(t>allIn+5.5) t0=performance.now();
+  raf=requestAnimationFrame(frame);
+}
+
+function pill(x,y,text,color,center){
+  ctx.font='800 10px -apple-system,system-ui,sans-serif';
+  const w=ctx.measureText(text).width+12;
+  if(center) x-=w/2;
+  ctx.fillStyle='rgba(6,10,18,.82)'; ctx.fillRect(x,y-9,w,15);
+  ctx.fillStyle=color; ctx.textAlign='left'; ctx.fillText(text,x+6,y+1.5);
+}
+function arrow(x1,y1,x2,y2){
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const a=Math.atan2(y2-y1,x2-x1), s=6;
+  ctx.beginPath(); ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-s*Math.cos(a-0.5),y2-s*Math.sin(a-0.5));
+  ctx.lineTo(x2-s*Math.cos(a+0.5),y2-s*Math.sin(a+0.5));
+  ctx.closePath(); ctx.fillStyle=ctx.strokeStyle; ctx.fill();
+}
+/* the game's "shell" = a cyan gem; here it sits on the wick tip = resting liquidity */
+function drawShell(x,y,r,glow){
+  ctx.save();
+  // soft outer halo so the liquidity reward really glows
+  const halo=ctx.createRadialGradient(x,y,0,x,y,r*2.4);
+  halo.addColorStop(0,'rgba(54,217,224,.45)'); halo.addColorStop(1,'rgba(54,217,224,0)');
+  ctx.fillStyle=halo; ctx.beginPath(); ctx.arc(x,y,r*2.4,0,7); ctx.fill();
+  ctx.shadowColor=C.shell; ctx.shadowBlur=glow||14;
+  const g=ctx.createLinearGradient(x,y-r,x,y+r);
+  g.addColorStop(0,'#bff6fb'); g.addColorStop(.5,C.shell); g.addColorStop(1,'#1aa6ad');
+  ctx.fillStyle=g;
+  ctx.beginPath();
+  ctx.moveTo(x,y-r); ctx.lineTo(x+r*0.9,y-r*0.15); ctx.lineTo(x,y+r); ctx.lineTo(x-r*0.9,y-r*0.15);
+  ctx.closePath(); ctx.fill();
+  ctx.shadowBlur=0; ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(x-r*0.4,y-r*0.2); ctx.lineTo(x,y-r*0.7); ctx.lineTo(x+r*0.4,y-r*0.2); ctx.stroke();
+  ctx.restore();
+}
+
+function load(key){
+  scene=SCENES[key];
+  document.getElementById('eyebrow').textContent=scene.eyebrow;
+  document.getElementById('eyebrowIcon').textContent=scene.eyebrowIcon;
+  document.getElementById('title').textContent=scene.title;
+  document.getElementById('caption').innerHTML=scene.caption;
+  resize(); t0=performance.now();
+}
+// populate the dropdown from the scene library, grouped by eyebrow for easy scanning
+const sel=document.getElementById('sceneSel');
+Object.keys(SCENES).forEach(k=>{
+  const s=SCENES[k], o=document.createElement('option');
+  o.value=k; o.textContent=(s.eyebrow?s.eyebrow+' · ':'')+s.title;
+  sel.appendChild(o);
+});
+sel.onchange=()=>load(sel.value);
+document.getElementById('replay').onclick=()=>{t0=performance.now();};
+
+resize(); sel.value='liquidity'; load('liquidity'); raf=requestAnimationFrame(frame);
+</script>
+</body>
+</html>

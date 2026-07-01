@@ -459,8 +459,8 @@
   @media (prefers-reduced-motion: reduce) { #bfRealmArt { animation: none; } }
   .bossStage.realmStage { justify-content: flex-end !important; padding-bottom: 0; }
   .bossRealmLabel { position: absolute; top: 32px; left: 0; right: 0; text-align: center; font: 700 11px var(--font-ui); letter-spacing: 4px; opacity: .92; text-shadow: 0 2px 12px #000; z-index: 3; }
-  .bossIntroLower { position: relative; z-index: 3; width: 100%; padding: 20px 14px 24px; background: linear-gradient(180deg, transparent, rgba(4,4,9,0.5) 36%, rgba(4,4,9,0.85)); display: flex; flex-direction: column; align-items: center; }
-  #bfResult.realmResult { position: relative; z-index: 3; margin: auto; max-width: 340px; padding: 22px 18px; border-radius: 16px; background: radial-gradient(ellipse at 50% 38%, rgba(6,7,14,0.6), rgba(6,7,14,0.88)); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); box-shadow: 0 18px 50px rgba(0,0,0,0.5); }
+  .bossIntroLower { position: relative; z-index: 3; width: 100%; padding: 22px 14px 26px; background: linear-gradient(180deg, transparent, rgba(3,4,10,0.66) 28%, rgba(2,3,8,0.94)); display: flex; flex-direction: column; align-items: center; }
+  #bfResult.realmResult { position: relative; z-index: 3; margin: auto; max-width: 340px; padding: 24px 18px; border-radius: 18px; background: radial-gradient(ellipse at 50% 34%, rgba(4,5,11,0.74), rgba(2,3,8,0.95)); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); box-shadow: 0 20px 64px rgba(0,0,0,0.66), inset 0 0 0 1px rgba(255,255,255,0.05); }
   #bfFlash { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0; }
   #bfFlash.on { animation: bfFlash 0.4s ease-out; }
   @keyframes bfFlash { 0% { opacity: 0.8; } 100% { opacity: 0; } }
@@ -521,13 +521,13 @@
   @keyframes bossRise { from { opacity: 0; transform: translateY(46px) scale(0.7); filter: blur(6px); } to { opacity: 1; transform: none; } }
   @keyframes bossFloat { 50% { transform: translateY(-7px); } }
   .bossPortrait { margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid #ff5d6c; background: radial-gradient(circle at 50% 38%, rgba(255,255,255,0.10), rgba(0,0,0,0.35)); animation: bossFloat 3.4s ease-in-out infinite; }
-  .bossName { position: relative; z-index: 3; font: 900 28px var(--font-ui); letter-spacing: 1px; margin-top: 6px; text-shadow: 0 0 22px currentColor, 0 2px 4px rgba(0,0,0,0.6); animation: bossNameIn 0.55s 0.35s ease-out both; }
+  .bossName { position: relative; z-index: 3; font: 900 34px var(--font-ui); letter-spacing: 2.5px; margin-top: 8px; text-shadow: 0 0 30px currentColor, 0 0 12px currentColor, 0 3px 9px rgba(0,0,0,0.88); animation: bossNameIn 0.55s 0.35s ease-out both; }
   @keyframes bossNameIn { from { opacity: 0; transform: translateY(10px) scale(0.96); } to { opacity: 1; transform: none; } }
   .bossEpithet { position: relative; z-index: 3; font: 800 10.5px var(--font-ui); letter-spacing: 3.6px; text-transform: uppercase; color: #c8d6e6; margin-top: 6px; animation: bossNameIn 0.6s 0.5s ease-out both; }
   .bossUnderline { z-index: 3; height: 2px; width: 64px; margin: 9px auto 0; border-radius: 2px; animation: bossUnderIn 0.5s 0.6s ease-out both; }
   @keyframes bossUnderIn { from { transform: scaleX(0); opacity: 0; } to { transform: scaleX(1); opacity: 1; } }
   .bossTitle { font: 600 10px var(--font-ui); letter-spacing: 2px; text-transform: uppercase; color: #8aa0b8; margin-top: 3px; }
-  .bossDialogue { position: relative; z-index: 3; font: italic 14.5px var(--font-ui); color: #eef4fb; line-height: 1.6; margin: 14px auto 6px; max-width: 322px; text-shadow: 0 1px 4px rgba(0,0,0,0.75); animation: bossNameIn 0.6s 0.75s ease-out both; }
+  .bossDialogue { position: relative; z-index: 3; font: italic 15px var(--font-ui); color: #f2f7fd; line-height: 1.62; margin: 14px auto 6px; max-width: 322px; text-shadow: 0 2px 9px rgba(0,0,0,0.9); animation: bossNameIn 0.6s 0.75s ease-out both; }
   .bossRoundHint { position: relative; z-index: 3; display: inline-block; font: 800 9.5px var(--font-ui); letter-spacing: 1.8px; color: #b9c6d6; margin: 16px 0 11px; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; background: rgba(255,255,255,0.04); animation: bossNameIn 0.5s 0.9s ease-out both; }
   /* The ENTER button fades in AFTER the boss's name + voice line have had time to read
      (delayed to ~1.9s) so players take in the story before the button invites a tap. */
@@ -574,9 +574,9 @@
   #bossFight.videobg .bossHeroStage, #bossFight.videobg .bossSpot, #bossFight.videobg .bossMotes,
   #bossFight.videobg .bossVignette, #bossFight.videobg .bossLetterbox { display: none !important; }
   #bossFight.videobg #bfBody, #bossFight.videobg.fighting #bfBody { background: transparent !important; border-top-color: transparent !important; }
-  #bossFight.videobg .bossIntroLower { background: linear-gradient(180deg, transparent, rgba(3,3,8,0.62) 42%, rgba(3,3,8,0.9)); }
+  #bossFight.videobg .bossIntroLower { background: linear-gradient(180deg, transparent, rgba(3,4,10,0.7) 34%, rgba(2,3,8,0.95)); }
   /* Victory over the video: lighten the result card so the world shows behind it. */
-  #bossFight.videobg #bfResult.realmResult { background: linear-gradient(180deg, rgba(6,7,14,0.32), rgba(6,7,14,0.7)); }
+  #bossFight.videobg #bfResult.realmResult { background: linear-gradient(180deg, rgba(4,5,11,0.5), rgba(2,3,8,0.88)); }
   /* ── Boss victory / reward screen ── portrait, GUARDIAN DEFEATED, progress, burst */
   .vicResult { position: relative; }
   .vicPortrait { position: relative; width: 96px; height: 96px; margin: 2px auto 8px; border-radius: 50%; border: 2px solid var(--vacc,#16c784); background: radial-gradient(circle at 50% 36%, rgba(255,255,255,0.12), rgba(0,0,0,0.4)); box-shadow: 0 0 26px var(--vacc,#16c784), inset 0 0 18px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; overflow: hidden; animation: vicPop .5s cubic-bezier(.2,.8,.2,1) both; }
@@ -584,7 +584,7 @@
   .vicPortrait .vicImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .4s ease; }
   .vicPortrait .vicImg.on { opacity: 1; }
   @keyframes vicPop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
-  .vicBadge { font: 900 13px var(--font-ui); letter-spacing: 3px; color: var(--vacc,#16c784); text-shadow: 0 0 16px var(--vacc,#16c784); margin-top: 2px; animation: vicBadgeIn .5s .12s both; }
+  .vicBadge { font: 900 14px var(--font-ui); letter-spacing: 4.5px; color: var(--vacc,#16c784); text-shadow: 0 0 24px var(--vacc,#16c784), 0 0 9px var(--vacc,#16c784); margin-top: 4px; animation: vicBadgeIn .5s .12s both; }
   @keyframes vicBadgeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
   .vicProgress { margin: 12px auto 8px; max-width: 300px; }
   .vicPips { display: flex; gap: 4px; justify-content: center; margin-bottom: 6px; flex-wrap: wrap; }
@@ -687,8 +687,8 @@
   .bfSkip  { background: transparent; border: 1px solid #2a3442; color: #7d8aa0; }
   #bfResult { text-align: center; padding: 24px 10px; }
   #bfResult .big { font-size: 46px; }
-  #bfResult .ttl { font-size: 20px; font-weight: bold; margin: 8px 0; }
-  #bfResult .earn { color: #ffd60a; font-weight: bold; font-family: var(--font-mono); margin: 8px 0; }
+  #bfResult .ttl { font: 900 25px var(--font-ui); letter-spacing: .5px; margin: 9px 0 4px; text-shadow: 0 0 26px currentColor, 0 2px 8px rgba(0,0,0,0.85); }
+  #bfResult .earn { color: #ffd60a; font-weight: bold; font-size: 17px; font-family: var(--font-mono); margin: 9px 0; text-shadow: 0 0 13px rgba(255,214,10,0.42); }
   #bfResult .sub { color: #7d8aa0; font-size: 13px; }
 
   /* --- Lesson cards: contextual teaching, stay until dismissed --- */
@@ -987,7 +987,9 @@
   .kEmpty { text-align: center; color: #7d8aa0; font-size: 12px; line-height: 1.7; padding: 26px 14px; font-family: 'Inter',var(--font-ui); }
   .kGrid { display: flex; flex-direction: column; gap: 9px; }
   .kCard { border-radius: 11px; padding: 11px 13px; border: 1px solid #1c2737; background: #0d1320; }
-  .kCard.known { border-color: #3a2d63; background: linear-gradient(180deg,#15102a,#0d1320); }
+  .kCard.known { border-color: #3a2d63; background: linear-gradient(180deg,#15102a,#0d1320); cursor: pointer; transition: border-color .15s, transform .1s; }
+  .kCard.known:hover { border-color: #6f53c9; }
+  .kCard.known:active { transform: scale(0.98); }
   .kCard.locked { border-style: dashed; border-color: #232f40; background: #0b0f17; opacity: .85; }
   .kCardTop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
   .kTerm { font: 700 14px 'Inter',var(--font-ui); color: #efe9ff; }
@@ -1100,7 +1102,7 @@
   }#mgRoot *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}#mgRoot, #mgRoot{margin:0;height:100%;background:#04060b;font-family:var(--font);color:var(--ink);}#mgRoot{display:flex;align-items:center;justify-content:center;overflow:hidden;}#mgRoot #stage{position:relative;width:420px;height:880px;max-height:100vh;max-height:100dvh;
     background:radial-gradient(120% 60% at 50% 0%,#101a2e 0%,var(--bg) 55%);
     overflow:hidden;box-shadow:0 0 0 1px #11161f,0 30px 90px rgba(0,0,0,.6);display:flex;flex-direction:column;}#mgRoot .lib{flex:1;display:flex;flex-direction:column;overflow:hidden;}#mgRoot .lib-h{padding:18px 18px 10px;}#mgRoot .lib-h .t{font-size:21px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:8px;}#mgRoot .lib-h .t .pill{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--purp);background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);padding:3px 8px;border-radius:999px;}#mgRoot .lib-h .s{font-size:11.5px;color:var(--sub);margin-top:3px;}#mgRoot .stats{display:flex;gap:9px;margin-top:13px;}#mgRoot .stat{flex:1;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:11px;padding:9px;text-align:center;}#mgRoot .stat .v{font-size:16px;font-weight:800;}#mgRoot .stat .v.g{color:var(--green);}#mgRoot .stat .v.y{color:var(--gold);}#mgRoot .stat .k{font-size:8.5px;letter-spacing:.8px;color:var(--mut);text-transform:uppercase;margin-top:3px;}#mgRoot .search{margin:13px 0 9px;position:relative;}#mgRoot .search input{width:100%;padding:11px 12px 11px 34px;border-radius:11px;background:var(--panel);border:1px solid var(--line);color:var(--ink);font:13px var(--font);outline:none;}#mgRoot .search input:focus{border-color:#2f4a66;}#mgRoot .search .ic{position:absolute;left:12px;top:11px;color:var(--mut);font-size:13px;}#mgRoot .cats{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;}#mgRoot .cats::-webkit-scrollbar{height:0;}#mgRoot .cat{white-space:nowrap;font-size:11px;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--sub);cursor:pointer;}#mgRoot .cat.on{border-color:var(--blue);color:var(--blue);background:rgba(76,195,255,.1);}#mgRoot .grid{flex:1;overflow-y:auto;padding:13px 16px 24px;display:grid;grid-template-columns:1fr 1fr;gap:11px;align-content:start;}#mgRoot .grid::-webkit-scrollbar{width:0;}#mgRoot .game{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .22s,border-color .22s;}#mgRoot .game:hover{transform:translateY(-3px);border-color:var(--acc);box-shadow:0 12px 32px -12px var(--acc);}#mgRoot .game .tile{width:100%;height:132px;display:block;}#mgRoot .game .foot{display:flex;align-items:center;justify-content:space-between;padding:8px 11px 9px;border-top:1px solid var(--line);background:#0a0f18;}#mgRoot .game .pips{display:flex;gap:3px;}#mgRoot .game .pip{width:13px;height:4px;border-radius:2px;background:#22324a;}#mgRoot .game .pip.on{background:var(--acc);box-shadow:0 0 5px -1px var(--acc);}#mgRoot .game .play{font-size:9px;font-weight:800;letter-spacing:.7px;color:var(--acc);}#mgRoot .game .done{position:absolute;top:8px;right:8px;z-index:3;width:20px;height:20px;border-radius:50%;background:var(--green);color:#04130c;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #0a0f18;}#mgRoot #play{position:absolute;inset:0;z-index:60;background:var(--bg);transform:translateX(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;}#mgRoot #play.on{transform:translateX(0);}#mgRoot .ph{padding:14px 16px 10px;border-bottom:1px solid var(--line);}#mgRoot .ph .top{display:flex;align-items:center;justify-content:space-between;}#mgRoot .ph .bk{background:none;border:none;color:var(--sub);font:600 13px var(--font);cursor:pointer;padding:0;}#mgRoot .ph .cat2{font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--purp);}#mgRoot .ph h2{margin:9px 0 3px;font-size:18px;font-weight:800;}#mgRoot .ph .obj{font-size:12px;color:var(--sub);line-height:1.5;}#mgRoot .diffs{display:flex;gap:6px;margin-top:11px;}#mgRoot .diff{flex:1;font-size:10px;font-weight:700;padding:7px 0;text-align:center;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--sub);cursor:pointer;}#mgRoot .diff.on{border-color:var(--gold);color:var(--gold);background:rgba(255,214,10,.1);}#mgRoot #gameArea{flex:1;position:relative;margin:12px;border:1px solid var(--line);border-radius:14px;background:#070b12;overflow:hidden;}#mgRoot #gcanvas{display:block;width:100%;height:100%;touch-action:none;}#mgRoot .prompt{position:absolute;top:10px;left:12px;right:12px;font-size:12px;font-weight:600;color:#d4dde8;text-align:center;
-    background:rgba(8,12,20,.7);padding:7px 10px;border-radius:9px;border:1px solid var(--line);backdrop-filter:blur(2px);}#mgRoot .hint{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:10.5px;color:var(--mut);}#mgRoot .timer{position:absolute;top:46px;right:14px;font:700 12px var(--mono);color:var(--gold);}#mgRoot .choices{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom, 0px));left:14px;right:14px;display:flex;flex-wrap:wrap;gap:9px;z-index:4;}#mgRoot .choices button{flex:1 1 44%;padding:13px 0;border-radius:11px;font:800 12.5px var(--font);border:1px solid;cursor:pointer;}#mgRoot .ch-up{background:rgba(22,199,132,.12);border-color:var(--green);color:var(--green);}#mgRoot .ch-dn{background:rgba(234,57,67,.12);border-color:var(--red);color:var(--red);}#mgRoot .ch-n{background:rgba(76,195,255,.1);border-color:var(--blue);color:var(--blue);}#mgRoot .ch-opt{background:#111a28;border-color:#2a3a4e;color:#c7d1de;}#mgRoot .sliders{position:absolute;bottom:calc(12px + env(safe-area-inset-bottom, 0px));left:14px;right:14px;background:rgba(8,12,20,.9);border:1px solid var(--line);border-radius:12px;padding:11px 13px;}#mgRoot .sliders .rdg{display:flex;justify-content:space-between;font:700 12px var(--mono);margin-bottom:9px;}#mgRoot .sliders label{display:block;font-size:10px;color:var(--sub);margin:7px 0 3px;}#mgRoot .sliders input[type=range]{width:100%;accent-color:var(--blue);}#mgRoot .pf{padding:0 16px 16px;}#mgRoot .submit{width:100%;padding:15px 0;border-radius:12px;font:800 14px var(--font);letter-spacing:.4px;cursor:pointer;border:1px solid var(--blue);background:rgba(76,195,255,.12);color:var(--blue);}#mgRoot .submit:disabled{opacity:.45;cursor:not-allowed;}#mgRoot #result{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(8,12,20,.7);padding:7px 10px;border-radius:9px;border:1px solid var(--line);backdrop-filter:blur(2px);}#mgRoot .hint{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:10.5px;color:var(--mut);}#mgRoot .timer{position:absolute;top:46px;right:14px;font:700 12px var(--mono);color:var(--gold);}#mgRoot .choices{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom, 0px));left:14px;right:14px;display:flex;flex-wrap:wrap;gap:9px;z-index:4;}#mgRoot .choices button{flex:1 1 44%;padding:12px 4px;border-radius:11px;font:800 13px var(--font);line-height:1.4;border:1px solid;cursor:pointer;}#mgRoot .ch-up{background:rgba(22,199,132,.12);border-color:var(--green);color:var(--green);}#mgRoot .ch-dn{background:rgba(234,57,67,.12);border-color:var(--red);color:var(--red);}#mgRoot .ch-n{background:rgba(76,195,255,.1);border-color:var(--blue);color:var(--blue);}#mgRoot .ch-opt{background:#111a28;border-color:#2a3a4e;color:#c7d1de;}#mgRoot .sliders{position:absolute;bottom:calc(12px + env(safe-area-inset-bottom, 0px));left:14px;right:14px;background:rgba(8,12,20,.9);border:1px solid var(--line);border-radius:12px;padding:11px 13px;}#mgRoot .sliders .rdg{display:flex;justify-content:space-between;font:700 12px var(--mono);margin-bottom:9px;}#mgRoot .sliders label{display:block;font-size:10px;color:var(--sub);margin:7px 0 3px;}#mgRoot .sliders input[type=range]{width:100%;accent-color:var(--blue);}#mgRoot .pf{padding:0 16px 16px;}#mgRoot .submit{width:100%;padding:15px 0;border-radius:12px;font:800 14px var(--font);letter-spacing:.4px;cursor:pointer;border:1px solid var(--blue);background:rgba(76,195,255,.12);color:var(--blue);}#mgRoot .submit:disabled{opacity:.45;cursor:not-allowed;}#mgRoot #result{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;
     background:rgba(4,6,11,.86);backdrop-filter:blur(4px);padding:28px;text-align:center;}#mgRoot #result.on{display:flex;}#mgRoot #result .ring{width:120px;height:120px;margin-bottom:18px;}#mgRoot #result .verdict{font-size:20px;font-weight:800;margin-bottom:6px;}#mgRoot #result .why{font-size:13px;color:var(--sub);line-height:1.55;max-width:300px;margin-bottom:22px;}#mgRoot #result .acts{display:flex;gap:11px;}#mgRoot #result .acts button{padding:13px 22px;border-radius:11px;font:800 13px var(--font);cursor:pointer;border:1px solid;}#mgRoot #result .again{background:rgba(76,195,255,.12);border-color:var(--blue);color:var(--blue);}#mgRoot #result .next{background:linear-gradient(180deg,#19d08a,#0e9b64);border-color:var(--green);color:#04130c;}
 
 #mgRoot{position:fixed;inset:0;z-index:400;}
@@ -1173,6 +1175,10 @@
     <form id="authForm" onsubmit="return false;">
       <input id="authEmail" type="email" placeholder="Email" autocomplete="email">
       <input id="authPass"  type="password" placeholder="Password" autocomplete="current-password">
+      <label id="authConsent" style="display:none;font-size:11px;color:#9fb0c8;text-align:left;line-height:1.45;margin:2px 2px 6px;cursor:pointer;">
+        <input id="authConsentBox" type="checkbox" style="vertical-align:middle;margin-right:6px;">
+        I agree to the <a href="privacy.html" target="_blank" rel="noopener" style="color:#4cc3ff;">Privacy Policy</a> and <a href="terms.html" target="_blank" rel="noopener" style="color:#4cc3ff;">Terms</a>. This says what we keep safe.
+      </label>
       <div id="authError"></div>
       <div id="authSpinner">Connecting…</div>
       <button id="authSubmitBtn" type="button">SIGN IN</button>
@@ -1318,6 +1324,7 @@
   </div>
   <div id="jTabs">
     <button class="jTab active" data-tab="knowledge"><span class="jTabIco">&#128214;</span><span class="jTabLbl">KNOWLEDGE</span></button>
+    <button class="jTab" data-tab="wisdom"><span class="jTabIco">&#128173;</span><span class="jTabLbl">WISDOM</span></button>
     <button class="jTab" data-tab="history"><span class="jTabIco">&#128202;</span><span class="jTabLbl">TRADES</span></button>
     <button class="jTab" data-tab="guardians"><span class="jTabIco">&#9876;</span><span class="jTabLbl">GUARDIANS</span></button>
     <button class="jTab" data-tab="profile"><span class="jTabIco">&#129489;</span><span class="jTabLbl">YOU</span></button>
@@ -1723,18 +1730,21 @@
     const siTab    = document.getElementById('authTabSignin');
     const suTab    = document.getElementById('authTabSignup');
     const passInput = document.getElementById('authPass');
+    const consent   = document.getElementById('authConsent');
     if (mode === 'signin') {
       if (title) title.textContent = 'Welcome back';
       if (btn)   btn.textContent   = 'SIGN IN';
       if (siTab) siTab.classList.add('active');
       if (suTab) suTab.classList.remove('active');
       if (passInput) passInput.setAttribute('autocomplete', 'current-password');
+      if (consent) consent.style.display = 'none';
     } else {
       if (title) title.textContent = 'Create your account';
       if (btn)   btn.textContent   = 'CREATE ACCOUNT';
       if (siTab) siTab.classList.remove('active');
       if (suTab) suTab.classList.add('active');
       if (passInput) passInput.setAttribute('autocomplete', 'new-password');
+      if (consent) consent.style.display = 'block';
     }
   }
 
@@ -1743,6 +1753,9 @@
     const pass  =  document.getElementById('authPass')?.value  || '';
     if (!email || !pass) { authSetError('Enter your email and password.'); return; }
     if (pass.length < 6) { authSetError('Password must be at least 6 characters.'); return; }
+    if (authMode === 'signup' && !(document.getElementById('authConsentBox')?.checked)) {
+      authSetError('Please tick the box to agree to the Privacy Policy and Terms.'); return;
+    }
     authSetLoading(true);
     authSetError('');
     let res;
@@ -2313,7 +2326,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 186';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 202';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -2694,7 +2707,23 @@ function scriptedCandle(lvl) {
   if (market._si == null) market._si = -1;
   market._si = (market._si + 1) % seq.length;
   const prev = market.level;
-  const target = Math.max(CFG.levelMin + 6, Math.min(CFG.levelMax - 6, seq[market._si]));
+  // SPRINT 1.5 R3 — ANTI-STAIRCASE (game-wide realism rule). The authored L2/L3 scripts contain
+  // clean monotonic runs that read as a uniform staircase. Jitter each target AND break any run of
+  // 3+ same-direction candles with a counter pullback, so the filler never looks mechanical.
+  // SHOTS 18/19 — LIVELIER terrain (up/down/up/down like a real low-timeframe chart, never flat or
+  // a long staircase): bigger candle-to-candle variation, a hard run cap of 3, and frequent counter
+  // pullbacks so the line keeps swinging.
+  let tgt = seq[market._si] + rand(-30, 30);
+  const rdir = tgt >= prev ? 1 : -1;
+  if (market._scRunDir === rdir) market._scRunLen = (market._scRunLen || 1) + 1;
+  else { market._scRunDir = rdir; market._scRunLen = 1; }
+  if (market._scRunLen >= 2 && (market._scRunLen >= 3 || Math.random() < 0.42)) {
+    tgt = prev - rdir * rand(30, 66);                   // counter pullback breaks the run (hard cap: 3 in a row)
+    market._scRunDir = -rdir; market._scRunLen = 1;
+  } else if (Math.abs(tgt - prev) < 26) {
+    tgt = prev + rdir * rand(26, 54);                   // never a flat filler candle — always a clear move
+  }
+  const target = Math.max(CFG.levelMin + 6, Math.min(CFG.levelMax - 6, tgt));
   const delta = target - prev;
   market.level = target;
   market.trendDir = delta >= 0 ? 1 : -1;
@@ -2718,9 +2747,11 @@ function pickSetupDir() {
 function setupFlowCandle() {
   const s = setupSeq, dir = s.dir, prev = market.level;
   let delta, role;
-  if (s.step === 0)      { delta = dir *  rand(180, 230); role = 'momentum'; }   // the impulse — clearly the biggest body
-  else if (s.step <= 2)  { delta = -dir * rand(38, 64);   role = 'pullback'; }   // shallow counter-move (2 candles)
-  else                   { delta = dir *  rand(120, 165); role = 'confirm';  }   // decisive close in the original direction
+  if (s.step === 0)      { delta = dir *  rand(170, 240); role = 'momentum'; }   // the impulse — clearly the biggest body
+  // Two pullback candles of DIFFERENT depths (pb1 deeper, pb2 tighter) so the counter-move never
+  // reads as two uniform blocks — a natural tightening pullback into the confirmation.
+  else if (s.step <= 2)  { delta = -dir * (s.step === 1 ? rand(48, 80) : rand(26, 52)); role = 'pullback'; }
+  else                   { delta = dir *  rand(115, 170); role = 'confirm';  }   // decisive close in the original direction
   let nl = prev + delta;
   // Keep a pullback from ever erasing the momentum candle's origin (so the setup stays "valid").
   if (role === 'pullback') {
@@ -2786,8 +2817,27 @@ function tradeDrivenCandle() {
     }
     if (trade._drivePhase === 'run') target = trade.tpH;
   }
-  let nl = prev + (target - prev) * DRIVE_EASE;
-  if (Math.abs(target - prev) < 8) nl = target;          // snap on the candle that TAGS the line
+  // SPRINT 1.5 — break the uniform "staircase". Vary the step size, and let the odd candle tick
+  // slightly AGAINST the move (a realistic micro-pullback). The counter-move is ALWAYS the safe
+  // direction (opposite the current target), so it can never push deeper toward the stop, and the
+  // emotional arc + duration (governed by the phase caps) are preserved.
+  const span = target - prev;
+  const dirToT = span >= 0 ? 1 : -1;
+  let nl;
+  if (Math.abs(span) > 16 && Math.random() < 0.24) {
+    // small counter candle (a fraction of R, NOT of the span-to-target — a big span must never
+    // produce a counter big enough to cross the stop) → prints the opposite colour, breaks the staircase.
+    nl = prev - dirToT * R * rand(0.05, 0.13);
+  } else {
+    // varied step toward target → no two bodies match. The slightly larger ease range offsets the
+    // counter candles so the overall drive keeps its ~30-60s pacing (duration system unchanged).
+    nl = prev + span * (DRIVE_EASE * rand(1.0, 1.8));
+  }
+  if (Math.abs(span) < 8) nl = target;                   // snap on the candle that TAGS the line
+  // HARD SAFETY — a pre-decided WIN never breaches the stop (keep ≥0.10R of buffer); a LOSS reaches
+  // the stop on the driven body but a counter/varied step never overshoots PAST it.
+  if (trade._l1Outcome === 'win') nl = long ? Math.max(nl, trade.slH + R * 0.10) : Math.min(nl, trade.slH - R * 0.10);
+  else                            nl = long ? Math.max(nl, trade.slH)            : Math.min(nl, trade.slH);
   nl = Math.max(CFG.levelMin + 6, Math.min(CFG.levelMax - 6, nl));
   const delta = nl - prev;
   market.level = nl;
@@ -2936,6 +2986,50 @@ function nextCandle() {
            price: market.price };
 }
 
+/* SPRINT 1.5 R3 — GAME-WIDE CANDLE WICK MODEL (applies to EVERY generated candle, all levels).
+   The same rule everywhere, so the chart never regresses between levels:
+     • ~50% of candles are CLEAN (no wick) — a calm chart, not a forest of wicks.
+     • the other ~50% get a short, varied wick.
+     • EVERY 10th candle prints ONE long SPIN-POLE wick (≥ spinMinWick) with a SHELL on its tip — a
+       fun pole to twirl on AND a wordless early seed for the liquidity-grab lesson ("price spikes
+       up to grab the shell, then reverses, so a shell always sits at the top of a long wick").
+       maintainCandles reads c._spinShell to drop the shell at the wick tip.
+   Structure candles are left to their own meaning: a BOS impulse stays clean, a real sweep keeps
+   its dramatic pole. SAFE: only writes c.wick / c.wick2 (cosmetic, beyond the body); during ANY
+   live trade the wicks are clamped so a decorative wick can never artificially tag the stop/target. */
+function decorateCandleWicks(c, prevClose) {
+  if (c.bos || c.sweep) return;                  // event candles keep their own (clean / sweep) wicks
+  c.wick = 0; c.wick2 = 0; c._spinShell = false;
+  const live = (typeof trade !== 'undefined' && trade);
+  const ref  = Math.max(20, Math.abs(c.h - prevClose));
+  if (market._wickN == null) market._wickN = 0;
+  market._wickN++;
+  // Every 10th candle (outside a live trade) → a long spin pole + shell.
+  if (!live && market._wickN % 10 === 0) {
+    c.wick = Math.round(CFG.spinMinWick * rand(1.2, 1.8));
+    c._spinShell = true;
+    return;
+  }
+  if (Math.random() < 0.5) return;               // ~50% of candles are clean (no wick)
+  const s = Math.random();
+  if (s < 0.45)      c.wick  = Math.round(ref * rand(0.06, 0.22));
+  else if (s < 0.90) c.wick2 = Math.round(ref * rand(0.06, 0.22));
+  else { c.wick = Math.round(ref * rand(0.05, 0.16)); c.wick2 = Math.round(ref * rand(0.05, 0.16)); }
+  // SAFETY — during any live trade a cosmetic wick must never reach through the stop OR the target
+  // (the intrabar hit checks count the wick). Clamp both sides to a margin past each line.
+  if (live) {
+    const long = trade.dir !== 'short';
+    const bodyHi = Math.max(prevClose, c.h), bodyLo = Math.min(prevClose, c.h);
+    if (long) {
+      if (trade.slH != null) c.wick2 = Math.max(0, Math.min(c.wick2, Math.round(bodyLo - (trade.slH + 6))));
+      if (trade.tpH != null) c.wick  = Math.max(0, Math.min(c.wick,  Math.round((trade.tpH - 6) - bodyHi)));
+    } else {
+      if (trade.slH != null) c.wick  = Math.max(0, Math.min(c.wick,  Math.round((trade.slH - 6) - bodyHi)));
+      if (trade.tpH != null) c.wick2 = Math.max(0, Math.min(c.wick2, Math.round(bodyLo - (trade.tpH + 6))));
+    }
+  }
+}
+
 function initCandles() {
   candles = [];
   // The three opening candles: two green, one red, different heights.
@@ -2977,6 +3071,9 @@ function maintainCandles(cameraX) {
     const gap = rand(CFG.gapMin, CFG.gapMax);
     const w   = candleW();
     const c   = nextCandle();
+    // SPRINT 1.5 R3 — GAME-WIDE wick model (50% clean · short varied wicks · a spin pole + shell
+    // every 10 candles). Visual only; never alters the close/level/colour. Applies to ALL levels.
+    decorateCandleWicks(c, last.h);
     // The order block = the last OPPOSING candle before the impulse
     // (e.g. the final red candle before a bullish break) — bounce pad
     if (c.bos && candles.length) {
@@ -2992,6 +3089,12 @@ function maintainCandles(cameraX) {
     }
     pushCandle(last.x + last.w + gap, w, c.h, c.color, c.wick, c);
     last = candles[candles.length - 1];
+    // SPRINT 1.5 R3 — the every-10 SPIN POLE carries a shell on its tip: fun to twirl up and grab,
+    // and a wordless seed for the liquidity-grab lesson (why a shell always sits atop a long wick).
+    if (c._spinShell && last.wick >= CFG.spinMinWick) {
+      coins.push({ x: last.x + last.w / 2, y: candleTop(last) - last.wick - 10, r: 6, collected: false, bobT: Math.random() * Math.PI * 2 });
+      market._shGap = Math.max(market._shGap || 0, 2);   // don't also drop a body-top shell on this same candle
+    }
     // PHASE 2 — recognise the beginner setup as its candles print AHEAD of Finn, so he sees
     // momentum → pullback → confirmation develop in front of him and has the full run-up to act.
     if (typeof session !== 'undefined' && session.level <= 3 && last.flow) advanceSetupFlow(last);
@@ -3152,14 +3255,15 @@ function spawnPortal(label, sublabel, action, kind) {
 }
 // The BOSS gate — a dramatic orange/black portal, 3× the size of a normal portal. Flying into
 // it summons the Gambler. Drawn with an extra rotating ring + more sparks (see the portal draw).
-function spawnBossPortal() {
+function spawnBossPortal(opts) {
   if (portals.some(p => p.kind === 'boss')) return;   // only ever one
+  opts = opts || {};
   const r = 96;                                        // 3× the normal 32px portal
   const px = turtle.x + W * 0.62;
   portals.push({
     x: px, y: portalHoverY(px, r), r,
-    label: 'THE GAMBLER', sublabel: '⬆ FLY INTO THE PORTAL',
-    action: function () { triggerIntroBoss(); },
+    label: opts.label || 'THE GAMBLER', sublabel: '⬆ FLY INTO THE PORTAL',
+    action: opts.action || function () { triggerIntroBoss(); },
     kind: 'boss', glowT: 0, entered: false,
   });
 }
@@ -3480,7 +3584,7 @@ function syncMastery() {
       const pid = localStorage.getItem('cq_pid') || 'anon';
       const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
       const rows = MASTERY_CATS.map(c => ({ player_id: pid, category: c, score: masteryScore(c), updated_at: new Date().toISOString() }));
-      fetch('https://ymxppzhczvmiuoncuqqu.supabase.co/rest/v1/player_mastery', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(rows), keepalive: true }).catch(() => {});
+      fetch('https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/ingest', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ table: 'player_mastery', rows: rows }), keepalive: true }).catch(() => {});
     } catch (e) {}
   }, 4000);
 }
@@ -3974,13 +4078,15 @@ function celebrate(opts) {
   const col = opts.color || '#4cc3ff';
   const dur = opts.dur || 2.6;
   if (opts.finn) {
-    // Hero milestone: a big smiling Finn centre-screen, with the title above his head and
-    // the sub-line below his feet. The Finn element is pushed FIRST so it renders behind text.
-    const hw = Math.min(W, H) * 0.36;
-    const cy = (opts.y != null) ? opts.y : H * 0.42;
-    floaters.push({ finn: true, t: dur, dur: dur, cy: cy });
-    floaters.push({ text: opts.title, color: col, y: cy - hw * 0.62, t: dur, big: true });
-    if (opts.sub) floaters.push({ text: opts.sub, color: opts.subColor || '#dbe6f0', y: cy + hw * 0.66, t: dur, center: true, size: 13, glow: true });
+    // SHOT 5 — the giant centre-screen Finn used to CLUSTER with the title + "LESSON LEARNED"
+    // + "TRADE WON" floaters (an ugly overlap on the first win). Replaced with ONE clean big
+    // TROPHY emoji, the title spaced well BELOW it so nothing overlaps. (`emoji` floaters also
+    // count as a "celebration" so the next event still waits for the party to finish.)
+    const es = Math.min(W, H) * 0.22;
+    const cy = (opts.y != null) ? opts.y : H * 0.32;
+    floaters.push({ emoji: '🏆', size: es, t: dur, dur: dur, y: cy });
+    floaters.push({ text: opts.title, color: col, y: cy + es * 0.78, t: dur, big: true });
+    if (opts.sub) floaters.push({ text: opts.sub, color: opts.subColor || '#dbe6f0', y: cy + es * 0.78 + 28, t: dur, center: true, size: 13, glow: true });
   } else {
     const y0  = (opts.y != null) ? opts.y : H * 0.38;
     floaters.push({ text: opts.title, color: col, y: y0, t: dur, big: true });
@@ -4158,9 +4264,9 @@ const LESSONS = {
     '</ul>'],
   loss:     ['STOPPED OUT 📉',
     '<ul style="margin:6px 0 0 14px;padding:0;line-height:2">' +
-    '<li>You lost exactly the SHELLS you risked — <b>nothing more</b></li>' +
-    '<li>That\'s the <b>stop loss doing its job</b></li>' +
-    '<li>💡 One bad trade can never ruin you if you use a stop loss every time</li>' +
+    '<li>You only lost the shells you bet — <b>nothing more</b>.</li>' +
+    '<li>Your <b>stop loss</b> kept it small.</li>' +
+    '<li>💡 Use a stop loss every time, and one bad trade can\'t hurt you.</li>' +
     '</ul>'],
   // FOLLOW-UP #3 (trim) — folded from a 4-bullet wall to ONE line so play comes first.
   // The full premise (11 Guardians → Market Maker) is carried by the cinematic + the
@@ -4558,7 +4664,7 @@ function conceptLabel(key) {
 
 const taught = {};
 const lessonQ = [];
-let lessonOpen = false, lessonGap = 0;
+let lessonOpen = false, lessonGap = 0, lessonLC = null;
 let lessonCurrentKey = null;   // the lesson key currently shown (for knowledge-discovery on dismiss)
 // FOLLOW-UP #2 (HARD SEQUENCE) — a milestone celebration (e.g. FIRST WIN) deferred by a
 // trade result until the post-trade lesson card has been READ. Consumed in dismissLesson.
@@ -4623,6 +4729,7 @@ function dismissLesson() {
   $('lesson').classList.remove('show');
   lessonOpen = false;
   lessonGap = 0.6;
+  if (lessonLC) { try { lessonLC.stop(); } catch (e) {} lessonLC = null; }   // stop any post-trade LessonChart
   // Learned in play → record it as read (mastery/bonus) and discover + celebrate
   // the concept(s) it teaches ("NEW KNOWLEDGE DISCOVERED").
   if (lessonCurrentKey) {
@@ -4695,10 +4802,21 @@ function pumpLessons(dt) {
       + '</div>'
       + '<div id="lrFb" style="font-size:12px;color:#9fb0c4;margin-top:9px;line-height:1.5"></div></div>'
     : '';
-  el.innerHTML = '<b class="ttl">' + l[0] + '</b>' + (l[2] || '') + l[1] + tryBtn + recallHTML +
+  // SHOTS 16/17/18 — l[2] may be an animated LessonChart request {scene:'<key>'} (e.g. the exact
+  // post-trade win/loss on a chart), not just HTML. Render a chart canvas and mount it below the title.
+  let _extra = '', _lcScene = null;
+  if (l[2]) {
+    if (typeof l[2] === 'string') _extra = l[2];
+    else if (l[2].scene && typeof LessonChart !== 'undefined' && LessonChart.has(l[2].scene)) {
+      _lcScene = l[2].scene;
+      _extra = '<canvas id="lessonLcCv" style="width:100%;height:188px;display:block;border-radius:12px;background:#070b12;margin:2px 0 12px"></canvas>';
+    }
+  }
+  el.innerHTML = '<b class="ttl">' + l[0] + '</b>' + _extra + l[1] + tryBtn + recallHTML +
                  '<button id="lessonOk"' + (recall ? ' style="display:none"' : '') + '>OK &mdash; GOT IT</button>';
   el.classList.add('show');
   lessonOpen = true;                              // world pauses underneath
+  if (_lcScene) { try { if (lessonLC) lessonLC.stop(); lessonLC = LessonChart.mount($('lessonLcCv'), _lcScene); } catch (e) {} }
   $('lessonOk').onclick = dismissLesson;
   if (hasDrill) {
     const tb = $('lessonTry');
@@ -5230,7 +5348,7 @@ const IM_LESSONS = {
   support_resist:{name:'Support & Resistance',sub:'Where price reacts',icon:'📏',diagram:'sr',
     lead:'Support is a floor where buyers step in; resistance is a ceiling where sellers step in. Price tends to react at these levels.',
     keys:[['#16c784','Support held = buyers defending — a long opportunity.'],['#ea3943','Resistance held = sellers defending — a short opportunity.']]},
-  vwap:{name:'VWAP',sub:'The fair-value line',icon:'〰️',diagram:'trend',
+  vwap:{name:'VWAP',sub:'The fair-value line',icon:'〰️',diagram:'vwap',
     lead:'VWAP is the volume-weighted average price for the session — the market’s “fair value.” Price above VWAP favours buyers; below favours sellers.',
     keys:[['#ff9f43','Price above VWAP = bullish bias.'],['#4cc3ff','A bounce off VWAP in a trend is a high-quality entry.']]},
   trendlines:{name:'Trendlines',sub:'Connect the rising lows',icon:'📐',diagram:'trendline',
@@ -5328,7 +5446,7 @@ function imRender(){
       + (cleared ? imConfettiHTML() : '')
       + '<span class="im-badge '+(cleared?'win':'end')+'">'+(cleared?'◆ LEVEL '+lvl+' COMPLETE':'LEVEL '+lvl+' ENDED')+'</span>'
       + '<h1>'+(cleared?'Level cleared!':'Run complete.')+'</h1>'
-      + '<div class="im-sub">'+lessonTitle+'</div>'
+      + (cleared ? '' : '<div class="im-sub">'+lessonTitle+'</div>')
       + '<div class="im-stars">'+'★'.repeat(stars)+'<span style="color:#243349">'+'★'.repeat(5-stars)+'</span></div>'
     + '</div>'
     /* ── Your Trading Account (the economy, front and centre) ── */
@@ -5418,19 +5536,23 @@ function imRender(){
   // wiring (rebuilt each render — fresh nodes)
   $('imContinue').onclick = function(){
     imCloseSheets();
-    // A Guardian guards each cleared level — fight it before advancing. (Restores
-    // the boss step the redesigned screen previously skipped.) bossFinish() then
-    // calls closeIntermission(true) to roll into the next level.
+    // SHOT 15 — a Guardian guards each cleared level, but it is NOT opened by this button. Returning
+    // to the chart spawns the boss PORTAL in the world; the Guardian is reached ONLY by physically
+    // flying into it. (bossFinish → closeIntermission(true) still rolls into the next level after.)
     if (session.cleared && guardian && !guardianDone) {
       $('intermission').style.display = 'none';
-      openBoss(lvl);
+      try { paused = false; } catch (e) {}
+      try {
+        spawnBossPortal({ label: (guardian && guardian.name ? String(guardian.name) : 'GUARDIAN').toUpperCase(),
+                          action: function () { openBoss(lvl); } });
+        floaters.push({ text: '⚡ The Guardian awaits — fly into the portal!', color: '#ff9f43', y: 104, t: 3.6 });
+      } catch (e) { openBoss(lvl); }   // SAFETY NET — if the portal can't spawn, never strand the player
       return;
     }
     closeIntermission(true);
   };
-  // SS1 — guardians are reached through a PORTAL, never a "FACE THE GUARDIAN" button. The recap
-  // ends on a portal-entry CTA that opens the boss splash (whose ENTER tap fires the portal vortex).
-  try { if (bossDue) $('imContinue').textContent = '⚡ ENTER THE PORTAL →'; } catch(e){}
+  // SHOT 15 — this button just RETURNS to the chart; the boss is entered via the in-world portal.
+  try { if (bossDue) $('imContinue').textContent = '↩ RETURN TO THE CHART →'; } catch(e){}
   $('imJournal').onclick = function(){ try{ if(typeof openJournal==='function'){ openJournal(); return; } }catch(e){} var jb=$('journalBtn'); if(jb) jb.click(); };
   root.querySelectorAll('.im-lrow').forEach(function(r){ r.onclick = function(){ imOpenLesson(r.getAttribute('data-lesson')); }; });
   if(tlog.length){ root.querySelectorAll('.im-trade').forEach(function(c){ c.onclick = function(){ imOpenReplay(tlog[+c.getAttribute('data-trade')]); }; }); }
@@ -5445,7 +5567,7 @@ function imSetupName(t){
   const map={momentum:'Strong Close',pullback:'Pullback',bos:'BOS Retest',ob:'Order Block',choch:'ChoCh',vwap:'VWAP Bounce',vwap_bounce:'VWAP Bounce',trend_break:'Breakout',sweep:'Liquidity Sweep',trend:'Trend Trade'};
   return map[t.setupType] || (t.setupType?imPretty(t.setupType):'Setup');
 }
-function imCloseSheets(){ var a=$('imLov'),b=$('imRov'); if(a)a.classList.remove('on'); if(b){b.classList.remove('on');} cancelAnimationFrame(imRX.raf); }
+function imCloseSheets(){ var a=$('imLov'),b=$('imRov'); if(a)a.classList.remove('on'); if(b){b.classList.remove('on');} cancelAnimationFrame(imRX.raf); if(typeof imLC!=='undefined'&&imLC){try{imLC.stop();}catch(e){}imLC=null;} }
 
 /* ── sparkline (game candle shape: body = open..h) ── */
 function imClose(c){ return c.color==='green' ? Math.max(c.open,c.h) : Math.min(c.open,c.h); }
@@ -5463,15 +5585,22 @@ function imDrawSpark(cv,t){
 }
 
 /* ── lesson detail (tap a Lessons-Completed row) ── */
+// LESSON FRAMEWORK — Hour lessons use the animated LessonChart when a scene exists for the
+// lesson's diagram concept; otherwise fall back to the original static imDrawStructure diagram.
+const IM_DIAGRAM_SCENE={candle:'candle',doji:'doji',longshort:'longshort',wait_close:'wait_close',trend:'uptrend',bos:'bos',sr:'support',choch:'choch',ob:'ob',trendline:'trendline',vwap:'vwap'};
+let imLC=null;
 function imOpenLesson(key){
   const m=imLessonMeta(key);
   var tt=$('imLTitle'); if(tt){ if(tt.firstChild) tt.firstChild.textContent=m.name; else tt.textContent=m.name; }
   var sb=$('imLSub'); if(sb) sb.textContent=m.sub;
-  var body=$('imLBody'); if(body) body.innerHTML='<p class="lead">'+m.lead+'</p>'+(m.keys||[]).map(function(k){return '<div class="im-lkey"><span class="dot" style="background:'+k[0]+'"></span><span class="kt">'+k[1]+'</span></div>';}).join('');
+  const sk=IM_DIAGRAM_SCENE[m.diagram], hasLC=sk&&typeof LessonChart!=='undefined'&&LessonChart.has(sk);
+  const lead=hasLC?LessonChart.SCENES[sk].caption:m.lead;   // 10-year-old caption when animated
+  var body=$('imLBody'); if(body) body.innerHTML='<p class="lead">'+lead+'</p>'+(m.keys||[]).map(function(k){return '<div class="im-lkey"><span class="dot" style="background:'+k[0]+'"></span><span class="kt">'+k[1]+'</span></div>';}).join('');
   $('imLov').classList.add('on');
-  requestAnimationFrame(function(){ imDrawStructure($('imDiagram'), m.diagram); });
+  if(imLC){try{imLC.stop();}catch(e){}imLC=null;}
+  requestAnimationFrame(function(){ if(hasLC){ try{ imLC=LessonChart.mount($('imDiagram'),sk); }catch(e){ imDrawStructure($('imDiagram'),m.diagram); } } else { imDrawStructure($('imDiagram'),m.diagram); } });
 }
-function imCloseLesson(){ var o=$('imLov'); if(o) o.classList.remove('on'); }
+function imCloseLesson(){ var o=$('imLov'); if(o) o.classList.remove('on'); if(imLC){try{imLC.stop();}catch(e){}imLC=null;} }
 
 /* ── accurate market-structure diagrams ── */
 const IM_UP=[{o:30,c:42},{o:42,c:55},{o:55,c:48},{o:48,c:43},{o:43,c:60},{o:60,c:69},{o:69,c:77}];
@@ -6156,7 +6285,7 @@ function showBanner(type) {
   setupSpotT = 0;           // restart the spotlight fade-in
   try { GameMusic && GameMusic.sting && GameMusic.sting('setup'); } catch (e) {}   // attention cue
   // Spawn a portal above the highlighted setup so the player can fly in for the full chart
-  spawnPortal(typeTier >= 2 ? 'CHART SETUP' : 'OPPORTUNITY', '⬆ FLY IN TO ANALYSE', function() {
+  spawnPortal(typeTier >= 2 ? 'CHART SETUP' : 'OPPORTUNITY', '⬆ FLY IN — ENTER ANALYSIS', function() {
     openTraderView();   // same ritual as tapping the banner → analyse, then the ticket
   }, 'trade');   // blue = trade portal
 }
@@ -6224,6 +6353,14 @@ function nextSetupIn() {
    Called as each scripted candle is PRINTED (ahead of Finn) so the setup is recognised while it
    develops in front of the player — momentum, then pullbacks, then the confirmation that arms it.
    (Expiry is location-based and lives in update(): the setup dies when Finn runs past the candle.) */
+// SPRINT 1.5 — TRADING GLASSES gate. Before the glasses are earned (Boss 2) the chart shows
+// ONLY natural price action; setup labels, circles and structure annotations stay hidden so the
+// player learns to RECOGNISE patterns rather than read answers. The glasses literally grant
+// "trader vision". (Mirrors the local hasGlasses check used by the turtle art.)
+function glassesUnlocked() {
+  return (typeof bossesDone !== 'undefined') && bossesDone.size >= 2;
+}
+
 function advanceSetupFlow(c) {
   if (pending || trade) return;                                          // ticket open / in a trade
   if (typeof introFlow !== 'undefined' && introFlow.active && !introFlow.awaitingTrade) return;
@@ -6250,7 +6387,7 @@ function armBeginnerSetup(c) {
   setupZone = { from: setupFlow.momId, to: c.id, dir: setupFlow.dir, type: 'pullback', quality: 'B' };
   if (typeof setupBannerMaxCandleId !== 'undefined') setupBannerMaxCandleId = maxSeenCandleId;
   bannerT = 1;
-  bannerEl.innerHTML = '&#9889; SETUP READY &mdash; TAP TO ANALYSE';
+  bannerEl.innerHTML = '&#9889; SETUP FORMING &mdash; ENTER THE CHART';
   bannerEl.style.borderColor = '#7c4dff';
   bannerEl.style.display = 'flex';
   try { document.body.classList.add('setupActive'); } catch (e) {}
@@ -6260,13 +6397,13 @@ function armBeginnerSetup(c) {
   try { GameMusic && GameMusic.sting && GameMusic.sting('setup'); } catch (e) {}
   // No center-screen floaters here — the banner IS the message ("SETUP READY — TAP TO ANALYSE"),
   // and the confirmation candle is highlighted on the chart. One message at a time.
-  spawnPortal('CHART SETUP', '⬆ FLY IN TO ANALYSE', function () { openTraderView(); }, 'trade');
+  spawnPortal('CHART SETUP', '⬆ FLY IN — ENTER ANALYSIS', function () { openTraderView(); }, 'trade');
 }
 // The setup scrolled by un-taken — clear it quietly and cool down before the next one develops.
 function expireBeginnerSetup() {
   clearBeginnerSetup();
   hideBanner();                          // clears bannerT, banner DOM, setupActive, and setupZone
-  genSetupIn = 7 + (Math.random() * 5 | 0);
+  genSetupIn = 20 + (Math.random() * 8 | 0);   // SPRINT 1.5 — ≥20 calm candles between events (no event spam)
 }
 // Drop the beginner-setup state + its fly-in portal (shared by expiry, entry, and resolution).
 function clearBeginnerSetup() {
@@ -6277,7 +6414,13 @@ function clearBeginnerSetup() {
 // Snapshot nearby structure and open the panel (pauses the game)
 function openPanel() {
   const cx = turtle.x + turtle.w / 2;
-  const idx = candles.findIndex(c => cx >= c.x && cx < c.x + c.w);
+  let idx = candles.findIndex(c => cx >= c.x && cx < c.x + c.w);
+  if (idx < 0) {
+    // Flew into the portal mid-jump (not standing on a candle): fall back to the armed setup's
+    // confirmation candle (or the last anchored setup) so the ticket still opens on the right setup.
+    if (typeof setupZone !== 'undefined' && setupZone && setupZone.to != null) idx = candles.findIndex(c => c.id === setupZone.to);
+    if (idx < 0 && typeof lastSetupIdx === 'number' && lastSetupIdx >= 0 && lastSetupIdx < candles.length) idx = lastSetupIdx;
+  }
   if (idx < 0) { hideBanner(); nextSetupIn(); return; }
 
   // ── Exploit guard: did the player walk ahead to peek at future candles? ──
@@ -7416,7 +7559,7 @@ function closePanel() {
   $('backdrop').classList.remove('open');
   if (!trade) {
     nextSetupIn(); setupZone = null;               // declined — clear & cool down
-    clearBeginnerSetup(); genSetupIn = 6 + (Math.random() * 5 | 0);   // PHASE 2 — drop the beginner setup too
+    clearBeginnerSetup(); genSetupIn = 20 + (Math.random() * 8 | 0);   // PHASE 2 — drop the beginner setup too (≥20 candles between events)
   }
 }
 
@@ -7623,6 +7766,70 @@ function renderKnowledge() {
   return html;
 }
 
+// SHOT 1 — JOURNAL TERM CARD. Tapping a discovered Knowledge term opens its animated LessonChart
+// (when a scene exists) + a plain 10-year-old explanation. Maps each Knowledge key → scene key.
+const KNOW_SCENE = { candle:'candle', wick:'candle', close:'wait_close', doji:'doji', long:'longshort',
+  short:'longshort', trend:'uptrend', support:'support', resistance:'resistance', bos:'bos',
+  choch:'choch', ob:'ob', sweep:'liquidity', vwap:'vwap', htf:'htf', trendline:'trendline',
+  headshoulders:'head_shoulders', sl:'sl', tp:'tp', rr:'rr', leverage:'leverage',
+  bullflag:'bullflag', bearflag:'bearflag', confluence:'confluence' };
+let termCardLC = null;
+function openTermCard(key) {
+  const c = KNOWLEDGE_BY_KEY[key]; if (!c) return;
+  const FT = "-apple-system,BlinkMacSystemFont,system-ui,sans-serif";
+  const sk = KNOW_SCENE[key];
+  const hasLC = sk && typeof LessonChart !== 'undefined' && LessonChart.has(sk);
+  const body = hasLC ? LessonChart.SCENES[sk].caption : esc(c.def);
+  const ov = document.createElement('div'); ov.id = 'termCard';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(2,4,9,0.82);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);padding:20px';
+  ov.innerHTML = '<div style="width:min(92vw,380px);background:linear-gradient(180deg,#0c1320,#080b14);border:1px solid #24344a;border-radius:18px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,0.6)">' +
+    (hasLC ? '<canvas id="termCv" style="width:100%;height:198px;display:block;background:#070b12"></canvas>' : '') +
+    '<div style="padding:16px 18px 18px">' +
+      '<div style="font:800 9px ' + FT + ';letter-spacing:1.5px;color:#a855f7;margin-bottom:6px">📘 KNOWLEDGE</div>' +
+      '<div style="font:800 20px ' + FT + ';color:#fff;margin-bottom:8px">' + esc(c.term) + '</div>' +
+      '<div style="font-size:13.5px;line-height:1.55;color:#dbe6f2;margin-bottom:16px">' + body + '</div>' +
+      '<button id="termClose" style="width:100%;padding:13px;border-radius:11px;font:800 13px ' + FT + ';background:rgba(76,195,255,.14);border:1px solid #4cc3ff;color:#4cc3ff;cursor:pointer">GOT IT ✓</button>' +
+    '</div></div>';
+  document.body.appendChild(ov);
+  if (hasLC) { try { termCardLC = LessonChart.mount(document.getElementById('termCv'), sk); } catch (e) {} }
+  const close = function () { try { if (termCardLC) termCardLC.stop(); } catch (e) {} termCardLC = null; if (ov.parentNode) ov.parentNode.removeChild(ov); };
+  const btn = document.getElementById('termClose'); if (btn) btn.onclick = close;
+  ov.addEventListener('pointerdown', function (e) { if (e.target === ov) close(); });
+}
+
+// SHOT 1 — WISDOM tab. "Lost wisdom": short trader-psychology lines (patience / emotion / risk),
+// each with a plain 10-year-old meaning. (Scaffold copy — final lines can be swapped in later.)
+const WISDOM = [
+  { q:'Cut your losses short, and let your winners run.', who:'Trader’s proverb',
+    why:'Get out of bad trades fast. Stay in good trades longer. That’s how small wins beat big losses.' },
+  { q:'Plan your trade, and trade your plan.', who:'Trader’s proverb',
+    why:'Pick your entry, stop and target BEFORE you click. Then just follow it — don’t panic.' },
+  { q:'The trend is your friend.', who:'Trader’s proverb',
+    why:'It’s easier to go the same way the market is already moving than to fight it.' },
+  { q:'Be fearful when others are greedy, and greedy when others are fearful.', who:'Warren Buffett',
+    why:'When everyone is excited and buying, be careful. When everyone is scared, look for chances.' },
+  { q:'Risk comes from not knowing what you’re doing.', who:'Warren Buffett',
+    why:'The more you understand a setup, the safer it is. Don’t bet on what you don’t know.' },
+  { q:'The market can stay wrong longer than you can stay in the trade.', who:'after J. M. Keynes',
+    why:'Even a good idea can take a long time. A stop loss makes sure a slow move can’t wipe you out.' },
+  { q:'Pros think about how much they can LOSE, not how much they can win.', who:'Trader’s proverb',
+    why:'Always ask “what’s the worst that happens?” first. Protect your shells before chasing more.' },
+  { q:'Most of trading is waiting.', who:'Trader’s proverb',
+    why:'You don’t have to trade all the time. Wait for the clean setup you practised.' }
+];
+function renderWisdom() {
+  let html = '<div class="kHead"><div class="kHeadRow">' +
+    '<span class="kHeadLbl">💭 LOST WISDOM</span>' +
+    '<span class="kHeadNum">' + WISDOM.length + '</span></div></div><div style="padding:4px 2px 18px">';
+  for (const w of WISDOM) {
+    html += '<div style="background:linear-gradient(180deg,#0e1626,#0a0f1a);border:1px solid #1d2c40;border-left:3px solid #a855f7;border-radius:12px;padding:14px 15px;margin:0 0 11px">' +
+      '<div style="font:italic 600 14.5px var(--font-ui);color:#eaf1fb;line-height:1.5">“' + esc(w.q) + '”</div>' +
+      '<div style="font:800 10px var(--font-ui);letter-spacing:.5px;color:#a855f7;margin:8px 0 9px">— ' + esc(w.who).toUpperCase() + '</div>' +
+      '<div style="font-size:12.5px;line-height:1.5;color:#9fb0c4">' + esc(w.why) + '</div></div>';
+  }
+  return html + '</div>';
+}
+
 // GUARDIANS tab — a defeated-boss collection (a bestiary). Defeated Guardians show
 // their portrait, realm and what they taught; the rest stay locked silhouettes.
 function renderGuardians() {
@@ -7817,6 +8024,7 @@ function renderJournalSection() {
   $('jList').innerHTML =
       journalTab === 'profile'   ? renderTraderProfile()
     : journalTab === 'knowledge' ? renderKnowledge()
+    : journalTab === 'wisdom'    ? renderWisdom()
     : journalTab === 'guardians' ? renderGuardians()
     : journalTab === 'notes'     ? renderNotes()
     :                              renderJournalList();
@@ -7856,6 +8064,11 @@ function closeJournal() {
 $('jTabs').addEventListener('click', (e) => {
   const b = e.target.closest ? e.target.closest('.jTab') : null;
   if (b) switchJournalTab(b.getAttribute('data-tab'));
+});
+// SHOT 1 — tap a discovered Knowledge term → open its animated LessonChart card.
+$('jList').addEventListener('click', (e) => {
+  const card = e.target.closest ? e.target.closest('.kCard.known') : null;
+  if (card && card.getAttribute('data-key')) openTermCard(card.getAttribute('data-key'));
 });
 // Save a trade note as it's typed (History tab textareas)
 $('jList').addEventListener('input', (e) => {
@@ -9894,13 +10107,15 @@ function bossWin() {
       // BOSS 2 REWARD — the Trading Glasses (the second milestone; teaches the player to SEE).
       (bfState.level === 1
         ? '<div class="vg1Note" style="margin:10px auto 4px;max-width:300px">🕶 TRADING GLASSES UNLOCKED<br>' +
-            '<span style="font-weight:600;opacity:.85">&ldquo;You stopped guessing. You started seeing.&rdquo;</span></div>'
+            '<span style="font-weight:600;opacity:.85">Now you SEE the setups — momentum, pullbacks &amp; confirmations get labeled on your chart.</span></div>'
         : '') +
       '<button id="bfClaim" class="vicBtn">CLAIM &amp; ADVANCE →</button></div>';
   }
   try { setTimeout(bossRewardBurst, 70); } catch (e) {}
   // BOSS 1 (the Gambler) → the Trader's Journal cinematic plays over the victory card.
   if (isGambler) { try { setTimeout(playJournalUnlock, 160); } catch (e) {} }
+  // BOSS 2 (the False Breakout Eel) → the Trading Glasses cinematic + lesson (shot 7).
+  else if (bfState.level === 1) { try { setTimeout(playGlassesUnlock, 160); } catch (e) {} }
 }
 
 /* ════ BOSS 1 REWARD — Trader's Journal cinematic unlock ════
@@ -9932,9 +10147,9 @@ function playJournalUnlock() {
         '<div class="ju-cover">📖</div>' +
       '</div></div>' +
       '<div class="ju-msg">' +
-        '<div class="ju-title">📖 TRADER&rsquo;S JOURNAL UNLOCKED</div>' +
-        '<div class="ju-copy">Every great trader keeps a journal.<br>' +
-          'Record your trades. Recover Lost Wisdom.<br>Track your progress. Build your journey.</div>' +
+        '<div class="ju-title">📖 YOU FOUND THE TRADER&rsquo;S JOURNAL</div>' +
+        '<div class="ju-copy">This is your most important tool.<br>' +
+          'It saves every trade and every lesson you learn —<br>so you get a little better each run.</div>' +
         '<div class="ju-hint">tap to continue</div>' +
       '</div>';
     document.body.appendChild(el);
@@ -9974,15 +10189,60 @@ function playJournalUnlock() {
   try { el.classList.add('on'); } catch (e) {}
   requestAnimationFrame(() => { try { el.classList.add('show', 'drop'); } catch (e) {} });
   try { if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting('win'); } catch (e) {}
-  T(() => { try { book.classList.add('float'); } catch (e) {} }, 1180);                       // settle → gentle bob
-  T(() => { try { el.classList.add('open'); if (typeof CineAudio !== 'undefined' && CineAudio.warp) CineAudio.warp(); } catch (e) {} }, 1300);  // cover opens
-  const base = 1640;
+  // SHOT 23 — slower, deliberate reveal so the player can actually READ each page and feels the
+  // weight of earning their most important tool (was 380ms/page → too fast to follow).
+  T(() => { try { book.classList.add('float'); } catch (e) {} }, 1400);                       // settle → gentle bob
+  T(() => { try { el.classList.add('open'); if (typeof CineAudio !== 'undefined' && CineAudio.warp) CineAudio.warp(); } catch (e) {} }, 1650);  // cover opens (slower)
+  const base = 2050, perPage = 760;
   PAGES.forEach((html, i) => T(() => {
-    try { page.innerHTML = html; page.classList.remove('flip'); void page.offsetWidth; page.classList.add('flip'); } catch (e) {}
-  }, base + i * 380));
-  const afterPages = base + PAGES.length * 380 + 180;   // ≈ 3.7s — message rises
+    try { page.innerHTML = html; page.classList.remove('flip'); void page.offsetWidth; page.classList.add('flip');
+      if (typeof CineAudio !== 'undefined' && CineAudio.warp && i > 0) CineAudio.warp(); } catch (e) {}   // a soft page-turn each flip
+  }, base + i * perPage));
+  const afterPages = base + PAGES.length * perPage + 360;   // ≈ 6.2s — message rises
   T(() => { try { el.classList.add('msg'); if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting('win'); } catch (e) {} }, afterPages);
-  T(finish, afterPages + 2400);                          // auto-dismiss → reveals the victory card + CONTINUE
+  T(finish, afterPages + 3200);                          // longer hold → auto-dismiss reveals the victory card + CONTINUE
+}
+
+/* ════ SHOT 7 — TRADING GLASSES cinematic + lesson (plays over the Guardian-2 victory card) ════
+   Finn puts on the glasses, then a plain-English explanation of what they DO ("trader vision").
+   Self-contained (inline styles + transitions, no asset/CSS dependency), tap-to-skip, fully
+   try/caught so it can never block progression. */
+let _glActive = false;
+function playGlassesUnlock() {
+  if (_glActive) return; _glActive = true;
+  let el;
+  try {
+    el = document.createElement('div');
+    el.id = 'glUnlock';
+    el.style.cssText = 'position:fixed;inset:0;z-index:520;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at 50% 42%, rgba(8,30,40,0.62), rgba(2,6,10,0.95));-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;transition:opacity .5s ease';
+    el.innerHTML =
+      '<div style="position:relative;width:170px;height:160px;margin-bottom:6px">' +
+        '<div id="glFinn" style="font-size:96px;line-height:160px;filter:drop-shadow(0 0 22px rgba(72,167,199,0.6))">🐢</div>' +
+        '<div id="glGlasses" style="position:absolute;left:50%;top:40px;transform:translate(-50%,-96px);font-size:56px;opacity:0;transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .45s ease;filter:drop-shadow(0 0 16px rgba(72,167,199,0.95))">🕶️</div>' +
+      '</div>' +
+      '<div id="glTitle" style="font:900 22px var(--font-ui);letter-spacing:1px;color:#7fe3ff;text-shadow:0 0 26px rgba(72,167,199,0.7);opacity:0;transition:opacity .5s ease">🕶 TRADER VISION UNLOCKED</div>' +
+      '<div id="glCopy" style="font:600 14px var(--font-ui);line-height:1.55;color:#cfe7f0;max-width:300px;margin:12px 18px 0;opacity:0;transition:opacity .5s ease">Now you can <b style="color:#fff">SEE</b> the setups! Momentum, pullbacks and confirmations get labeled right on your chart — so you spot the trade instead of guessing.</div>' +
+      '<div id="glHint" style="font:600 11px var(--font-ui);color:#5a7480;margin-top:18px;opacity:0;transition:opacity .5s ease">tap to continue</div>';
+    document.body.appendChild(el);
+  } catch (e) { _glActive = false; return; }
+  const timers = []; const T = (fn, ms) => timers.push(setTimeout(fn, ms));
+  const $g = (id) => el.querySelector('#' + id);
+  let done = false;
+  function finish() {
+    if (done) return; done = true;
+    try { timers.forEach(clearTimeout); } catch (e) {}
+    try { el.style.opacity = '0'; } catch (e) {}
+    setTimeout(() => { try { el.remove(); } catch (e) {} _glActive = false; }, 520);
+  }
+  try { el.addEventListener('click', finish); } catch (e) {}
+  requestAnimationFrame(() => { try { el.style.opacity = '1'; } catch (e) {} });
+  try { if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting('win'); } catch (e) {}
+  T(() => { try { const g = $g('glGlasses'); g.style.opacity = '1'; g.style.transform = 'translate(-50%,0)'; } catch (e) {} }, 750);        // glasses slide onto his face
+  T(() => { try { if (typeof CineAudio !== 'undefined' && CineAudio.warp) CineAudio.warp(); const f = $g('glFinn'); f.style.transition = 'filter .3s'; f.style.filter = 'drop-shadow(0 0 36px rgba(72,167,199,0.98))'; } catch (e) {} }, 1450);  // glint
+  T(() => { try { $g('glTitle').style.opacity = '1'; } catch (e) {} }, 1650);
+  T(() => { try { $g('glCopy').style.opacity = '1'; } catch (e) {} }, 2200);
+  T(() => { try { $g('glHint').style.opacity = '1'; } catch (e) {} }, 2900);
+  T(finish, 7000);
 }
 
 // Celebratory burst on the victory screen: shells + accent sparks fly outward, then clear.
@@ -10586,17 +10846,15 @@ function refreshPanel() {
 // shared #chartFull overlay (also used for expand/review) knows to lead into the ticket.
 let cfTraderView = false;
 function openTraderView() {
+  // SPRINT 1.5 — the portal now goes STRAIGHT to the trade ticket. The old flow opened a
+  // full-screen "which way next?" predict screen FIRST and then a second trade-ticket pop-up —
+  // two entry screens in a row. Dropping the guess step leaves a SINGLE entry screen; the ticket's
+  // own mini-chart (tpChart) is the analysis surface. We still anchor the setup candle here (so the
+  // ticket opens on the right setup even if Finn flew in mid-jump), then openPanel pauses the world.
   const cx = turtle.x + turtle.w / 2;
   const idx = candles.findIndex(c => cx >= c.x && cx < c.x + c.w);
-  const useIdx = idx >= 0 ? idx : (lastSetupIdx >= 0 ? lastSetupIdx : candles.length - 1);
-  lastSetupIdx = useIdx;            // anchor the chart to the SETUP candle, not the live edge
-  cfTraderView = true;
-  paused = true;                    // PHASE 2 — freeze the world during analysis (the setup can't
-                                    // scroll past or expire while you study it); closePanel resumes.
-  $('cfLegend').classList.remove('on');
-  $('cfChart').innerHTML = setupChartSVGFull(useIdx);
-  openPortalPredict(useIdx);        // "Read the chart — which way next?" → +5 on a correct read
-  $('chartFull').classList.add('open');
+  lastSetupIdx = idx >= 0 ? idx : (lastSetupIdx >= 0 ? lastSetupIdx : candles.length - 1);
+  openPanel();
 }
 
 bannerEl.addEventListener('pointerdown', (e) => {
@@ -10940,8 +11198,8 @@ function learnExplain(type, dir, won) {
   const why = ({
     momentum: up ? 'Strong green closes often keep rising — buyers stayed in control.' + momTail
                  : 'Strong red closes often keep falling — sellers stayed in control.' + momTail,
-    pullback: up ? 'You waited for the pullback, then the confirmation candle closed UP — so you entered with the move instead of chasing it.'
-                 : 'You waited for the pullback, then the confirmation candle closed DOWN — so you entered with the move instead of chasing it.',
+    pullback: up ? 'You waited for the small dip, then a green candle closed up — so you joined the move instead of chasing it.'
+                 : 'You waited for the small bounce, then a red candle closed down — so you joined the move instead of chasing it.',
     bos:      up ? 'A break of structure up shows buyers have taken control.'
                  : 'A break of structure down shows sellers have taken control.',
     choch:    up ? 'A first higher move can flip a downtrend back up.'
@@ -10955,7 +11213,7 @@ function learnExplain(type, dir, won) {
   })[type] || (up ? 'Upward momentum often continues a little longer.' : 'Downward momentum often continues a little longer.');
   return won
     ? '✅ You followed your plan. ' + why
-    : why + ' Good trade — the market didn’t follow through this time. Losses happen, and your stop kept it small. That’s discipline, not a mistake.';
+    : why + ' Good trade — the move just didn’t happen this time. Your stop kept the loss small. That’s smart, not a mistake.';
 }
 
 // Called once per NEW candle the turtle reaches (backtracking doesn't
@@ -11221,14 +11479,15 @@ function onCandleEntered(c) {
           introFlow.awaitingTrade = false;
           triggerIntroBoss(); return;
         }
-      } else if (!introFlow.firstTradeDone) {
-        // Surface the Flash Quiz; entering it chains quiz → bet → trade → boss.
-        if (introFlow.candleCount === 40 && !portals.find(p => p.label === 'FLASH QUIZ'))   // first interaction ~28s in — the old 90-candle (~60s) opening felt dead
-          spawnPortal('FLASH QUIZ', '⬆ BOOST TO ENTER', () => triggerFlashQuiz());
+      } else if (!introFlow.firstTradeDone && !introFlow.learnStarted) {
+        // GREEN vs RED — discover the lesson by exploring: animated lesson → Trader View
+        // practice → first prediction → momentum → first trade. (Chains forward from here.)
+        if (introFlow.candleCount === 40 && !portals.find(p => p.label === 'GREEN vs RED'))   // first interaction ~28s in — the old 90-candle (~60s) opening felt dead
+          spawnPortal('GREEN vs RED', '⬆ BOOST TO LEARN', () => beginGreenRedLearn());
         if (introFlow.candleCount >= 52) {   // missed the portal → start it anyway
-          const fi = portals.findIndex(p => p.label === 'FLASH QUIZ');
+          const fi = portals.findIndex(p => p.label === 'GREEN vs RED');
           if (fi >= 0) portals.splice(fi, 1);
-          triggerFlashQuiz(); return;
+          beginGreenRedLearn(); return;
         }
       }
     }
@@ -11543,7 +11802,7 @@ function resolveTrade(result) {
         learnExplain(tradeRecord.setupType, tradeRecord.dir, delta > 0) +
         (conceptTier('risk') >= 1 ? '<br><span style="color:#8aa0b8;font-size:12px">Result: ' + net + ' ' + shellHTML(12) + '</span>' : '') +
         '</div>';
-      lessonQ.push([(delta > 0 ? '✅ GOOD TRADE — YOU WAITED FOR CONFIRMATION' : '🛡️ STOP DID ITS JOB'), body]);
+      lessonQ.push([(delta > 0 ? '✅ GOOD TRADE — YOU WAITED FOR CONFIRMATION' : '🛡️ STOP DID ITS JOB'), body, { scene: delta > 0 ? 'trade_win' : 'trade_loss' }]);
       lessonGap = 0.25;
     } catch (e) {}
   } else {
@@ -11598,7 +11857,7 @@ function resolveTrade(result) {
   setupZone = null; // the setup that spawned this trade is done
   closeBtnEl.style.display = 'none';
   nextSetupIn();
-  clearBeginnerSetup(); genSetupIn = 8 + (Math.random() * 5 | 0);   // PHASE 2 — cool down before the next beginner setup develops
+  clearBeginnerSetup(); genSetupIn = 20 + (Math.random() * 8 | 0);   // PHASE 2 — cool down ≥20 candles before the next beginner setup develops
   // Guided intro: the player takes INTRO_TRADES_NEEDED (3) real trades, THEN the prove gate,
   // THEN The Gambler. The first trade gets the full ENTRY→STOP→TARGET walkthrough; trades 2–3
   // are quick real trades so the beginner gets reps before the boss.
@@ -11613,13 +11872,38 @@ function resolveTrade(result) {
       waitThenIntroBoss();
     } else {
       // Re-arm for the next guided trade (stay in 'run', awaitingTrade stays true). CRITICAL:
-      // wait until the TRADE REVIEW card + any celebration are dismissed BEFORE showing the next
-      // "TRADE INCOMING" notice, so the two panels never overlap (was a visible stacking bug).
+      // wait until the TRADE REVIEW card + any celebration are dismissed BEFORE teaching the
+      // next concept, so the panels never overlap. Each upcoming trade gets its concept TAUGHT
+      // (animated lesson) + PRACTICED (Trader View) first, THEN armed: trade 2 ← pullback,
+      // trade 3 ← confirmation. (momentum was taught before trade 1.)
       introFlow.tradeWaitCandles = 0;
       const _left = INTRO_TRADES_NEEDED - introFlow.tradesDone;
-      waitThenNextTrade(_left);
+      const _nextConcept = introFlow.tradesDone === 1 ? 'pullback' : 'confirmation';
+      teachThenNextTrade(_nextConcept, _left);
     }
   }
+}
+// Between guided trades: wait for the trade-review card + celebration to clear, THEN teach the
+// upcoming concept (animated lesson → Trader View practice), THEN arm the next trade. Keeps the
+// LEARN→PRACTICE→APPLY order and never stacks panels. Hard cap so an idle player never stalls.
+function teachThenNextTrade(concept, left) {
+  const _now = function () { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); };
+  const t0 = _now();
+  (function tick() {
+    if (!introFlow.active || introFlow.phase !== 'run' || !introFlow.awaitingTrade) return;
+    const capped = (_now() - t0) > 18000;
+    const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && (f.finn || f.emoji); });
+    const ready = !lessonOpen && (typeof lessonQ === 'undefined' || lessonQ.length === 0) && !pendingCelebration && !_celebrating;
+    if (ready || capped) {
+      openIntroLesson(concept, function () {
+        openConceptPractice(concept, function () {
+          waitThenNextTrade(left);
+        });
+      });
+      return;
+    }
+    setTimeout(tick, 200);
+  })();
 }
 // Hold the next guided trade until the review card/celebration clear, then arm it + flash the
 // incoming notice. Hard cap so an idle player never stalls.
@@ -11631,7 +11915,7 @@ function waitThenNextTrade(left) {
     const capped = (_now() - t0) > 18000;
     // Wait for the lesson card, any deferred celebration, AND the active FIRST-WIN hero
     // celebration (a `finn` floater) to finish — so TRADE INCOMING never lands over the party.
-    const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && f.finn; });
+    const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && (f.finn || f.emoji); });
     const ready = !lessonOpen && (typeof lessonQ === 'undefined' || lessonQ.length === 0) && !pendingCelebration && !_celebrating;
     if (ready || capped) {
       setupCountdown = 2;
@@ -11652,7 +11936,7 @@ function waitThenIntroBoss() {
   (function tick() {
     if (!introFlow.active || introFlow.phase !== 'run') return;   // aborted (e.g. reset)
     const capped = (_now() - t0) > 18000;                         // hard fallback
-    const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && f.finn; });
+    const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && (f.finn || f.emoji); });
     const ready  = !lessonOpen && lessonQ.length === 0 && !pendingCelebration && !_celebrating;
     if (ready || capped) {
       // a beat for the confetti to breathe, THEN a short "prove you can read" practice
@@ -11663,13 +11947,14 @@ function waitThenIntroBoss() {
     setTimeout(tick, 150);
   })();
 }
-/* GUARDIAN 1 EXPANSION (Phase 3): a short "prove you can read" practice beat between the
-   first trade and the Gambler. Quick-reads spawn during traversal; the player must nail a
-   few before the boss reveals. Bounded by a candle cap so it can never stall. */
-const INTRO_PROVE_NEEDED = 5;       // correct quick-reads required to summon the Gambler
-const INTRO_TRADES_NEEDED = 3;      // real trades the player takes before the prove gate
-const INTRO_PROVE_CAP    = 260;     // last-resort anti-stall only — the 5 reads are the REAL gate,
-                                    // so the boss never appears "out of nowhere" before the warm-up.
+/* GUARDIAN 1 — final approach before the Gambler. Each concept (green/red, momentum, pullback,
+   confirmation) is now TAUGHT + PRACTICED + APPLIED in its own section, so the old standalone
+   "prove you can read" quiz gate is dissolved (INTRO_PROVE_NEEDED = 0). What remains is a short
+   PURE-GAMEPLAY final stretch (collect shells, platform) → the Gambler portal. Bounded so it
+   can never stall. */
+const INTRO_PROVE_NEEDED = 0;       // dissolved — concepts are practiced per-section now
+const INTRO_TRADES_NEEDED = 3;      // real trades the player takes before the boss
+const INTRO_PROVE_CAP    = 260;     // last-resort anti-stall only
 function beginIntroProve() {
   introFlow.phase = 'prove';
   introFlow.proveReads = 0;
@@ -11679,11 +11964,12 @@ function beginIntroProve() {
   introFlow.finalApproach = null;
   introFlow.awaitingTrade = false;
   paused = false; session.inModal = false; turtle.halt = false;
-  quickRead.active = false; quickRead.countdown = 3;   // first read appears soon
-  floaters.push({ text: 'One last test — read the candles to earn your shot at the Gambler', color: '#ffd60a', y: 104, t: 3.6 });
+  quickRead.active = false; quickRead.countdown = 3;
+  floaters.push({ text: 'Final stretch — grab the shells, the Gambler is close!', color: '#ff9f43', y: 104, t: 3.6 });
 }
 function drawIntroProveHUD() {
   try {
+    if (INTRO_PROVE_NEEDED <= 0) return;   // reading gate dissolved — only the final-approach platforming remains
     const need = INTRO_PROVE_NEEDED, got = Math.min(need, introFlow.proveReads || 0);
     ctx.save();
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
@@ -12197,12 +12483,14 @@ function drawCandle(c, cameraX) {
   // they walk (Levels 1-3, while a setup is live): each candle in the setup is CIRCLED and labelled
   // — MOMENTUM (boost over it), PULLBACK 1 & 2 (walk down them), CONFIRM (then enter). This is the
   // whole "watch the setup develop in front of you" moment, so it's bold, not subtle.
-  if (c.flow && session.level <= 3 && setupFlow && c.id >= setupFlow.momId) {
-    const isPB = c.flow === 'pullback';
-    const col  = isPB ? '#ffd60a' : (c.color === 'green' ? '#19d27c' : '#ff5a64');
-    const lab  = c.flow === 'momentum' ? 'MOMENTUM'
-               : isPB ? ('PULLBACK ' + (c.flowN || ''))
-               : 'CONFIRM';
+  // SPRINT 1.5 — only show the setup labels + circles once TRADING GLASSES are earned. Before
+  // that the chart stays natural (price action only) so the player learns to SEE the pattern.
+  // SHOT 6 — declutter the live setup preview: instead of circling + labelling ALL four setup
+  // candles (momentum + 2 pullbacks + confirm), highlight ONLY the CONFIRM candle (the one you act
+  // on) with a single circle + label. The momentum/pullback teaching now lives in the LessonCharts.
+  if (c.flow === 'confirm' && session.level <= 3 && setupFlow && c.id >= setupFlow.momId && glassesUnlocked()) {
+    const col  = (c.color === 'green' ? '#19d27c' : '#ff5a64');
+    const lab  = 'SETUP';
     const cyB = (top + bot) / 2;
     const rx = bw / 2 + 7, ry = Math.max(15, bodyH / 2 + 10);
     const pulse = 1 + 0.06 * Math.sin(turtle.animT * 4);
@@ -13716,10 +14004,22 @@ function drawSetupSpotlight(cameraX) {
   // Pulsing focus ring on the setup candle — an ellipse that hugs the candle body.
   const pr = 1 + 0.07 * Math.sin(performance.now() / 170);
   ctx.globalAlpha = a;
-  ctx.strokeStyle = 'rgba(124,77,255,0.9)'; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.ellipse(cx, cy, ringRx * pr, ringRy * pr, 0, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = 'rgba(180,140,255,0.45)'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.ellipse(cx, cy, (ringRx + 10) * pr, (ringRy + 10) * pr, 0, 0, Math.PI * 2); ctx.stroke();
+  if (glassesUnlocked()) {
+    // TRADER VISION — a precise focus ring hugging the confirmation candle (identifies the setup).
+    ctx.strokeStyle = 'rgba(124,77,255,0.9)'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.ellipse(cx, cy, ringRx * pr, ringRy * pr, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(180,140,255,0.45)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(cx, cy, (ringRx + 10) * pr, (ringRy + 10) * pr, 0, 0, Math.PI * 2); ctx.stroke();
+  } else {
+    // PRE-GLASSES — a soft, NON-identifying bloom: "something interesting is happening here",
+    // without circling THE answer candle. Broad, soft, no crisp outline.
+    const bloom = ctx.createRadialGradient(cx, cy, 4, cx, cy, 130 * pr);
+    bloom.addColorStop(0, 'rgba(150,120,255,' + (0.16 * a) + ')');
+    bloom.addColorStop(0.6, 'rgba(150,120,255,' + (0.06 * a) + ')');
+    bloom.addColorStop(1, 'rgba(150,120,255,0)');
+    ctx.fillStyle = bloom;
+    ctx.beginPath(); ctx.arc(cx, cy, 130 * pr, 0, Math.PI * 2); ctx.fill();
+  }
   ctx.restore();
 }
 
@@ -13855,23 +14155,23 @@ function drawPersistentTeach() {
   } else {
     lines = [concept];
   }
-  ctx.font = '800 8px ' + MONO; const hw = ctx.measureText(header).width;
-  ctx.font = '800 11px ' + SANS;
+  ctx.font = '800 7px ' + MONO; const hw = ctx.measureText(header).width;   // SHOT 8 — box ~22% smaller
+  ctx.font = '800 9px ' + SANS;
   let cw2 = 0; for (let i = 0; i < lines.length; i++) cw2 = Math.max(cw2, ctx.measureText(lines[i]).width);
-  const cardW = Math.max(hw, cw2) + 16;
-  const cardH = 19 + lines.length * 14;
+  const cardW = Math.max(hw, cw2) + 13;
+  const cardH = 16 + lines.length * 12;
   // CQ-0016: was globalAlpha 0.84 × fill-alpha 0.84 ≈ 0.70 effective, so entry/stop price
   // text behind it bled through and read as a glitch. Make the panel near-opaque.
   ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(9,13,20,0.96)';
   if (typeof rr === 'function') { rr(LX - 8, LY - 15, cardW, cardH, 8); ctx.fill(); }
   ctx.globalAlpha = 0.55; ctx.strokeStyle = 'rgba(124,196,255,0.42)'; ctx.lineWidth = 1;
   if (typeof rr === 'function') { rr(LX - 8, LY - 15, cardW, cardH, 8); ctx.stroke(); }
-  ctx.globalAlpha = 0.72; ctx.fillStyle = '#7fb0d0'; ctx.font = '800 8px ' + MONO;
+  ctx.globalAlpha = 0.72; ctx.fillStyle = '#7fb0d0'; ctx.font = '800 7px ' + MONO;
   try { ctx.letterSpacing = '1px'; } catch (e) {}
   ctx.fillText(header, LX, LY - 1);
   try { ctx.letterSpacing = '0px'; } catch (e) {}
-  ctx.globalAlpha = 0.97; ctx.fillStyle = '#e3eef7'; ctx.font = '800 11px ' + SANS;
-  for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i], LX, LY + 12 + i * 14);
+  ctx.globalAlpha = 0.97; ctx.fillStyle = '#e3eef7'; ctx.font = '800 9px ' + SANS;
+  for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i], LX, LY + 10 + i * 12);
   ctx.restore();
 }
 
@@ -13955,6 +14255,8 @@ function drawHUD() {
     if (simpleRisk) {
       // KNOWLEDGE GATE: risk/target aren't taught until L5 — show a plain chip at L1–L4
       // instead of leaking "RISK"/"TARGET" numbers a beginner hasn't learned.
+      // SHOT 20 — white text so it stays readable over the green TAKE-PROFIT line/box.
+      ctx.fillStyle = '#eaf0f7';
       ctx.fillText(trade.dir === 'long' ? '▲ LONG — riding it up' : '▼ SHORT — riding it down', 12, subY);
     } else {
       const levLabel = (trade.leverage || 1) > 1 ? ' · ' + (trade.leverage || 1) + '×LEV' : '';
@@ -14021,6 +14323,12 @@ function drawHUD() {
     if (f.finn) {                        // milestone hero — big smiling Finn, centred
       try { drawHeroFinn(f); } catch (e) {}
       ctx.globalAlpha = 1; ctx.textAlign = 'left';
+    } else if (f.emoji) {                // SHOT 5 — a big single emoji (🏆) milestone pop, centred
+      ctx.font = (f.size || 64) + 'px ' + SANS;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.shadowColor = '#ffd60a'; ctx.shadowBlur = 22;
+      ctx.fillText(f.emoji, W / 2, f.y);
+      ctx.shadowBlur = 0; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
     } else if (f.big) {                  // trade outcome — centred, large, with a soft halo
       ctx.font = 'bold 30px ' + MONO;
       ctx.textAlign = 'center';
@@ -14817,10 +15125,32 @@ function showFirstTradeReady(onReady) {
   const go = function () { if (ov.parentNode) ov.remove(); if (typeof onReady === 'function') onReady(); };
   document.getElementById('cqFTGo').addEventListener('click', go);
 }
-// After the engineered first WIN, hand the player a real OPPORTUNITY before the boss.
-// We FREEZE on the "I'm Ready" gate first; only on the click do we resume live play and
-// let the normal setup system surface ONE real trade. The Gambler comes after they trade.
+// GREEN vs RED — the LEARN→PRACTICE chain discovered by exploring (animated lesson →
+// Trader View practice), capped by the first prediction win (triggerPredictionBet).
+function beginGreenRedLearn() {
+  if (introFlow.learnStarted) return;
+  introFlow.learnStarted = true;
+  try { const fi = portals.findIndex(p => p.label === 'GREEN vs RED'); if (fi >= 0) portals.splice(fi, 1); } catch (e) {}
+  openIntroLesson('candle', function () {
+    openConceptPractice('greenred', function () {
+      triggerPredictionBet();
+    });
+  });
+}
+// After the engineered first WIN — TEACH momentum (animated lesson → Trader View practice),
+// THEN hand the player their first REAL trade (APPLY). The "I'm Ready" gate frames the trade;
+// only on the click do we resume live play and surface ONE real setup. The Gambler comes after.
 function beginIntroFirstTrade() {
+  introFlow.phase = 'run';        // leave the prediction screen (overlays re-pause themselves)
+  session.inModal = false;
+  paused = false;
+  openIntroLesson('momentum', function () {
+    openConceptPractice('momentum', function () {
+      armFirstGuidedTrade();
+    });
+  });
+}
+function armFirstGuidedTrade() {
   introFlow.phase = 'run';
   introFlow.awaitingTrade = true;
   introFlow.firstTradeDone = false;
@@ -15253,7 +15583,7 @@ function drawPredictionBet() {
       ctx.globalAlpha = 1;
       ctx.fillStyle = 'rgba(255,215,0,0.85)'; ctx.font = 'bold 12px ' + F;
       ctx.textAlign = 'center';
-      ctx.fillText('⏱  BET NOW — candle closing soon!', cx, btnsTop + 66);
+      ctx.fillText('⏱  CALL IT — green or red?', cx, btnsTop + 66);
     } else {
       ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '15px ' + F; ctx.textAlign = 'center';
       ctx.fillText('👀  Watch the candle form...', cx, btnsTop + 28);
@@ -15262,7 +15592,7 @@ function drawPredictionBet() {
     const betCol = b.choice === 'green' ? '#16c784' : '#ea3943';
     const betLbl = b.choice === 'green' ? '📈 GREEN' : '📉 RED';
     ctx.font = 'bold 16px ' + F; ctx.fillStyle = betCol; ctx.textAlign = 'center';
-    if (prog < 1) ctx.fillText('YOUR BET: ' + betLbl + ' — waiting for close...', cx, btnsTop + 30);
+    if (prog < 1) ctx.fillText('YOUR CALL: ' + betLbl + ' — waiting for close...', cx, btnsTop + 30);
 
     if (b.resultStartT !== null) {
       const elapsed = introFlow.t - b.resultStartT;
@@ -15272,10 +15602,12 @@ function drawPredictionBet() {
 
       // MOBILE FIX — anchor the result block ABOVE the action button (which sits at H-148)
       // so the reward line never collides with the button on a short phone viewport.
+      // SHOTS 26/27 — push the result block DOWN ~20px so "YOU CALLED IT" / the reward line
+      // clears the candle highlight square above it (was overlapping the box + OPEN line).
       const btnTop  = H - 148;
-      const titleY  = btnTop - 92;
-      const explY   = btnTop - 62;
-      const rewardY = btnTop - 32;
+      const titleY  = btnTop - 72;
+      const explY   = btnTop - 44;
+      const rewardY = btnTop - 20;
 
       ctx.fillStyle = correct ? '#16c784' : '#ea3943';
       ctx.font = 'bold 24px ' + F; ctx.textAlign = 'center';
@@ -17194,17 +17526,21 @@ const doneOf=id=>DIFFS.some(d=>(PROGRESS[id+':'+d]||{}).done);
 
 /* ── seeded candles ── */
 function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-function candles(seed,n,vol,trend){const r=rng(seed);let p=100;const out=[];for(let i=0;i<n;i++){const d=(r()-0.5)*vol+trend;const o=p,c=p+d;out.push({o,c,hi:Math.max(o,c)+r()*vol*0.4,lo:Math.min(o,c)-r()*vol*0.4});p=c;}return out;}
+function mgCandles(seed,n,vol,trend){const r=rng(seed);let p=100;const out=[];for(let i=0;i<n;i++){let d=(r()-0.5)*vol*1.45+trend;
+  if(Math.abs(d)<vol*0.32)d=(d>=0?1:-1)*vol*(0.32+r()*0.5);   /* SHOT 25 — fewer dojis: enforce a readable body */
+  const o=p,c=p+d,bt=Math.max(o,c),bb=Math.min(o,c);
+  const hw=r()<0.5?r()*vol*0.45:0,lw=r()<0.5?r()*vol*0.45:0;  /* SHOT 25 — not every candle has a wick */
+  out.push({o,c,hi:bt+hw,lo:bb-lw});p=c;}return out;}
 function fromPath(seed,levels,wick){const r=rng(seed);const cs=[];for(let i=0;i<levels.length;i++){const o=i?cs[i-1].c:levels[0];const c=levels[i]+(r()-0.5)*0.8;cs.push({o,c,hi:Math.max(o,c)+wick*(0.6+r()*0.6),lo:Math.min(o,c)-wick*(0.6+r()*0.6)});}return cs;}
 // pad a clean pattern with leading noise so difficulty scales without losing the shape
-function padLead(seed,n,base,cs){const lead=Math.max(0,n-cs.length);const pre=candles(seed,lead,1.6,(cs[0].c-base)/Math.max(1,lead));pre.forEach(c=>{c.c=c.c-(pre.length?pre[pre.length-1].c:0)+0;});return cs;}
+function padLead(seed,n,base,cs){const lead=Math.max(0,n-cs.length);const pre=mgCandles(seed,lead,1.6,(cs[0].c-base)/Math.max(1,lead));pre.forEach(c=>{c.c=c.c-(pre.length?pre[pre.length-1].c:0)+0;});return cs;}
 
 /* ════════ CHART SUBSTRATE ════════ */
 function ChartView(cv,cs,opts){
   opts=opts||{};const dpr=Math.min(devicePixelRatio||1,2);
   cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;
   const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
-  const W=cv.width/dpr,H=cv.height/dpr,padL=8,padR=48,padT=40,padB=20;
+  const W=cv.width/dpr,H=cv.height/dpr,padL=8,padR=48,padT=40,padB=86;  /* SHOTS 11/25 — reserve bottom space so candles never overlap the choice buttons */
   let lo=Math.min(...cs.map(c=>c.lo)),hi=Math.max(...cs.map(c=>c.hi));
   if(opts.extra)opts.extra.forEach(v=>{if(isFinite(v)){lo=Math.min(lo,v);hi=Math.max(hi,v);}});
   const pad=(hi-lo)*0.1||1;lo-=pad;hi+=pad;
@@ -17234,9 +17570,9 @@ const iou=(a,b)=>{const inter=Math.max(0,Math.min(a[1],b[1])-Math.max(a[0],b[0])
 function pivots(cs,k){const H=[],L=[];for(let i=k;i<cs.length-k;i++){let ph=true,pl=true;for(let j=1;j<=k;j++){if(cs[i].hi<cs[i-j].hi||cs[i].hi<cs[i+j].hi)ph=false;if(cs[i].lo>cs[i-j].lo||cs[i].lo>cs[i+j].lo)pl=false;}if(ph)H.push(i);if(pl)L.push(i);}return{H,L};}
 
 /* BOS: real swing-high pivot, first close above it (varies by seed) */
-function genBOS(seed,diff){const n=DIFF_N[diff],vol=DIFF_VOL[diff],cs=candles(seed,n,vol,0.85);const pv=pivots(cs,2);const cand=pv.H.filter(i=>i>=2&&i<=n*0.62);let swingIdx=cand.length?cand[cand.length-1]:Math.floor(n*0.4),swing=cs[swingIdx].hi,ans=-1;for(let i=swingIdx+1;i<n;i++){if(cs[i].c>swing){ans=i;break;}}if(ans<0){ans=Math.min(swingIdx+3,n-2);cs[ans].c=swing+vol;cs[ans].hi=cs[ans].c+1;}return{cs,swing,swingIdx,ans,extra:[swing]};}
+function genBOS(seed,diff){const n=DIFF_N[diff],vol=DIFF_VOL[diff],cs=mgCandles(seed,n,vol,0.85);const pv=pivots(cs,2);const cand=pv.H.filter(i=>i>=2&&i<=n*0.62);let swingIdx=cand.length?cand[cand.length-1]:Math.floor(n*0.4),swing=cs[swingIdx].hi,ans=-1;for(let i=swingIdx+1;i<n;i++){if(cs[i].c>swing){ans=i;break;}}if(ans<0){ans=Math.min(swingIdx+3,n-2);cs[ans].c=swing+vol;cs[ans].hi=cs[ans].c+1;}return{cs,swing,swingIdx,ans,extra:[swing]};}
 /* ChoCh: genuine up-leg then first close BELOW the most recent higher-low (varies) */
-function genChoCh(seed,diff){const n=DIFF_N[diff],vol=DIFF_VOL[diff],cs=candles(seed,n,vol,0.6),r=rng(seed+9);const pv=pivots(cs,2);const lows=pv.L.filter(i=>i>=2&&i<=n*0.65);let hlIdx=lows.length?lows[lows.length-1]:Math.floor(n*0.45),hl=cs[hlIdx].lo;const start=Math.min(hlIdx+2,n-4),breakAt=clamp(start+1+Math.floor(r()*(n-2-start)),start+1,n-2);let p=cs[start-1].c;for(let i=start;i<breakAt;i++){p=p-(p-(hl+vol*0.7))*0.4;cs[i].o=cs[i-1].c;cs[i].c=Math.max(hl+vol*0.4,p+(r()-0.5)*vol*0.3);cs[i].hi=Math.max(cs[i].o,cs[i].c)+vol*0.3;cs[i].lo=Math.min(cs[i].o,cs[i].c)-vol*0.2;}cs[breakAt].o=cs[breakAt-1].c;cs[breakAt].c=hl-vol*0.7;cs[breakAt].lo=cs[breakAt].c-vol*0.3;cs[breakAt].hi=Math.max(cs[breakAt].o,cs[breakAt].c)+vol*0.2;return{cs,hl,hlIdx,ans:breakAt,extra:[hl]};}
+function genChoCh(seed,diff){const n=DIFF_N[diff],vol=DIFF_VOL[diff],cs=mgCandles(seed,n,vol,0.6),r=rng(seed+9);const pv=pivots(cs,2);const lows=pv.L.filter(i=>i>=2&&i<=n*0.65);let hlIdx=lows.length?lows[lows.length-1]:Math.floor(n*0.45),hl=cs[hlIdx].lo;const start=Math.min(hlIdx+2,n-4),breakAt=clamp(start+1+Math.floor(r()*(n-2-start)),start+1,n-2);let p=cs[start-1].c;for(let i=start;i<breakAt;i++){p=p-(p-(hl+vol*0.7))*0.4;cs[i].o=cs[i-1].c;cs[i].c=Math.max(hl+vol*0.4,p+(r()-0.5)*vol*0.3);cs[i].hi=Math.max(cs[i].o,cs[i].c)+vol*0.3;cs[i].lo=Math.min(cs[i].o,cs[i].c)-vol*0.2;}cs[breakAt].o=cs[breakAt-1].c;cs[breakAt].c=hl-vol*0.7;cs[breakAt].lo=cs[breakAt].c-vol*0.3;cs[breakAt].hi=Math.max(cs[breakAt].o,cs[breakAt].c)+vol*0.2;return{cs,hl,hlIdx,ans:breakAt,extra:[hl]};}
 /* Zone: a level price reacts from 2-3 times (varied positions) */
 /* CLEAN, ACCURATE S/R test (SS5 rewrite): price travels AWAY from one fixed horizontal level,
    returns to touch it (2 clean tests), then breaks away. Candles connect smoothly (each opens at
@@ -17262,7 +17598,7 @@ function genZone(seed,diff,side){
   return{cs,zone:[level-band,level+band],side,level,extra:[level-band,level+band]};
 }
 /* Liquidity: near-equal highs at varied positions, any one accepted */
-function genLiquidity(seed,diff){const n=DIFF_N[diff],vol=DIFF_VOL[diff],r=rng(seed),cs=candles(seed,n,vol,0.4),lvl=Math.max.apply(0,cs.slice(0,Math.floor(n*0.35)).map(c=>c.hi))+vol*0.5,cnt=2+(r()>0.6?1:0),idxs=[];let pos=Math.floor(n*0.28);for(let k=0;k<cnt;k++){pos+=2+Math.floor(r()*Math.max(2,(n-3-pos)/(cnt-k)));pos=clamp(pos,1,n-2);/* clean liquidity sweep: body just BELOW the level, upper WICK spikes above it (grabs stops), small lower wick — all 4 set so the stale open/low can't draw a runaway body */cs[pos].o=lvl-vol*0.45;cs[pos].c=lvl-vol*0.65;cs[pos].hi=lvl+vol*0.3;cs[pos].lo=lvl-vol*0.95;idxs.push(pos);}return{cs,idxs,level:lvl,extra:[lvl]};}
+function genLiquidity(seed,diff){const n=DIFF_N[diff],vol=DIFF_VOL[diff],r=rng(seed),cs=mgCandles(seed,n,vol,0.4),lvl=Math.max.apply(0,cs.slice(0,Math.floor(n*0.35)).map(c=>c.hi))+vol*0.5,cnt=2+(r()>0.6?1:0),idxs=[];let pos=Math.floor(n*0.28);for(let k=0;k<cnt;k++){pos+=2+Math.floor(r()*Math.max(2,(n-3-pos)/(cnt-k)));pos=clamp(pos,1,n-2);/* clean liquidity sweep: body just BELOW the level, upper WICK spikes above it (grabs stops), small lower wick — all 4 set so the stale open/low can't draw a runaway body */cs[pos].o=lvl-vol*0.45;cs[pos].c=lvl-vol*0.65;cs[pos].hi=lvl+vol*0.3;cs[pos].lo=lvl-vol*0.95;idxs.push(pos);}return{cs,idxs,level:lvl,extra:[lvl]};}
 
 const PATTERNS={
   'Double Top':[36,50,66,58,65,52,40,34],'Double Bottom':[64,50,34,42,35,48,60,66],
@@ -17287,7 +17623,7 @@ reg({id:'choch',title:'ChoCh Placement',category:'Structure',framework:'annotate
 
 reg({id:'ob',title:'Order Block Trade',category:'Structure',framework:'sequence',variant:'zone',
   objective:'Mark the structure break, shade the order block, choose your direction, then watch price retest the block.',
-  gen:function(s,d){var n=DIFF_N[d],vol=DIFF_VOL[d],r=rng(s),cs=candles(s,n,vol,0.35),pv=pivots(cs,2),ch=pv.H.filter(function(i){return i>=2&&i<=n*0.5;}),sw=ch.length?ch[ch.length-1]:Math.floor(n*0.35),swing=cs[sw].hi,imp=clamp(sw+3+Math.floor(r()*3),sw+2,n-3),ob=imp-1,i;while(ob>1&&cs[ob].c>=cs[ob].o)ob--;cs[ob].o=cs[ob-1].c;cs[ob].c=cs[ob].o-vol*1.1;cs[ob].hi=cs[ob].o+vol*0.3;cs[ob].lo=cs[ob].c-vol*0.3;for(i=ob+1;i<=imp;i++){cs[i].o=cs[i-1].c;cs[i].c=Math.max(cs[i-1].c+vol*1.6,swing+vol*0.6);cs[i].lo=Math.min(cs[i].o,cs[i].c)-vol*0.2;cs[i].hi=Math.max(cs[i].o,cs[i].c)+vol*0.3;}for(i=imp+1;i<n;i++){var _t=(i-imp)/Math.max(1,n-1-imp),_mid=cs[imp].c+((cs[ob].hi+vol*0.6)-cs[imp].c)*_t,_o=cs[i-1].c,_c=_mid+(r()-0.5)*vol*0.55;cs[i]={o:_o,c:_c,hi:Math.max(_o,_c)+r()*vol*0.4,lo:Math.min(_o,_c)-r()*vol*0.4};}var obZone=[cs[ob].lo,cs[ob].hi],entryP=cs[n-1].c,obMid=(obZone[0]+obZone[1])/2,fut=[],p=entryP,m=10;for(i=0;i<m;i++){var t=i/(m-1),tgt=t<0.4?entryP+(obMid-entryP)*(t/0.4):obMid+((swing+vol*4)-obMid)*((t-0.4)/0.6),o=p,c=tgt+(r()-0.5)*vol*0.3;fut.push({o:o,c:c,hi:Math.max(o,c)+vol*0.3,lo:Math.min(o,c)-vol*0.3});p=c;}return {cs:cs,full:cs.concat(fut),swing:swing,swingIdx:sw,breakIdx:imp,obZone:obZone,obIdx:ob,entryP:entryP,extra:[obZone[0],obZone[1],swing+vol*4]};},
+  gen:function(s,d){var n=DIFF_N[d],vol=DIFF_VOL[d],r=rng(s),cs=mgCandles(s,n,vol,0.35),pv=pivots(cs,2),ch=pv.H.filter(function(i){return i>=2&&i<=n*0.5;}),sw=ch.length?ch[ch.length-1]:Math.floor(n*0.35),swing=cs[sw].hi,imp=clamp(sw+3+Math.floor(r()*3),sw+2,n-3),ob=imp-1,i;while(ob>1&&cs[ob].c>=cs[ob].o)ob--;cs[ob].o=cs[ob-1].c;cs[ob].c=cs[ob].o-vol*1.1;cs[ob].hi=cs[ob].o+vol*0.3;cs[ob].lo=cs[ob].c-vol*0.3;for(i=ob+1;i<=imp;i++){cs[i].o=cs[i-1].c;cs[i].c=Math.max(cs[i-1].c+vol*1.6,swing+vol*0.6);cs[i].lo=Math.min(cs[i].o,cs[i].c)-vol*0.2;cs[i].hi=Math.max(cs[i].o,cs[i].c)+vol*0.3;}for(i=imp+1;i<n;i++){var _t=(i-imp)/Math.max(1,n-1-imp),_mid=cs[imp].c+((cs[ob].hi+vol*0.6)-cs[imp].c)*_t,_o=cs[i-1].c,_c=_mid+(r()-0.5)*vol*0.55;cs[i]={o:_o,c:_c,hi:Math.max(_o,_c)+r()*vol*0.4,lo:Math.min(_o,_c)-r()*vol*0.4};}var obZone=[cs[ob].lo,cs[ob].hi],entryP=cs[n-1].c,obMid=(obZone[0]+obZone[1])/2,fut=[],p=entryP,m=10;for(i=0;i<m;i++){var t=i/(m-1),tgt=t<0.4?entryP+(obMid-entryP)*(t/0.4):obMid+((swing+vol*4)-obMid)*((t-0.4)/0.6),o=p,c=tgt+(r()-0.5)*vol*0.3;fut.push({o:o,c:c,hi:Math.max(o,c)+vol*0.3,lo:Math.min(o,c)-vol*0.3});p=c;}return {cs:cs,full:cs.concat(fut),swing:swing,swingIdx:sw,breakIdx:imp,obZone:obZone,obIdx:ob,entryP:entryP,extra:[obZone[0],obZone[1],swing+vol*4]};},
   draw:function(V,st,SEQ){V.hline(st.swing,'#4cc3ff','swing high');if(SEQ.brk!=null)V.marker(SEQ.brk,'#4cc3ff','BOS');if(SEQ.obz)V.zone(SEQ.obz[0],SEQ.obz[1],'#a855f7');},
   steps:[
     {kind:'marker',key:'brk',prompt:'Tap the impulsive candle that BREAKS the swing high',hint:'the big breakout candle',score:function(st,SEQ,r){var d=Math.abs(r-st.breakIdx);return{pts:d===0?25:d===1?15:0,max:25,why:d<=1?'':'The break is the strong candle that closes above the swing high.'};}},
@@ -17299,12 +17635,12 @@ reg({id:'ob',title:'Order Block Trade',category:'Structure',framework:'sequence'
 reg({id:'support',title:'Support Zone',category:'Levels',framework:'annotate',variant:'zone',
   objective:'Shade the demand zone — the level price keeps bouncing UP from.',prompt:'Shade support',
   gen:(s,d)=>genZone(s,d,'support'),reveal:(V,st)=>V.zone(st.zone[0],st.zone[1],'#16c784'),
-  validate:(st,r)=>{if(!r)return{score:0,why:'Drag across the level price keeps bouncing from.'};const v=iou(r,st.zone);return{score:Math.round(v*100),why:v>0.5?'Good — that band held as demand on repeated tests.':'Support is the band the lows keep bouncing off — note the repeated tests, and draw a zone not a line.'};}});
+  validate:(st,r)=>{if(!r)return{score:0,why:'Drag across the level price keeps bouncing from.'};const v=iou(r,st.zone);return{score:Math.round(Math.min(1,v*1.45)*100),why:v>0.4?'Nice — your box covers the floor where price keeps bouncing up.':'Support is the floor where the lows keep bouncing up. Draw a box (not a line) right over those bounce points.'};}});
 
 reg({id:'resistance',title:'Resistance Zone',category:'Levels',framework:'annotate',variant:'zone',
   objective:'Shade the supply zone — the level price keeps rejecting DOWN from.',prompt:'Shade resistance',
   gen:(s,d)=>genZone(s,d,'resistance'),reveal:(V,st)=>V.zone(st.zone[0],st.zone[1],'#ea3943'),
-  validate:(st,r)=>{if(!r)return{score:0,why:'Drag across the level price keeps rejecting from.'};const v=iou(r,st.zone);return{score:Math.round(v*100),why:v>0.5?'Good — that band capped price on repeated tests.':'Resistance is the band the highs keep rejecting from — note the repeated tests.'};}});
+  validate:(st,r)=>{if(!r)return{score:0,why:'Drag across the level price keeps rejecting from.'};const v=iou(r,st.zone);return{score:Math.round(Math.min(1,v*1.45)*100),why:v>0.4?'Nice — your box covers the ceiling where price keeps getting pushed down.':'Resistance is the ceiling where the highs keep getting pushed down. Draw a box over those rejection points.'};}});
 
 reg({id:'liquidity',title:'Liquidity ID',category:'Structure',framework:'annotate',variant:'marker',
   objective:'Tap one of the (near-)equal highs where stop orders rest.',prompt:'Where is liquidity resting?',
@@ -17314,7 +17650,7 @@ reg({id:'liquidity',title:'Liquidity ID',category:'Structure',framework:'annotat
 
 reg({id:'sl',title:'Stop-Loss Placement',category:'Risk',framework:'annotate',variant:'line',
   objective:'Drag the stop to a LOGICAL level — just beyond structure, clear of the noise.',prompt:'Place your stop-loss',
-  gen:(s,d)=>{const n=DIFF_N[d],cs=candles(s,n,DIFF_VOL[d],0.7),swingLo=Math.min.apply(0,cs.slice(-8).map(c=>c.lo)),atr=DIFF_VOL[d];return{cs,swingLo,goodLo:swingLo-atr*1.5,goodHi:swingLo-atr*0.1,entry:cs[n-1].c,start:swingLo-atr*0.05,extra:[swingLo]};},
+  gen:(s,d)=>{const n=DIFF_N[d],cs=mgCandles(s,n,DIFF_VOL[d],0.7),swingLo=Math.min.apply(0,cs.slice(-8).map(c=>c.lo)),atr=DIFF_VOL[d];return{cs,swingLo,goodLo:swingLo-atr*1.5,goodHi:swingLo-atr*0.1,entry:cs[n-1].c,start:swingLo-atr*0.05,extra:[swingLo]};},
   overlays:(V,st)=>V.hline(st.swingLo,'#7d8aa0','swing low'),
   reveal:(V,st)=>V.hline((st.goodLo+st.goodHi)/2,'#16c784','good stop'),
   validate:(st,r)=>{const ok=r<st.goodHi&&r>st.goodLo,tight=r>=st.swingLo,score=ok?100:tight?20:55;return{score,why:ok?'Logical stop — just beyond structure, clear of the wicks.':tight?'Too tight — a stop inside the noise gets hunted out.':'Valid but far — you\'re risking more than the trade needs.'};}});
@@ -17326,13 +17662,13 @@ reg({id:'trend',title:'Trendline',category:'Levels',framework:'annotate',variant
 
 reg({id:'vwap',title:'VWAP Reaction',category:'Execution',framework:'annotate',variant:'marker',
   objective:'Tap a candle that tags VWAP and rejects — the bounce entry.',prompt:'Where does price react to VWAP?',
-  gen:(s,d)=>{const n=DIFF_N[d],vol=DIFF_VOL[d],cs=candles(s,n,vol,0.5),vw=[];let sum=0;for(let i=0;i<n;i++){sum+=cs[i].c;vw.push(sum/(i+1));}const valid=[];for(let i=3;i<n-1;i++)if(Math.abs(cs[i].lo-vw[i])<vol*0.6&&cs[i+1].c>cs[i].c+vol*0.2)valid.push(i);if(!valid.length){const bi=clamp(Math.floor((0.45+rng(s)()*0.3)*n),3,n-2);let s2=0;for(let k=0;k<=bi;k++)s2+=cs[k].c;const v=s2/(bi+1);/* clean VWAP bounce: lower WICK tags the VWAP line, body closes above it, small upper wick — hi was left stale, which drew the body at VWAP with a huge wick up */cs[bi].o=v-vol*0.1;cs[bi].c=v+vol*0.7;cs[bi].lo=v-vol*0.25;cs[bi].hi=v+vol*1.0;if(cs[bi+1]){cs[bi+1].o=cs[bi].c;cs[bi+1].c=cs[bi].c+vol*0.5;cs[bi+1].hi=Math.max(cs[bi+1].o,cs[bi+1].c)+vol*0.3;cs[bi+1].lo=Math.min(cs[bi+1].o,cs[bi+1].c)-vol*0.2;}valid.push(bi);}return{cs,valid,extra:[]};},
+  gen:(s,d)=>{const n=DIFF_N[d],vol=DIFF_VOL[d],cs=mgCandles(s,n,vol,0.5),vw=[];let sum=0;for(let i=0;i<n;i++){sum+=cs[i].c;vw.push(sum/(i+1));}const valid=[];for(let i=3;i<n-1;i++)if(Math.abs(cs[i].lo-vw[i])<vol*0.6&&cs[i+1].c>cs[i].c+vol*0.2)valid.push(i);if(!valid.length){const bi=clamp(Math.floor((0.45+rng(s)()*0.3)*n),3,n-2);let s2=0;for(let k=0;k<=bi;k++)s2+=cs[k].c;const v=s2/(bi+1);/* clean VWAP bounce: lower WICK tags the VWAP line, body closes above it, small upper wick — hi was left stale, which drew the body at VWAP with a huge wick up */cs[bi].o=v-vol*0.1;cs[bi].c=v+vol*0.7;cs[bi].lo=v-vol*0.25;cs[bi].hi=v+vol*1.0;if(cs[bi+1]){cs[bi+1].o=cs[bi].c;cs[bi+1].c=cs[bi].c+vol*0.5;cs[bi+1].hi=Math.max(cs[bi+1].o,cs[bi+1].c)+vol*0.3;cs[bi+1].lo=Math.min(cs[bi+1].o,cs[bi+1].c)-vol*0.2;}valid.push(bi);}return{cs,valid,extra:[]};},
   overlays:(V)=>V.vwap(),reveal:(V,st)=>st.valid.forEach(i=>V.marker(i,'#16c784','✓')),
   validate:(st,r)=>{const dist=Math.min.apply(0,st.valid.map(i=>Math.abs(r-i))),score=dist===0?100:dist===1?70:dist===2?35:10;return{score,why:dist<=1?'Good — price tagged VWAP and pushed off it. A clean mean-reversion entry.':'Find a candle whose wick TOUCHES the orange VWAP line, then closes higher.'};}});
 
 reg({id:'error',title:'Spot the Error',category:'Patterns',framework:'annotate',variant:'marker',
   objective:'One candle is impossible (its body breaks its own wick). Tap it.',prompt:'Find the corrupt candle',
-  gen:(s,d)=>{const n=DIFF_N[d],cs=candles(s,n,DIFF_VOL[d],0.3),bad=4+Math.floor(rng(s)()*(n-6));cs[bad].c=cs[bad].hi+DIFF_VOL[d]*1.4;return{cs,ans:bad,extra:[]};},
+  gen:(s,d)=>{const n=DIFF_N[d],cs=mgCandles(s,n,DIFF_VOL[d],0.3),bad=4+Math.floor(rng(s)()*(n-6));cs[bad].c=cs[bad].hi+DIFF_VOL[d]*1.4;return{cs,ans:bad,extra:[]};},
   reveal:(V,st)=>V.marker(st.ans,'#16c784','✓'),
   validate:(st,r)=>({score:r===st.ans?100:0,why:r===st.ans?'Right — that candle closes ABOVE its own high, which is impossible. Bad data.':'One candle\'s body pokes OUTSIDE its wick — that\'s the impossible one.'})});
 
@@ -17380,7 +17716,7 @@ reg({id:'candle',title:'Candle Lab',category:'Patterns',framework:'sequence',
 /* —— PREDICT —— */
 reg({id:'fake',title:'Break Trader',category:'Patterns',framework:'sequence',
   objective:'Mark resistance, judge the break (close above = real, wick & close back = fake), choose your play, then watch it resolve.',
-  gen:function(s,d){var n=DIFF_N[d],vol=DIFF_VOL[d],r=rng(s),real=r()>0.5,cs=candles(s,n,vol*0.7,0.2),pv=pivots(cs,2),hh=pv.H.filter(function(i){return i<=n*0.6;}),resIdx=hh.length?hh[hh.length-1]:Math.floor(n*0.4),res=cs[resIdx].hi,dec=clamp(Math.floor(n*0.7),resIdx+3,n-1),i;
+  gen:function(s,d){var n=DIFF_N[d],vol=DIFF_VOL[d],r=rng(s),real=r()>0.5,cs=mgCandles(s,n,vol*0.7,0.2),pv=pivots(cs,2),hh=pv.H.filter(function(i){return i<=n*0.6;}),resIdx=hh.length?hh[hh.length-1]:Math.floor(n*0.4),res=cs[resIdx].hi,dec=clamp(Math.floor(n*0.7),resIdx+3,n-1),i;
     if(real){cs[dec].o=res-vol*0.4;cs[dec].c=res+vol*1.4;cs[dec].hi=cs[dec].c+vol*0.2;cs[dec].lo=cs[dec].o-vol*0.2;}else{cs[dec].o=res-vol*0.3;cs[dec].hi=res+vol*1.7;cs[dec].c=res-vol*0.4;cs[dec].lo=cs[dec].o-vol*0.2;}
     var hist=cs.slice(0,dec+1),fut=[],p=cs[dec].c,m=9;for(i=0;i<m;i++){var tgt=real?res+vol*(1.5+i*0.7):res-vol*(0.8+i*0.7),o=p,c=tgt+(r()-0.5)*vol*0.3;fut.push({o:o,c:c,hi:Math.max(o,c)+vol*0.3,lo:Math.min(o,c)-vol*0.3});p=c;}
     return {cs:hist,full:hist.concat(fut),res:res,resIdx:resIdx,dec:dec,real:real,extra:[res]};},
@@ -17408,7 +17744,7 @@ reg({id:'predict',title:'Trade Prediction',category:'Execution',framework:'predi
       for(let i=dec+1;i<n;i++){const o=p,c=p+dir*vol*(0.7+r()*0.5);cs.push({o,c,hi:Math.max(o,c)+r()*vol*0.4,lo:Math.min(o,c)-r()*vol*0.4});p=c;}
       return{cs,dec,answer:dir>0?'up':'down',follow:true,extra:[]};
     }
-    const trend=(r()>0.5?1:-1)*(0.7+r()*0.8),cs=candles(s,n,vol,trend),dec=n-6,follow=r()<0.82,dir=follow?(trend>0?1:-1):(trend>0?-1:1);
+    const trend=(r()>0.5?1:-1)*(0.7+r()*0.8),cs=mgCandles(s,n,vol,trend),dec=n-6,follow=r()<0.82,dir=follow?(trend>0?1:-1):(trend>0?-1:1);
     if(!follow){if(trend>0)cs[dec].hi=cs[dec].c+vol*2.4;else cs[dec].lo=cs[dec].c-vol*2.4;}
     for(let i=dec+1;i<n;i++){cs[i].o=cs[i-1].c;cs[i].c=cs[i-1].c+dir*vol*0.9+(rng(s+i)()-0.5)*vol*0.5;cs[i].hi=Math.max(cs[i].o,cs[i].c)+1;cs[i].lo=Math.min(cs[i].o,cs[i].c)-1;}
     return{cs,dec,answer:cs[n-1].c>cs[dec].c?'up':'down',follow,extra:[]};},
@@ -17440,13 +17776,14 @@ reg({id:'whowon',title:'Who Won?',category:'Execution',framework:'classify',
 reg({id:'confirm',title:'Read the Close',category:'Execution',framework:'classify',
   objective:'Ignore the spike — the CLOSE decides who really won.',prompt:'It spiked, then closed. Who really won?',
   gen:(s,d)=>{const r=rng(s),up=r()>0.5,vol=DIFF_VOL[d];const cs=[];let p=100;
-    // realistic mixed lead-in (varied green/red bodies + wicks) drifting toward the trap — not flat dojis
+    // SHOT 25 — realistic mixed lead-in: readable bodies (few dojis), and only SOME candles get a
+    // wick — drifting toward the trap. The decisive spike candle below keeps its long teaching wick.
     const drift=(up?-1:1)*vol*0.3;
-    for(let i=0;i<5;i++){const o=p,c=p+drift+(r()-0.5)*vol*1.15;cs.push({o,c,hi:Math.max(o,c)+r()*vol*0.6,lo:Math.min(o,c)-r()*vol*0.6});p=c;}
+    for(let i=0;i<5;i++){let dd=drift+(r()-0.5)*vol*1.15;if(Math.abs(dd)<vol*0.3)dd=(dd>=0?1:-1)*vol*(0.3+r()*0.5);const o=p,c=p+dd,bt=Math.max(o,c),bb=Math.min(o,c);const hw=r()<0.5?r()*vol*0.5:0,lw=r()<0.5?r()*vol*0.5:0;cs.push({o,c,hi:bt+hw,lo:bb-lw});p=c;}
     const o=p,c=p+(up?1:-1)*vol*2.6,Wk=vol*2.8;   // big decisive body, long wick AGAINST the close
     cs.push({o,c,hi:up?Math.max(o,c)+vol*0.25:Math.max(o,c)+Wk,lo:up?Math.min(o,c)-Wk:Math.min(o,c)-vol*0.25});
     return{cs,answer:up?'up':'down'};},
-  choices:()=>[['up','🟩 BUYERS — it closed UP','#16c784'],['down','🟥 SELLERS — it closed DOWN','#ea3943']],
+  choices:()=>[['up','🟩 BUYERS<br><span style="font-weight:600;opacity:.85">it closed UP</span>','#16c784'],['down','🟥 SELLERS<br><span style="font-weight:600;opacity:.85">it closed DOWN</span>','#ea3943']],
   why:(st,ok)=>ok?'Right — the long wick was a fake-out; the CLOSE is the truth.':'Read the CLOSE, not the spike — the wick faked one way, the body closed the other.'});
 
 reg({id:'manage',title:'Trade Management Sim',category:'Execution',framework:'sequence',
@@ -17466,7 +17803,7 @@ reg({id:'manage',title:'Trade Management Sim',category:'Execution',framework:'se
 reg({id:'mtf',title:'Multi-Timeframe',category:'Execution',framework:'predict',
   objective:'Check the higher-timeframe bias first, then trade the lower timeframe with it.',prompt:'Trade with the higher-timeframe bias',
   choices:[['up','📈 LONG','ch-up'],['down','📉 SHORT','ch-dn']],
-  gen:(s,d)=>{const bias=rng(s)()>0.5?'up':'down',n=DIFF_N[d],htf=candles(s+1,10,DIFF_VOL[d]*1.1,bias==='up'?1.4:-1.4),cs=candles(s,n,DIFF_VOL[d],bias==='up'?0.6:-0.6);return{cs,htf,bias,dec:n-1,answer:bias,extra:[]};},
+  gen:(s,d)=>{const bias=rng(s)()>0.5?'up':'down',n=DIFF_N[d],htf=mgCandles(s+1,10,DIFF_VOL[d]*1.1,bias==='up'?1.4:-1.4),cs=mgCandles(s,n,DIFF_VOL[d],bias==='up'?0.6:-0.6);return{cs,htf,bias,dec:n-1,answer:bias,extra:[]};},
   noReveal:true,
   overlays:(V,st)=>{const x=V.x,bw=104,bh=46,bx=V.padL+4,by=V.padT+2;x.fillStyle='rgba(8,12,20,.85)';x.fillRect(bx,by,bw,bh);x.strokeStyle='#2a3a4e';x.strokeRect(bx,by,bw,bh);const hs=st.htf,lo=Math.min.apply(0,hs.map(c=>c.lo)),hi=Math.max.apply(0,hs.map(c=>c.hi)),HX=i=>bx+6+i/(hs.length-1)*(bw-12),HY=v=>by+8+(1-(v-lo)/(hi-lo))*(bh-22);x.strokeStyle=st.bias==='up'?'#16c784':'#ea3943';x.lineWidth=1.5;x.beginPath();hs.forEach((c,i)=>i?x.lineTo(HX(i),HY(c.c)):x.moveTo(HX(i),HY(c.c)));x.stroke();x.fillStyle=st.bias==='up'?'#16c784':'#ea3943';x.font='800 8px sans-serif';x.textAlign='left';x.fillText('HTF: '+(st.bias==='up'?'UPTREND':'DOWNTREND'),bx+4,by+bh-4);},
   why:(st,ok)=>ok?'Correct — align with the higher-timeframe bias for the highest-probability trades.':'Trade WITH the higher timeframe — the inset showed the dominant direction.'});
@@ -17474,7 +17811,7 @@ reg({id:'mtf',title:'Multi-Timeframe',category:'Execution',framework:'predict',
 /* —— CALCULATE —— */
 reg({id:'rr',title:'Risk-Reward Builder',category:'Risk',framework:'calculate',
   objective:'Stop beyond structure, target at the resistance level. Build at least 2R.',prompt:'Build the trade',
-  gen:(s,d)=>{const cs=candles(s,20,DIFF_VOL[d],0.5),entry=cs[19].c,swingLo=Math.min.apply(0,cs.slice(-8).map(c=>c.lo)),res=Math.max.apply(0,cs.slice(0,16).map(c=>c.hi))+DIFF_VOL[d]*0.6;return{cs,entry,swingLo,res,extra:[entry,swingLo,res]};},
+  gen:(s,d)=>{const cs=mgCandles(s,20,DIFF_VOL[d],0.5),entry=cs[19].c,swingLo=Math.min.apply(0,cs.slice(-8).map(c=>c.lo)),res=Math.max.apply(0,cs.slice(0,16).map(c=>c.hi))+DIFF_VOL[d]*0.6;return{cs,entry,swingLo,res,extra:[entry,swingLo,res]};},
   setup:(st,V,host,finish)=>{const e=st.entry;let stop=st.swingLo-1,target=e+(e-st.swingLo)*2;
     host.innerHTML+=`<div class="sliders"><div class="rdg"><span>R:R <b id="rrv">–</b></span><span>target the red level</span></div>
       <label>Stop</label><input type="range" id="s-stop" min="5" max="95" value="40"><label>Target</label><input type="range" id="s-tgt" min="5" max="95" value="62"></div>`;
@@ -17487,7 +17824,7 @@ reg({id:'rr',title:'Risk-Reward Builder',category:'Risk',framework:'calculate',
 
 reg({id:'possize',title:'Position Size',category:'Risk',framework:'calculate',
   objective:'Risk 1%: compute size = (1% × account) ÷ stop distance, then dial it in.',prompt:'Size the trade to 1% risk',
-  gen:(s,d)=>{const r=rng(s),account=[5000,10000,25000][Math.floor(r()*3)],cs=candles(s,18,DIFF_VOL[d],0.5),entry=cs[17].c,swingLo=Math.min.apply(0,cs.slice(-6).map(c=>c.lo)),stopDist=Math.max(1,entry-swingLo),correct=account*0.01/stopDist,maxSize=correct*(1.5+r()*1.8);return{cs,entry,swingLo,stopDist,account,correct,maxSize,extra:[entry,swingLo]};},
+  gen:(s,d)=>{const r=rng(s),account=[5000,10000,25000][Math.floor(r()*3)],cs=mgCandles(s,18,DIFF_VOL[d],0.5),entry=cs[17].c,swingLo=Math.min.apply(0,cs.slice(-6).map(c=>c.lo)),stopDist=Math.max(1,entry-swingLo),correct=account*0.01/stopDist,maxSize=correct*(1.5+r()*1.8);return{cs,entry,swingLo,stopDist,account,correct,maxSize,extra:[entry,swingLo]};},
   setup:(st,V,host,finish)=>{let size=0;
     host.innerHTML+=`<div class="sliders"><div class="rdg"><span>ACCT ${st.account.toLocaleString()}</span><span>STOP ${st.stopDist.toFixed(1)} pts</span></div>
       <label>Solve 1% × ${st.account.toLocaleString()} ÷ ${st.stopDist.toFixed(1)}, then set the size:</label><input type="range" id="s-size" min="0" max="1000" value="300"><div class="rdg"><span></span><span id="szv"></span></div></div>`;
@@ -17498,7 +17835,7 @@ reg({id:'possize',title:'Position Size',category:'Risk',framework:'calculate',
 /* —— CLASSIFY —— */
 reg({id:'struct',title:'Market-Structure Classify',category:'Structure',framework:'classify',
   objective:'Read the structure: uptrend, downtrend, or range?',prompt:'Classify the structure',
-  gen:(s,d)=>{const kind=['up','down','range'][Math.floor(rng(s)()*3)],trend=kind==='up'?1:kind==='down'?-1:0,cs=candles(s,DIFF_N[d],DIFF_VOL[d],trend);if(kind==='range'){const mid=cs[0].c;cs.forEach((c,i)=>{c.c=mid+Math.sin(i*0.7)*DIFF_VOL[d]*1.6;c.o=mid+Math.sin((i-1)*0.7)*DIFF_VOL[d]*1.6;c.hi=Math.max(c.o,c.c)+1.2;c.lo=Math.min(c.o,c.c)-1.2;});}return{cs,answer:kind};},
+  gen:(s,d)=>{const kind=['up','down','range'][Math.floor(rng(s)()*3)],trend=kind==='up'?1:kind==='down'?-1:0,cs=mgCandles(s,DIFF_N[d],DIFF_VOL[d],trend);if(kind==='range'){const mid=cs[0].c;cs.forEach((c,i)=>{c.c=mid+Math.sin(i*0.7)*DIFF_VOL[d]*1.6;c.o=mid+Math.sin((i-1)*0.7)*DIFF_VOL[d]*1.6;c.hi=Math.max(c.o,c.c)+1.2;c.lo=Math.min(c.o,c.c)-1.2;});}return{cs,answer:kind};},
   choices:()=>[['up','▲ Uptrend','#16c784'],['down','▼ Downtrend','#ea3943'],['range','↔ Range','#4cc3ff']],
   why:(st,ok)=>ok?'Correct — that\'s a clean '+st.answer+'.':'That was a '+st.answer+'. Read the sequence of highs and lows.'});
 
@@ -17522,7 +17859,7 @@ reg({id:'exec',title:'Trade Execution Challenge',category:'Execution',framework:
   objective:'The capstone: read the trend, mark the break, pick your entry, set stop & target, execute — then watch it play out.',
   gen:function(seed,diff){
     var r=rng(seed),dir=r()>0.5?'up':'down',sign=dir==='up'?1:-1,n=Math.round(DIFF_N[diff]*0.78),vol=DIFF_VOL[diff];
-    var cs=candles(seed,n,vol,sign*0.85),sh=Math.floor(n*0.4),swing,breakIdx,struct,i;
+    var cs=mgCandles(seed,n,vol,sign*0.85),sh=Math.floor(n*0.4),swing,breakIdx,struct,i;
     if(dir==='up'){swing=Math.max.apply(0,cs.slice(0,sh+1).map(function(c){return c.hi;}));breakIdx=-1;for(i=sh+2;i<n;i++)if(cs[i].c>swing){breakIdx=i;break;}if(breakIdx<0){breakIdx=n-3;cs[breakIdx].c=swing+vol;cs[breakIdx].hi=cs[breakIdx].c+1;}struct=Math.min.apply(0,cs.slice(0,breakIdx+1).map(function(c){return c.lo;}));}
     else{swing=Math.min.apply(0,cs.slice(0,sh+1).map(function(c){return c.lo;}));breakIdx=-1;for(i=sh+2;i<n;i++)if(cs[i].c<swing){breakIdx=i;break;}if(breakIdx<0){breakIdx=n-3;cs[breakIdx].c=swing-vol;cs[breakIdx].lo=cs[breakIdx].c-1;}struct=Math.max.apply(0,cs.slice(0,breakIdx+1).map(function(c){return c.hi;}));}
     var entryP=cs[n-1].c,risk=Math.max(vol,Math.abs(entryP-struct)),entryBand=dir==='up'?[swing-vol,entryP+vol*1.3]:[entryP-vol*1.3,swing+vol];
@@ -17671,7 +18008,7 @@ function stopTimer(){if(timer){clearInterval(timer);timer=null;}$$('#gameArea .t
 function clearArea(){$$('#gameArea .prompt,#gameArea .hint,#gameArea .choices,#gameArea .sliders,#gameArea .timer,#gameArea #mgConcept').forEach(e=>e.remove());cv.onpointerdown=cv.onpointermove=cv.onpointerup=null;}
 function addHTML(h){const d=document.createElement('div');d.innerHTML=h;while(d.firstChild)$('#gameArea').appendChild(d.firstChild);}
 const _MGF='-apple-system,BlinkMacSystemFont,system-ui,sans-serif';
-const CONCEPTS={
+const MG_CONCEPTS={
   bos:'A SWING HIGH is a peak with lower highs on each side. A BREAK OF STRUCTURE (BOS) is when a candle CLOSES above it — confirming the up-move continues.',
   choch:'A CHANGE OF CHARACTER (ChoCh) is the first warning a trend may reverse: in an uptrend, price closes back BELOW the most recent higher low.',
   ob:'An ORDER BLOCK is the last opposing (red) candle before a strong move that breaks structure — a zone price often returns to before continuing.',
@@ -17693,22 +18030,315 @@ const CONCEPTS={
   pattern:'Chart PATTERNS — double tops, head & shoulders, flags, triangles — hint at the next move once they complete.',
   exec:'A full trade: read the trend, mark the break, enter the retest, set a logical stop & target, then let it play out.',
 };
+
+/* ════════ LessonChart — reusable ANIMATED teaching chart (style LOCKED 10/10; ref lesson-chart-preview.html)
+   One renderer, data-driven scenes keyed by concept id. Powers every boss-round lesson intro (showConcept).
+   Scenes: candles print in left→right, then annotations animate (shell-on-wick + label/arrow, HH/HL,
+   swing-high + BOS close, support/resistance line, liquidity sweep / fakeout). Prices are 0..100; auto-framed.
+   Copy is 10-year-old level (HARD RULE). ════════ */
+const LessonChart=(function(){
+  const C={green:'#16c784',greenEdge:'#0c9c69',greenWick:'#1fd790',red:'#ea3943',redEdge:'#c0212c',redWick:'#ff5663',grid:'rgba(255,255,255,0.05)',sub:'#8b97a8',purp:'#a855f7',gold:'#ffd60a',blue:'#4cc3ff',shell:'#36d9e0',orange:'#ff9f1c'};
+  const FT='-apple-system,system-ui,sans-serif';
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,easeOut=t=>1-Math.pow(1-clamp(t,0,1),3);
+  const SCENES={
+    liquidity:{caption:'See the matching highs? Lots of traders hide a <b>stop loss</b> just above them. Price spikes up to grab those — a <b>liquidity sweep</b> — then drops back down.',
+      candles:[{o:42,h:50,l:40,c:48},{o:48,h:71,l:46,c:55},{o:55,h:64,l:52,c:62},{o:62,h:70,l:57,c:58},{o:58,h:63,l:54,c:61},{o:61,h:71,l:55,c:56},{o:56,h:60,l:52,c:59},{o:59,h:88,l:50,c:52,sweep:true}],
+      anns:[{type:'eqHighs',y:70.5,from:1,to:6,at:1.7,color:C.purp,label:'EQUAL HIGHS · stop losses sit above'},{type:'shell',candle:7,at:2.4,label:'LIQUIDITY'},{type:'sweepFlag',candle:7,at:3.5}]},
+    support:{caption:'See the <b>floor</b>? Buyers keep stepping in here, so price bounces back <b>UP</b>. That floor is called <b>support</b>.',
+      candles:[{o:60,h:62,l:54,c:56},{o:56,h:58,l:46,c:48},{o:48,h:50,l:31,c:36},{o:36,h:42,l:30,c:40},{o:40,h:44,l:31,c:34},{o:34,h:48,l:32,c:46},{o:46,h:56,l:44,c:54},{o:54,h:64,l:52,c:62}],
+      anns:[{type:'hline',y:31,at:1.7,color:C.green,label:'SUPPORT · buyers step in'}]},
+    resistance:{caption:'See the <b>ceiling</b>? Sellers keep stepping in here, so price drops back <b>DOWN</b>. That ceiling is called <b>resistance</b>.',
+      candles:[{o:40,h:44,l:38,c:43},{o:43,h:55,l:42,c:52},{o:52,h:69,l:50,c:60},{o:60,h:70,l:58,c:64},{o:64,h:70,l:56,c:58},{o:58,h:62,l:48,c:50},{o:50,h:54,l:40,c:42},{o:42,h:46,l:34,c:36}],
+      anns:[{type:'hline',y:70,at:1.7,color:C.red,label:'RESISTANCE · sellers step in'}]},
+    uptrend:{caption:'An <b>uptrend</b> makes <b>higher highs</b> and <b>higher lows</b> — like stairs going up. Trade with it (look for buys).',
+      candles:[{o:26,h:36,l:24,c:34},{o:34,h:38,l:28,c:30},{o:30,h:48,l:28,c:46},{o:46,h:50,l:39,c:41},{o:41,h:60,l:39,c:58},{o:58,h:62,l:51,c:53},{o:53,h:74,l:51,c:72},{o:72,h:80,l:67,c:78}],
+      anns:[{type:'hl',candle:1,at:1.6,label:'HL'},{type:'hh',candle:2,at:2.0,label:'HH'},{type:'hl',candle:3,at:2.4,label:'HL'},{type:'hh',candle:4,at:2.8,label:'HH'},{type:'hl',candle:5,at:3.2,label:'HL'},{type:'hh',candle:6,at:3.6,label:'HH'}]},
+    downtrend:{caption:'A <b>downtrend</b> makes <b>lower highs</b> and <b>lower lows</b> — like stairs going down. Trade with it (look for sells).',
+      candles:[{o:72,h:78,l:64,c:66},{o:66,h:72,l:60,c:62},{o:62,h:66,l:50,c:52},{o:52,h:60,l:50,c:58},{o:58,h:60,l:42,c:44},{o:44,h:52,l:42,c:50},{o:50,h:52,l:30,c:32},{o:32,h:38,l:24,c:28}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.red,at:1.8,label:'LH'},{type:'tag',candle:2,side:'down',color:C.gold,at:2.2,label:'LL'},{type:'tag',candle:3,side:'up',color:C.red,at:2.6,label:'LH'},{type:'tag',candle:6,side:'down',color:C.gold,at:3.0,label:'LL'}]},
+    sfp:{caption:'A <b>Swing Failure</b> pokes just above the last high to grab stop losses, then <b>closes back below</b>. The breakout failed — price often reverses.',
+      candles:[{o:40,h:46,l:38,c:44},{o:44,h:62,l:42,c:58},{o:58,h:60,l:48,c:50},{o:50,h:56,l:46,c:54},{o:54,h:58,l:50,c:52},{o:52,h:74,l:50,c:55,sweep:true}],
+      anns:[{type:'hline',y:62,at:1.4,color:C.sub,label:'last swing high'},{type:'sweepFlag',candle:5,at:3.0,color:C.red,text:'SFP → swept the high, closed back'}]},
+    head_shoulders:{caption:'<b>Head &amp; Shoulders</b>: two smaller peaks (shoulders) beside one big peak (head). When price breaks the <b>neckline</b>, the uptrend often flips down.',
+      candles:[{o:22,h:28,l:20,c:26},{o:26,h:44,l:24,c:42},{o:42,h:44,l:34,c:36},{o:36,h:58,l:34,c:56},{o:56,h:58,l:36,c:38},{o:38,h:46,l:36,c:44},{o:44,h:48,l:34,c:36},{o:36,h:40,l:26,c:28}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.blue,at:1.8,label:'SHOULDER'},{type:'tag',candle:3,side:'up',color:C.blue,at:2.3,label:'HEAD'},{type:'tag',candle:6,side:'up',color:C.blue,at:2.8,label:'SHOULDER'},{type:'hline',y:36,at:3.2,color:C.red,label:'neckline'}]},
+    double_bottom:{caption:'A <b>double bottom</b> is a <b>W</b> shape — price hits the same floor twice and can’t break it. Buyers step in, and it often turns up.',
+      candles:[{o:56,h:58,l:50,c:52},{o:52,h:54,l:38,c:40},{o:40,h:50,l:38,c:48},{o:48,h:54,l:46,c:52},{o:52,h:54,l:38,c:42},{o:42,h:56,l:40,c:54},{o:54,h:64,l:52,c:62}],
+      anns:[{type:'hline',y:38,at:1.6,color:C.green,label:'double bottom'},{type:'tag',candle:1,side:'down',color:C.gold,at:2.4,label:'LOW 1'},{type:'tag',candle:4,side:'down',color:C.gold,at:3.0,label:'LOW 2'}]},
+    choch:{caption:'A <b>Change of Character</b> is the first warning a trend may flip. In an uptrend, price <b>closes below the last higher low</b> — buyers just lost control.',
+      candles:[{o:30,h:38,l:28,c:36},{o:36,h:48,l:34,c:46},{o:46,h:50,l:40,c:42},{o:42,h:58,l:40,c:56},{o:56,h:60,l:46,c:48},{o:48,h:52,l:36,c:40}],
+      anns:[{type:'hline',y:42,at:2.0,color:C.sub,label:'last higher low'},{type:'sweepFlag',candle:5,at:3.0,color:C.red,text:'ChoCh → closed below it'}]},
+    vwap:{caption:'<b>VWAP</b> is the day’s average price. When price <b>flips</b> from above to below it, then <b>slaps</b> back into it and gets rejected, sellers are in control.',
+      candles:[{o:36,h:42,l:34,c:40},{o:40,h:50,l:38,c:48},{o:48,h:54,l:43,c:44},{o:44,h:50,l:40,c:42},{o:42,h:46,l:34,c:36},{o:36,h:44,l:35,c:41},{o:41,h:43,l:28,c:30}],
+      anns:[{type:'line',c1:0,p1:37,c2:6,p2:41,color:C.blue,dash:true,at:1.4,label:'VWAP'},{type:'tag',candle:4,side:'down',color:C.red,at:2.6,label:'FLIP ↓'},{type:'tag',candle:5,side:'up',color:C.red,at:3.2,label:'SLAP ✗'}]},
+    ob:{caption:'An <b>order block</b> is the last red candle before a big move up. Price often comes <b>back to it</b> and bounces — a good spot to buy.',
+      candles:[{o:48,h:54,l:46,c:52},{o:52,h:54,l:42,c:44},{o:44,h:64,l:42,c:62},{o:62,h:68,l:58,c:66},{o:66,h:68,l:52,c:54},{o:54,h:58,l:44,c:48},{o:48,h:66,l:46,c:64}],
+      anns:[{type:'zone',from:1,to:6,y1:42,y2:52,color:C.purp,at:1.6,label:'ORDER BLOCK'},{type:'tag',candle:5,side:'down',color:C.gold,at:2.8,label:'retest'},{type:'tag',candle:6,side:'up',color:C.green,at:3.3,label:'bounce ↑'}]},
+    trendline:{caption:'A <b>trendline</b> joins the rising lows. Price keeps <b>bouncing up off it</b> — until it finally breaks, which warns the trend may be ending.',
+      candles:[{o:30,h:36,l:28,c:34},{o:34,h:44,l:32,c:42},{o:42,h:46,l:34,c:36},{o:36,h:50,l:34,c:48},{o:48,h:54,l:42,c:44},{o:44,h:60,l:42,c:58},{o:58,h:64,l:50,c:52},{o:52,h:68,l:50,c:66}],
+      anns:[{type:'line',c1:2,p1:33,c2:6,p2:49,color:C.gold,extend:true,at:1.6,label:'TRENDLINE'},{type:'tag',candle:4,side:'down',color:C.gold,at:2.8,label:'bounce'}]},
+    htf:{caption:'The <b>higher timeframe</b> is the big picture. Small red dips don’t change it. Always trade <b>with</b> the bigger trend, not against it.',
+      candles:[{o:24,h:34,l:22,c:32},{o:32,h:46,l:30,c:44},{o:44,h:50,l:38,c:40},{o:40,h:62,l:38,c:60},{o:60,h:70,l:56,c:66},{o:66,h:72,l:58,c:60},{o:60,h:84,l:58,c:80}],
+      anns:[{type:'line',c1:0,p1:26,c2:6,p2:78,color:C.green,at:1.6,label:'BIG TREND ↑'},{type:'tag',candle:2,side:'down',color:C.sub,at:2.8,label:'just a dip'},{type:'tag',candle:5,side:'down',color:C.sub,at:3.3,label:'just a dip'}]},
+    bos:{caption:'A candle <b>closes above the swing high</b> — that’s a <b>Break of Structure</b>. The up-move is confirmed.',
+      candles:[{o:36,h:44,l:32,c:42},{o:42,h:66,l:40,c:50},{o:50,h:56,l:38,c:40},{o:40,h:50,l:36,c:47},{o:47,h:58,l:44,c:54},{o:54,h:63,l:50,c:52},{o:52,h:80,l:50,c:76,bos:true}],
+      anns:[{type:'swingHigh',y:66,at:1.6,label:'SWING HIGH'},{type:'bosFlag',candle:6,at:3.0,label:'BOS · closes above'}]},
+    fake:{caption:'A <b>fake breakout</b> pokes ABOVE the line but <b>closes back below</b> it — a trap. Always wait for the close.',
+      candles:[{o:44,h:50,l:42,c:48},{o:48,h:64,l:46,c:55},{o:55,h:63,l:52,c:60},{o:60,h:64,l:54,c:57},{o:57,h:62,l:53,c:59},{o:59,h:84,l:55,c:56,sweep:true}],
+      anns:[{type:'hline',y:64,at:1.6,color:C.sub,label:'the level'},{type:'sweepFlag',candle:5,at:3.2,fake:true}]},
+    candle:{caption:'Each candle is one chunk of time. <b>Green</b> = price closed <b>UP</b>; <b>red</b> = it closed <b>DOWN</b>. The thin lines (wicks) show how far it poked.',
+      candles:[{o:30,h:40,l:28,c:38},{o:38,h:42,l:30,c:33},{o:33,h:48,l:31,c:46},{o:46,h:50,l:40,c:42},{o:42,h:58,l:40,c:56}],
+      anns:[{type:'tag',candle:2,side:'up',color:C.green,at:1.8,label:'GREEN = UP'},{type:'tag',candle:3,side:'down',color:C.red,at:2.5,label:'RED = DOWN'}]},
+    doji:{caption:'A <b>doji</b> has almost no body — it opens and closes at nearly the same price. That’s a <b>tie</b> between buyers and sellers, and the trend often turns next.',
+      candles:[{o:30,h:40,l:28,c:38},{o:38,h:50,l:36,c:48},{o:48,h:60,l:46,c:58},{o:58,h:74,l:44,c:57}],
+      anns:[{type:'tag',candle:3,side:'up',color:C.gold,at:2.2,label:'DOJI · a tie'}]},
+    longshort:{caption:'<b>Long</b> = you bet price goes <b>UP</b>. <b>Short</b> = you bet it goes <b>DOWN</b>. You can win in both directions.',
+      candles:[{o:30,h:38,l:28,c:36},{o:36,h:48,l:34,c:46},{o:46,h:58,l:44,c:56},{o:56,h:66,l:54,c:62},{o:62,h:64,l:50,c:52},{o:52,h:55,l:40,c:42},{o:42,h:46,l:30,c:32}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.8,label:'LONG ↑ wins'},{type:'tag',candle:5,side:'down',color:C.red,at:2.8,label:'SHORT ↓ wins'}]},
+    wait_close:{caption:'While a candle forms it jumps around. <b>Only the close</b> tells you who really won — so wait for the candle to finish before you act.',
+      candles:[{o:40,h:48,l:38,c:46},{o:46,h:56,l:44,c:54},{o:54,h:80,l:52,c:57,sweep:true}],
+      anns:[{type:'sweepFlag',candle:2,at:3.0,color:C.gold,text:'spiked UP… but CLOSED here'}]},
+    trade_win:{caption:'You bought after the pullback. Price dipped toward your <b>stop</b> but never hit it — then ran up to your <b>target</b>. Win!',
+      candles:[{o:40,h:48,l:38,c:46},{o:46,h:56,l:44,c:54},{o:54,h:56,l:46,c:50},{o:50,h:52,l:43,c:45},{o:45,h:54,l:43,c:52},{o:52,h:64,l:50,c:62},{o:62,h:72,l:60,c:70}],
+      anns:[{type:'hline',y:50,at:1.4,color:C.gold,label:'ENTRY'},{type:'hline',y:38,at:1.9,color:C.red,label:'STOP — your shield'},{type:'hline',y:70,at:2.4,color:C.green,label:'TARGET ✓'},{type:'tag',candle:3,side:'down',color:C.sub,at:3.2,label:'dipped, HELD'}]},
+    trade_loss:{caption:'Price went the other way and hit your <b>stop</b>. You only lost what you bet — the stop kept it small. Smart, not a mistake.',
+      candles:[{o:60,h:62,l:54,c:56},{o:56,h:60,l:50,c:52},{o:52,h:58,l:50,c:56},{o:56,h:58,l:46,c:48},{o:48,h:49,l:43,c:44}],
+      anns:[{type:'hline',y:56,at:1.4,color:C.gold,label:'ENTRY'},{type:'hline',y:44,at:1.9,color:C.red,label:'STOP — loss capped'},{type:'hline',y:72,at:2.4,color:C.sub,label:'TARGET (missed)'},{type:'tag',candle:4,side:'down',color:C.red,at:3.2,label:'stop did its job'}]},
+    sl:{caption:'A <b>stop loss</b> is your safety net. If price goes the wrong way and touches it, you exit right away — so one bad trade stays small.',
+      candles:[{o:54,h:60,l:52,c:58},{o:58,h:60,l:48,c:50},{o:50,h:53,l:44,c:46},{o:46,h:48,l:40,c:42},{o:42,h:44,l:38,c:40}],
+      anns:[{type:'hline',y:58,at:1.5,color:C.gold,label:'ENTRY'},{type:'hline',y:40,at:2.0,color:C.red,label:'STOP LOSS'},{type:'tag',candle:4,side:'down',color:C.red,at:3.0,label:'exit — stay small'}]},
+    tp:{caption:'A <b>take profit</b> is your goal price. When price reaches it, the trade closes and your win is locked in.',
+      candles:[{o:42,h:48,l:40,c:46},{o:46,h:54,l:44,c:52},{o:52,h:58,l:50,c:56},{o:56,h:66,l:54,c:64},{o:64,h:72,l:62,c:70}],
+      anns:[{type:'hline',y:46,at:1.5,color:C.gold,label:'ENTRY'},{type:'hline',y:70,at:2.0,color:C.green,label:'TAKE PROFIT ✓'},{type:'tag',candle:4,side:'up',color:C.green,at:3.0,label:'locked in'}]},
+    rr:{caption:'<b>Risk : reward</b> compares what you could lose to what you could win. Risk a little to make a lot — aim for at least <b>2×</b> your risk.',
+      candles:[{o:46,h:52,l:44,c:50},{o:50,h:56,l:48,c:54},{o:54,h:62,l:52,c:60},{o:60,h:70,l:58,c:68}],
+      anns:[{type:'zone',from:0,to:3,y1:42,y2:50,color:C.red,at:1.6,label:'1R RISK'},{type:'zone',from:0,to:3,y1:50,y2:66,color:C.green,at:2.2,label:'2R REWARD'},{type:'hline',y:50,at:1.3,color:C.gold,label:'ENTRY'}]},
+    leverage:{caption:'<b>Leverage</b> makes your wins AND losses bigger. A small price move turns into a big result — powerful, but risky.',
+      candles:[{o:44,h:50,l:42,c:48},{o:48,h:54,l:46,c:52},{o:52,h:58,l:50,c:56},{o:56,h:62,l:54,c:60}],
+      anns:[{type:'tag',candle:0,side:'down',color:C.sub,at:1.8,label:'small move'},{type:'tag',candle:3,side:'up',color:C.orange,at:2.6,label:'× LEVERAGE = BIG result'}]},
+    bullflag:{caption:'A <b>bull flag</b>: a strong push up (the pole), a short rest that drifts down a little (the flag), then price <b>pops higher</b> again.',
+      candles:[{o:30,h:34,l:28,c:32},{o:32,h:52,l:30,c:50},{o:50,h:53,l:45,c:47},{o:47,h:49,l:43,c:45},{o:45,h:62,l:43,c:60},{o:60,h:70,l:58,c:68}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.6,label:'POLE'},{type:'tag',candle:3,side:'down',color:C.sub,at:2.4,label:'flag (rest)'},{type:'tag',candle:5,side:'up',color:C.green,at:3.0,label:'GO ↑'}]},
+    bearflag:{caption:'A <b>bear flag</b>: a strong push down (the pole), a short rest that drifts up a little (the flag), then price <b>drops lower</b> again.',
+      candles:[{o:70,h:72,l:66,c:68},{o:68,h:70,l:50,c:52},{o:52,h:57,l:50,c:55},{o:55,h:59,l:53,c:57},{o:57,h:59,l:40,c:42},{o:42,h:44,l:32,c:34}],
+      anns:[{type:'tag',candle:1,side:'down',color:C.red,at:1.6,label:'POLE'},{type:'tag',candle:3,side:'up',color:C.sub,at:2.4,label:'flag (rest)'},{type:'tag',candle:5,side:'down',color:C.red,at:3.0,label:'GO ↓'}]},
+    confluence:{caption:'<b>Confluence</b> is when several clues point the same way — the trend, a level, and a setup all agree. More clues = a stronger trade.',
+      candles:[{o:34,h:40,l:32,c:38},{o:38,h:44,l:33,c:35},{o:35,h:48,l:33,c:46},{o:46,h:50,l:40,c:42},{o:42,h:56,l:40,c:54},{o:54,h:62,l:50,c:60}],
+      anns:[{type:'hline',y:33,at:1.6,color:C.green,label:'SUPPORT held'},{type:'line',c1:1,p1:34,c2:5,p2:50,color:C.gold,extend:true,at:2.2,label:'TRENDLINE'},{type:'tag',candle:5,side:'up',color:C.blue,at:3.0,label:'clues agree ✓'}]},
+    momentum:{caption:'One big, strong green candle shoots up past the little ones. That power move is <b>momentum</b> — buyers just took control and the move is starting.',
+      candles:[{o:42,h:47,l:39,c:45},{o:45,h:47,l:40,c:42},{o:42,h:46,l:39,c:44},{o:44,h:82,l:42,c:78}],
+      anns:[{type:'tag',candle:3,side:'up',color:C.green,at:1.8,label:'MOMENTUM · big strong push'}]},
+    pullback:{caption:'After a big push up, price takes a short rest and drifts back down a little. That’s a <b>pullback</b> — not a crash. Don’t chase it; wait.',
+      candles:[{o:34,h:38,l:32,c:36},{o:36,h:72,l:34,c:68},{o:68,h:70,l:60,c:62},{o:62,h:65,l:56,c:58}],
+      anns:[{type:'hline',y:36,at:1.4,color:C.sub,label:'where the push began'},{type:'tag',candle:2,side:'up',color:C.gold,at:2.2,label:'PULLBACK · a short rest'},{type:'tag',candle:3,side:'up',color:C.gold,at:2.7,label:'still resting'}]},
+    confirmation:{caption:'After the rest, a strong green candle <b>closes back up</b> — that’s the <b>confirmation</b>. Now the setup is real. This is where you enter.',
+      candles:[{o:34,h:38,l:32,c:36},{o:36,h:70,l:34,c:66},{o:66,h:68,l:58,c:60},{o:60,h:63,l:54,c:56},{o:56,h:88,l:54,c:84}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.sub,at:1.4,label:'momentum'},{type:'tag',candle:3,side:'down',color:C.sub,at:2.0,label:'pullback'},{type:'tag',candle:4,side:'up',color:C.green,at:2.8,label:'CONFIRMATION ✓ enter here'}]}
+  };
+  function mount(canvas,key){
+    const scene=SCENES[key]; if(!scene) return null;
+    const ctx=canvas.getContext('2d'); let raf=0,t0=performance.now(),dpr=1,alive=true;
+    function size(){dpr=Math.min(devicePixelRatio||1,2);const r=canvas.getBoundingClientRect();canvas.width=Math.max(2,Math.round(r.width*dpr));canvas.height=Math.max(2,Math.round(r.height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);}
+    function loop(){ if(!alive||!canvas.isConnected){alive=false;return;}
+      const r=canvas.getBoundingClientRect();           // re-measure each frame → robust to initial 0-size + rotation
+      if(r.width>0&&(Math.abs(r.width*dpr-canvas.width)>2||Math.abs(r.height*dpr-canvas.height)>2)) size();
+      try{ draw(ctx,canvas,dpr,scene,(performance.now()-t0)/1000); }catch(e){} raf=requestAnimationFrame(loop); }
+    size(); loop();
+    return { replay(){t0=performance.now();}, stop(){alive=false;try{cancelAnimationFrame(raf);}catch(e){}}, resize:size };
+  }
+  function draw(ctx,cv,dpr,scene,rawT){
+    const Wc=cv.width/dpr,Hc=cv.height/dpr,padX=30,padTop=22,padBot=18;
+    const x0=padX,x1=Wc-padX,yTop=padTop,yBot=Hc-padBot,cs=scene.candles,n=cs.length;
+    let lo=1e9,hi=-1e9; cs.forEach(c=>{lo=Math.min(lo,c.l,c.o,c.c);hi=Math.max(hi,c.h,c.o,c.c);});
+    (scene.anns||[]).forEach(a=>{if(a.y!=null){lo=Math.min(lo,a.y);hi=Math.max(hi,a.y);}});
+    const pad=(hi-lo)*0.08; lo-=pad; hi+=pad;
+    if((scene.anns||[]).some(a=>a.type==='shell')) hi+=(hi-lo)*0.20;
+    const Y=v=>yBot-(v-lo)/(hi-lo)*(yBot-yTop);
+    const slot=(x1-x0)/n,bw=Math.min(48,slot*0.72),cx=i=>x0+slot*(i+0.5);
+    const printStep=0.26,allIn=n*printStep,t=rawT%(allIn+5.4);
+    ctx.clearRect(0,0,Wc,Hc);
+    ctx.strokeStyle=C.grid; ctx.lineWidth=1;
+    for(let g=0;g<=4;g++){const gy=yTop+g/4*(yBot-yTop);ctx.beginPath();ctx.moveTo(x0-8,gy);ctx.lineTo(x1+8,gy);ctx.stroke();}
+    for(let i=0;i<n;i++){
+      const appear=i*printStep,p=easeOut((t-appear)/printStep); if(p<=0) continue;
+      const c=cs[i],up=c.c>=c.o,x=cx(i),col=up?C.green:C.red,edge=up?C.greenEdge:C.redEdge,wcol=up?C.greenWick:C.redWick;
+      const bodyTopV=Math.max(c.o,c.c),bodyBotV=Math.min(c.o,c.c),curTop=lerp(c.o,bodyTopV,p),curBot=lerp(c.o,bodyBotV,p);
+      const wp=c.sweep?easeOut((t-appear-printStep*0.5)/(printStep*1.4)):p,curHi=lerp(bodyTopV,c.h,wp),curLo=lerp(bodyBotV,c.l,p);
+      ctx.strokeStyle=wcol; ctx.lineWidth=c.sweep?3:1.6; ctx.beginPath(); ctx.moveTo(x,Y(curHi)); ctx.lineTo(x,Y(curLo)); ctx.stroke();
+      const bt=Y(curTop),bb=Y(curBot); ctx.fillStyle=col; ctx.fillRect(x-bw/2,bt,bw,Math.max(2,bb-bt));
+      ctx.strokeStyle=edge; ctx.lineWidth=1; ctx.strokeRect(x-bw/2+.5,bt+.5,bw-1,Math.max(2,bb-bt)-1);
+      ctx.fillStyle=up?'rgba(93,237,181,.5)':'rgba(255,120,130,.45)'; ctx.fillRect(x-bw/2+1,bt+1,Math.max(1.5,bw*.16),Math.max(1,(bb-bt)*.9));
+      c._x=x; c._hiY=Y(c.h); c._loY=Y(c.l); c._bt=bt; c._bb=bb;
+    }
+    for(const a of (scene.anns||[])){
+      const ap=easeOut((t-a.at)/0.55); if(ap<=0) continue; ctx.globalAlpha=ap;
+      if(a.type==='eqHighs'){const xa=cx(a.from)-bw*0.7,xb=cx(a.to)+bw*0.7,y=Y(a.y);ctx.strokeStyle=a.color;ctx.lineWidth=1.6;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(xa,y);ctx.lineTo(xb,y);ctx.stroke();ctx.setLineDash([]);pill(ctx,xa+2,y-9,a.label,a.color);}
+      else if(a.type==='hline'){const y=Y(a.y);ctx.strokeStyle=a.color;ctx.lineWidth=1.7;ctx.setLineDash([7,4]);ctx.beginPath();ctx.moveTo(x0-8,y);ctx.lineTo(x1+8,y);ctx.stroke();ctx.setLineDash([]);pill(ctx,x0,y-9,a.label,a.color);}
+      else if(a.type==='shell'){const c=cs[a.candle];if(!c||c._hiY==null){ctx.globalAlpha=1;continue;}const r=11,x=c._x,y=c._hiY-r-2,glow=18+Math.sin(t*4)*9;drawShell(ctx,x,y,r,glow);ctx.strokeStyle=C.shell;ctx.lineWidth=2;const lx=x-92,ly=y-1;arrow(ctx,lx+10,ly,x-r-3,y);ctx.fillStyle=C.shell;ctx.font='800 12px '+FT;ctx.textAlign='right';ctx.fillText(a.label,lx+4,ly+4);const gp=t-(a.at+0.9);if(gp>0){const rise=easeOut(gp/0.9),fade=clamp(1-(gp-0.9)/1.2,0,1);ctx.globalAlpha=ap*fade;ctx.fillStyle=C.shell;ctx.font='900 14px '+FT;ctx.textAlign='center';ctx.fillText('+5 💎',x,y-14-rise*16);ctx.globalAlpha=ap;}}
+      else if(a.type==='hh'||a.type==='hl'){const c=cs[a.candle];if(!c||c._x==null){ctx.globalAlpha=1;continue;}const isHH=a.type==='hh',y=isHH?c._hiY-12:c._loY+18;ctx.fillStyle=isHH?C.green:C.gold;ctx.font='800 12px '+FT;ctx.textAlign='center';ctx.fillText(a.label,c._x,y);ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(c._x,isHH?c._hiY-2:c._loY+2);ctx.lineTo(c._x,isHH?y+3:y-11);ctx.stroke();}
+      else if(a.type==='tag'){const c=cs[a.candle];if(!c||c._x==null){ctx.globalAlpha=1;continue;}const up=a.side!=='down',y=up?c._hiY-12:c._loY+18;ctx.fillStyle=a.color||C.blue;ctx.font='800 12px '+FT;ctx.textAlign='center';ctx.fillText(a.label,c._x,y);ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(c._x,up?c._hiY-2:c._loY+2);ctx.lineTo(c._x,up?y+3:y-11);ctx.stroke();}
+      else if(a.type==='swingHigh'){const y=Y(a.y);ctx.strokeStyle=C.sub;ctx.lineWidth=1.4;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(x0-8,y);ctx.lineTo(x1+8,y);ctx.stroke();ctx.setLineDash([]);pill(ctx,x0,y-9,a.label,C.sub);}
+      else if(a.type==='bosFlag'){const cc=cs[a.candle];if(!cc||cc._bt==null){ctx.globalAlpha=1;continue;}const x=cc._x,y=cc._bt-10;ctx.strokeStyle=C.green;ctx.lineWidth=1.6;arrow(ctx,x-2,y-22,x,cc._bt-2);pill(ctx,x-ctx.measureText(a.label).width*0.5-46,y-22,a.label,C.green,true);}
+      else if(a.type==='sweepFlag'){const c=cs[a.candle];if(!c||c._bb==null){ctx.globalAlpha=1;continue;}ctx.fillStyle=a.color||C.red;ctx.font='800 11px '+FT;ctx.textAlign='center';ctx.fillText(a.text||(a.fake?'FAKEOUT → closed back below':'SWEPT → rejected'),c._x,c._bb+18);}
+      else if(a.type==='zone'){const xa=cx(a.from)-bw*0.6,xb=cx(a.to)+bw*0.6,yt=Y(Math.max(a.y1,a.y2)),yb=Y(Math.min(a.y1,a.y2)),sa=ctx.globalAlpha;ctx.globalAlpha=sa*0.16;ctx.fillStyle=a.color;ctx.fillRect(xa,yt,xb-xa,yb-yt);ctx.globalAlpha=sa;ctx.strokeStyle=a.color;ctx.lineWidth=1.2;ctx.strokeRect(xa,yt,xb-xa,yb-yt);if(a.label)pill(ctx,xa+2,yt-9,a.label,a.color);}
+      else if(a.type==='line'){const xA=cx(a.c1),xB=a.extend?(x1+8):cx(a.c2),yA=Y(a.p1),sl=(Y(a.p2)-yA)/((cx(a.c2)-xA)||1),yB=yA+sl*(xB-xA);ctx.strokeStyle=a.color;ctx.lineWidth=1.8;if(a.dash){ctx.setLineDash([6,4]);}ctx.beginPath();ctx.moveTo(xA,yA);ctx.lineTo(xB,yB);ctx.stroke();ctx.setLineDash([]);if(a.label)pill(ctx,xA,yA-9,a.label,a.color);}
+      ctx.globalAlpha=1;
+    }
+  }
+  function pill(ctx,x,y,text,color,center){ctx.font='800 10px '+FT;const w=ctx.measureText(text).width+12;if(center)x-=w/2;ctx.fillStyle='rgba(6,10,18,.82)';ctx.fillRect(x,y-9,w,15);ctx.fillStyle=color;ctx.textAlign='left';ctx.fillText(text,x+6,y+1.5);}
+  function arrow(ctx,x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1),s=6;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-s*Math.cos(a-0.5),y2-s*Math.sin(a-0.5));ctx.lineTo(x2-s*Math.cos(a+0.5),y2-s*Math.sin(a+0.5));ctx.closePath();ctx.fillStyle=ctx.strokeStyle;ctx.fill();}
+  function drawShell(ctx,x,y,r,glow){ctx.save();const halo=ctx.createRadialGradient(x,y,0,x,y,r*2.4);halo.addColorStop(0,'rgba(54,217,224,.45)');halo.addColorStop(1,'rgba(54,217,224,0)');ctx.fillStyle=halo;ctx.beginPath();ctx.arc(x,y,r*2.4,0,7);ctx.fill();ctx.shadowColor=C.shell;ctx.shadowBlur=glow||14;const g=ctx.createLinearGradient(x,y-r,x,y+r);g.addColorStop(0,'#bff6fb');g.addColorStop(.5,C.shell);g.addColorStop(1,'#1aa6ad');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x,y-r);ctx.lineTo(x+r*0.9,y-r*0.15);ctx.lineTo(x,y+r);ctx.lineTo(x-r*0.9,y-r*0.15);ctx.closePath();ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-r*0.4,y-r*0.2);ctx.lineTo(x,y-r*0.7);ctx.lineTo(x+r*0.4,y-r*0.2);ctx.stroke();ctx.restore();}
+  return { mount, has:k=>!!SCENES[k], SCENES };
+})();
+
+/* ════════ TRADER VIEW · PRACTICE — short concept-ID challenge (LEARN→PRACTICE) ════════
+   After an animated lesson, the player proves they can spot the concept on a static chart:
+   movement freezes, the chart zooms out, and they TAP the momentum / pullback / confirmation
+   candle. 3–10s, never blocks, always returns to the world. Reuses no live-trade state. */
+const CONCEPT_PRACTICE = {
+  greenred:{ label:'BUYERS WON', prompt:'Tap a GREEN candle (buyers won)', hint:'green = closed UP = buyers won',
+    ok:'✓ Yes! Green means buyers won — it closed UP.', answer:[1,3,4],
+    candles:[{o:60,h:64,l:50,c:52},{o:52,h:74,l:50,c:70},{o:70,h:72,l:58,c:60},{o:60,h:84,l:58,c:80},{o:80,h:92,l:78,c:90}] },
+  momentum:{ label:'MOMENTUM', prompt:'Tap the MOMENTUM candle', hint:'the one BIG, strong green push',
+    ok:'✓ Yes! That big strong candle is MOMENTUM.', answer:[3],
+    candles:[{o:40,h:44,l:38,c:42},{o:42,h:45,l:39,c:41},{o:41,h:46,l:39,c:44},{o:44,h:84,l:42,c:80},{o:80,h:84,l:76,c:82},{o:82,h:86,l:78,c:83}] },
+  pullback:{ label:'PULLBACK', prompt:'Tap the PULLBACK candle', hint:'the small rest right after the big push',
+    ok:'✓ Right! That little dip is the PULLBACK — a short rest.', answer:[2],
+    candles:[{o:34,h:38,l:32,c:36},{o:36,h:74,l:34,c:70},{o:70,h:73,l:60,c:62},{o:62,h:84,l:60,c:82},{o:82,h:86,l:78,c:84}] },
+  confirmation:{ label:'CONFIRMATION', prompt:'Tap the CONFIRMATION candle', hint:'the strong green candle that closes back UP after the rest',
+    ok:'✓ Nice! That close-back-up is your CONFIRMATION to enter.', answer:[3],
+    candles:[{o:34,h:38,l:32,c:36},{o:36,h:70,l:34,c:66},{o:66,h:69,l:58,c:60},{o:60,h:90,l:58,c:86},{o:86,h:90,l:82,c:88}] },
+};
+let conceptPracticeActive = false;
+function openConceptPractice(key, onDone){
+  const P = CONCEPT_PRACTICE[key];
+  const finish = function(){ if (typeof onDone === 'function') onDone(); };
+  if (!P) { finish(); return; }
+  if (document.getElementById('cqPractice')) return;
+  conceptPracticeActive = true;
+  let prevPaused = false;
+  try { prevPaused = paused; paused = true; session.inModal = true; turtle.halt = true; } catch (e) {}
+  const FT = (typeof QR_F !== 'undefined' ? QR_F : 'system-ui,sans-serif');
+  const ov = document.createElement('div');
+  ov.id = 'cqPractice';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99990;display:flex;flex-direction:column;align-items:center;'
+    + 'background:radial-gradient(120% 90% at 50% 22%, #0a1626 0%, #07090e 62%, #000 100%);'
+    + 'font-family:' + FT + ';padding:max(20px,env(safe-area-inset-top)) 16px 20px;';
+  ov.innerHTML =
+      '<div style="font-size:11px;letter-spacing:.22em;color:#4cc3ff;text-transform:uppercase;opacity:.9">🔍 Trader View · Practice</div>'
+    + '<div style="font-size:21px;font-weight:800;color:#fff;margin:8px 0 2px;text-align:center;line-height:1.25">' + P.prompt + '</div>'
+    + '<div style="font-size:13px;color:#8b97a8;margin-bottom:10px;text-align:center">' + P.hint + '</div>'
+    + '<canvas id="cqpCv" style="width:100%;max-width:560px;flex:1 1 auto;min-height:0;border-radius:14px;background:rgba(8,12,20,.55);border:1px solid rgba(76,195,255,.18);touch-action:none"></canvas>'
+    + '<div id="cqpMsg" style="min-height:26px;margin-top:12px;font-size:15px;font-weight:700;color:#9fb0c4;text-align:center"></div>';
+  document.body.appendChild(ov);
+  const cv = document.getElementById('cqpCv'), x = cv.getContext('2d'), msg = document.getElementById('cqpMsg');
+  const cs = P.candles, n = cs.length, t0 = performance.now();
+  let dpr = Math.min(devicePixelRatio || 1, 2), rects = [], settled = false, tries = 0, raf = 0;
+  function size(){ const r = cv.getBoundingClientRect(); cv.width = Math.max(2, Math.round(r.width*dpr)); cv.height = Math.max(2, Math.round(r.height*dpr)); x.setTransform(dpr,0,0,dpr,0,0); }
+  function draw(){
+    const W = cv.width/dpr, H = cv.height/dpr, pX = 22, pT = 18, pB = 16;
+    let lo = 1e9, hi = -1e9; cs.forEach(c => { lo = Math.min(lo,c.l); hi = Math.max(hi,c.h); });
+    const pad = (hi-lo)*0.12; lo -= pad; hi += pad;
+    const Y = v => H-pB-(v-lo)/(hi-lo)*(H-pT-pB);
+    const slot = (W-pX*2)/n, bw = Math.min(42, slot*0.66);
+    x.clearRect(0,0,W,H);
+    x.strokeStyle = 'rgba(255,255,255,.05)'; x.lineWidth = 1;
+    for (let g=0; g<=3; g++){ const gy = pT+g/3*(H-pT-pB); x.beginPath(); x.moveTo(8,gy); x.lineTo(W-8,gy); x.stroke(); }
+    rects = [];
+    for (let i=0; i<n; i++){
+      const c = cs[i], up = c.c>=c.o, cx = pX+slot*(i+0.5), col = up?'#16c784':'#ea3943', edge = up?'#0c9c69':'#c0212c';
+      const bt = Y(Math.max(c.o,c.c)), bb = Y(Math.min(c.o,c.c)), hl = settled && P.answer.indexOf(i)>=0;
+      if (hl){ x.save(); x.shadowColor = '#16c784'; x.shadowBlur = 16+Math.sin((performance.now()-t0)/120)*8; }
+      x.strokeStyle = up?'#1fd790':'#ff5663'; x.lineWidth = 1.8; x.beginPath(); x.moveTo(cx,Y(c.h)); x.lineTo(cx,Y(c.l)); x.stroke();
+      x.fillStyle = col; x.fillRect(cx-bw/2,bt,bw,Math.max(2,bb-bt));
+      x.strokeStyle = edge; x.lineWidth = 1; x.strokeRect(cx-bw/2+.5,bt+.5,bw-1,Math.max(2,bb-bt)-1);
+      if (hl){ x.restore(); x.fillStyle = '#16c784'; x.font = '800 11px '+FT; x.textAlign = 'center'; x.fillText(P.label, cx, Y(c.h)-9); }
+      rects.push({ i:i, x0:cx-slot/2, x1:cx+slot/2 });
+    }
+  }
+  function close(){ if (!ov.parentNode) return; try { cancelAnimationFrame(raf); } catch(e){} ov.remove(); conceptPracticeActive = false;
+    try { paused = prevPaused; session.inModal = false; turtle.halt = false; } catch(e){} finish(); }
+  function succeed(){ settled = true;
+    try { player.shells += 5; addXP(5); } catch(e){}
+    try { if (typeof gatePredictCredit === 'function') gatePredictCredit(); } catch(e){}
+    try { GameMusic && GameMusic.sting && GameMusic.sting('coin'); } catch(e){}
+    msg.style.color = '#16c784'; msg.textContent = P.ok + '   +5🐚 +5XP'; setTimeout(close, 1250); }
+  function reveal(){ settled = true; msg.style.color = '#ffd60a'; msg.textContent = 'Here it is — ' + P.hint + '.'; setTimeout(close, 1600); }
+  cv.addEventListener('pointerdown', function(ev){
+    if (settled) return; ev.preventDefault();
+    const r = cv.getBoundingClientRect(), px = ev.clientX - r.left;
+    let hit = -1; for (const rc of rects){ if (px>=rc.x0 && px<rc.x1){ hit = rc.i; break; } }
+    if (hit < 0) return;
+    if (P.answer.indexOf(hit) >= 0) succeed();
+    else { tries++; if (tries >= 2) reveal(); else { msg.style.color = '#ea3943'; msg.textContent = 'Not that one — ' + P.hint + '.'; } }
+  });
+  function loop(){ if (!ov.parentNode) return;
+    const r = cv.getBoundingClientRect(); if (r.width>0 && Math.abs(r.width*dpr-cv.width)>2) size();
+    draw();
+    if (!settled && (performance.now()-t0) > 12000) reveal();
+    raf = requestAnimationFrame(loop); }
+  size(); loop();
+}
+
+/* ════════ INTRO LESSON — animated LessonChart + caption + GOT IT (the LEARN beat) ════════
+   A short, fast animated lesson shown when the player discovers a concept. Freezes the world,
+   plays the LessonChart scene, shows the 10-year-old caption, returns on tap. 5–15s. */
+function openIntroLesson(sceneKey, onDone){
+  const finish = function(){ if (typeof onDone === 'function') onDone(); };
+  const hasLC = (typeof LessonChart !== 'undefined') && LessonChart.has(sceneKey);
+  if (!hasLC) { finish(); return; }
+  if (document.getElementById('cqLesson')) return;
+  let prevPaused = false;
+  try { prevPaused = paused; paused = true; session.inModal = true; turtle.halt = true; } catch (e) {}
+  const FT = (typeof QR_F !== 'undefined' ? QR_F : 'system-ui,sans-serif');
+  const cap = (LessonChart.SCENES[sceneKey] && LessonChart.SCENES[sceneKey].caption) || '';
+  const ov = document.createElement('div');
+  ov.id = 'cqLesson';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99990;display:flex;flex-direction:column;align-items:center;justify-content:center;'
+    + 'background:radial-gradient(120% 90% at 50% 24%, #0a1422 0%, #07090e 64%, #000 100%);'
+    + 'font-family:' + FT + ';padding:max(20px,env(safe-area-inset-top)) 16px 22px;';
+  ov.innerHTML =
+      '<div style="font-size:11px;letter-spacing:.22em;color:#a855f7;text-transform:uppercase;opacity:.9;margin-bottom:8px">📈 Lesson</div>'
+    + '<canvas id="cqlCv" style="width:100%;max-width:560px;height:42vh;min-height:0;border-radius:14px;background:rgba(8,12,20,.55);border:1px solid rgba(168,85,247,.22)"></canvas>'
+    + '<div style="max-width:520px;font-size:15px;line-height:1.5;color:#dfe7f0;text-align:center;margin:16px 4px 18px">' + cap + '</div>'
+    + '<button id="cqlGo" style="width:100%;max-width:300px;background:linear-gradient(180deg,#7c4dff,#5a32d6);color:#fff;border:0;font-weight:800;font-size:16px;letter-spacing:.03em;padding:15px 22px;border-radius:13px;cursor:pointer;box-shadow:0 7px 24px rgba(124,77,255,.34)">GOT IT →</button>';
+  document.body.appendChild(ov);
+  let lc = null;
+  try { lc = LessonChart.mount(document.getElementById('cqlCv'), sceneKey); } catch (e) {}
+  const close = function(){ if (!ov.parentNode) return; try { lc && lc.stop && lc.stop(); } catch(e){} ov.remove();
+    try { paused = prevPaused; session.inModal = false; turtle.halt = false; } catch(e){} finish(); };
+  document.getElementById('cqlGo').addEventListener('click', close);
+}
+
 function _seen(id){try{return store.getItem('cq_mgseen_'+id)==='1';}catch(e){return false;}}
 function _markSeen(id){try{store.setItem('cq_mgseen_'+id,'1');}catch(e){}}
 function showConcept(g,then){clearArea();const sub=$('#pSubmit');if(sub)sub.style.display='none';
-  const def=CONCEPTS[g.id]||g.objective||'';const d=document.createElement('div');d.id='mgConcept';
-  // CQ-0016: content used to float, centred in the tall game area, so the card read as empty
-  // and unfinished. Wrap it in a bordered, max-width card so the surrounding space looks like
-  // intentional breathing room around a defined panel.
-  d.style.cssText='position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#05070d;border-radius:12px;padding:18px';
-  d.innerHTML='<div style="width:100%;max-width:330px;background:linear-gradient(180deg,rgba(22,28,44,0.55),rgba(10,14,22,0.35));border:1px solid rgba(124,196,255,0.16);border-radius:16px;padding:24px 20px;box-shadow:0 14px 44px rgba(0,0,0,0.5)">'+
-    '<div style="font:800 9px '+_MGF+';letter-spacing:1.5px;color:#a855f7;margin-bottom:10px">📘 '+(g.category||'').toUpperCase()+'</div>'+
-    '<div style="font:800 19px '+_MGF+';color:#fff;margin-bottom:12px">'+g.title+'</div>'+
-    '<div style="font-size:13px;line-height:1.6;color:#d4dde8;margin:0 auto 18px">'+def+'</div>'+
-    '<button id="mgGotit" style="margin:0 auto;padding:13px 28px;border-radius:11px;font:800 13px '+_MGF+';background:rgba(76,195,255,.14);border:1px solid #4cc3ff;color:#4cc3ff;cursor:pointer">GOT IT — PLAY →</button>'+
-    '</div>';
-  $('#gameArea').appendChild(d);
-  const b=document.getElementById('mgGotit');if(b)b.onclick=function(){if(d.parentNode)d.parentNode.removeChild(d);then();};
+  // LESSON FRAMEWORK — if this concept has a LessonChart scene, TEACH it on an animated chart
+  // (chart on top, teach card below — matches lesson-chart-preview). Otherwise keep the text card.
+  const sk=({trend:'trendline',mtf:'htf'})[g.id]||g.id;   // mini-game concept id → LessonChart scene key
+  const hasChart=(typeof LessonChart!=='undefined')&&LessonChart.has(sk);
+  const def=hasChart?LessonChart.SCENES[sk].caption:(MG_CONCEPTS[g.id]||g.objective||'');
+  const d=document.createElement('div');d.id='mgConcept';let lc=null;
+  const eyebrow='<div style="font:800 9px '+_MGF+';letter-spacing:1.5px;color:#a855f7;margin-bottom:'+(hasChart?'6':'10')+'px">📘 '+(g.category||'').toUpperCase()+'</div>';
+  const titleEl='<div style="font:800 19px '+_MGF+';color:#fff;margin-bottom:'+(hasChart?'8':'12')+'px">'+g.title+'</div>';
+  const btn='<button id="mgGotit" style="margin:0 auto;padding:13px 28px;border-radius:11px;font:800 13px '+_MGF+';background:rgba(76,195,255,.14);border:1px solid #4cc3ff;color:#4cc3ff;cursor:pointer">GOT IT — PLAY →</button>';
+  if(hasChart){
+    d.style.cssText='position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;background:#05070d;border-radius:12px;overflow:hidden';
+    d.innerHTML='<canvas id="mgLessonCv" style="flex:1;min-height:0;width:100%;display:block"></canvas>'+
+      '<div style="flex:0 0 auto;padding:13px 18px 18px;background:linear-gradient(180deg,transparent,rgba(4,6,12,0.6) 32%,rgba(4,6,12,0.94));text-align:center">'+
+        eyebrow+titleEl+
+        '<div style="font-size:13.5px;line-height:1.55;color:#dbe6f2;margin:0 auto 14px;max-width:332px">'+def+'</div>'+btn+
+      '</div>';
+    $('#gameArea').appendChild(d);
+    try{ lc=LessonChart.mount(document.getElementById('mgLessonCv'),sk); }catch(e){}
+  } else {
+    // CQ-0016: bordered max-width card so the surrounding space looks intentional.
+    d.style.cssText='position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#05070d;border-radius:12px;padding:18px';
+    d.innerHTML='<div style="width:100%;max-width:330px;background:linear-gradient(180deg,rgba(22,28,44,0.55),rgba(10,14,22,0.35));border:1px solid rgba(124,196,255,0.16);border-radius:16px;padding:24px 20px;box-shadow:0 14px 44px rgba(0,0,0,0.5)">'+
+      eyebrow+titleEl+'<div style="font-size:13px;line-height:1.6;color:#d4dde8;margin:0 auto 18px">'+def+'</div>'+btn+'</div>';
+    $('#gameArea').appendChild(d);
+  }
+  const b=document.getElementById('mgGotit');if(b)b.onclick=function(){try{if(lc)lc.stop();}catch(e){}if(d.parentNode)d.parentNode.removeChild(d);then();};
 }
 function startGame(){ if(_seen(CUR.id)) runGame(); else showConcept(CUR,function(){_markSeen(CUR.id);runGame();}); }
 function runGame(){stopTimer();RESP=null;calcValidate=null;$('#result').classList.remove('on');
@@ -17849,6 +18479,10 @@ renderLib();
   try{ if(typeof masteryBump==='function'&&CUR){ masteryBump((typeof GAME_MASTERY!=='undefined'&&GAME_MASTERY[CUR.id])||'Structure','mg',Math.round(score),0.25); } }catch(e){}
   if(_onDone){var od=_onDone;_onDone=null;_of(score,ok,why);var a=$('#result .acts');if(a)a.innerHTML='<button class="next" id="mgCont">CONTINUE →</button>';var b=$('#mgCont');if(b)b.onclick=function(){var ov=$('#result');if(ov)ov.classList.remove('on');var pl=$('#play');if(pl)pl.classList.remove('on');_r.style.display='none';od(score,score>=70);};}else _of(score,ok,why);};})();
 function MG_run(id,diff,onDone,ctx){var g=REG[id];if(!g){if(onDone)onDone(0,false);return;}CUR=g;DIFF=diff||'beginner';_onDone=onDone;_r.style.display='block';try{var _bf=document.getElementById('bossFight');_r.classList.toggle('inBoss',!!(_bf&&_bf.classList.contains('open')));}catch(e){}var T=$('#pTitle');if(T)T.textContent=g.title;var O=$('#pObj');if(O)O.textContent='';var Cc=$('#pCat');if(Cc)Cc.innerHTML=ctx||(g.category||'');var Dd=$('#pDiffs');if(Dd)Dd.innerHTML='<div class="diff on">'+(diff.charAt(0).toUpperCase()+diff.slice(1))+'</div>';var R=$('#result');if(R)R.classList.remove('on');var bk=$('#back');if(bk)bk.style.display='none';var P=$('#play');if(P)P.classList.add('on');startGame();}
+// EXPOSE globals that live inside this IIFE but are used by the main game script (block 1):
+// the LessonChart engine + the intro LEARN/PRACTICE overlays. Without this they stay closure-
+// locals and block-1 references (LessonChart lessons, openIntroLesson/openConceptPractice) fail.
+try{ window.LessonChart=LessonChart; window.openConceptPractice=openConceptPractice; window.openIntroLesson=openIntroLesson; window.CONCEPT_PRACTICE=CONCEPT_PRACTICE; }catch(e){}
 return {run:MG_run,REG:REG};
 })();
 </script>
@@ -18249,10 +18883,13 @@ window.ContentLog = (function () {
   const online = () => (typeof navigator === 'undefined' || navigator.onLine !== false);
   function scheduleFlush(ms) { if (flushTimer || flushing) return; flushTimer = setTimeout(() => { flushTimer = null; flush(); }, ms != null ? ms : 1000); }
   function postRows(table, rows) {
-    return fetch(SUPA_URL + '/rest/v1/' + table, {
+    // Writes go through the validated `ingest` Edge Function (service-role,
+    // sanitizes + rate-limits), NOT direct REST. Anon INSERT on these tables is
+    // removed in migration 0009 once this client is deployed.
+    return fetch(SUPA_URL + '/functions/v1/ingest', {
       method: 'POST', keepalive: true,
-      headers: { apikey: SUPA_ANON, Authorization: 'Bearer ' + SUPA_ANON, 'Content-Type': 'application/json', Prefer: 'return=minimal,resolution=ignore-duplicates' },
-      body: JSON.stringify(rows),
+      headers: { apikey: SUPA_ANON, Authorization: 'Bearer ' + SUPA_ANON, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table: table, rows: rows }),
     }).then(r => ({ ok: r.ok || r.status === 409, status: r.status })).catch(() => ({ ok: false, status: 0 }));
   }
   async function flush() {

@@ -1,0 +1,53 @@
+# XcodeGen spec — run `xcodegen generate` to produce ChartQuestQA.xcodeproj
+name: ChartQuestQA
+options:
+  bundleIdPrefix: com.chartquest
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    # Set your Apple Developer Team ID here (or leave blank to "Sign to Run Locally")
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: YES
+    COMBINE_HIDPI_IMAGES: YES
+
+targets:
+  ChartQuestQA:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Sources
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      base:
+        PRODUCT_NAME: ChartQuestQA
+        PRODUCT_BUNDLE_IDENTIFIER: com.chartquest.qa
+        INFOPLIST_FILE: Sources/App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/App/ChartQuestQA.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+    dependencies:
+      - sdk: libsqlite3.tbd
+      - sdk: Carbon.framework
+      - sdk: Speech.framework
+      - sdk: AVFoundation.framework
+      - sdk: PDFKit.framework
+      - sdk: ScreenCaptureKit.framework
+
+schemes:
+  ChartQuestQA:
+    build:
+      targets:
+        ChartQuestQA: all
+    run:
+      config: Release

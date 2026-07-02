@@ -4,8 +4,15 @@
     {
       "name": "chartquest",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8777"],
+      "runtimeArgs": ["/private/tmp/claude-501/-Users-owl-Claude-Projects-Shell-Trade/83e27584-0654-4eb1-bb0b-48befb65220b/scratchpad/serve_nocache.py"],
       "port": 8777
+    },
+    {
+      "name": "chartquest-preview",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["/private/tmp/claude-501/-Users-owl-Claude-Projects-Shell-Trade/8de0c5f7-50fd-4cdc-bc88-3197939744d6/scratchpad/serve_nocache_218.py"],
+      "port": 8779,
+      "autoPort": true
     }
   ]
 }

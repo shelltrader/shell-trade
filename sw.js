@@ -1,5 +1,5 @@
 // Bump this version on every deploy so iOS/clients drop the old cache.
-const CACHE = 'chart-quest-v225';
+const CACHE = 'chart-quest-v226';
 const ASSETS = ['/', '/index.html', '/icon-192.png', '/icon-512.png', '/manifest.json'];
 
 self.addEventListener('install', e => {

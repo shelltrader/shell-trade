@@ -2328,17 +2328,21 @@ const CFG = {
 
 /* ---------- Colours (trading-terminal palette) ---------- */
 // Inline Finn (the ChartQuest mascot) as an SVG — used in place of the 🐢 emoji so the brand
-// stays consistent everywhere: teal hero shell, green head, big googly eyes, friendly smile.
+// stays consistent everywhere: ORANGE hero shell, green head, big googly eyes, friendly smile,
+// gold compass necklace (canon).
 function finnIconHTML(px) {
   px = px || 44;
   return '<svg width="' + px + '" height="' + Math.round(px * 0.95) + '" viewBox="0 0 44 42" '
     + 'xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle">'
-    + '<ellipse cx="22" cy="27" rx="17" ry="13" fill="#2EC4C7" stroke="#0B5C60" stroke-width="2.6"/>'
-    + '<ellipse cx="13" cy="20" rx="6" ry="4" fill="#a6f5cf" opacity="0.55"/>'
+    + '<ellipse cx="22" cy="27" rx="17" ry="13" fill="#F0862C" stroke="#7A3A12" stroke-width="2.6"/>'
+    + '<ellipse cx="13" cy="20" rx="6" ry="4" fill="#ffd9a0" opacity="0.55"/>'
     + '<circle cx="22" cy="16" r="11" fill="#7ED957"/>'
     + '<circle cx="17" cy="15" r="4.2" fill="#fff"/><circle cx="27" cy="15" r="4.2" fill="#fff"/>'
     + '<circle cx="17.6" cy="15.6" r="2.3" fill="#1a1a1a"/><circle cx="27.6" cy="15.6" r="2.3" fill="#1a1a1a"/>'
-    + '<path d="M18 21 Q22 24.5 26 21" stroke="#0B5C60" stroke-width="1.7" fill="none" stroke-linecap="round"/>'
+    + '<path d="M18 21 Q22 24.5 26 21" stroke="#7A3A12" stroke-width="1.7" fill="none" stroke-linecap="round"/>'
+    + '<circle cx="28" cy="31" r="3.4" fill="#FFD54A" stroke="#7A3A12" stroke-width="1"/>'
+    + '<circle cx="28" cy="31" r="1.9" fill="#FBF3D8"/>'
+    + '<path d="M28 29.3 L29 31.2 L27 31.2 Z" fill="#E5432E"/>'
     + '</svg>';
 }
 
@@ -2352,31 +2356,35 @@ const COLOR = {
   redBody:      '#ea3943',
   redStripe:    '#f3838a',
   redEdge:      '#c0212c',  // darker border — real candlestick outline
-  // ── CANONICAL TURTLE PALETTE (turtle master character sheet.png) ──
-  turtleBody:   '#7ED957',  // TEAL PASS — body stays bright GREEN (head, legs)
-  turtleShell:  '#2EC4C7',  // TEAL HERO SHELL — the signature colour; pops off green candles
-  turtleShellHi:'#6FE6E8',  // shell highlight (light-teal gloss)
-  turtleShellShadow:'#138C91', // shell shadow (soft scute depth)
-  turtleShellRim:'#8AF0F2', // bright cyan rim / edge light
-  turtleOutline:'#0B5C60',  // deep-teal shell outline (also the mouth line)
+  // ── CANONICAL FINN PALETTE (Finn Master Animation Set — ORANGE hero shell) ──
+  turtleBody:   '#7ED957',  // bright GREEN body (head, legs, tail, neck)
+  turtleBodyShadow:'#57A83A', // darker green — the REAR (far) leg pair, for depth
+  turtleShell:  '#F0862C',  // ORANGE HERO SHELL — the signature colour (canon)
+  turtleShellHi:'#FFC46B',  // amber shell gloss highlight
+  turtleShellShadow:'#B5561A', // burnt-orange scute shadow
+  turtleShellRim:'#FFD79A', // bright amber rim / edge light
+  turtleOutline:'#7A3A12',  // deep brown-orange shell outline (also the mouth line)
   turtleBelly:  '#ecdca0',  // pale cream plastron band
   turtleScute:  '#5c4a26',  // (legacy — unused)
+  compassGold:  '#FFD54A',  // compass necklace — gold ring + chain
+  compassFace:  '#FBF3D8',  // compass necklace — face
+  compassNeedle:'#E5432E',  // compass necklace — red N needle
   lens:         '#48a7c7',  // CANON Trader's Glasses — cyan (earned after Guardian 1)
   lensShine:    '#bfeaff',  // glint on the glasses
   jetpackBody:  '#6B7280',  // FINAL — gunmetal / graphite pack body (futuristic, not military)
   jetpackDark:  '#3a414b',  // darker gunmetal — cap, nozzle, shading
   jetpackTrim:  '#FFD54A',  // warm gold accent trim / rings / buckles
   jetpackStrap: '#2a2f38',  // dark strap wrapping the shell
-  flameOuter:   '#ff9f43',  // ORANGE flame body (paired with a blue engine glow at the nozzle)
+  flameOuter:   '#ff9f43',  // ORANGE flame body
   flameInner:   '#ffd27a',  // warm inner flame
-  engineGlow:   '#3DD6FF',  // blue engine glow at the thruster mouth
+  engineGlow:   '#FFB020',  // warm amber thruster glow (canon: flame is orange→yellow, no blue)
 };
 
 /* ---------- Canvas setup ---------- */
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 225';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 226 — Finn orange canon';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -12976,6 +12984,11 @@ function update(dt) {
   turtle._idleX = turtle.x;
   if (turtle.adjustT > 0) turtle.adjustT = Math.max(0, turtle.adjustT - dt);  // P9 glasses-push decay
   if (turtle.landT > 0) turtle.landT = Math.max(0, turtle.landT - dt);        // neck-compression micro-anim on landing
+  // DAZED bookkeeping (founder rule: dazed art ONLY after falling off a large candle) —
+  // track the highest point of the current airtime; timers tick down here.
+  if (!turtle.onGround) _finnFallTop = (_finnFallTop == null) ? turtle.y : Math.min(_finnFallTop, turtle.y);
+  if (finnDazedT > 0) finnDazedT = Math.max(0, finnDazedT - dt);
+  if (_finnDazeCd > 0) _finnDazeCd -= dt;
 
   // JETPACK IDLE PUFF — a tiny occasional engine burp while standing (personality, not constant).
   if (turtle.idleT > 1 && turtle.flameT <= 0) {
@@ -13014,7 +13027,7 @@ function update(dt) {
          Halted (at a setup) = standing still until the player acts --- */
   const prevFront = turtle.x + turtle.w;
   const prevBack  = turtle.x;
-  if (!turtle.halt) turtle.x += (CFG.walkSpeed + turtle.vxBoost) * dt * turtle.dir;
+  if (!turtle.halt && finnDazedT <= 0) turtle.x += (CFG.walkSpeed + turtle.vxBoost) * dt * turtle.dir;   // dazed = a 1.7s lie-down, then he shakes it off
   turtle.vxBoost = Math.max(0, turtle.vxBoost - CFG.spinBoostDecay * dt);
   // Keep a short trail going while the fling boost is still strong
   if (turtle.vxBoost > 120) {
@@ -13148,7 +13161,19 @@ function update(dt) {
   }
 
   // JETPACK LANDING PUFF — a tiny blue burst the instant Finn touches down from the air.
-  if (turtle.onGround && wasAirborne) { turtle.flameT = Math.max(turtle.flameT, 0.12); turtle.landT = 0.22; }   // landT → neck-compression micro-anim
+  if (turtle.onGround && wasAirborne) {
+    turtle.flameT = Math.max(turtle.flameT, 0.12); turtle.landT = 0.22;   // landT → neck-compression micro-anim
+    // DAZED (founder rule) — an UNTUCKED fall from a LARGE candle (≥230px drop) leaves Finn
+    // seeing stars for a beat. Never during a trade/ticket/modal or a deliberate shell landing,
+    // and on an 9s cooldown so it stays a rare gag, not a movement tax.
+    const _drop = (_finnFallTop == null) ? 0 : (turtle.y - _finnFallTop);
+    if (_drop >= 230 && _finnDazeCd <= 0 && !turtle.tucked && !turtle.spinning &&
+        !trade && !pending && !session.inModal && finnDazedT <= 0) {
+      finnDazedT = 1.7; _finnDazeCd = 9;
+      try { GameMusic && GameMusic.sting && GameMusic.sting('lose'); } catch (e) {}
+    }
+    _finnFallTop = null;
+  }
 
   /* --- ANTI-STUCK SAFETY ------------------------------------------------------
      A candle taller than Finn's jump acts as a wall (see the wall-block above). If
@@ -13526,7 +13551,121 @@ function drawCoinGlyph(ticker, cx, cy, s, color) {
    Drawn inside the collision box (46x30), facing right.
    Layers back-to-front: legs → jetpack → head+sunglasses → dome shell
    with hexagon pattern. Bob/leg-swing are visual only — physics untouched. */
+/* ── OFFICIAL FINN SPRITES (founder directive, 2026-07-03) ─────────────────────────────────────
+   The PNG IS Finn — never redrawn, never redesigned, never replaced. Every frame below is a
+   straight CROP of the two canonical pose sheets (content-assets/finn-canon-poses-A/B.png);
+   animation is transforms + frame selection only, honoring the pose contracts in
+   docs/finn-canon/02-Finn-Animation-Bible.md. Physics, the 36×24 hitbox and every CFG value are
+   untouched. If ANY sprite fails to load, the procedural Finn below renders exactly as before —
+   graceful fallback, never a blank hero. */
+const FINN_SPRITES = { ready: false, img: {} };
+(function loadFinnSprites() {
+  const files = { idle: 'finn/idle.png', run: 'finn/run.png', walk: 'finn/walk.png',
+                  glide: 'finn/glide.png', jump: 'finn/jump.png', vboost: 'finn/vboost.png',
+                  boosth: 'finn/boosth.png', shell: 'finn/shell.png', shellfall: 'finn/shellfall.png',
+                  land: 'finn/land.png', dazed: 'finn/dazed.png' };
+  const keys = Object.keys(files); let got = 0;
+  keys.forEach(k => {
+    const im = new Image();
+    im.onload = function () { if (++got === keys.length) FINN_SPRITES.ready = true; };
+    im.onerror = function () {};   // any miss → ready stays false → procedural fallback
+    im.src = files[k];
+    FINN_SPRITES.img[k] = im;
+  });
+})();
+// Per-frame draw height in the 46×30 authoring frame (width follows each sprite's own aspect).
+const FINN_H = { idle: 31, run: 31, walk: 31, glide: 31, jump: 32, vboost: 36, boosth: 33,
+                 shell: 25, shellfall: 27, land: 25, dazed: 23 };
+// DAZED — founder rule: the dazed art appears ONLY after Finn falls off a LARGE candle.
+let finnDazedT = 0, _finnDazeCd = 0, _finnFallTop = null;
+
+function drawFinnSprite(cameraX) {
+  const I = FINN_SPRITES.img;
+  const w = 46, h = 30;
+  const s = turtle.w / w;
+  const sx = turtle.x - cameraX;
+  const moving = turtle.onGround && !turtle.halt && finnDazedT <= 0;
+  const bob = moving ? Math.sin(turtle.animT * 9) * 1.4 : 0;               // Bible §2 — run bob
+  const idle = turtle.onGround && !moving && !turtle.tucked && !turtle.spinning;
+  const breath = idle ? Math.sin(turtle.animT * 1.8) * 1.6 : 0;            // Bible §1 — breathing
+  const sy = turtle.y + bob + breath;
+
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.scale(s, s);
+  const VIS = 1.35;                                                        // same hero scale as the procedural art
+  ctx.translate(w / 2, h); ctx.scale(VIS, VIS); ctx.translate(-w / 2, -h);
+
+  // Contact shadow — identical to the procedural version (silhouette readability on any candle)
+  if (!turtle.tucked && !turtle.spinning && turtle.onGround) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.30)';
+    ctx.beginPath(); ctx.ellipse(w / 2, h - 0.5, 15, 3.3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  // Bible §1 — idle weight-shift lean (≈±1.4°) about the feet
+  if (idle && finnDazedT <= 0) {
+    const lean = Math.sin(turtle.animT * 0.8 + 1.3) * 0.025;
+    ctx.translate(w / 2, h); ctx.rotate(lean); ctx.translate(-w / 2, -h);
+  }
+  // Face the walking direction (canon art faces right; mirror = manipulation, not redraw)
+  if (turtle.dir < 0) { ctx.translate(w / 2, h / 2); ctx.scale(-1, 1); ctx.translate(-w / 2, -h / 2); }
+
+  // ── frame selection + pose transforms (Bible contracts; positive rot = nose-DOWN in canvas) ──
+  const airborne = !turtle.onGround;
+  let img = I.idle, rot = 0, ball = false, key = 'idle';
+  if (finnDazedT > 0) {
+    key = 'dazed'; img = I.dazed;
+    rot = Math.sin(turtle.animT * 7) * 0.03;                               // tiny woozy wobble
+  } else if (turtle.spinning) {
+    key = 'shell'; img = I.shell; ball = true;
+    rot = (turtle.spinPhase || 0) * 2 + turtle.animT * 4;                  // the twirl reads through rotation
+  } else if (turtle.tucked) {
+    key = airborne && turtle.vy > 40 ? 'shellfall' : 'shell'; img = I[key]; ball = true;
+    rot = turtle.rot || 0;                                                 // rolling ball (existing physics rot)
+  } else if (airborne) {
+    if (turtle.vxBoost > 140) { key = 'boosth'; img = I.boosth; rot = 0; }               // wick-fling dash
+    else if (turtle.flameT > 0.25) { key = 'vboost'; img = I.vboost; rot = 0; }          // Bible §4 — art is already nose-up
+    else if (turtle.vy < -60) { key = 'jump'; img = I.jump; rot = -0.10; }               // Bible §3 — +6–10° nose-up
+    else if (turtle.vy > 60)  { key = 'glide'; img = I.glide; rot = Math.min(0.24, turtle.vy / 2600); }   // Bible §5 — −6..−14° nose-down with speed
+    else { key = 'glide'; img = I.glide; rot = 0; }                                       // apex float
+  } else if (turtle.landT > 0) {
+    key = 'land'; img = I.land;                                            // Bible §10 — touchdown squash frame
+  } else if (moving) {
+    key = Math.sin(turtle.animT * 9) > 0 ? 'run' : 'walk';                 // Bible §2 — 2-frame diagonal gait
+    img = I[key];
+  }
+  if (!img || !img.naturalWidth) { ctx.restore(); return; }                // belt-and-braces
+
+  const dh = FINN_H[key] || 31;
+  const dw = dh * img.naturalWidth / img.naturalHeight;
+  if (ball) {
+    // ball states rotate about the shell centre (matches the procedural r=14 ball placement)
+    ctx.translate(w / 2, h / 2 + 2);
+    ctx.rotate(rot);
+    ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+  } else if (airborne && finnDazedT <= 0) {
+    // airborne poses rotate about the body centre so the nose leads naturally
+    ctx.translate(w / 2, h - dh / 2);
+    ctx.rotate(rot);
+    ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+  } else {
+    // grounded poses are feet-anchored; landing gets the Bible §10 squash window
+    ctx.translate(w / 2, h);
+    if (key === 'land') {
+      const landC = turtle.landT > 0 ? Math.sin((turtle.landT / 0.22) * Math.PI) : 0;
+      ctx.scale(1 + landC * 0.08, 1 - landC * 0.12);
+    }
+    if (rot) ctx.rotate(rot);
+    ctx.drawImage(img, -dw / 2, -dh, dw, dh);
+  }
+  ctx.restore();
+}
+
 function drawTurtle(cameraX) {
+  // OFFICIAL FINN — sprite renderer first; the procedural art below remains as the
+  // automatic fallback while sprites load (or if a file ever goes missing).
+  if (FINN_SPRITES.ready) { drawFinnSprite(cameraX); return; }
   // Art is authored at this design size, then uniformly scaled down to the
   // (smaller) collision box so the whole turtle shrinks without distortion.
   const w = 46, h = 30;
@@ -13728,8 +13867,8 @@ function drawTurtle(cameraX) {
   // (a) mint gloss bubble-shine (top-left) — glossy collectible toy
   const gx = shellL + (shellR - shellL) * 0.34, gy = shellTop + (shellBot - shellTop) * 0.26;
   const gloss = ctx.createRadialGradient(gx, gy, 1, gx, gy, (shellR - shellL) * 0.72);
-  gloss.addColorStop(0, 'rgba(140,238,240,0.6)');
-  gloss.addColorStop(1, 'rgba(140,238,240,0)');
+  gloss.addColorStop(0, 'rgba(255,206,140,0.55)');
+  gloss.addColorStop(1, 'rgba(255,206,140,0)');
   ctx.fillStyle = gloss;
   ctx.fillRect(shellL, shellTop, shellR - shellL, shellBot - shellTop);
   // (b) ICONIC scutes — a central rounded plate + soft CURVED dividers (rounded, friendly,
@@ -13761,16 +13900,49 @@ function drawTurtle(cameraX) {
   ctx.fillStyle = COLOR.turtleBelly;
   rr(shellL + 4, shellBot - 5, shellR - shellL - 8, 5, 2.5); ctx.fill();
 
-  /* ── Turtle FEET + little green TAIL — drawn OVER the shell's bottom edge so they read as the
-     legs/tail emerging from under the shell (the instant "it's a turtle" cue, visible at small scale). ── */
+  /* ── EXACTLY 4 LEGS (canon) + little green TAIL. The FAR-side pair is drawn first — smaller,
+     darker, nudged up 2u and in counter-phase — so it reads as the two legs on the far side of the
+     body; the NEAR pair is drawn over the shell's bottom edge. Together = unmistakable quadruped. ── */
+  // FAR (far-side) leg pair — darker green, ~12% smaller, raised, counter-phase gait (diagonal walk)
+  ctx.fillStyle = COLOR.turtleBodyShadow;
+  ctx.strokeStyle = COLOR.turtleOutline; ctx.lineWidth = 1.2; ctx.lineJoin = 'round';
+  rr(w * 0.36 - step, shellBot - 5, 9.5, 8 + bob * 0.7, 4.5); ctx.fill(); ctx.stroke();   // far back leg
+  rr(w * 0.62 + step, shellBot - 5, 9.5, 8 + bob * 0.7, 4.5); ctx.fill(); ctx.stroke();   // far front leg
+  // NEAR feet + tail — bright green, drawn OVER the shell's bottom edge
   ctx.fillStyle = COLOR.turtleBody;
   ctx.strokeStyle = COLOR.turtleOutline; ctx.lineWidth = 1.3; ctx.lineJoin = 'round';
   // little tail at the back-bottom, poking down-left (clear of the jetpack flame column at rest)
   ctx.beginPath(); ctx.moveTo(2, shellBot - 3); ctx.lineTo(-3.5, shellBot + 5.5); ctx.lineTo(3.5, shellBot + 0.5); ctx.closePath();
   ctx.fill(); ctx.stroke();
-  // two feet poking out below the shell, with a clear gap so they read as separate feet
-  rr(w * 0.30 + step, shellBot - 3, 11, 9.5 + bob, 5); ctx.fill(); ctx.stroke();   // back foot
-  rr(w * 0.58 - step, shellBot - 3, 11, 9.5 + bob, 5); ctx.fill(); ctx.stroke();   // front foot
+  // two NEAR feet poking out below the shell, with a clear gap so they read as separate feet
+  rr(w * 0.30 + step, shellBot - 3, 11, 9.5 + bob, 5); ctx.fill(); ctx.stroke();   // near back foot
+  rr(w * 0.58 - step, shellBot - 3, 11, 9.5 + bob, 5); ctx.fill(); ctx.stroke();   // near front foot
+
+  /* ── COMPASS NECKLACE — Finn's canonical identity item: a gold medallion on the plastron with a
+     thin gold chain to the neck base. Present in EVERY open pose (only the tucked BALL, which
+     returns earlier, omits it). Subtle swing on landing / under thrust. ── */
+  {
+    const swing = (landC * 0.20) - Math.min(0.2, Math.max(0, (turtle.flameT || 0))) * 0.15;
+    const mcx = w * 0.52, mcy = shellBot - 8;   // medallion centre, on the plastron front
+    // thin gold chain from the medallion up-forward toward the neck base
+    ctx.strokeStyle = COLOR.compassGold; ctx.lineWidth = 1.1; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(mcx - 2.5, mcy - 3.5); ctx.quadraticCurveTo(mcx + 6, mcy - 11, w * 0.66, h * 0.30); ctx.stroke();
+    ctx.save();
+    ctx.translate(mcx, mcy); ctx.rotate(swing);
+    ctx.fillStyle = COLOR.compassGold;                                             // gold ring
+    ctx.beginPath(); ctx.arc(0, 0, 4.6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = COLOR.turtleOutline; ctx.lineWidth = 1.0; ctx.stroke();
+    ctx.fillStyle = COLOR.compassFace;                                             // compass face
+    ctx.beginPath(); ctx.arc(0, 0, 3.0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(122,58,18,0.35)'; ctx.lineWidth = 0.5;                 // faint cross-hairs
+    ctx.beginPath(); ctx.moveTo(-2.4, 0); ctx.lineTo(2.4, 0); ctx.moveTo(0, -2.4); ctx.lineTo(0, 2.4); ctx.stroke();
+    ctx.fillStyle = COLOR.compassNeedle;                                           // red N-needle (points up)
+    ctx.beginPath(); ctx.moveTo(0, -2.4); ctx.lineTo(1.1, 0.4); ctx.lineTo(-1.1, 0.4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = COLOR.turtleOutline;                                           // centre pin
+    ctx.beginPath(); ctx.arc(0, 0, 0.6, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.lineCap = 'butt';
+  }
 
   /* ═══════════ JETPACK — small, simple EQUIPPED gadget on the shell's back ═══════════
      POLISH PASS: ~20% smaller and ~40% simpler — no bolts, buckles, trim rings, status light or
@@ -13812,8 +13984,8 @@ function drawTurtle(cameraX) {
     const flLen = (jBoost ? 19.5 + Math.sin(turtle.animT * 48) * 5.2 : 4.4 + Math.sin(turtle.animT * 22) * 1.6) * (0.45 + jPow * 0.75);   // +30% bigger flame
     const flW   = jBoost ? 6.4 : 3.9;   // +30%
     ctx.save();
-    ctx.shadowColor = COLOR.engineGlow; ctx.shadowBlur = jBoost ? 10 : 5;   // subtle blue glow (dialled back)
-    ctx.fillStyle = 'rgba(61,214,255,' + (jBoost ? 0.42 : 0.30) + ')';
+    ctx.shadowColor = COLOR.engineGlow; ctx.shadowBlur = jBoost ? 10 : 5;   // subtle warm amber glow
+    ctx.fillStyle = 'rgba(255,180,60,' + (jBoost ? 0.42 : 0.30) + ')';
     ctx.beginPath(); ctx.ellipse(jMidX, fy0 - 0.3, flW * 0.9, 1.9, 0, 0, Math.PI * 2); ctx.fill();
     ctx.shadowColor = COLOR.flameOuter; ctx.shadowBlur = jBoost ? 12 : 5;
     ctx.fillStyle = COLOR.flameOuter;

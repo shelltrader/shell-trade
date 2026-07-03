@@ -2384,7 +2384,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 228 — Finn alive';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 229 — Finn strides';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -13613,6 +13613,33 @@ const FINN_FLAME = ['rgb(252,104,17)', 'rgb(255,155,13)', 'rgb(252,228,33)', 'rg
 // excised from the grounded frame and replaced by this drawn, animated plume. Power eases
 // 0.18 (pilot flicker, halted at a setup) ↔ 1 (full running trail), so the flame BREATHES
 // between states instead of popping on/off — that pop was the "glitchy" stop/start feel.
+// STEPPING LEGS (founder, build 229: "his feet are not moving at all… use ONE image and give
+// his legs smooth motion"). The single canon run frame is drawn in vertical columns; the three
+// LEG columns get a squash-step — the lower slice compresses toward its hip line, so the foot
+// visibly lifts off the ground and plants again, with ZERO seams (the cut row never moves and
+// nothing is drawn twice). Diagonal trot: the near rear leg steps opposite the front leg + far
+// rear foot. The belly/medallion column and tail column never move. Geometry measured per-pixel
+// on finn/run.png (fractions of the full frame).
+const FINN_LEGS = [
+  { x0: 0.2057, x1: 0.3475, top: 0.710, ph: 1 },   // far rear foot (steps with the front leg)
+  { x0: 0.3475, x1: 0.6312, top: 0.710, ph: 0 },   // near rear leg (opposite phase)
+  { x0: 0.8156, x1: 1.0,    top: 0.688, ph: 1 }    // front leg (medallion column stays static)
+];
+function finnWalkFrame(src, sW, sH, dw, dh, g, amp) {
+  const seg = (fx0, fy0, fx1, fy1, hMul) => {
+    ctx.drawImage(src, sW * fx0, sH * fy0, sW * (fx1 - fx0), sH * (fy1 - fy0),
+                  -dw / 2 + fx0 * dw, -dh + fy0 * dh,
+                  (fx1 - fx0) * dw, (fy1 - fy0) * dh * (hMul || 1));
+  };
+  const s = Math.sin(g);
+  seg(FINN_CUT_X, 0, FINN_LEGS[0].x0, 1);          // tail + nozzle column (static, plume excised)
+  seg(FINN_LEGS[1].x1, 0, FINN_LEGS[2].x0, 1);     // belly + medallion column (static)
+  for (const L of FINN_LEGS) {
+    const lift = Math.max(0, L.ph ? -s : s) * amp; // each leg steps on its own half-cycle
+    seg(L.x0, 0, L.x1, L.top);                     // hip and up — never moves (seamless cut)
+    seg(L.x0, L.top, L.x1, 1, 1 - 0.17 * lift);    // leg squashes upward → the foot LIFTS
+  }
+}
 let _finnFlameP = 0.2, _finnFlameMs = 0;
 function finnLiveFlame(nx, ny, p) {
   const t = turtle.animT;
@@ -13642,7 +13669,7 @@ function drawFinnSprite(cameraX) {
   const sx = turtle.x - cameraX;
   const moving = turtle.onGround && !turtle.halt && finnDazedT <= 0;
   const grounded = turtle.onGround && !turtle.tucked && !turtle.spinning && finnDazedT <= 0;
-  const bob = grounded ? Math.sin(turtle.animT * 9) * (moving ? 1.4 : 0.6) : 0;   // Bible §2 — gait bob (idle trots in place)
+  const bob = grounded ? Math.sin(turtle.animT * 9) * (moving ? 1.7 : 0.6) : 0;   // Bible §2 — gait bob (idle trots in place)
   const idle = turtle.onGround && !moving && !turtle.tucked && !turtle.spinning;
   const breath = idle ? Math.sin(turtle.animT * 1.8) * 1.6 : 0;            // Bible §1 — breathing
   // Live-flame power (render-only): full trail while moving/airborne, pilot flicker at a stop.
@@ -13653,10 +13680,11 @@ function drawFinnSprite(cameraX) {
   const sy = turtle.y + bob + breath;
 
   ctx.save();
-  // Snap the world anchor to DEVICE pixels — a sub-pixel translate makes the resampling phase
-  // crawl every frame (the "pixelated shimmer" while moving). Motion stays dpr-granular.
-  const dpx = window.devicePixelRatio || 1;
-  ctx.translate(Math.round(sx * dpx) / dpx, Math.round(sy * dpx) / dpx);
+  // CONTINUOUS translate — build 228 snapped this to device pixels to fight resampling
+  // shimmer, but quantizing Finn while the candles scroll smoothly made him JUDDER against
+  // the world (founder: "glitching in place / two images superposed"). The mips +
+  // imageSmoothingQuality already keep minification clean; position must stay sub-pixel.
+  ctx.translate(sx, sy);
   ctx.scale(s, s);
   const VIS = 1.35;                                                        // same hero scale as the procedural art
   ctx.translate(w / 2, h); ctx.scale(VIS, VIS); ctx.translate(-w / 2, -h);
@@ -13753,11 +13781,10 @@ function drawFinnSprite(cameraX) {
     }
     if (rot) ctx.rotate(rot);
     if (key === 'run') {
-      // Grounded (running AND idle) = the canon frame minus the static baked plume (source-rect
-      // only; the body keeps the exact same on-screen mapping) + the LIVE animated flame. One
-      // frame, one flame, continuously breathing — no plume pop between run and stop.
-      ctx.drawImage(src, sW * FINN_CUT_X, 0, sW * (1 - FINN_CUT_X), sH,
-                    -dw / 2 + dw * FINN_CUT_X, -dh, dw * (1 - FINN_CUT_X), dh);
+      // Grounded (running AND idle) = the canon frame with STEPPING legs (one image, sliced —
+      // never two frames) + the LIVE animated flame. Legs trot at full lift while moving and
+      // keep marching in place at ~45% when halted (the market never stops, neither does Finn).
+      finnWalkFrame(src, sW, sH, dw, dh, turtle.animT * 9, moving ? 1 : 0.45);
       finnLiveFlame(-dw / 2 + dw * FINN_NOZZLE.x, -dh + dh * FINN_NOZZLE.y, _finnFlameP);
     } else {
       ctx.drawImage(src, -dw / 2, -dh, dw, dh);

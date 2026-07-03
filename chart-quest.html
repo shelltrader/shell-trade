@@ -2376,7 +2376,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 224';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 225';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -6639,6 +6639,12 @@ function armBeginnerSetup(c) {
   setupFlow.armed = true;
   setupFlow.confirmId = c.id;
   setupZone = { from: setupFlow.momId, to: c.id, dir: setupFlow.dir, type: 'pullback', quality: 'B' };
+  // MASTERY AUDIT v224 (HIGH #3) — at Level 3, once BOS is taught, this setup IS a break of
+  // structure by construction (the confirmation candle closes beyond the pullback swing), so it
+  // is armed AS one: the banner reads BREAK, the ticket/review explain BOS, and every L3 player
+  // is GUARANTEED to trade the concept before the Serpent tests it (the Trade stage, §4 of the
+  // audit, stops being probabilistic for BOS).
+  if (session.level === 3 && taught.bos) { setupZone.type = 'bos'; try { c.bos = true; } catch (e) {} }
   if (typeof setupBannerMaxCandleId !== 'undefined') setupBannerMaxCandleId = maxSeenCandleId;
   bannerT = 1;
   bannerEl.innerHTML = '&#9889; SETUP FORMING &mdash; FLY INTO THE PORTAL';   /* SHOT 21 — info-only banner; the PORTAL is the single way in (no tap-to-trade) */
@@ -9487,7 +9493,7 @@ const BOSS_CAST = {
   2:  { name:'THE TREND CRAB', emoji:'🦀', portrait:'🦀', arenaSrc:7, lives:3, rank:'CRAB',
         realm:'STRUCTURE REEF', lesson:'Trend direction, higher highs, higher lows', diff:'beginner', reward:{ shells:95, xp:140 },
         desc:'Walks only with the trend. He teaches reading higher highs and higher lows before taking a side.',
-        weak:['Trend','MultiTF'], rounds:[['trend','beginner'],['support','beginner'],['resistance','beginner'],['fake','intermediate'],['predict','intermediate']],   /* TPAT AUDIT — 'bos' moved to the Serpent (taught hour 3); 'struct' out (range untaught here). Full-strength 'fake' moves IN: resistance + the close-read are both taught by end of L2. */
+        weak:['Trend','MultiTF'], rounds:[['trend','beginner'],['support','beginner'],['resistance','beginner'],['fake','intermediate'],['trend','intermediate']],   /* MASTERY AUDIT v224 — strict ownership: 'predict' (an L1-graded skill) out; a second, harder trendline rep in. 'fake' stays: its NOVEL graded skill is marking resistance (L2-owned); the close-call is L1-as-medium (ruling of record in BOSS_MASTERY_AUDIT_v224). */
         title:'Strider of the Reef',
         intro:"Sideways, schmideways. Pick the line, hatchling. WITH me, or under my claw.",
         victory:"You fought the trend. The trend, as always, won.",
@@ -9496,7 +9502,7 @@ const BOSS_CAST = {
   3:  { name:'THE STRUCTURE SERPENT', emoji:'🐉', portrait:'🐍', arenaSrc:3, lives:3, rank:'PUFFERFISH',
         realm:'BROKEN STRUCTURE CANYON', lesson:'Market structure, BOS, CHOCH', diff:'intermediate', reward:{ shells:120, xp:160 },
         desc:'The skeleton of the market. He teaches break of structure and change of character.',
-        weak:['Structure','OrderBlocks'], rounds:[['bos','intermediate'],['choch','intermediate'],['error','advanced'],['trend','advanced'],['predict','advanced']],   /* SPRINT 3 — 'struct' out: its RANGE option lost its teach link when the L3 text cards became animated scenes (BOSS_CURRICULUM_ALIGNMENT_v222). 'error' (advanced) in: the chain-law lie — taught+practiced in the intro, reinforced at the Gambler, native to Broken Structure Canyon. */
+        weak:['Structure','OrderBlocks'], rounds:[['bos','intermediate'],['choch','intermediate'],['bos','advanced'],['choch','advanced']],   /* MASTERY AUDIT v224 — strict ownership: L3 owns ONLY BOS/ChoCh, so error(L1)/trend(L2)/predict(L1) are out. A pure, escalating structure exam — each concept once to learn, once to prove, on fresh harder charts. 4 rounds vs 3 lives stays fair and fully guess-proof (no binary rounds). */
         title:'Spine of the Canyon',
         intro:"Every wave has a spine, hatchling. Find where it breaks — or be crushed by it.",
         victory:"You traded against the structure. The Canyon does not forgive that.",

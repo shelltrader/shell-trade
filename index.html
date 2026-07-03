@@ -2384,7 +2384,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 227 — Finn polish';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 228 — Finn alive';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -3881,6 +3881,7 @@ function spawnTurtle() {
 function jump() {
   if (turtle.spinning || turtle.tucked) return; // committed to spin/ball
   turtle.halt = false; // any action resumes from a setup stop
+  finnDazedT = 0; turtle.landT = 0;   // founder: input = INSTANT get-up — never jump wearing the dazed/splat art
   if (turtle.onGround) {
     turtle.vy = CFG.jumpVelocity;
     turtle.onGround = false;
@@ -3897,6 +3898,7 @@ function jump() {
 function fireJetpack() {
   if (turtle.spinning) return;               // committed to the spin
   turtle.halt = false;
+  finnDazedT = 0; turtle.landT = 0;   // founder: input = INSTANT get-up (same as jump)
   turtle.tucked = false;
   turtle.rollT = 0;
   turtle.rot = 0;
@@ -13162,14 +13164,14 @@ function update(dt) {
 
   // JETPACK LANDING PUFF — a tiny blue burst the instant Finn touches down from the air.
   if (turtle.onGround && wasAirborne) {
-    turtle.flameT = Math.max(turtle.flameT, 0.12); turtle.landT = 0.22;   // landT → neck-compression micro-anim
+    turtle.flameT = Math.max(turtle.flameT, 0.12); turtle.landT = 0.14;   // landT → touchdown squash (founder: recover FAST)
     // DAZED (founder rule) — an UNTUCKED fall from a LARGE candle (≥230px drop) leaves Finn
     // seeing stars for a beat. Never during a trade/ticket/modal or a deliberate shell landing,
     // and on an 9s cooldown so it stays a rare gag, not a movement tax.
     const _drop = (_finnFallTop == null) ? 0 : (turtle.y - _finnFallTop);
     if (_drop >= 230 && _finnDazeCd <= 0 && !turtle.tucked && !turtle.spinning &&
         !trade && !pending && !session.inModal && finnDazedT <= 0) {
-      finnDazedT = 1.7; _finnDazeCd = 9;
+      finnDazedT = 1.0; _finnDazeCd = 9;   // founder (build 228): shorter beat — he gets up FAST (any jump/boost cancels it instantly)
       try { GameMusic && GameMusic.sting && GameMusic.sting('lose'); } catch (e) {}
     }
     _finnFallTop = null;
@@ -13605,7 +13607,31 @@ const FINN_LID = 'rgb(168,199,39)';
 // nozzle cone survives intact), plus the nozzle-mouth anchor + canon flame colours for the
 // idle PILOT FLAME (sampled from the baked plume so the flicker is HIS fire).
 const FINN_CUT_X = 0.156, FINN_NOZZLE = { x: 0.181, y: 0.50 };
-const FINN_FLAME = ['rgb(255,155,13)', 'rgb(252,228,33)'];
+// Canon flame palette sampled from the baked plume: tip → body → core → white-hot heart.
+const FINN_FLAME = ['rgb(252,104,17)', 'rgb(255,155,13)', 'rgb(252,228,33)', 'rgb(254,251,240)'];
+// LIVE FLAME (founder, build 228: "the rocket needs a live flame") — the static baked plume is
+// excised from the grounded frame and replaced by this drawn, animated plume. Power eases
+// 0.18 (pilot flicker, halted at a setup) ↔ 1 (full running trail), so the flame BREATHES
+// between states instead of popping on/off — that pop was the "glitchy" stop/start feel.
+let _finnFlameP = 0.2, _finnFlameMs = 0;
+function finnLiveFlame(nx, ny, p) {
+  const t = turtle.animT;
+  const wob = 0.84 + 0.16 * Math.sin(t * 21) * Math.sin(t * 6.1 + 1.3) + 0.05 * Math.sin(t * 47);
+  const len = (1.2 + 6.2 * p) * wob;
+  const wid = (0.75 + 1.95 * p) * (0.92 + 0.16 * Math.sin(t * 29));
+  ctx.save();
+  ctx.translate(nx, ny);
+  ctx.rotate(-0.28 + 0.10 * p + 0.03 * Math.sin(t * 13));   // exhaust axis: left + slightly down (canon plume line)
+  ctx.globalAlpha = 0.95;
+  const layers = [[0.66, 1.10], [0.55, 0.90], [0.38, 0.60], [0.20, 0.33]];
+  for (let i = 0; i < 4; i++) {
+    ctx.fillStyle = FINN_FLAME[i];
+    ctx.beginPath();
+    ctx.ellipse(-len * layers[i][0], 0, len * layers[i][0], wid * layers[i][1], 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
 // DAZED — founder rule: the dazed art appears ONLY after Finn falls off a LARGE candle.
 let finnDazedT = 0, _finnDazeCd = 0, _finnFallTop = null;
 
@@ -13615,9 +13641,15 @@ function drawFinnSprite(cameraX) {
   const s = turtle.w / w;
   const sx = turtle.x - cameraX;
   const moving = turtle.onGround && !turtle.halt && finnDazedT <= 0;
-  const bob = moving ? Math.sin(turtle.animT * 9) * 1.4 : 0;               // Bible §2 — run bob
+  const grounded = turtle.onGround && !turtle.tucked && !turtle.spinning && finnDazedT <= 0;
+  const bob = grounded ? Math.sin(turtle.animT * 9) * (moving ? 1.4 : 0.6) : 0;   // Bible §2 — gait bob (idle trots in place)
   const idle = turtle.onGround && !moving && !turtle.tucked && !turtle.spinning;
   const breath = idle ? Math.sin(turtle.animT * 1.8) * 1.6 : 0;            // Bible §1 — breathing
+  // Live-flame power (render-only): full trail while moving/airborne, pilot flicker at a stop.
+  const _fms = performance.now();
+  const _fdt = _finnFlameMs ? Math.min(0.05, (_fms - _finnFlameMs) / 1000) : 0.016;
+  _finnFlameMs = _fms;
+  _finnFlameP += (((moving || !turtle.onGround) ? 1 : 0.18) - _finnFlameP) * Math.min(1, _fdt * 8);
   const sy = turtle.y + bob + breath;
 
   ctx.save();
@@ -13652,7 +13684,7 @@ function drawFinnSprite(cameraX) {
   // ── frame selection + pose transforms (Bible contracts; positive rot = nose-DOWN in canvas) ──
   const airborne = !turtle.onGround;
   let img = I.run, rot = 0, ball = false, key = 'run';
-  if (finnDazedT > 0) {
+  if (finnDazedT > 0 && !airborne) {                                       // dazed NEVER shows mid-air (jump = instant get-up)
     key = 'dazed'; img = I.dazed;
     rot = Math.sin(turtle.animT * 7) * 0.03;                               // tiny woozy wobble
   } else if (turtle.spinning) {
@@ -13684,20 +13716,30 @@ function drawFinnSprite(cameraX) {
     // airborne poses rotate about the body centre so the nose leads naturally
     ctx.translate(w / 2, h - dh / 2);
     ctx.rotate(rot);
-    ctx.drawImage(src, -dw / 2, -dh / 2, dw, dh);
+    if (key === 'run') {
+      // Wick-fling dash — same plume-less frame, full live flame trailing behind
+      ctx.drawImage(src, sW * FINN_CUT_X, 0, sW * (1 - FINN_CUT_X), sH,
+                    -dw / 2 + dw * FINN_CUT_X, -dh / 2, dw * (1 - FINN_CUT_X), dh);
+      finnLiveFlame(-dw / 2 + dw * FINN_NOZZLE.x, -dh / 2 + dh * FINN_NOZZLE.y, 1.15);
+    } else {
+      ctx.drawImage(src, -dw / 2, -dh / 2, dw, dh);
+    }
   } else {
     // Grounded — ONE jetpack frame animated by continuous transforms (founder note: the old
     // 2-frame gait snapped AND flashed a jetpack-less frame; both retired with walk.png).
     ctx.translate(w / 2, h);
     if (key === 'land') {
-      const landC = turtle.landT > 0 ? Math.sin((turtle.landT / 0.22) * Math.PI) : 0;
+      const landC = turtle.landT > 0 ? Math.sin((turtle.landT / 0.14) * Math.PI) : 0;
       ctx.scale(1 + landC * 0.08, 1 - landC * 0.12);
     }
-    if (key === 'run' && moving) {
-      // Bible §2 as pure transforms: gait rock ±2.6°, in-phase micro-squash — buttery at any fps
+    if (key === 'run') {
+      // Bible §2 as pure transforms: gait rock ±2.6°, in-phase micro-squash — buttery at any
+      // fps. At a stop the SAME gait keeps trotting in place at ~45% amplitude (founder rule:
+      // the market never stops moving forward, so neither do Finn's feet).
       const g = Math.sin(turtle.animT * 9);
-      ctx.rotate(g * 0.045);
-      ctx.scale(1 + g * 0.015, 1 - g * 0.02);
+      const amp = moving ? 1 : 0.45;
+      ctx.rotate(g * 0.045 * amp);
+      ctx.scale(1 + g * 0.015 * amp, 1 - g * 0.02 * amp);
     }
     if (key === 'run' && idle && finnDazedT <= 0) {
       // Bible §1 CURIOUS PEEK — every ~11s Finn leans in for a look (whole-sprite gesture,
@@ -13710,24 +13752,13 @@ function drawFinnSprite(cameraX) {
       }
     }
     if (rot) ctx.rotate(rot);
-    if (key === 'run' && idle) {
-      // IDLE — the same canon frame minus the baked thrust plume (source-rect only; the body
-      // keeps the exact same on-screen mapping, so stop→start never pops)…
+    if (key === 'run') {
+      // Grounded (running AND idle) = the canon frame minus the static baked plume (source-rect
+      // only; the body keeps the exact same on-screen mapping) + the LIVE animated flame. One
+      // frame, one flame, continuously breathing — no plume pop between run and stop.
       ctx.drawImage(src, sW * FINN_CUT_X, 0, sW * (1 - FINN_CUT_X), sH,
                     -dw / 2 + dw * FINN_CUT_X, -dh, dw * (1 - FINN_CUT_X), dh);
-      // …plus the idle PILOT FLAME: a small nozzle-anchored flicker in his own flame colours
-      // (run/jump/vboost keep their BAKED flames — never doubled).
-      const fx = -dw / 2 + dw * FINN_NOZZLE.x, fy = -dh + dh * FINN_NOZZLE.y;
-      const fl = 0.62 + 0.38 * Math.sin(turtle.animT * 23) * Math.sin(turtle.animT * 7.3 + 1.7);
-      ctx.save();
-      ctx.translate(fx, fy);
-      ctx.rotate(-0.30);                       // exhaust axis: left + slightly down (canon plume line)
-      ctx.globalAlpha = 0.72 + 0.22 * fl;
-      ctx.fillStyle = FINN_FLAME[0];
-      ctx.beginPath(); ctx.ellipse(-1.9 - 1.6 * fl, 0, 1.9 + 1.4 * fl, 1.5, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = FINN_FLAME[1];
-      ctx.beginPath(); ctx.ellipse(-1.3 - 1.0 * fl, 0, 1.1 + 0.8 * fl, 0.85, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
+      finnLiveFlame(-dw / 2 + dw * FINN_NOZZLE.x, -dh + dh * FINN_NOZZLE.y, _finnFlameP);
     } else {
       ctx.drawImage(src, -dw / 2, -dh, dw, dh);
     }
@@ -13921,7 +13952,7 @@ function drawTurtle(cameraX) {
   // head-bob while walking, and a brief neck compression (head dips) on landing.
   const moveExt     = moving ? 1.6 : 0;
   const walkHeadBob = moving ? Math.sin(turtle.animT * 9 + 0.7) * 0.9 : 0;
-  const landC       = turtle.landT > 0 ? Math.sin((turtle.landT / 0.22) * Math.PI) : 0;   // 0→1→0
+  const landC       = turtle.landT > 0 ? Math.sin((turtle.landT / 0.14) * Math.PI) : 0;   // 0→1→0
   // Raised + nudged FORWARD so the shell frames the face instead of swallowing it; a short neck
   // (drawn after the shell) always shows. The long idle crane still adds neckEx*27 on top.
   const hcx = w * 1.03 + neckEx * 27 + moveExt + lookDX * (2.6 + neckEx * 4) + subtleGlance;   // head sits up+OUT against the shell (more face shows, NO neck at rest); idle peek cranes +27 more

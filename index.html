@@ -2384,7 +2384,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 231 — Finn crawls clean';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 232 — Finn one-piece';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -13560,34 +13560,54 @@ function drawCoinGlyph(ticker, cx, cy, s, color) {
    docs/finn-canon/02-Finn-Animation-Bible.md. Physics, the 36×24 hitbox and every CFG value are
    untouched. If ANY sprite fails to load, the procedural Finn below renders exactly as before —
    graceful fallback, never a blank hero. */
-const FINN_SPRITES = { ready: false, img: {}, mip: {} };
+const FINN_SPRITES = { ready: false, img: {}, mip: {}, walk: [], walkC: [] };
 (function loadFinnSprites() {
   // FOUNDER-CURATED SET (2026-07-03): one grounded frame WITH the jetpack (run — the
   // jetpack-less walk/idle frames were deleted by the founder), the new vertical-boost art,
   // jump, landing skid, the shell ball for dive/spin, and dazed (big falls only).
   const files = { run: 'finn/run.png', jump: 'finn/jump.png', vboost: 'finn/vboost.png',
                   shell: 'finn/shell-fall-roll.png', land: 'finn/land.png',
-                  dazed: 'finn/dazed-after-fall.png' };
+                  dazed: 'finn/dazed-after-fall.png', walk: 'finn/walk-sheet.png' };
   const keys = Object.keys(files); let got = 0;
   keys.forEach(k => {
     const im = new Image();
     im.onload = function () {
-      // MIP — pre-shrink each frame to ~2× its largest on-screen device size so every draw is
-      // a ≤2:1 minification. That stays clean even where imageSmoothingQuality is ignored
-      // (iOS Safari) — the real fix for "movement feels pixelated" on actual phones.
       try {
-        const mh = Math.round((FINN_H[k] || 31) * 4.2);
-        if (im.naturalHeight > mh * 1.15) {
-          const c = document.createElement('canvas');
-          c.width = Math.max(1, Math.round(im.naturalWidth * mh / im.naturalHeight));
-          c.height = mh;
-          const mctx = c.getContext('2d');
-          mctx.imageSmoothingEnabled = true;
-          try { mctx.imageSmoothingQuality = 'high'; } catch (e) {}
-          mctx.drawImage(im, 0, 0, c.width, c.height);
-          FINN_SPRITES.mip[k] = c;
+        if (k === 'walk') {
+          // WALK SHEET (build 232 "one-piece Finn"): 24 pre-baked COMPLETE frames — 12 gait
+          // phases × (eyes open / eyes closed) — composed OFFLINE from the canon art (legs
+          // rotated at the hip under feathered masks; closed eyes grafted from land.png's own
+          // closed-eye arcs). The renderer always draws ONE whole bitmap, so seams/"puzzle
+          // lines" are impossible by construction. 2px gutters stop mip-downscale bleed.
+          const TW = 238, TH = 186, GUT = 2, COLS = 4;
+          const mh = Math.round((FINN_H.run || 31) * 4.2);
+          const mw = Math.max(1, Math.round(TW * mh / TH));
+          for (let i = 0; i < 24; i++) {
+            const c = document.createElement('canvas');
+            c.width = mw; c.height = mh;
+            const mctx = c.getContext('2d');
+            mctx.imageSmoothingEnabled = true;
+            try { mctx.imageSmoothingQuality = 'high'; } catch (e) {}
+            mctx.drawImage(im, GUT + (i % COLS) * (TW + GUT), GUT + Math.floor(i / COLS) * (TH + GUT),
+                           TW, TH, 0, 0, mw, mh);
+            (i < 12 ? FINN_SPRITES.walk : FINN_SPRITES.walkC).push(c);
+          }
+        } else {
+          // MIP — pre-shrink each frame to ~2× its largest on-screen device size so every draw
+          // is a ≤2:1 minification (clean even where imageSmoothingQuality is ignored — iOS).
+          const mh = Math.round((FINN_H[k] || 31) * 4.2);
+          if (im.naturalHeight > mh * 1.15) {
+            const c = document.createElement('canvas');
+            c.width = Math.max(1, Math.round(im.naturalWidth * mh / im.naturalHeight));
+            c.height = mh;
+            const mctx = c.getContext('2d');
+            mctx.imageSmoothingEnabled = true;
+            try { mctx.imageSmoothingQuality = 'high'; } catch (e) {}
+            mctx.drawImage(im, 0, 0, c.width, c.height);
+            FINN_SPRITES.mip[k] = c;
+          }
         }
-      } catch (e) {}   // the mip is an optimization — never let it block sprite readiness
+      } catch (e) {}   // mips/tiles are optimizations — never let them block sprite readiness
       if (++got === keys.length) FINN_SPRITES.ready = true;
     };
     im.onerror = function () {};   // any miss → ready stays false → procedural fallback
@@ -13597,63 +13617,15 @@ const FINN_SPRITES = { ready: false, img: {}, mip: {} };
 })();
 // Per-frame draw height in the 46×30 authoring frame (width follows each sprite's own aspect).
 const FINN_H = { run: 31, jump: 32, vboost: 36, shell: 25, land: 25, dazed: 23 };
-// Eye geometry on run.png (auto-detected white-blob centroids, normalized to the sprite box) +
-// the lid green sampled from Finn's own head — the blink overlay closes HIS pixels' colour.
-const FINN_EYES = [ { cx: 0.787, cy: 0.290, rx: 0.062, ry: 0.102 },
-                    { cx: 0.936, cy: 0.309, rx: 0.032, ry: 0.091 } ];
-const FINN_LID = 'rgb(168,199,39)';
-// IDLE = the same canon run frame with the thrust plume excised (everything left of this
-// x-fraction is flame-only — verified per-pixel: the rear foot starts at x≈0.16 and the gold
-// nozzle cone survives intact), plus the nozzle-mouth anchor + canon flame colours for the
-// idle PILOT FLAME (sampled from the baked plume so the flicker is HIS fire).
-const FINN_CUT_X = 0.156, FINN_NOZZLE = { x: 0.181, y: 0.50 };
+// Nozzle-mouth anchor for the live flame, as a fraction of the WALK-SHEET tile (tiles are
+// pre-cropped at bake time, so the baked plume never ships — the drawn flame is the only fire).
+const FINN_NOZZLE = { x: 0.029, y: 0.50 };
 // Canon flame palette sampled from the baked plume: tip → body → core → white-hot heart.
 const FINN_FLAME = ['rgb(252,104,17)', 'rgb(255,155,13)', 'rgb(252,228,33)', 'rgb(254,251,240)'];
 // LIVE FLAME (founder, build 228: "the rocket needs a live flame") — the static baked plume is
 // excised from the grounded frame and replaced by this drawn, animated plume. Power eases
 // 0.18 (pilot flicker, halted at a setup) ↔ 1 (full running trail), so the flame BREATHES
 // between states instead of popping on/off — that pop was the "glitchy" stop/start feel.
-// STEPPING LEGS (founder, build 229: "his feet are not moving at all… use ONE image and give
-// his legs smooth motion"). The single canon run frame is drawn in vertical columns; the three
-// LEG columns get a squash-step — the lower slice compresses toward its hip line, so the foot
-// visibly lifts off the ground and plants again, with ZERO seams (the cut row never moves and
-// nothing is drawn twice). Diagonal trot: the near rear leg steps opposite the front leg + far
-// rear foot. The belly/medallion column and tail column never move. Geometry measured per-pixel
-// on finn/run.png (fractions of the full frame).
-const FINN_LEGS = [
-  // ONE slice for the whole rear mass (both rear feet + thigh) — build 230 animated the far
-  // rear foot as its own column and it visibly DETACHED mid-swing (its anatomical joint lives
-  // in the neighbouring column). Connected pixels must always travel together.
-  { x0: 0.2057, x1: 0.6312, top: 0.710, ph: 0, amp: 2.2 },   // rear legs (one connected piece)
-  { x0: 0.8156, x1: 1.0,    top: 0.688, ph: 1, amp: 1.7 }    // front leg (smaller sweep — stays clear of the medallion)
-];
-function finnWalkFrame(src, sW, sH, dw, dh, g, amp) {
-  const seg = (fx0, fy0, fx1, fy1) => {
-    ctx.drawImage(src, sW * fx0, sH * fy0, sW * (fx1 - fx0), sH * (fy1 - fy0),
-                  -dw / 2 + fx0 * dw, -dh + fy0 * dh,
-                  (fx1 - fx0) * dw, (fy1 - fy0) * dh);
-  };
-  seg(FINN_CUT_X, 0, FINN_LEGS[0].x0, 1);          // tail + nozzle column (static, plume excised)
-  seg(FINN_LEGS[0].x1, 0, FINN_LEGS[1].x0, 1);     // belly + medallion column (static)
-  for (const L of FINN_LEGS) {
-    seg(L.x0, 0, L.x1, L.top);                     // hip and up — pinned (seamless cut)
-    // PENDULUM STRIDE — the leg slice SHEARS about its hip line (top edge pinned, no seam):
-    // the paws swing forward/back on a pure sine (no velocity kinks) and lift on the forward
-    // swing with a squared ease, so each foot touches down and takes off SOFTLY:
-    // plant → push back → lift → reach forward → plant.
-    const ph = L.ph ? g + Math.PI : g;
-    const sw2 = Math.sin(ph);
-    const lift = Math.max(0, sw2);
-    const bandH = (1 - L.top) * dh;
-    ctx.save();
-    ctx.translate(0, -dh + L.top * dh);            // pivot on the hip line
-    ctx.transform(1, 0, (L.amp * amp * sw2) / bandH, 1, 0, 0);   // smooth sine swing at the ground
-    ctx.scale(1, 1 - 0.13 * amp * lift * lift);    // lift² — gentle touch-down, no slam
-    ctx.drawImage(src, sW * L.x0, sH * L.top, sW * (L.x1 - L.x0), sH * (1 - L.top),
-                  -dw / 2 + L.x0 * dw, 0, (L.x1 - L.x0) * dw, bandH);
-    ctx.restore();
-  }
-}
 let _finnFlameP = 0.2, _finnFlameMs = 0;
 function finnLiveFlame(nx, ny, p) {
   const t = turtle.animT;
@@ -13758,11 +13730,13 @@ function drawFinnSprite(cameraX) {
     // airborne poses rotate about the body centre so the nose leads naturally
     ctx.translate(w / 2, h - dh / 2);
     ctx.rotate(rot);
-    if (key === 'run') {
-      // Wick-fling dash — same plume-less frame, full live flame trailing behind
-      ctx.drawImage(src, sW * FINN_CUT_X, 0, sW * (1 - FINN_CUT_X), sH,
-                    -dw / 2 + dw * FINN_CUT_X, -dh / 2, dw * (1 - FINN_CUT_X), dh);
-      finnLiveFlame(-dw / 2 + dw * FINN_NOZZLE.x, -dh / 2 + dh * FINN_NOZZLE.y, 1.15);
+    if (key === 'run' && FINN_SPRITES.walk.length === 12) {
+      // Wick-fling dash — same one-piece frames, paddling fast, full live flame trailing
+      const cyc = (turtle.animT * 14) / (Math.PI * 2);
+      const fr = FINN_SPRITES.walk[Math.floor((cyc - Math.floor(cyc)) * 12) % 12];
+      const fw = dh * fr.width / fr.height;
+      ctx.drawImage(fr, -fw / 2, -dh / 2, fw, dh);
+      finnLiveFlame(-fw / 2 + fw * FINN_NOZZLE.x, -dh / 2 + dh * FINN_NOZZLE.y, 1.15);
     } else {
       ctx.drawImage(src, -dw / 2, -dh / 2, dw, dh);
     }
@@ -13794,31 +13768,23 @@ function drawFinnSprite(cameraX) {
       }
     }
     if (rot) ctx.rotate(rot);
-    if (key === 'run') {
-      // Grounded (running AND idle) = the canon frame with STEPPING legs (one image, sliced —
-      // never two frames) + the LIVE animated flame. Legs trot at full lift while moving and
-      // keep marching in place at ~45% when halted (the market never stops, neither does Finn).
-      finnWalkFrame(src, sW, sH, dw, dh, turtle.animT * 9, moving ? 1 : 0.65);
-      finnLiveFlame(-dw / 2 + dw * FINN_NOZZLE.x, -dh + dh * FINN_NOZZLE.y, _finnFlameP);
+    if (key === 'run' && FINN_SPRITES.walk.length === 12) {
+      // ONE-PIECE WALK (founder, build 232: "construct him as one smooth character") — pick the
+      // pre-baked WHOLE frame for this gait phase; the character is never sliced at runtime, so
+      // seams/"puzzle lines" are impossible. Blink = swap to the closed-eye variant of the SAME
+      // frame (canon closed eyes grafted from land.png at bake time — never painted lids).
+      const cyc = (turtle.animT * 9) / (Math.PI * 2);
+      const idx = Math.floor((cyc - Math.floor(cyc)) * 12) % 12;
+      const bp = 2.4 + (Math.floor(turtle.animT / 2.4) % 3) * 0.6;   // V3 timing — never metronomic
+      let blink = (turtle.animT % bp) < 0.13;
+      const pc2 = turtle.animT % 11;                                 // peek double-blink
+      if ((pc2 > 9.35 && pc2 < 9.47) || (pc2 > 9.75 && pc2 < 9.87)) blink = true;
+      const fr = (blink ? FINN_SPRITES.walkC : FINN_SPRITES.walk)[idx];
+      const fw = dh * fr.width / fr.height;
+      ctx.drawImage(fr, -fw / 2, -dh, fw, dh);
+      finnLiveFlame(-fw / 2 + fw * FINN_NOZZLE.x, -dh + dh * FINN_NOZZLE.y, _finnFlameP);
     } else {
       ctx.drawImage(src, -dw / 2, -dh, dw, dh);
-    }
-    // Bible §13 BLINK — eyelids in Finn's own head-green close over the detected eye positions.
-    // V3 timing (~2.4–4s, never metronomic) + a double-blink during the curious peek.
-    if (key === 'run' && !airborne) {
-      const bp = 2.4 + (Math.floor(turtle.animT / 2.4) % 3) * 0.6;
-      const bc = turtle.animT % bp;
-      let blink = bc < 0.13 ? (1 - Math.abs(bc - 0.065) / 0.065) : 0;
-      const pc2 = turtle.animT % 11;   // peek double-blink
-      [9.35, 9.75].forEach(t0 => { const d = pc2 - t0; if (d > 0 && d < 0.12) blink = Math.max(blink, 1 - Math.abs(d - 0.06) / 0.06); });
-      if (blink > 0.05) {
-        ctx.fillStyle = FINN_LID;
-        FINN_EYES.forEach(e => {
-          ctx.beginPath();
-          ctx.ellipse(-dw / 2 + e.cx * dw, -dh + e.cy * dh, e.rx * dw * 1.15, e.ry * dh * 1.1 * blink, 0, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      }
     }
   }
   ctx.restore();

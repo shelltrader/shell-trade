@@ -13558,7 +13558,7 @@ function drawCoinGlyph(ticker, cx, cy, s, color) {
    docs/finn-canon/02-Finn-Animation-Bible.md. Physics, the 36×24 hitbox and every CFG value are
    untouched. If ANY sprite fails to load, the procedural Finn below renders exactly as before —
    graceful fallback, never a blank hero. */
-const FINN_SPRITES = { ready: false, img: {} };
+const FINN_SPRITES = { ready: false, img: {}, mip: {} };
 (function loadFinnSprites() {
   // FOUNDER-CURATED SET (2026-07-03): one grounded frame WITH the jetpack (run — the
   // jetpack-less walk/idle frames were deleted by the founder), the new vertical-boost art,
@@ -13569,7 +13569,25 @@ const FINN_SPRITES = { ready: false, img: {} };
   const keys = Object.keys(files); let got = 0;
   keys.forEach(k => {
     const im = new Image();
-    im.onload = function () { if (++got === keys.length) FINN_SPRITES.ready = true; };
+    im.onload = function () {
+      // MIP — pre-shrink each frame to ~2× its largest on-screen device size so every draw is
+      // a ≤2:1 minification. That stays clean even where imageSmoothingQuality is ignored
+      // (iOS Safari) — the real fix for "movement feels pixelated" on actual phones.
+      try {
+        const mh = Math.round((FINN_H[k] || 31) * 4.2);
+        if (im.naturalHeight > mh * 1.15) {
+          const c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(im.naturalWidth * mh / im.naturalHeight));
+          c.height = mh;
+          const mctx = c.getContext('2d');
+          mctx.imageSmoothingEnabled = true;
+          try { mctx.imageSmoothingQuality = 'high'; } catch (e) {}
+          mctx.drawImage(im, 0, 0, c.width, c.height);
+          FINN_SPRITES.mip[k] = c;
+        }
+      } catch (e) {}   // the mip is an optimization — never let it block sprite readiness
+      if (++got === keys.length) FINN_SPRITES.ready = true;
+    };
     im.onerror = function () {};   // any miss → ready stays false → procedural fallback
     im.src = files[k];
     FINN_SPRITES.img[k] = im;
@@ -13582,6 +13600,12 @@ const FINN_H = { run: 31, jump: 32, vboost: 36, shell: 25, land: 25, dazed: 23 }
 const FINN_EYES = [ { cx: 0.787, cy: 0.290, rx: 0.062, ry: 0.102 },
                     { cx: 0.936, cy: 0.309, rx: 0.032, ry: 0.091 } ];
 const FINN_LID = 'rgb(168,199,39)';
+// IDLE = the same canon run frame with the thrust plume excised (everything left of this
+// x-fraction is flame-only — verified per-pixel: the rear foot starts at x≈0.16 and the gold
+// nozzle cone survives intact), plus the nozzle-mouth anchor + canon flame colours for the
+// idle PILOT FLAME (sampled from the baked plume so the flicker is HIS fire).
+const FINN_CUT_X = 0.156, FINN_NOZZLE = { x: 0.181, y: 0.50 };
+const FINN_FLAME = ['rgb(255,155,13)', 'rgb(252,228,33)'];
 // DAZED — founder rule: the dazed art appears ONLY after Finn falls off a LARGE candle.
 let finnDazedT = 0, _finnDazeCd = 0, _finnFallTop = null;
 
@@ -13597,7 +13621,10 @@ function drawFinnSprite(cameraX) {
   const sy = turtle.y + bob + breath;
 
   ctx.save();
-  ctx.translate(sx, sy);
+  // Snap the world anchor to DEVICE pixels — a sub-pixel translate makes the resampling phase
+  // crawl every frame (the "pixelated shimmer" while moving). Motion stays dpr-granular.
+  const dpx = window.devicePixelRatio || 1;
+  ctx.translate(Math.round(sx * dpx) / dpx, Math.round(sy * dpx) / dpx);
   ctx.scale(s, s);
   const VIS = 1.35;                                                        // same hero scale as the procedural art
   ctx.translate(w / 2, h); ctx.scale(VIS, VIS); ctx.translate(-w / 2, -h);
@@ -13643,19 +13670,21 @@ function drawFinnSprite(cameraX) {
     key = 'land'; img = I.land;                                            // Bible §10 — touchdown squash frame
   }
   if (!img || !img.naturalWidth) { ctx.restore(); return; }                // belt-and-braces
+  const src = FINN_SPRITES.mip[key] || img;                                // draw the pre-shrunk mip when one exists
+  const sW = src.naturalWidth || src.width, sH = src.naturalHeight || src.height;
 
   const dh = FINN_H[key] || 31;
-  const dw = dh * img.naturalWidth / img.naturalHeight;
+  const dw = dh * sW / sH;
   if (ball) {
     // ball states rotate about the shell centre (matches the procedural r=14 ball placement)
     ctx.translate(w / 2, h / 2 + 2);
     ctx.rotate(rot);
-    ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+    ctx.drawImage(src, -dw / 2, -dh / 2, dw, dh);
   } else if (airborne && finnDazedT <= 0) {
     // airborne poses rotate about the body centre so the nose leads naturally
     ctx.translate(w / 2, h - dh / 2);
     ctx.rotate(rot);
-    ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+    ctx.drawImage(src, -dw / 2, -dh / 2, dw, dh);
   } else {
     // Grounded — ONE jetpack frame animated by continuous transforms (founder note: the old
     // 2-frame gait snapped AND flashed a jetpack-less frame; both retired with walk.png).
@@ -13681,7 +13710,27 @@ function drawFinnSprite(cameraX) {
       }
     }
     if (rot) ctx.rotate(rot);
-    ctx.drawImage(img, -dw / 2, -dh, dw, dh);
+    if (key === 'run' && idle) {
+      // IDLE — the same canon frame minus the baked thrust plume (source-rect only; the body
+      // keeps the exact same on-screen mapping, so stop→start never pops)…
+      ctx.drawImage(src, sW * FINN_CUT_X, 0, sW * (1 - FINN_CUT_X), sH,
+                    -dw / 2 + dw * FINN_CUT_X, -dh, dw * (1 - FINN_CUT_X), dh);
+      // …plus the idle PILOT FLAME: a small nozzle-anchored flicker in his own flame colours
+      // (run/jump/vboost keep their BAKED flames — never doubled).
+      const fx = -dw / 2 + dw * FINN_NOZZLE.x, fy = -dh + dh * FINN_NOZZLE.y;
+      const fl = 0.62 + 0.38 * Math.sin(turtle.animT * 23) * Math.sin(turtle.animT * 7.3 + 1.7);
+      ctx.save();
+      ctx.translate(fx, fy);
+      ctx.rotate(-0.30);                       // exhaust axis: left + slightly down (canon plume line)
+      ctx.globalAlpha = 0.72 + 0.22 * fl;
+      ctx.fillStyle = FINN_FLAME[0];
+      ctx.beginPath(); ctx.ellipse(-1.9 - 1.6 * fl, 0, 1.9 + 1.4 * fl, 1.5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = FINN_FLAME[1];
+      ctx.beginPath(); ctx.ellipse(-1.3 - 1.0 * fl, 0, 1.1 + 0.8 * fl, 0.85, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.drawImage(src, -dw / 2, -dh, dw, dh);
+    }
     // Bible §13 BLINK — eyelids in Finn's own head-green close over the detected eye positions.
     // V3 timing (~2.4–4s, never metronomic) + a double-blink during the curious peek.
     if (key === 'run' && !airborne) {

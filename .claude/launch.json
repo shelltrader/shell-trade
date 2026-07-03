@@ -4,14 +4,27 @@
     {
       "name": "chartquest",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["/private/tmp/claude-501/-Users-owl-Claude-Projects-Shell-Trade/83e27584-0654-4eb1-bb0b-48befb65220b/scratchpad/serve_nocache.py"],
+      "runtimeArgs": [
+        "/private/tmp/claude-501/-Users-owl-Claude-Projects-Shell-Trade/83e27584-0654-4eb1-bb0b-48befb65220b/scratchpad/serve_nocache.py"
+      ],
       "port": 8777
     },
     {
       "name": "chartquest-preview",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["/private/tmp/claude-501/-Users-owl-Claude-Projects-Shell-Trade/8de0c5f7-50fd-4cdc-bc88-3197939744d6/scratchpad/serve_nocache_218.py"],
+      "runtimeArgs": [
+        "/private/tmp/claude-501/-Users-owl-Claude-Projects-Shell-Trade/8de0c5f7-50fd-4cdc-bc88-3197939744d6/scratchpad/serve_nocache_218.py"
+      ],
       "port": 8779,
+      "autoPort": true
+    },
+    {
+      "name": "chartquest-227",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "/private/tmp/claude-501/-Users-owl-Claude-Projects-Shell-Trade/0f1c4461-3135-4938-97a7-89713ae127e2/scratchpad/serve_nocache_227.py"
+      ],
+      "port": 8781,
       "autoPort": true
     }
   ]

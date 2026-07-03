@@ -2384,7 +2384,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 230 — Finn crawls';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 231 — Finn crawls clean';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -13621,9 +13621,11 @@ const FINN_FLAME = ['rgb(252,104,17)', 'rgb(255,155,13)', 'rgb(252,228,33)', 'rg
 // rear foot. The belly/medallion column and tail column never move. Geometry measured per-pixel
 // on finn/run.png (fractions of the full frame).
 const FINN_LEGS = [
-  { x0: 0.2057, x1: 0.3475, top: 0.710, ph: 1 },   // far rear foot (steps with the front leg)
-  { x0: 0.3475, x1: 0.6312, top: 0.710, ph: 0 },   // near rear leg (opposite phase)
-  { x0: 0.8156, x1: 1.0,    top: 0.688, ph: 1 }    // front leg (medallion column stays static)
+  // ONE slice for the whole rear mass (both rear feet + thigh) — build 230 animated the far
+  // rear foot as its own column and it visibly DETACHED mid-swing (its anatomical joint lives
+  // in the neighbouring column). Connected pixels must always travel together.
+  { x0: 0.2057, x1: 0.6312, top: 0.710, ph: 0, amp: 2.2 },   // rear legs (one connected piece)
+  { x0: 0.8156, x1: 1.0,    top: 0.688, ph: 1, amp: 1.7 }    // front leg (smaller sweep — stays clear of the medallion)
 ];
 function finnWalkFrame(src, sW, sH, dw, dh, g, amp) {
   const seg = (fx0, fy0, fx1, fy1) => {
@@ -13632,23 +13634,21 @@ function finnWalkFrame(src, sW, sH, dw, dh, g, amp) {
                   (fx1 - fx0) * dw, (fy1 - fy0) * dh);
   };
   seg(FINN_CUT_X, 0, FINN_LEGS[0].x0, 1);          // tail + nozzle column (static, plume excised)
-  seg(FINN_LEGS[1].x1, 0, FINN_LEGS[2].x0, 1);     // belly + medallion column (static)
+  seg(FINN_LEGS[0].x1, 0, FINN_LEGS[1].x0, 1);     // belly + medallion column (static)
   for (const L of FINN_LEGS) {
     seg(L.x0, 0, L.x1, L.top);                     // hip and up — pinned (seamless cut)
-    // PENDULUM STRIDE (founder, build 230: feet must move "back and forth, like he's actually
-    // walking"). The leg slice SHEARS about its hip line — top edge pinned (no seam), the foot
-    // swings forward/back — and lifts on the forward swing, so each paw traces a real walking
-    // arc: plant → drag back → lift → swing forward → plant. Back-swing is damped so the front
-    // paw never sweeps far over the medallion.
+    // PENDULUM STRIDE — the leg slice SHEARS about its hip line (top edge pinned, no seam):
+    // the paws swing forward/back on a pure sine (no velocity kinks) and lift on the forward
+    // swing with a squared ease, so each foot touches down and takes off SOFTLY:
+    // plant → push back → lift → reach forward → plant.
     const ph = L.ph ? g + Math.PI : g;
     const sw2 = Math.sin(ph);
     const lift = Math.max(0, sw2);
-    const swing = 2.3 * amp * (sw2 > 0 ? sw2 : sw2 * 0.6);
     const bandH = (1 - L.top) * dh;
     ctx.save();
     ctx.translate(0, -dh + L.top * dh);            // pivot on the hip line
-    ctx.transform(1, 0, swing / bandH, 1, 0, 0);   // foot swings ±~2.3 units at the ground
-    ctx.scale(1, 1 - 0.15 * amp * lift);           // …and lifts off while swinging forward
+    ctx.transform(1, 0, (L.amp * amp * sw2) / bandH, 1, 0, 0);   // smooth sine swing at the ground
+    ctx.scale(1, 1 - 0.13 * amp * lift * lift);    // lift² — gentle touch-down, no slam
     ctx.drawImage(src, sW * L.x0, sH * L.top, sW * (L.x1 - L.x0), sH * (1 - L.top),
                   -dw / 2 + L.x0 * dw, 0, (L.x1 - L.x0) * dw, bandH);
     ctx.restore();
@@ -13780,8 +13780,8 @@ function drawFinnSprite(cameraX) {
       // the market never stops moving forward, so neither do Finn's feet).
       const g = Math.sin(turtle.animT * 9);
       const amp = moving ? 1 : 0.45;
-      ctx.rotate(g * 0.045 * amp);
-      ctx.scale(1 + g * 0.015 * amp, 1 - g * 0.02 * amp);
+      ctx.rotate(g * 0.032 * amp);                 // calmer rock — the legs carry the gait now
+      ctx.scale(1 + g * 0.010 * amp, 1 - g * 0.014 * amp);
     }
     if (key === 'run' && idle && finnDazedT <= 0) {
       // Bible §1 CURIOUS PEEK — every ~11s Finn leans in for a look (whole-sprite gesture,

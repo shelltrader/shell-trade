@@ -2384,7 +2384,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 229 — Finn strides';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 230 — Finn crawls';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -13626,18 +13626,32 @@ const FINN_LEGS = [
   { x0: 0.8156, x1: 1.0,    top: 0.688, ph: 1 }    // front leg (medallion column stays static)
 ];
 function finnWalkFrame(src, sW, sH, dw, dh, g, amp) {
-  const seg = (fx0, fy0, fx1, fy1, hMul) => {
+  const seg = (fx0, fy0, fx1, fy1) => {
     ctx.drawImage(src, sW * fx0, sH * fy0, sW * (fx1 - fx0), sH * (fy1 - fy0),
                   -dw / 2 + fx0 * dw, -dh + fy0 * dh,
-                  (fx1 - fx0) * dw, (fy1 - fy0) * dh * (hMul || 1));
+                  (fx1 - fx0) * dw, (fy1 - fy0) * dh);
   };
-  const s = Math.sin(g);
   seg(FINN_CUT_X, 0, FINN_LEGS[0].x0, 1);          // tail + nozzle column (static, plume excised)
   seg(FINN_LEGS[1].x1, 0, FINN_LEGS[2].x0, 1);     // belly + medallion column (static)
   for (const L of FINN_LEGS) {
-    const lift = Math.max(0, L.ph ? -s : s) * amp; // each leg steps on its own half-cycle
-    seg(L.x0, 0, L.x1, L.top);                     // hip and up — never moves (seamless cut)
-    seg(L.x0, L.top, L.x1, 1, 1 - 0.17 * lift);    // leg squashes upward → the foot LIFTS
+    seg(L.x0, 0, L.x1, L.top);                     // hip and up — pinned (seamless cut)
+    // PENDULUM STRIDE (founder, build 230: feet must move "back and forth, like he's actually
+    // walking"). The leg slice SHEARS about its hip line — top edge pinned (no seam), the foot
+    // swings forward/back — and lifts on the forward swing, so each paw traces a real walking
+    // arc: plant → drag back → lift → swing forward → plant. Back-swing is damped so the front
+    // paw never sweeps far over the medallion.
+    const ph = L.ph ? g + Math.PI : g;
+    const sw2 = Math.sin(ph);
+    const lift = Math.max(0, sw2);
+    const swing = 2.3 * amp * (sw2 > 0 ? sw2 : sw2 * 0.6);
+    const bandH = (1 - L.top) * dh;
+    ctx.save();
+    ctx.translate(0, -dh + L.top * dh);            // pivot on the hip line
+    ctx.transform(1, 0, swing / bandH, 1, 0, 0);   // foot swings ±~2.3 units at the ground
+    ctx.scale(1, 1 - 0.15 * amp * lift);           // …and lifts off while swinging forward
+    ctx.drawImage(src, sW * L.x0, sH * L.top, sW * (L.x1 - L.x0), sH * (1 - L.top),
+                  -dw / 2 + L.x0 * dw, 0, (L.x1 - L.x0) * dw, bandH);
+    ctx.restore();
   }
 }
 let _finnFlameP = 0.2, _finnFlameMs = 0;
@@ -13784,7 +13798,7 @@ function drawFinnSprite(cameraX) {
       // Grounded (running AND idle) = the canon frame with STEPPING legs (one image, sliced —
       // never two frames) + the LIVE animated flame. Legs trot at full lift while moving and
       // keep marching in place at ~45% when halted (the market never stops, neither does Finn).
-      finnWalkFrame(src, sW, sH, dw, dh, turtle.animT * 9, moving ? 1 : 0.45);
+      finnWalkFrame(src, sW, sH, dw, dh, turtle.animT * 9, moving ? 1 : 0.65);
       finnLiveFlame(-dw / 2 + dw * FINN_NOZZLE.x, -dh + dh * FINN_NOZZLE.y, _finnFlameP);
     } else {
       ctx.drawImage(src, -dw / 2, -dh, dw, dh);

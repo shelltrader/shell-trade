@@ -2389,7 +2389,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 249 — REVERTED build 248: new-art leg rig (finn/body.png + leg.png) restored; the walk-sheet swap was wrong';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 250 — new-art Finn walks with STATIC legs (finn/run.png); dropped the build-244 procedural leg swing';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -13934,52 +13934,13 @@ function drawFinnSprite(cameraX) {
       }
     }
     if (rot) ctx.rotate(rot);
-    // The NEW-ART leg rig (finn/body.png + finn/leg.png — the founder's ~2-day art pass). This is the
-    // canonical Finn and MUST render when its assets load. (Build 248 wrongly "parked" this to the OLD
-    // baked walk-sheet; that regression is reverted here in build 249.)
-    const _rigOn = FINN_SPRITES.img.body && FINN_SPRITES.img.body.naturalWidth &&
-                   FINN_SPRITES.img.leg && FINN_SPRITES.img.leg.naturalWidth;
-    if (key === 'run' && _rigOn) {
-      // PROCEDURAL LEG RIG (build 244, founder: "a real walking mechanic — his left leg should step
-      // ahead of his right"): the leg-cleared canon body (finn/body.png) + the real canon leg
-      // (finn/leg.png) reused for all four legs, rotated about their hips at runtime. Diagonal gait —
-      // near-front & far-rear swing together, near-rear & far-front opposite. Amplitude follows the
-      // shared _gait so idle marches in place and it ramps smoothly to a full run stride.
-      const bodySrc = FINN_SPRITES.mip.body || FINN_SPRITES.img.body;
-      const bw = dh * bodySrc.width / bodySrc.height;
-      const L = FINN_SPRITES.img.leg;
-      const ph = turtle.animT * 9;
-      const sw = 0.75 * _gait;                          // hip swing amplitude (rad)
-      const hipY = -dh * 0.32, legH = dh * 0.5;         // hip on the belly line; leg length
-      const liftAmt = dh * 0.08;                        // FOOT-LIFT (build 245) so legs STEP, not slide
-      const phF = ph, phR = ph + Math.PI;               // diagonal gait: front-pair vs rear-pair phase
-      const liftF = Math.max(0, Math.cos(phF)) * liftAmt, liftR = Math.max(0, Math.cos(phR)) * liftAmt;
-      // TAIL (build 245) — the leg-clear removed it; draw a small canon nub at the lower back, gentle wag
-      drawFinnRigTail(-bw * 0.30, -dh * 0.15, dh * 0.15, Math.sin(ph) * 0.12);
-      // FAR legs (behind the body) — faded for depth but CLEARLY moving (founder: the back leg was frozen)
-      drawFinnRigLeg(L, -bw * 0.05, hipY - 1, Math.sin(phF) * sw, legH * 0.9, 0.6, liftF);   // far-rear (diagonal w/ near-front)
-      drawFinnRigLeg(L,  bw * 0.30, hipY - 1, Math.sin(phR) * sw, legH * 0.9, 0.6, liftR);   // far-front (diagonal w/ near-rear)
-      // BODY
-      ctx.drawImage(bodySrc, -bw / 2, -dh, bw, dh);
-      // NEAR legs (in front of the belly) — full & bright: rear under the shell, front under the head
-      drawFinnRigLeg(L, -bw * 0.16, hipY, Math.sin(phR) * sw, legH, 1, liftR);   // near-rear
-      drawFinnRigLeg(L,  bw * 0.22, hipY, Math.sin(phF) * sw, legH, 1, liftF);   // near-front
-      finnLiveFlame(-bw / 2 + bw * FINN_NOZZLE.x, -dh + dh * FINN_NOZZLE.y, _finnFlameP);
-    } else if (key === 'run' && FINN_SPRITES.walk.length === 12) {
-      // ONE-PIECE WALK fallback (build 232) if the rig assets ever fail to load — pre-baked frames.
-      const cyc = (turtle.animT * 9) / (Math.PI * 2);
-      const idx = Math.floor((cyc - Math.floor(cyc)) * 12) % 12;
-      const bp = 2.4 + (Math.floor(turtle.animT / 2.4) % 3) * 0.6;
-      let blink = (turtle.animT % bp) < 0.13;
-      const pc2 = turtle.animT % 11;
-      if ((pc2 > 9.35 && pc2 < 9.47) || (pc2 > 9.75 && pc2 < 9.87)) blink = true;
-      const fr = (blink ? FINN_SPRITES.walkC : FINN_SPRITES.walk)[idx];
-      const fw = dh * fr.width / fr.height;
-      ctx.drawImage(fr, -fw / 2, -dh, fw, dh);
-      finnLiveFlame(-fw / 2 + fw * FINN_NOZZLE.x, -dh + dh * FINN_NOZZLE.y, _finnFlameP);
-    } else {
-      ctx.drawImage(src, -dw / 2, -dh, dw, dh);
-    }
+    // STATIC-LEG WALK (build 250 — founder: the new-art Finn looks best with legs that DON'T swing).
+    // The build-244 procedural 4-leg rig (legs overlapped over the compass) and the old baked
+    // walk-sheet both looked wrong. Draw the COMPLETE new-art frame instead (finn/run.png for the
+    // grounded state — legs are baked into the sprite, so they stay put). The gentle body-rock/squash
+    // applied above still gives the walk life; only the legs no longer animate. Live jetpack flame kept.
+    ctx.drawImage(src, -dw / 2, -dh, dw, dh);
+    if (key === 'run') finnLiveFlame(-dw / 2 + dw * FINN_NOZZLE.x, -dh + dh * FINN_NOZZLE.y, _finnFlameP);
   }
   ctx.restore();
 }

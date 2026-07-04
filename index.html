@@ -2389,7 +2389,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 248 — legs fixed: parked the build-244 procedural leg rig → clean baked one-piece walk (build 232)';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 249 — REVERTED build 248: new-art leg rig (finn/body.png + leg.png) restored; the walk-sheet swap was wrong';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -13934,13 +13934,10 @@ function drawFinnSprite(cameraX) {
       }
     }
     if (rot) ctx.rotate(rot);
-    // build 247 — RIG PARKED (leg fix). The build-244 procedural leg rig (ONE leg.png reused for all
-    // four legs, rotated at the hips) rendered pasted-on / disconnected legs. The founder's build-246
-    // note already said "reverted to clean baked walk (rig parked)" — but the park was never actually
-    // wired, so the rig kept drawing whenever its assets loaded. This flag truly parks it: the clean
-    // one-piece baked walk (build 232, the branch below) draws instead. Flip to true to revive the rig.
-    const FINN_LEG_RIG = false;
-    const _rigOn = FINN_LEG_RIG && FINN_SPRITES.img.body && FINN_SPRITES.img.body.naturalWidth &&
+    // The NEW-ART leg rig (finn/body.png + finn/leg.png — the founder's ~2-day art pass). This is the
+    // canonical Finn and MUST render when its assets load. (Build 248 wrongly "parked" this to the OLD
+    // baked walk-sheet; that regression is reverted here in build 249.)
+    const _rigOn = FINN_SPRITES.img.body && FINN_SPRITES.img.body.naturalWidth &&
                    FINN_SPRITES.img.leg && FINN_SPRITES.img.leg.naturalWidth;
     if (key === 'run' && _rigOn) {
       // PROCEDURAL LEG RIG (build 244, founder: "a real walking mechanic — his left leg should step

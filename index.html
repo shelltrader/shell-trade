@@ -2389,7 +2389,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 247 — Movement Feel Patch V1: coyote+buffer, scaled landing weight, move SFX, fast touch';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 248 — legs fixed: parked the build-244 procedural leg rig → clean baked one-piece walk (build 232)';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -13934,7 +13934,13 @@ function drawFinnSprite(cameraX) {
       }
     }
     if (rot) ctx.rotate(rot);
-    const _rigOn = FINN_SPRITES.img.body && FINN_SPRITES.img.body.naturalWidth &&
+    // build 247 — RIG PARKED (leg fix). The build-244 procedural leg rig (ONE leg.png reused for all
+    // four legs, rotated at the hips) rendered pasted-on / disconnected legs. The founder's build-246
+    // note already said "reverted to clean baked walk (rig parked)" — but the park was never actually
+    // wired, so the rig kept drawing whenever its assets loaded. This flag truly parks it: the clean
+    // one-piece baked walk (build 232, the branch below) draws instead. Flip to true to revive the rig.
+    const FINN_LEG_RIG = false;
+    const _rigOn = FINN_LEG_RIG && FINN_SPRITES.img.body && FINN_SPRITES.img.body.naturalWidth &&
                    FINN_SPRITES.img.leg && FINN_SPRITES.img.leg.naturalWidth;
     if (key === 'run' && _rigOn) {
       // PROCEDURAL LEG RIG (build 244, founder: "a real walking mechanic — his left leg should step

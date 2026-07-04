@@ -2258,6 +2258,11 @@ const CFG = {
   // 3-tier jump: every jump is a jetpack puff; boosting once or twice goes higher
   // and burns the tank. Tap = base hop; boost 1 = jetpack; boost 2 = double jetpack.
   jumpVelocity: -780,  // base hop (tap) — clears an average candle
+  /* Responsiveness affordances (Movement Feel Patch V1). These fix DROPPED INPUTS only —
+     they never change jump height/reach, so difficulty is untouched (the world has no pit
+     deaths: candles touch and the off-chart failsafe re-grounds). */
+  coyoteTime:     0.09,  // 90ms — may still jump just after walking off a crest/into a valley
+  jumpBufferTime: 0.12,  // 120ms — a jump pressed just BEFORE landing fires on touchdown
   gapMin:     0,   gapMax:     0,    // candles touch, like a real chart —
                                      // the tops form a bumpy continuous road
 
@@ -2384,7 +2389,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 232 — Finn one-piece';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 247 — Movement Feel Patch V1: coyote+buffer, scaled landing weight, move SFX, fast touch';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -3365,6 +3370,13 @@ const turtle = {
   tucked: false,   // retracted into the shell (ball form)
   rollT: 0,        // remaining landing-roll time
   sweepCdT: 0,     // invulnerability window after a liquidity-sweep zap
+  /* Movement Feel Patch V1 — responsiveness + landing weight */
+  coyoteT: 0,      // remaining coyote-time window (grounded refreshes it)
+  jumpBufferT: 0,  // remaining buffered-jump window (an early press queued in the air)
+  _landVy: 0,      // downward speed captured at the instant of landing (drives impact feedback)
+  landSq: 0,       // landing-squash magnitude 0..1 (impact strength) — render-only
+  landSqT: 0,      // landing-squash timer (counts down)
+  landSqDur: 0,    // landing-squash duration (for progress) — render-only
 };
 const rings = []; // expanding bounce-pad rings (world space)
 
@@ -3874,21 +3886,44 @@ function spawnTurtle() {
   turtle.tucked = false;
   turtle.rollT = 0;
   turtle.halt = false;
+  turtle.coyoteT = turtle.jumpBufferT = 0;   // fresh spawn → no stale responsiveness windows
+  turtle.landSq = turtle.landSqT = 0;
+}
+
+/* Movement Feel Patch V1 — HAPTICS. navigator.vibrate is Android/Chrome-only (iOS Safari has no
+   Web Vibration API, so this is a silent no-op there — audio + visuals still carry the feel).
+   Suppressed under prefers-reduced-motion. Deliberately NOT wired to the constant base jump or
+   small landings (would be spam) — only to power/reward/heavy-impact moments. */
+let _hapticOK = true;
+try { _hapticOK = !matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+function hapticMove(ms) { try { if (_hapticOK && navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+
+// The actual hop impulse (fresh air-time). Shared by jump() and the jump-buffer consume on landing,
+// so both paths behave identically and the buffered jump also cancels a daze (instant get-up).
+function performJump() {
+  turtle.vy = CFG.jumpVelocity;
+  turtle.onGround = false;
+  turtle.coyoteT = 0;             // consume the ground window — no free double-jump via coyote
+  turtle.jumpBufferT = 0;
+  finnDazedT = 0;                 // input = instant get-up
+  turtle.boostsUsed = 0;          // fresh air-time → both boosts available
+  turtle.flameT = 0.18;           // small jetpack puff — turtle always uses the pack
+  coachAdvance(0);                // learned to jump → next hint
+  try { if (typeof GameMusic !== 'undefined' && GameMusic.move) GameMusic.move.jump(); } catch (e) {}
 }
 
 // Base jump (tap): a small jetpack puff off the ground. Starts a fresh air-time,
 // so up to two boosts (jetpack 1 + jetpack 2) become available while airborne.
+// COYOTE: also fires for ~90ms after leaving a surface. BUFFER: an early press (in the air) is
+// remembered and fired the instant Finn lands (see the landing block).
 function jump() {
   if (turtle.spinning || turtle.tucked) return; // committed to spin/ball
   turtle.halt = false; // any action resumes from a setup stop
   finnDazedT = 0; turtle.landT = 0;   // founder: input = INSTANT get-up — never jump wearing the dazed/splat art
-  if (turtle.onGround) {
-    turtle.vy = CFG.jumpVelocity;
-    turtle.onGround = false;
-    turtle.boostsUsed = 0;          // fresh air-time → both boosts available
-    turtle.flameT = 0.18;           // small jetpack puff — turtle always uses the pack
-    // PART 3 — jumping no longer scores a combo (movement isn't a reward minigame).
-    coachAdvance(0);                // learned to jump → next hint
+  if (turtle.onGround || turtle.coyoteT > 0) {
+    performJump();
+  } else {
+    turtle.jumpBufferT = CFG.jumpBufferTime;   // pressed too early → queue it for touchdown
   }
 }
 
@@ -3904,6 +3939,7 @@ function fireJetpack() {
   turtle.rot = 0;
   // Boosting straight off the ground also starts a fresh air-time.
   if (turtle.onGround) { turtle.onGround = false; turtle.boostsUsed = 0; }
+  turtle.coyoteT = 0;                             // a boost consumes the ground window too
   if (turtle.boostsUsed >= CFG.maxBoosts) return; // both boosts spent this air-time
   if (turtle.fuel < CFG.jetpackCost) return;      // fuel cap — stops the player boosting out of the candle range
   turtle.boostsUsed++;
@@ -3912,6 +3948,9 @@ function fireJetpack() {
   turtle.jetT = CFG.jetpackHang;   // physics: reduced gravity window
   turtle.flameT = turtle.boostsUsed === 2 ? 0.6 : 0.45; // bigger flame on the double
   coachAdvance(1);                 // learned to boost → next hint
+  // FEEDBACK — rising jet whoosh (bigger on the double) + a light power haptic (not on the base jump)
+  try { if (typeof GameMusic !== 'undefined' && GameMusic.move) GameMusic.move.boost(turtle.boostsUsed); } catch (e) {}
+  hapticMove(turtle.boostsUsed === 2 ? 16 : 10);
 }
 
 // Shell tuck: retract into the shell mid-air and slam downward.
@@ -3922,8 +3961,12 @@ function shellTuck() {
   if (turtle.onGround) return;                 // only useful in the air
   turtle.tucked = true;
   turtle.jetT = 0;                             // cancels any jetpack hang
+  turtle.coyoteT = 0;
+  turtle.jumpBufferT = 0;                      // chose to dive → drop any pending buffered jump
   turtle.vy = Math.max(turtle.vy, CFG.tuckMinVy); // instant downward kick
   coachAdvance(2);                             // learned to tuck → done
+  // FEEDBACK — downward "whoomph". No haptic on the press: the hard landing that follows carries it.
+  try { if (typeof GameMusic !== 'undefined' && GameMusic.move) GameMusic.move.dive(); } catch (e) {}
 }
 
 /* ---------- Input ----------
@@ -3960,8 +4003,9 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowRight' || e.code === 'KeyD') { e.preventDefault(); turtle.dir = 1;  turtle.halt = false; }
 });
 
-let _holdTimer = null; // hold ~150ms triggers jetpack instead of jump
-let pointer = null; // active gesture: {x0,y0: start, fired: swipe already fired?}
+let _tapTimer = null; // ≈60ms: a tap with no swipe fires JUMP (replaces the old 150ms hold→jetpack,
+                      // which mis-fired intended taps into boosts). A swipe cancels it (see pointermove).
+let pointer = null; // active gesture: {x0,y0: start, fired: swipe already fired?, uiTap: started on HUD}
 window.addEventListener('pointerdown', (e) => {
   // CRITICAL (mobile): never intercept taps on DOM UI — auth screen, buttons,
   // panels, journal, etc. This global handler is ONLY for taps on the game
@@ -4009,28 +4053,43 @@ window.addEventListener('pointerdown', (e) => {
   // Only react to taps on the game itself — not the banner/panel/lesson UI
   if (paused || lessonOpen || e.target !== canvas) return;
   e.preventDefault();
-  pointer = { x0: e.clientX, y0: e.clientY, fired: false };
-  // Hold 150 ms → jetpack; quick release → jump
-  _holdTimer = setTimeout(() => {
-    _holdTimer = null;
-    if (pointer && !pointer.fired) { pointer.fired = true; fireJetpack(); }
-  }, 150);
+  pointer = { x0: e.clientX, y0: e.clientY, fired: false, uiTap: false };
+  // If the touch STARTS on the HTF panel (taught L8+, top-right), it's a UI tap — resolve it on
+  // release and DON'T arm the jump timer (otherwise the 60ms timer would hop Finn as you open it).
+  // Geometry mirrors drawHTFPanel / the pointerup hit-test below.
+  {
+    const lx0 = e.clientX - stageX, ly0 = e.clientY - stageY;
+    const htfPanW0 = 28 + 4 * 16 + 8, htfPx0 = W - htfPanW0 - 4, htfPy0 = 50;
+    const htfPanH0 = (typeof htf !== 'undefined' ? htf.length : 0) * 23 + 10;
+    if (typeof conceptTier === 'function' && conceptTier('htf') >= 1 &&
+        lx0 >= htfPx0 && lx0 <= htfPx0 + htfPanW0 && ly0 >= htfPy0 && ly0 <= htfPy0 + htfPanH0) {
+      pointer.uiTap = true;
+    }
+  }
+  // TAP → JUMP now fires fast (≈60ms) or on an earlier release — no longer gated on release, and a
+  // HOLD no longer mis-fires to jetpack (boost is the SWIPE-UP gesture). A swipe cancels this timer.
+  if (!pointer.uiTap) {
+    _tapTimer = setTimeout(() => {
+      _tapTimer = null;
+      if (pointer && !pointer.fired) { pointer.fired = true; jump(); }
+    }, 60);
+  }
 });
 window.addEventListener('pointermove', (e) => {
   if (!pointer || pointer.fired) return;
   const dx = e.clientX - pointer.x0;
   const dy = e.clientY - pointer.y0;
   if (Math.abs(dy) >= Math.abs(dx)) {
-    if (dy < -45) { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } pointer.fired = true; if (typeof flowReadCommit === 'function') flowReadCommit(0); fireJetpack(); }  // swipe up = boost + "read UP"
-    if (dy >  45) { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } pointer.fired = true; if (typeof flowReadCommit === 'function') flowReadCommit(1); shellTuck();  }   // swipe down = tuck + "read DOWN"
+    if (dy < -45) { if (_tapTimer) { clearTimeout(_tapTimer); _tapTimer = null; } pointer.fired = true; if (typeof flowReadCommit === 'function') flowReadCommit(0); fireJetpack(); }  // swipe up = boost + "read UP"
+    if (dy >  45) { if (_tapTimer) { clearTimeout(_tapTimer); _tapTimer = null; } pointer.fired = true; if (typeof flowReadCommit === 'function') flowReadCommit(1); shellTuck();  }   // swipe down = tuck + "read DOWN"
   } else {
-    if (dx < -40) { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } pointer.fired = true; turtle.dir = -1; turtle.halt = false; } // swipe left
-    if (dx >  40) { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } pointer.fired = true; turtle.dir = 1;  turtle.halt = false; } // swipe right
+    if (dx < -40) { if (_tapTimer) { clearTimeout(_tapTimer); _tapTimer = null; } pointer.fired = true; turtle.dir = -1; turtle.halt = false; } // swipe left
+    if (dx >  40) { if (_tapTimer) { clearTimeout(_tapTimer); _tapTimer = null; } pointer.fired = true; turtle.dir = 1;  turtle.halt = false; } // swipe right
   }
 });
 window.addEventListener('pointerup', (e) => {
-  // Cancel hold timer if it's still running (user released before 150 ms)
-  if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; }
+  // Cancel the tap→jump timer if it's still pending (finger lifted before ≈60 ms — a crisp quick tap)
+  if (_tapTimer) { clearTimeout(_tapTimer); _tapTimer = null; }
   // Map viewport coords → stage-local (canvas) coords for hit-testing
   const lx = e.clientX - stageX, ly = e.clientY - stageY;
   // HTF zoom: swipe left/right = move Mini Shell; swipe up = jump; tap = close
@@ -12945,6 +13004,10 @@ function startSpin(c) {
   turtle.vy = 0;
   turtle.vxBoost = 0;
   turtle.onGround = false;
+  turtle.coyoteT = 0;
+  turtle.jumpBufferT = 0;   // a spin is a hard state change — drop any pre-spin buffered press (no stale late hop)
+  // FEEDBACK — a rising warbled "whirl" as Finn grabs the pole (momentum building).
+  try { if (typeof GameMusic !== 'undefined' && GameMusic.move) GameMusic.move.spin(); } catch (e) {}
 }
 
 function updateSpin(dt) {
@@ -12970,6 +13033,9 @@ function updateSpin(dt) {
     turtle.vy = CFG.spinReleaseVy;
     turtle.vxBoost = CFG.spinBoost;
     turtle.cdSpin = CFG.spinCooldown;
+    // FEEDBACK — a bright little "ting" + light haptic on the reward fling.
+    try { if (typeof GameMusic !== 'undefined' && GameMusic.move) GameMusic.move.spinRelease(); } catch (e) {}
+    hapticMove(12);
   }
 }
 
@@ -12986,6 +13052,7 @@ function update(dt) {
   turtle._idleX = turtle.x;
   if (turtle.adjustT > 0) turtle.adjustT = Math.max(0, turtle.adjustT - dt);  // P9 glasses-push decay
   if (turtle.landT > 0) turtle.landT = Math.max(0, turtle.landT - dt);        // neck-compression micro-anim on landing
+  if (turtle.landSqT > 0) turtle.landSqT = Math.max(0, turtle.landSqT - dt);  // landing-squash decay (render-only, Feel Patch V1)
   // DAZED bookkeeping (founder rule: dazed art ONLY after falling off a large candle) —
   // track the highest point of the current airtime; timers tick down here.
   if (!turtle.onGround) _finnFallTop = (_finnFallTop == null) ? turtle.y : Math.min(_finnFallTop, turtle.y);
@@ -13086,6 +13153,7 @@ function update(dt) {
         // PART 4 — order blocks no longer launch the turtle. EVERY candle (OB or not) is
         // landed on the same way, so movement stays predictable and intentional. OBs are
         // passive educational chart zones, not jump pads.
+        turtle._landVy = turtle.vy;   // capture impact speed for landing feedback (before it's zeroed)
         turtle.vy = 0;
         turtle.onGround = true;
         break;
@@ -13099,6 +13167,7 @@ function update(dt) {
       if (back) {
         turtle.x = back.x + 8;
         turtle.y = candleTop(back) - turtle.h;
+        turtle._landVy = 0;   // failsafe re-ground is a teleport, not an impact — no landing feedback
         turtle.vy = 0;
         turtle.onGround = true;
         floaters.push({ text: 'OFF THE CHART!', color: '#7d8aa0', y: 64, t: 1.4 });
@@ -13156,6 +13225,7 @@ function update(dt) {
       const top = candleTop(under);
       if (turtle.y + turtle.h > top + 4) {
         turtle.y = top - turtle.h;
+        turtle._landVy = turtle.vy;    // capture impact (Feel Patch V1)
         turtle.vy = 0;                 // PART 4 — OB no longer launches; land normally.
         turtle.onGround = true;
       }
@@ -13164,7 +13234,17 @@ function update(dt) {
 
   // JETPACK LANDING PUFF — a tiny blue burst the instant Finn touches down from the air.
   if (turtle.onGround && wasAirborne) {
-    turtle.flameT = Math.max(turtle.flameT, 0.12); turtle.landT = 0.14;   // landT → touchdown squash (founder: recover FAST)
+    // LANDING WEIGHT (Feel Patch V1) — feedback that SCALES with impact. Render-only squash (never
+    // touches physics → no responsiveness/speed cost), a soft synth thud, and a haptic on HEAVY
+    // landings only (small hops stay silent — no spam). impact01: 0 at a gentle hop, 1 at a hard drop.
+    const _iv = Math.abs(turtle._landVy || 0);
+    const _impact01 = Math.max(0, Math.min(1, (_iv - 300) / 900));   // <300px/s ≈ none; ~1200px/s = full
+    if (_impact01 > 0.02) { turtle.landSq = _impact01; turtle.landSqT = turtle.landSqDur = 0.09 + 0.06 * _impact01; }  // 90–150ms
+    try { if (typeof GameMusic !== 'undefined' && GameMusic.move) GameMusic.move.land(_impact01); } catch (e) {}
+    if (_impact01 > 0.5) hapticMove(6 + Math.round(12 * _impact01));
+    turtle._landVy = 0;
+
+    turtle.flameT = Math.max(turtle.flameT, 0.12);   // brief jetpack puff on touchdown. (Old always-on squash frame stays inert; this scaled squash replaces it.)
     // DAZED (founder rule) — an UNTUCKED fall from a LARGE candle (≥230px drop) leaves Finn
     // seeing stars for a beat. Never during a trade/ticket/modal or a deliberate shell landing,
     // and on an 9s cooldown so it stays a rare gag, not a movement tax.
@@ -13172,9 +13252,13 @@ function update(dt) {
     if (_drop >= 230 && _finnDazeCd <= 0 && !turtle.tucked && !turtle.spinning &&
         !trade && !pending && !session.inModal && finnDazedT <= 0) {
       finnDazedT = 1.0; _finnDazeCd = 9;   // founder (build 228): shorter beat — he gets up FAST (any jump/boost cancels it instantly)
-      try { GameMusic && GameMusic.sting && GameMusic.sting('lose'); } catch (e) {}
+      // (dazed fall is now SILENT — founder removed the 'lose' sting; the visual gag stands on its own)
     }
     _finnFallTop = null;
+    // JUMP BUFFER (Feel Patch V1) — an early press queued in the air fires the instant Finn lands.
+    // performJump() clears finnDazedT, so a buffered jump also cancels the daze just set above.
+    // Guard on !tucked so a buffered press can never launch Finn mid-ball during a dive-roll landing.
+    if (turtle.jumpBufferT > 0 && !turtle.tucked) performJump();
   }
 
   /* --- ANTI-STUCK SAFETY ------------------------------------------------------
@@ -13197,10 +13281,20 @@ function update(dt) {
           if (!ahead || (turtle.dir < 0 ? c.x > ahead.x : c.x < ahead.x)) ahead = c;
         }
         const onto = ahead || candles.find(c => cxc >= c.x && cxc < c.x + c.w);
-        if (onto) {
+        // Only RE-GROUND when he's genuinely off a clean footing (wedged/flung). If he's already
+        // standing cleanly on the target candle — the normal "blocked by a tall candle he's meant to
+        // JUMP" case (e.g. the intro SPACE-to-JUMP wall) — re-centering set x = onto.x+(onto.w−w)/2,
+        // which for a candle NARROWER than Finn lands INSIDE the wall ahead, so the wall-block shoved
+        // him back ~2px EVERY ~1s → the founder's "vibrates back and forth every 1 second" glitch.
+        // Skip it there; he can just jump. (build 242 — the real fix; the earlier animation edits
+        // were treating a symptom.)
+        const cleanlyGrounded = onto && turtle.onGround
+          && Math.abs((turtle.y + turtle.h) - candleTop(onto)) < 2
+          && cxc >= onto.x && cxc < onto.x + onto.w;
+        if (onto && !cleanlyGrounded) {
           turtle.y = candleTop(onto) - turtle.h;
           turtle.x = onto.x + (onto.w - turtle.w) / 2;
-          turtle.vy = 0; turtle.onGround = true;
+          turtle.vy = 0; turtle.onGround = true; turtle._landVy = 0;   // teleport rescue — not a real impact
         }
         turtle._stuckT = 0;
       }
@@ -13211,6 +13305,17 @@ function update(dt) {
     turtle._stuckT = 0;
   }
   turtle._lastProgX = turtle.x;
+
+  /* --- Coyote time + jump buffer bookkeeping (Feel Patch V1) — authoritative, after all landing
+     and rescue logic has settled onGround for this frame. Grounded refreshes the coyote window;
+     airborne bleeds it (and any stale buffered press) down. These change DROPPED INPUTS only, never
+     jump height/reach, so platforming difficulty is unchanged. --- */
+  if (turtle.onGround) {
+    turtle.coyoteT = CFG.coyoteTime;
+  } else {
+    if (turtle.coyoteT > 0) turtle.coyoteT = Math.max(0, turtle.coyoteT - dt);
+    if (turtle.jumpBufferT > 0) turtle.jumpBufferT = Math.max(0, turtle.jumpBufferT - dt);
+  }
 
   /* --- Candle counting: setups + trade resolution tick per candle.
      Only candles NEVER seen before advance the market — walking back
@@ -13327,6 +13432,11 @@ function drawCandle(c, cameraX) {
   if (c.id > maxSeenCandleId + 2 && !_setupCandle) return;
 
   const sx  = c.x - cameraX;          // screen x
+  // Off-screen cull: candles live in a ~2500px walk-back buffer BEHIND the camera (so the player can
+  // turn around), and drawCandle was run for all of them every frame — dozens of wasted stroke/fill
+  // calls that push a phone toward dropped frames. Skip anything fully off either edge (40px margin
+  // clears wicks / BOS + live-edge glows). Pure draw code, no side effects, so culling is safe.
+  if (sx < -(c.w + 40) || sx > W + 40) return;
   const top = candleTop(c);           // body top  = max(open, close)
   const bot = Math.max(groundY - Math.min(c.open, c.h), top + CFG.minBody);
   const bodyH = bot - top;
@@ -13567,7 +13677,8 @@ const FINN_SPRITES = { ready: false, img: {}, mip: {}, walk: [], walkC: [] };
   // jump, landing skid, the shell ball for dive/spin, and dazed (big falls only).
   const files = { run: 'finn/run.png', jump: 'finn/jump.png', vboost: 'finn/vboost.png',
                   shell: 'finn/shell-fall-roll.png', land: 'finn/land.png',
-                  dazed: 'finn/dazed-after-fall.png', walk: 'finn/walk-sheet.png' };
+                  dazed: 'finn/dazed-after-fall.png', walk: 'finn/walk-sheet.png',
+                  body: 'finn/body.png', leg: 'finn/leg.png' };   // PROCEDURAL LEG RIG (build 244): leg-cleared canon body + one clean canon leg reused for all 4, animated at runtime
   const keys = Object.keys(files); let got = 0;
   keys.forEach(k => {
     const im = new Image();
@@ -13616,7 +13727,7 @@ const FINN_SPRITES = { ready: false, img: {}, mip: {}, walk: [], walkC: [] };
   });
 })();
 // Per-frame draw height in the 46×30 authoring frame (width follows each sprite's own aspect).
-const FINN_H = { run: 31, jump: 32, vboost: 36, shell: 25, land: 25, dazed: 23 };
+const FINN_H = { run: 31, jump: 32, vboost: 36, shell: 25, land: 25, dazed: 23, body: 31 };
 // Nozzle-mouth anchor for the live flame, as a fraction of the WALK-SHEET tile (tiles are
 // pre-cropped at bake time, so the baked plume never ships — the drawn flame is the only fire).
 const FINN_NOZZLE = { x: 0.029, y: 0.50 };
@@ -13648,16 +13759,62 @@ function finnLiveFlame(nx, ny, p) {
 // DAZED — founder rule: the dazed art appears ONLY after Finn falls off a LARGE candle.
 let finnDazedT = 0, _finnDazeCd = 0, _finnFallTop = null;
 
+// PROCEDURAL LEG RIG (build 244): draw the ONE real canon leg (finn/leg.png) from a hip pivot, rotated
+// by the gait swing. Called inside drawFinnSprite's body-centred transform (origin = feet line; the
+// body spans y = -dh .. 0). Reused for all four legs — near legs full/bright, far legs smaller/faded.
+function drawFinnRigLeg(L, hipX, hipY, angle, legH, alpha, lift) {
+  if (!L || !L.naturalWidth) return;
+  const lw = legH * L.naturalWidth / L.naturalHeight;
+  ctx.save();
+  ctx.globalAlpha = (alpha == null) ? 1 : alpha;
+  ctx.translate(hipX, hipY - (lift || 0));       // lift raises the whole leg → the FOOT steps up off the ground
+  ctx.rotate(angle);                             // swing about the hip
+  ctx.drawImage(L, -lw * 0.5, -legH * 0.16, lw, legH);   // thigh top sits ~at the hip pivot, foot hangs below
+  ctx.restore();
+}
+// Small canon-green TAIL nub (build 245) — the leg-clear removed it; draw it back at the lower-back.
+function drawFinnRigTail(bx, by, s, wag) {
+  ctx.save();
+  ctx.translate(bx, by);
+  ctx.rotate(0.15 + wag);
+  ctx.fillStyle = COLOR.turtleBody || '#7ED957';
+  ctx.strokeStyle = COLOR.turtleOutline || '#0c5a2a';
+  ctx.lineWidth = Math.max(1, s * 0.16); ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 0.5);
+  ctx.quadraticCurveTo(-s * 1.5, -s * 0.1, -s * 1.9, s * 0.5);   // taper to a point, back+down
+  ctx.quadraticCurveTo(-s * 0.9, s * 0.55, 0, s * 0.5);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
 function drawFinnSprite(cameraX) {
   const I = FINN_SPRITES.img;
   const w = 46, h = 30;
   const s = turtle.w / w;
   const sx = turtle.x - cameraX;
-  const moving = turtle.onGround && !turtle.halt && finnDazedT <= 0;
+  // "moving" for ANIMATION = actually ADVANCING on the ground, not merely un-halted. On load Finn
+  // auto-runs into the first tall candle and is BLOCKED (halt stays false, but x stops changing —
+  // the intro's "SPACE to JUMP" wall). Keying the gait off !halt made him bob/rock/cycle his legs
+  // IN PLACE there = the "he vibrates back and forth every 1 second" that survived builds 236/238
+  // (those only froze the *halted* case). Gate on real per-frame progress: a blocked OR stopped Finn
+  // now stands calm (breath only) and the gait resumes the instant he actually travels again.
+  const _dxAnim = turtle.x - (turtle._animLastX != null ? turtle._animLastX : turtle.x);
+  turtle._animLastX = turtle.x;
+  turtle._moveEMA = (turtle._moveEMA || 0) * 0.8 + Math.abs(_dxAnim) * 0.2;   // debounced real-motion: ignores isolated 1-frame wall twitches; winds down over ~5 frames when he stops (natural, no snap)
+  const moving = turtle.onGround && !turtle.halt && finnDazedT <= 0 && turtle._moveEMA > 0.3;
   const grounded = turtle.onGround && !turtle.tucked && !turtle.spinning && finnDazedT <= 0;
-  const bob = grounded ? Math.sin(turtle.animT * 9) * (moving ? 1.7 : 0.6) : 0;   // Bible §2 — gait bob (idle trots in place)
+  // MARCH-IN-PLACE (build 243, founder: "when idle I want to see his legs moving as if trying to walk
+  // straight — smooth"): the legs (baked walk frames) + body bounce now run whenever he's GROUNDED —
+  // idle OR moving — so a blocked/standing Finn keeps stepping in place. The amplitude eases from a
+  // gentle idle march up to the full run bounce via the smoothed motion signal, so standing → walking
+  // is one continuous motion, no pop. (The old idle "vibrate" was the anti-stuck teleport fixed in
+  // build 242 — NOT this leg cycle — so it's safe, and smooth, to bring back.)
+  const _gait = 0.42 + 0.58 * Math.min(1, (turtle._moveEMA || 0) / 0.5);   // 0.42 idle-march → 1.0 running
+  const bob = grounded ? Math.sin(turtle.animT * 9) * 1.7 * _gait : 0;      // Bible §2 — step bounce (scaled by _gait)
   const idle = turtle.onGround && !moving && !turtle.tucked && !turtle.spinning;
-  const breath = idle ? Math.sin(turtle.animT * 1.8) * 1.6 : 0;            // Bible §1 — breathing
+  const breath = idle ? Math.sin(turtle.animT * 1.8) * 0.55 : 0;           // Bible §1 — a faint slow underlay now that the march bob carries idle's vertical life
   // Live-flame power (render-only): full trail while moving/airborne, pilot flicker at a stop.
   const _fms = performance.now();
   const _fdt = _finnFlameMs ? Math.min(0.05, (_fms - _finnFlameMs) / 1000) : 0.016;
@@ -13674,6 +13831,14 @@ function drawFinnSprite(cameraX) {
   ctx.scale(s, s);
   const VIS = 1.35;                                                        // same hero scale as the procedural art
   ctx.translate(w / 2, h); ctx.scale(VIS, VIS); ctx.translate(-w / 2, -h);
+
+  // LANDING SQUASH (Feel Patch V1) — a brief feet-anchored squash-&-stretch whose depth scales with
+  // impact force. Render-only: it reads as WEIGHT without touching physics, input, or world speed.
+  if (turtle.landSqT > 0 && turtle.landSqDur > 0 && grounded) {
+    const _p = turtle.landSqT / turtle.landSqDur;                          // 1 → 0 over the window
+    const _amp = 0.22 * (turtle.landSq || 0) * _p;                         // max ~0.22 on a hard drop
+    ctx.translate(w / 2, h); ctx.scale(1 + _amp * 0.6, 1 - _amp); ctx.translate(-w / 2, -h);
+  }
 
   // Contact shadow — identical to the procedural version (silhouette readability on any candle)
   if (!turtle.tucked && !turtle.spinning && turtle.onGround) {
@@ -13749,12 +13914,13 @@ function drawFinnSprite(cameraX) {
       ctx.scale(1 + landC * 0.08, 1 - landC * 0.12);
     }
     if (key === 'run') {
-      // Bible §2 as pure transforms: gait rock ±2.6°, in-phase micro-squash — buttery at any
-      // fps. At a stop the SAME gait keeps trotting in place at ~45% amplitude (founder rule:
-      // the market never stops moving forward, so neither do Finn's feet).
+      // Bible §2 as pure transforms: gait rock + in-phase micro-squash — buttery at any fps.
+      // Build 243: amplitude follows _gait (gentle idle march → full run bounce), so the rock/squash
+      // eases in as he starts to travel and never pops. Idle isn't frozen any more — the founder
+      // wants his legs stepping in place; the old vibrate was the anti-stuck teleport, fixed in 242.
       const g = Math.sin(turtle.animT * 9);
-      const amp = moving ? 1 : 0.45;
-      ctx.rotate(g * 0.032 * amp);                 // calmer rock — the legs carry the gait now
+      const amp = _gait;
+      ctx.rotate(g * 0.032 * amp);
       ctx.scale(1 + g * 0.010 * amp, 1 - g * 0.014 * amp);
     }
     if (key === 'run' && idle && finnDazedT <= 0) {
@@ -13768,16 +13934,41 @@ function drawFinnSprite(cameraX) {
       }
     }
     if (rot) ctx.rotate(rot);
-    if (key === 'run' && FINN_SPRITES.walk.length === 12) {
-      // ONE-PIECE WALK (founder, build 232: "construct him as one smooth character") — pick the
-      // pre-baked WHOLE frame for this gait phase; the character is never sliced at runtime, so
-      // seams/"puzzle lines" are impossible. Blink = swap to the closed-eye variant of the SAME
-      // frame (canon closed eyes grafted from land.png at bake time — never painted lids).
+    const _rigOn = FINN_SPRITES.img.body && FINN_SPRITES.img.body.naturalWidth &&
+                   FINN_SPRITES.img.leg && FINN_SPRITES.img.leg.naturalWidth;
+    if (key === 'run' && _rigOn) {
+      // PROCEDURAL LEG RIG (build 244, founder: "a real walking mechanic — his left leg should step
+      // ahead of his right"): the leg-cleared canon body (finn/body.png) + the real canon leg
+      // (finn/leg.png) reused for all four legs, rotated about their hips at runtime. Diagonal gait —
+      // near-front & far-rear swing together, near-rear & far-front opposite. Amplitude follows the
+      // shared _gait so idle marches in place and it ramps smoothly to a full run stride.
+      const bodySrc = FINN_SPRITES.mip.body || FINN_SPRITES.img.body;
+      const bw = dh * bodySrc.width / bodySrc.height;
+      const L = FINN_SPRITES.img.leg;
+      const ph = turtle.animT * 9;
+      const sw = 0.75 * _gait;                          // hip swing amplitude (rad)
+      const hipY = -dh * 0.32, legH = dh * 0.5;         // hip on the belly line; leg length
+      const liftAmt = dh * 0.08;                        // FOOT-LIFT (build 245) so legs STEP, not slide
+      const phF = ph, phR = ph + Math.PI;               // diagonal gait: front-pair vs rear-pair phase
+      const liftF = Math.max(0, Math.cos(phF)) * liftAmt, liftR = Math.max(0, Math.cos(phR)) * liftAmt;
+      // TAIL (build 245) — the leg-clear removed it; draw a small canon nub at the lower back, gentle wag
+      drawFinnRigTail(-bw * 0.30, -dh * 0.15, dh * 0.15, Math.sin(ph) * 0.12);
+      // FAR legs (behind the body) — faded for depth but CLEARLY moving (founder: the back leg was frozen)
+      drawFinnRigLeg(L, -bw * 0.05, hipY - 1, Math.sin(phF) * sw, legH * 0.9, 0.6, liftF);   // far-rear (diagonal w/ near-front)
+      drawFinnRigLeg(L,  bw * 0.30, hipY - 1, Math.sin(phR) * sw, legH * 0.9, 0.6, liftR);   // far-front (diagonal w/ near-rear)
+      // BODY
+      ctx.drawImage(bodySrc, -bw / 2, -dh, bw, dh);
+      // NEAR legs (in front of the belly) — full & bright: rear under the shell, front under the head
+      drawFinnRigLeg(L, -bw * 0.16, hipY, Math.sin(phR) * sw, legH, 1, liftR);   // near-rear
+      drawFinnRigLeg(L,  bw * 0.22, hipY, Math.sin(phF) * sw, legH, 1, liftF);   // near-front
+      finnLiveFlame(-bw / 2 + bw * FINN_NOZZLE.x, -dh + dh * FINN_NOZZLE.y, _finnFlameP);
+    } else if (key === 'run' && FINN_SPRITES.walk.length === 12) {
+      // ONE-PIECE WALK fallback (build 232) if the rig assets ever fail to load — pre-baked frames.
       const cyc = (turtle.animT * 9) / (Math.PI * 2);
       const idx = Math.floor((cyc - Math.floor(cyc)) * 12) % 12;
-      const bp = 2.4 + (Math.floor(turtle.animT / 2.4) % 3) * 0.6;   // V3 timing — never metronomic
+      const bp = 2.4 + (Math.floor(turtle.animT / 2.4) % 3) * 0.6;
       let blink = (turtle.animT % bp) < 0.13;
-      const pc2 = turtle.animT % 11;                                 // peek double-blink
+      const pc2 = turtle.animT % 11;
       if ((pc2 > 9.35 && pc2 < 9.47) || (pc2 > 9.75 && pc2 < 9.87)) blink = true;
       const fr = (blink ? FINN_SPRITES.walkC : FINN_SPRITES.walk)[idx];
       const fw = dh * fr.width / fr.height;
@@ -13799,8 +13990,13 @@ function drawTurtle(cameraX) {
   const w = 46, h = 30;
   const s = turtle.w / w;
   const sx = turtle.x - cameraX;
-  // Gentle bob while walking; frozen mid-air and while halted at a setup
-  const moving = turtle.onGround && !turtle.halt;
+  // Gentle bob while walking; frozen mid-air, while halted at a setup, AND while blocked in place
+  // (auto-running into a wall is un-halted but stationary — same fix as drawFinnSprite: gate the
+  // gait on real forward progress, not just !halt, so a stopped/blocked Finn doesn't vibrate).
+  const _dxAnim = turtle.x - (turtle._animLastX != null ? turtle._animLastX : turtle.x);
+  turtle._animLastX = turtle.x;
+  turtle._moveEMA = (turtle._moveEMA || 0) * 0.8 + Math.abs(_dxAnim) * 0.2;
+  const moving = turtle.onGround && !turtle.halt && turtle._moveEMA > 0.3;
   const bob  = moving ? Math.sin(turtle.animT * 9) * 1.4 : 0;
   const step = moving ? Math.sin(turtle.animT * 9) * 2.2 : 0;
   // Idle breathing — a calm rise/fall when standing still (incl. while reading a setup),
@@ -13823,6 +14019,14 @@ function drawTurtle(cameraX) {
   // turtle grows upward and stays planted on the candle it's standing on.
   const VIS = 1.35;
   ctx.translate(w / 2, h); ctx.scale(VIS, VIS); ctx.translate(-w / 2, -h);
+
+  // LANDING SQUASH (Feel Patch V1) — mirror of the sprite path, so the procedural fallback has the
+  // same impact-scaled weight. Render-only; feet-anchored.
+  if (turtle.landSqT > 0 && turtle.landSqDur > 0 && turtle.onGround && !turtle.tucked && !turtle.spinning) {
+    const _p = turtle.landSqT / turtle.landSqDur;
+    const _amp = 0.22 * (turtle.landSq || 0) * _p;
+    ctx.translate(w / 2, h); ctx.scale(1 + _amp * 0.6, 1 - _amp); ctx.translate(-w / 2, -h);
+  }
 
   // Contact shadow — grounds the turtle and separates its silhouette from the candles
   // behind it (instant readability on giant green AND giant red candles).
@@ -18306,7 +18510,67 @@ const GameMusic = (() => {
       voice('triangle', MIDI(64), t + 0.12, 0.42, 0.045, bus); // faint shimmer
     }
   }
-  return { unlock, setMuted, play, boss, stop, sting, isOn: () => started };
+
+  /* ── MOVEMENT SFX (Feel Patch V1) ──────────────────────────────────────────
+     A cute, clean, low-gain package — no harsh arcade stabs, no explosions. Each shares the
+     existing synth (respects the same `muted` toggle as music + stings) and plays one-shot on its
+     own bus, exactly like sting(). Gains sit UNDER the stings; the base jump is the quietest since
+     it's the most frequent. Each sound communicates state / power / momentum. */
+  function fx() { const a = ctx(); if (!a || muted) return null; const bus = a.createGain(); bus.gain.value = 1; bus.connect(a.destination); return { a, t: a.currentTime, bus }; }
+  function sweep(wave, f0, f1, t, dur, vol, bus) {
+    const a = ctx(); if (!a) return;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = wave; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.02, dur * 0.3));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.03);
+  }
+  function noiseBurst(t, dur, freq, vol, bus) {   // airy, decaying band-passed noise (jet breath / dust)
+    const a = ctx(); if (!a) return;
+    const buf = a.createBuffer(1, Math.max(1, (a.sampleRate * dur) | 0), a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    const src = a.createBufferSource(); src.buffer = buf;
+    const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 0.7;
+    const g = a.createGain(); g.gain.value = vol;
+    src.connect(f); f.connect(g); g.connect(bus); src.start(t);
+  }
+  const move = {
+    jump() {                         // light upward "boop" — small, springy
+      const s = fx(); if (!s) return;
+      sweep('triangle', 520, 760, s.t, 0.11, 0.06, s.bus);
+    },
+    boost(tier) {                    // rising jet whoosh — bigger/higher on the double (power + momentum)
+      const s = fx(); if (!s) return; const big = tier === 2;
+      noiseBurst(s.t, big ? 0.26 : 0.20, big ? 900 : 700, big ? 0.05 : 0.04, s.bus);
+      sweep('triangle', big ? 300 : 260, big ? 760 : 560, s.t, big ? 0.26 : 0.20, big ? 0.09 : 0.075, s.bus);
+      sweep('sine', big ? 600 : 520, big ? 1120 : 900, s.t + 0.01, big ? 0.24 : 0.18, big ? 0.05 : 0.04, s.bus);
+    },
+    dive() {                         // downward "whoomph" — committed drop
+      const s = fx(); if (!s) return;
+      sweep('triangle', 520, 150, s.t, 0.16, 0.08, s.bus);
+      noiseBurst(s.t, 0.12, 400, 0.03, s.bus);
+    },
+    spin() {                         // warbled rising "whirl" as he grabs the pole
+      const a = ctx(); const s = fx(); if (!s || !a) return;
+      const o = a.createOscillator(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
+      o.type = 'triangle'; o.frequency.setValueAtTime(420, s.t); o.frequency.exponentialRampToValueAtTime(880, s.t + 0.34);
+      lfo.type = 'sine'; lfo.frequency.value = 22; lg.gain.value = 40; lfo.connect(lg); lg.connect(o.frequency);
+      g.gain.setValueAtTime(0.0001, s.t); g.gain.exponentialRampToValueAtTime(0.07, s.t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, s.t + 0.36);
+      o.connect(g); g.connect(s.bus); o.start(s.t); o.stop(s.t + 0.4); lfo.start(s.t); lfo.stop(s.t + 0.4);
+    },
+    spinRelease() {                  // bright little "ting" on the reward fling
+      const s = fx(); if (!s) return;
+      voice('triangle', MIDI(84), s.t, 0.16, 0.08, s.bus);
+      voice('sine', MIDI(91), s.t + 0.03, 0.14, 0.05, s.bus);
+    },
+    land(impact) {                   // soft thud — pitch drops + gain grows with impact; heavy adds dust
+      const i = Math.max(0, Math.min(1, impact || 0)); if (i < 0.03) return;
+      const s = fx(); if (!s) return;
+      sweep('sine', 150 + 90 * (1 - i), 60 + 60 * (1 - i), s.t, 0.09 + 0.05 * i, 0.04 + 0.10 * i, s.bus);
+      if (i > 0.45) noiseBurst(s.t, 0.06 + 0.05 * i, 300, 0.02 + 0.03 * i, s.bus);
+    },
+  };
+  return { unlock, setMuted, play, boss, stop, sting, isOn: () => started, move };
 })();
 
 /* ════════ BOSS ARENA (animated background per boss) ════════ */
@@ -18421,6 +18685,7 @@ const BossArena = (() => {
 
 /* ---------- Main loop ---------- */
 let lastTime = performance.now();
+let _dtEMA = 0;   // low-pass-filtered frame time (see frame()) — keeps the world scroll uniform under rAF jitter
 let camY = 0; // vertical camera offset (negative = looking up)
 // TRADER VIEW — the most important moment in the game. While a trade is live, the camera pulls
 // back (zoom out) with easing + a brief slow-mo so the player can SEE the whole trade (entry,
@@ -18501,9 +18766,20 @@ function enforceChartContinuity(baseCamX, dt) {
 }
 
 function frame(now) {
-  // Clamp dt so a backgrounded tab doesn't cause a huge physics step
-  const dt = Math.min((now - lastTime) / 1000, 1 / 30);
+  // FRAME PACING (fluid-motion fix): the world scrolls by turtle.x += walkSpeed·dt and the camera
+  // is rigidly locked to turtle.x, so feeding RAW rAF frame time straight in turned every timing
+  // jitter or heavy frame into a visible scroll stutter ("not fluid / glitchy sometimes"). Low-pass
+  // the timestep: clamp out absurd spikes (backgrounded tab / GC pause), then ease toward the running
+  // average. Micro-jitter vanishes and an occasional long frame is spread over ~½ s instead of
+  // lurching the world in one step. Physics is unchanged on average — the EMA tracks the true cadence,
+  // so a steady 50 fps device still runs at correct speed; input is unaffected (jumps set velocity
+  // directly, dt only scales integration).
+  let _rawDt = (now - lastTime) / 1000;
   lastTime = now;
+  if (!(_rawDt > 0)) _rawDt = 1 / 60;                    // first frame / clock anomaly
+  _rawDt = Math.max(1 / 240, Math.min(_rawDt, 1 / 30));  // ignore absurd spikes; keep the anti-spiral cap
+  _dtEMA = _dtEMA > 0 ? _dtEMA + (_rawDt - _dtEMA) * 0.15 : _rawDt;
+  const dt = _dtEMA;
 
   // A Guardian Trial owns the screen while active (movement-based boss round on the main canvas).
   if (typeof GuardianTrial !== 'undefined' && GuardianTrial.active) { GuardianTrial.frame(dt); requestAnimationFrame(frame); return; }
@@ -18642,7 +18918,16 @@ function frame(now) {
 
   // Horizontal camera: once the turtle passes the anchor point, the world
   // scrolls left while he stays put on screen — infinite scrolling.
-  const baseCameraX = Math.max(0, turtle.x - W * CFG.cameraAnchor);
+  // WICK-SPIN EXCEPTION: during a pole twirl, updateSpin() drives turtle.x in a sin() orbit
+  // ±CFG.spinRadius around the FIXED pole (tipX). The camera is rigidly locked to turtle.x, so
+  // without this guard the whole chart swung forward-then-back with every spin (~every 10 candles)
+  // — the "chart scrolls then jerks backward" glitch. Hold the follow point on the pole so the
+  // world stays put while Finn visibly orbits it; turtle.x === tipX − w/2 at the twirl's start AND
+  // release, so entering/leaving the spin never pops the camera.
+  const _camFollowX = (turtle.spinning && typeof turtle.tipX === 'number')
+    ? turtle.tipX - turtle.w / 2
+    : turtle.x;
+  const baseCameraX = Math.max(0, _camFollowX - W * CFG.cameraAnchor);
   maintainCandles(baseCameraX);   // candle generation + physics use the TRUE camera
   // CHART CONTINUITY GUARD (Global Visual Rule): when the camera is pulled back, reframe the
   // RENDER so the chart never shows a dead right-hand gap / floating price scale. Inert at zoom = 1.
@@ -18996,8 +19281,14 @@ reg({id:'sl',title:'Stop-Loss Placement',category:'Risk',framework:'annotate',va
   validate:(st,r)=>{const ok=r<st.goodHi&&r>st.goodLo,tight=r>=st.swingLo,score=ok?100:tight?20:55;return{score,why:ok?'Logical stop — just beyond structure, clear of the wicks.':tight?'Too tight — a stop inside the noise gets hunted out.':'Valid but far — you\'re risking more than the trade needs.'};}});
 
 reg({id:'trend',title:'Trendline',category:'Levels',framework:'annotate',variant:'ray',
-  objective:'Connect swing lows so the line supports the up-move and respects 2–3 touches.',prompt:'Tap two swing lows',
-  gen:(s,d)=>{const n=DIFF_N[d],vol=DIFF_VOL[d],r=rng(s),base=60,slope=vol*0.5+1.0,cs=[];for(let i=0;i<n;i++){const lineLo=base+i*slope,c=lineLo+(1.6+r()*3)*vol*0.4+Math.sin(i*0.8)*vol*0.5,o=i?cs[i-1].c:c;cs.push({o,c,hi:Math.max(o,c)+vol*0.4,lo:Math.min(o,c,lineLo+r()*0.4*vol)-vol*0.2});}const pv=pivots(cs,2),lows=pv.L.length>=2?pv.L:[Math.floor(n*0.2),Math.floor(n*0.6)];return{cs,lows,extra:[]};},
+  objective:'Connect swing lows so the line supports the up-move and respects 2–3 touches.',prompt:'Draw the support line under the rising lows',
+  gen:(s,d)=>{const n=DIFF_N[d],vol=DIFF_VOL[d],r=rng(s),base=58,slope=vol*0.5+1.0,cs=[];
+    for(let i=0;i<n;i++){const lineLo=base+i*slope,o=i?cs[i-1].c:lineLo+vol;let c;
+      if(i>0&&r()<0.34){c=o-(0.5+r()*1.3)*vol;}                                   // RED pullback candle (realism)
+      else{c=Math.max(o+(0.3+r()*1.1)*vol,lineLo+(1.0+r()*1.8)*vol*0.4);}          // GREEN up candle
+      const lo=Math.min(o,c,lineLo+r()*0.3*vol)-vol*0.2;
+      cs.push({o,c,hi:Math.max(o,c)+vol*0.4,lo});}
+    const pv=pivots(cs,2),lows=pv.L.length>=2?pv.L:[Math.floor(n*0.2),Math.floor(n*0.6)];return{cs,lows,extra:[]};},
   validate:(st,resp,d)=>{if(!resp||resp.length<2)return{score:0,why:'Tap two swing lows to draw the line.'};const pp=resp.slice().sort((a,b)=>a.i-b.i),a=pp[0],b=pp[1];if(b.i===a.i)return{score:0,why:'Pick two different points.'};const slope=(b.v-a.v)/(b.i-a.i);if(slope<=0)return{score:25,why:'An up-trendline must RISE — connect rising swing lows.'};const at=i=>a.v+slope*(i-a.i);let touches=0,cuts=0;for(const li of st.lows){const lv=at(li),lo=st.cs[li].lo;if(Math.abs(lo-lv)<DIFF_VOL[d]*1.2)touches++;if(lv>lo+DIFF_VOL[d]*1.4)cuts++;}const score=clamp((touches>=3?100:touches===2?78:50)-cuts*20,0,100);return{score,why:touches>=2&&cuts===0?'Valid trendline — it rests under price and respects '+touches+' swing lows.':'A good trendline touches 2–3 swing lows and stays below price'+(cuts?' — yours cut through price '+cuts+'×.':'.')};}});
 
 reg({id:'vwap',title:'VWAP Reaction',category:'Execution',framework:'annotate',variant:'marker',
@@ -19021,7 +19312,7 @@ reg({id:'error',title:'Spot the Error',category:'Patterns',framework:'annotate',
 /* —— BUILD —— (now O/H/L/C + real candle archetypes) */
 reg({id:'candle',title:'Candle Lab',category:'Patterns',framework:'sequence',
   objective:'Construct the candle from its description, then read what it signals.',
-  gen:function(s,d){var r=rng(s),t=(d==='beginner')?['bull','bear'][Math.floor(r()*2)]:['bull','bear','doji','hammer','star'][Math.floor(r()*5)],j=function(){return (r()-0.5)*6;},O,C,H,L,desc,signal,ctx=null,prevClose=null,ctxHi=null,ctxLo=null;
+  gen:function(s,d){var r=rng(s),t=['bull','bear'][Math.floor(r()*2)],j=function(){return (r()-0.5)*6;},O,C,H,L,desc,signal,ctx=null,prevClose=null,ctxHi=null,ctxLo=null;   /* OPEN/CLOSE only — wick lessons live elsewhere (e.g. liquidity). Always bull/bear with context. */
     if(t==='bull'||t==='bear'){
       // THREE small OPPOSITE-colour context candles set the scene; the player's candle must OPEN at
       // the last close (the dotted guide) and CLOSE far beyond them to prove the side won. Wicks are
@@ -19783,7 +20074,7 @@ const FW={
       if(variant==='marker'&&RESP!=null)V.marker(RESP,'#ffd60a','✓');
       if(variant==='line'&&RESP!=null)V.hline(RESP,'#ea3943','STOP');
       if(variant==='zone'&&RESP)V.zone(RESP[0],RESP[1],CUR.id==='ob'?'#a855f7':CUR.id==='support'?'#16c784':'#ea3943');
-      if(variant==='ray'&&pts.length){pts.forEach(p=>V.marker(p.i,'#ffd60a','•'));if(pts.length===2){const slope=(pts[1].v-pts[0].v)/Math.max(1,pts[1].i-pts[0].i);V.ray(pts[0].i,pts[0].v,STATE.cs.length-1,pts[1].v+slope*(STATE.cs.length-1-pts[1].i),'#4cc3ff');}}}
+      if(variant==='ray'&&pts.length>=2){const a=pts[0],b=pts[1];if(b.i!==a.i){const slope=(b.v-a.v)/(b.i-a.i);V.ray(a.i,a.v,STATE.cs.length-1,b.v+slope*(STATE.cs.length-1-b.i),'#4cc3ff');}else{V.ray(a.i,a.v,b.i,b.v,'#4cc3ff');}[a,b].forEach(p=>{V.x.fillStyle='#ffd60a';V.x.beginPath();V.x.arc(V.X(p.i),V.Y(p.v),6,0,7);V.x.fill();});}}
     draw();
     const xy=e=>{const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};
     if(variant==='marker'){addHTML('<div class="hint">tap the candle</div>');cv.onpointerdown=e=>{RESP=V.indexAt(xy(e).x);draw();sub.disabled=false;};}
@@ -19791,7 +20082,7 @@ const FW={
       const mv=e=>{RESP=V.priceAt(xy(e).y);draw();};cv.onpointerdown=e=>{mv(e);cv.setPointerCapture(e.pointerId);cv.onpointermove=mv;};cv.onpointerup=()=>cv.onpointermove=null;}
     else if(variant==='zone'){addHTML('<div class="hint">drag across the zone</div>');let y0=null;
       cv.onpointerdown=e=>{y0=V.priceAt(xy(e).y);cv.setPointerCapture(e.pointerId);cv.onpointermove=ev=>{const yy=V.priceAt(xy(ev).y);RESP=[Math.min(y0,yy),Math.max(y0,yy)];draw();sub.disabled=false;};};cv.onpointerup=()=>cv.onpointermove=null;}
-    else if(variant==='ray'){addHTML('<div class="hint">tap two swing lows</div>');cv.onpointerdown=e=>{const i=V.indexAt(xy(e).x);pts.push({i,v:STATE.cs[i].lo});if(pts.length>2)pts=[pts[pts.length-1]];RESP=pts;draw();sub.disabled=pts.length<2;};}
+    else if(variant==='ray'){addHTML('<div class="hint">press UNDER a candle, then DRAG to draw the support line</div>');let p0=null;cv.onpointerdown=e=>{const p=xy(e);p0={i:V.indexAt(p.x),v:V.priceAt(p.y)};pts=[p0,p0];RESP=pts;draw();cv.setPointerCapture(e.pointerId);cv.onpointermove=ev=>{const q=xy(ev);pts=[p0,{i:V.indexAt(q.x),v:V.priceAt(q.y)}];RESP=pts;draw();sub.disabled=(pts[1].i===p0.i);};};cv.onpointerup=()=>cv.onpointermove=null;}
     sub.onclick=()=>{const r=CUR.validate(STATE,RESP,DIFF);
       if(CUR.reveal&&RESP!=null){clearArea();base();CUR.reveal(V,STATE);
         if(variant==='marker'&&typeof RESP==='number')V.marker(RESP,'#ffd60a','you');
@@ -19872,7 +20163,7 @@ const FW={
       else if(k==='line'){resp=active.startVal?active.startVal(st,SEQ):data[Math.max(0,Math.floor(shown)-1)].c;chartRender();if(active.hint)addHTML('<div class="hint">'+active.hint+'</div>');sub.style.display='block';sub.disabled=false;sub.textContent=active.btn||'CONFIRM';var mv=function(e){resp=V.priceAt(xy(e).y);chartRender();};cv.onpointerdown=function(e){mv(e);cv.setPointerCapture(e.pointerId);cv.onpointermove=mv;};cv.onpointerup=function(){cv.onpointermove=null;};sub.onclick=commit;}
       else if(k==='zone'){if(active.hint)addHTML('<div class="hint">'+active.hint+'</div>');sub.style.display='block';sub.disabled=true;sub.textContent=active.btn||'CONFIRM';var y0=null;cv.onpointerdown=function(e){y0=V.priceAt(xy(e).y);cv.setPointerCapture(e.pointerId);cv.onpointermove=function(ev){var yy=V.priceAt(xy(ev).y);resp=[Math.min(y0,yy),Math.max(y0,yy)];chartRender();sub.disabled=false;};};cv.onpointerup=function(){cv.onpointermove=null;};sub.onclick=commit;}}
     function commit(){var sc=active.score?active.score(st,SEQ,resp):{pts:0,max:0};SEQ[active.key||('s'+si)]=resp;scores.push(sc);clearUI();si++;if(si<steps.length)startStep();else finishSeq();}
-    function runBuild(){sub.style.display='block';sub.disabled=false;sub.textContent='CONFIRM';var x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;x.setTransform(dpr,0,0,dpr,0,0);var W=cv.width/dpr,H=cv.height/dpr,top=58,bot=H-30,cx=W/2,Y=function(v){return top+(1-v/100)*(bot-top);},pAt=function(py){return clamp((1-(py-top)/(bot-top))*100,0,100);};resp={open:42,close:58,high:72,low:28};var drag=null,hs=function(){return [['high',cx,resp.high,'#4cc3ff'],['low',cx,resp.low,'#4cc3ff'],['open',cx-32,resp.open,'#ffd60a'],['close',cx+32,resp.close,'#16c784']];};function draw(){x.clearRect(0,0,W,H);x.strokeStyle='rgba(255,255,255,.05)';for(var g=0;g<=4;g++){var gy=top+g/4*(bot-top);x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke();}if(st.ctx){var _n=st.ctx.length,_stp=(cx-72)/(_n+1);for(var _ci=0;_ci<_n;_ci++){var _c=st.ctx[_ci],_gx=28+_stp*(_ci+1),_gu=_c.c>=_c.o,_gc=_gu?'#16c784':'#ea3943',_gh=Math.max(_c.hi,_c.o,_c.c),_gl=Math.min(_c.lo,_c.o,_c.c);x.strokeStyle=_gc;x.lineWidth=1.5;x.beginPath();x.moveTo(_gx,Y(_gh));x.lineTo(_gx,Y(_gl));x.stroke();var _bt=Y(Math.max(_c.o,_c.c)),_bb=Y(Math.min(_c.o,_c.c));x.fillStyle=_gc;x.fillRect(_gx-8,_bt,16,Math.max(2,_bb-_bt));}x.strokeStyle='rgba(255,214,10,0.7)';x.setLineDash([5,4]);x.lineWidth=1.4;x.beginPath();x.moveTo(0,Y(st.prevClose));x.lineTo(W,Y(st.prevClose));x.stroke();x.setLineDash([]);x.fillStyle='rgba(255,214,10,0.92)';x.font='800 9px sans-serif';x.textAlign='left';x.fillText('OPEN HERE',4,Y(st.prevClose)-4);}var up=resp.close>=resp.open,col=up?'#16c784':'#ea3943',hi=Math.max(resp.high,resp.open,resp.close),lo=Math.min(resp.low,resp.open,resp.close);x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(cx,Y(hi));x.lineTo(cx,Y(lo));x.stroke();var bt=Y(Math.max(resp.open,resp.close)),bb=Y(Math.min(resp.open,resp.close));x.fillStyle=col;x.fillRect(cx-8,bt,16,Math.max(2,bb-bt));/* SHOT 14 — same width as the context candles (was 44, ~3× too wide) */hs().forEach(function(h){x.fillStyle=h[3];x.beginPath();x.arc(h[1],Y(h[2]),8,0,7);x.fill();x.fillStyle='#04060b';x.font='800 8px sans-serif';x.textAlign='center';x.fillText(h[0][0].toUpperCase(),h[1],Y(h[2])+3);});x.fillStyle='#7d8aa0';x.font='10px sans-serif';x.textAlign='center';x.fillText('drag  O · C · H · L',cx,bot+18);}draw();var pick=function(p){var b=null,bd=1e9;hs().forEach(function(h){var d=Math.hypot(p.x-h[1],p.y-Y(h[2]));if(d<bd){bd=d;b=h[0];}});return b;};cv.onpointerdown=function(e){var p=xy(e);drag=pick(p);resp[drag]=pAt(p.y);draw();cv.setPointerCapture(e.pointerId);cv.onpointermove=function(ev){resp[drag]=pAt(xy(ev).y);draw();};};cv.onpointerup=function(){cv.onpointermove=null;};sub.onclick=commit;}
+    function runBuild(){sub.style.display='block';sub.disabled=false;sub.textContent='CONFIRM';var x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;x.setTransform(dpr,0,0,dpr,0,0);var W=cv.width/dpr,H=cv.height/dpr,top=58,bot=H-30,cx=W/2,Y=function(v){return top+(1-v/100)*(bot-top);},pAt=function(py){return clamp((1-(py-top)/(bot-top))*100,0,100);};resp={open:38,close:64};var drag=null,hs=function(){return [['open',cx-30,resp.open,'#ffd60a'],['close',cx+30,resp.close,'#16c784']];};function draw(){x.clearRect(0,0,W,H);x.strokeStyle='rgba(255,255,255,.05)';for(var g=0;g<=4;g++){var gy=top+g/4*(bot-top);x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke();}if(st.ctx){var _n=st.ctx.length,_stp=(cx-72)/(_n+1);for(var _ci=0;_ci<_n;_ci++){var _c=st.ctx[_ci],_gx=28+_stp*(_ci+1),_gu=_c.c>=_c.o,_gc=_gu?'#16c784':'#ea3943',_gh=Math.max(_c.hi,_c.o,_c.c),_gl=Math.min(_c.lo,_c.o,_c.c);x.strokeStyle=_gc;x.lineWidth=1.5;x.beginPath();x.moveTo(_gx,Y(_gh));x.lineTo(_gx,Y(_gl));x.stroke();var _bt=Y(Math.max(_c.o,_c.c)),_bb=Y(Math.min(_c.o,_c.c));x.fillStyle=_gc;x.fillRect(_gx-8,_bt,16,Math.max(2,_bb-_bt));}x.strokeStyle='rgba(255,214,10,0.7)';x.setLineDash([5,4]);x.lineWidth=1.4;x.beginPath();x.moveTo(0,Y(st.prevClose));x.lineTo(W,Y(st.prevClose));x.stroke();x.setLineDash([]);x.fillStyle='rgba(255,214,10,0.92)';x.font='800 9px sans-serif';x.textAlign='left';x.fillText('OPEN HERE',4,Y(st.prevClose)-4);}var up=resp.close>=resp.open,col=up?'#16c784':'#ea3943';var bt=Y(Math.max(resp.open,resp.close)),bb=Y(Math.min(resp.open,resp.close));x.fillStyle=col;x.fillRect(cx-8,bt,16,Math.max(2,bb-bt));/* SHOT 14 — same width as the context candles (was 44, ~3× too wide) */hs().forEach(function(h){x.fillStyle=h[3];x.beginPath();x.arc(h[1],Y(h[2]),9,0,7);x.fill();x.fillStyle='#04060b';x.font='800 9px sans-serif';x.textAlign='center';x.fillText(h[0]==='open'?'O':'C',h[1],Y(h[2])+3);x.fillStyle=h[3];x.font='800 12px sans-serif';x.textAlign=(h[0]==='open')?'right':'left';x.fillText(h[0].toUpperCase(),h[1]+((h[0]==='open')?-15:15),Y(h[2])+4);});x.fillStyle='#7d8aa0';x.font='11px sans-serif';x.textAlign='center';x.fillText('drag the OPEN and CLOSE handles',cx,bot+18);}draw();var pick=function(p){var b=null,bd=1e9;hs().forEach(function(h){var d=Math.hypot(p.x-h[1],p.y-Y(h[2]));if(d<bd){bd=d;b=h[0];}});return b;};cv.onpointerdown=function(e){var p=xy(e);drag=pick(p);resp[drag]=pAt(p.y);draw();cv.setPointerCapture(e.pointerId);cv.onpointermove=function(ev){resp[drag]=pAt(xy(ev).y);draw();};};cv.onpointerup=function(){cv.onpointermove=null;};sub.onclick=commit;}
     function runReplay(){sub.style.display='none';$$('#gameArea .prompt').forEach(function(e){e.remove();});addHTML('<div class="prompt">⚡ Playing it out…</div>');data=st.full||st.cs;V=ChartView(cv,data,{extra:st.extra});var tot=data.length,last=performance.now();function loop(now){if(!$('#play').classList.contains('on'))return;if(now-last>=230){shown++;last=now;}V.grid();V.candlesN(Math.floor(Math.min(shown,tot)));if(CUR.draw)CUR.draw(V,st,SEQ);if(shown<tot)requestAnimationFrame(loop);else hold();}requestAnimationFrame(loop);function hold(){var oc=active.outcome(st,SEQ);scores.push({pts:oc.pts,max:oc.max,why:oc.why});var col=oc.win?'#16c784':'#ea3943';$$('#gameArea .prompt').forEach(function(e){e.remove();});addHTML('<div class="prompt" style="border-color:'+col+';color:'+col+';font-weight:800">'+(oc.title||(oc.win?'✓ WIN':'✗ LOSS'))+'</div>');addHTML('<div class="choices"><button class="ch-n" id="seqSee">SEE YOUR SCORE →</button></div>');SEQ._why=oc.why;document.getElementById('seqSee').onclick=function(){$$('#gameArea .choices').forEach(function(e){e.remove();});finishSeq();};}}
     function finishSeq(){var got=0,max=0,worst=null;scores.forEach(function(s){got+=s.pts||0;max+=s.max||0;if(s.why&&s.max&&(!worst||(s.pts/s.max)<(worst.pts/worst.max)))worst=s;});var total=Math.round(got/(max||1)*100),why=SEQ._why||(worst?worst.why:'Nice run.');if(CUR.summary){var sm=CUR.summary(st,SEQ,total);if(sm)why=sm;}finish(total,total>=70,why);}
     startStep();

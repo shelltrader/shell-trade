@@ -1,12 +1,14 @@
 #!/bin/bash
 # ChartQuest dev helper — automates the per-change loop so steps aren't missed.
-# Usage:  scripts/cq.sh <check | mirror | tag | ship | serve [port] | qr [port]>
+# Usage:  scripts/cq.sh <check | verify | mirror | tag | ship | serve [port] | qr [port]>
 #   check   syntax-check the inline game <script> (node --check)
+#   verify  run the full regression gate (scripts/verify.js) — prints PASS/FAIL
 #   mirror  copy chart-quest.html -> index.html (the deployed mirror) + verify identical
 #   tag     print the current BUILD_TAG
-#   ship    check + mirror + tag  (run before every commit)
+#   ship    mirror + verify + tag  (run before every commit; STOPS on a gate FAIL)
 #   serve   start the no-cache LAN preview server (default port 8795)
 #   qr      print a scannable LAN QR to the beginner-mode URL (?fresh=1)
+# For an approved protected-system change, run: CQ_ALLOW_PROTECTED=1 scripts/cq.sh ship
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -22,8 +24,11 @@ case "${1:-}" in
   tag)
     grep "BUILD_TAG =" chart-quest.html | grep -o "build [0-9][^']*" | head -1 || echo "(no BUILD_TAG found)"
     ;;
+  verify)
+    node scripts/verify.js
+    ;;
   ship)
-    "$0" check && "$0" mirror && echo -n "build tag: " && "$0" tag
+    "$0" mirror && node scripts/verify.js && echo -n "build tag: " && "$0" tag
     ;;
   serve)
     python3 scripts/serve_nocache.py "${2:-8795}"
@@ -35,6 +40,6 @@ case "${1:-}" in
     command -v qrencode >/dev/null 2>&1 && qrencode -t ANSIUTF8 "$URL" || echo "(brew install qrencode for the QR)"
     ;;
   *)
-    echo "usage: scripts/cq.sh <check | mirror | tag | ship | serve [port] | qr [port]>"
+    echo "usage: scripts/cq.sh <check | verify | mirror | tag | ship | serve [port] | qr [port]>"
     ;;
 esac

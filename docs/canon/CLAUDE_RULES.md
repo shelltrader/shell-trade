@@ -27,9 +27,9 @@ Deeper detail lives in the rest of `docs/canon/`; this page is the law.
 13. **Only modify files listed in the task scope.** Name the exact file(s) and line region before starting. For the game that is almost always **`chart-quest.html` only** — no drive-by edits to unrelated files.
 14. **Read canon before coding** — `development_guardrails.md` → `protected_systems.md` → the relevant `*_canon.md`.
 15. **Confirm scope in one sentence** — *"This edits X to do Y and touches nothing else."* If you can't, split the task.
-16. **Bump `BUILD_TAG`**, then **mirror** (`cp chart-quest.html index.html`), then **syntax-check** the inline script.
-17. **Run `regression_checklist.md`** before every commit.
-18. **Verify in the browser** when the change is observable (art/UI/movement) — `?fresh=1`, on-device via QR for feel/touch/art.
+16. **Bump `BUILD_TAG`**, then run **`scripts/cq.sh ship`** — it mirrors `index.html`, runs the regression gate (`scripts/verify.js`), and prints the tag; it **STOPS on a gate FAIL**. For an approved protected change: `CQ_ALLOW_PROTECTED=1 scripts/cq.sh ship`.
+17. **The gate + `regression_checklist.md` before every commit** — `cq.sh verify` mechanizes most guarantees; the checklist is the human backstop (intent, visuals, difficulty).
+18. **Verify in the browser** when the change is observable (art/UI/movement) — `?fresh=1`, on-device via QR for feel/touch/art. (The gate does not judge visuals.)
 
 ## 🛑 When a task requires touching a protected system
 Do not proceed silently. Say exactly:

@@ -4,6 +4,8 @@
 
 > **Closes the loop on the PRE-FLIGHT.** Any system you scored **0/10** in the [PRE-FLIGHT CHECK](CLAUDE_RULES.md#pre-flight-check) must still verify **unchanged** below. If the diff changed something you predicted it wouldn't, that is scope creep — revert it. If reality diverged from the pre-flight risk scores, say so before committing.
 
+> **The automated gate does most of this for you.** `scripts/cq.sh verify` (run automatically by `ship`) mechanically enforces the five guarantees plus syntax, mirror, `BUILD_TAG`, large-file, and protected-diff checks — and FAILs the commit if any break. **The boxes below are the human backstop** for what a script can't judge: intent, UI/visual correctness, difficulty, and whether a protected change was actually approved (`CQ_ALLOW_PROTECTED=1`). See [dev_workflow.md](dev_workflow.md#the-regression-gate-scriptsverifyjs).
+
 ---
 
 ## The five guarantees (unchanged unless explicitly requested)
@@ -21,19 +23,16 @@
 - [ ] Finn did **not** get easier as a side effect (responsiveness ≠ difficulty).
 
 ## Mechanics of committing
-- [ ] Inline `<script>` blocks **syntax-check clean** (`node --check` on the extracted script).
-- [ ] `BUILD_TAG` bumped.
-- [ ] `index.html` re-mirrored from source (`cp chart-quest.html index.html`) — never hand-edited.
-- [ ] If observable (art/UI/movement): **verified in the browser** (`?fresh=1`), on-device via QR when it's feel/touch/art.
+- [ ] **`scripts/cq.sh ship` passes** (mirror + `scripts/verify.js` gate + tag). The gate enforces: syntax (boot proxy), `index.html` mirrors source, `BUILD_TAG` bumped, Finn canon (run.png active / grounded rig+walk-sheet inactive), lessons/bosses/save load, no >5 MB non-ignored files, and protected-diff. For an **approved** protected change: `CQ_ALLOW_PROTECTED=1 scripts/cq.sh ship`.
+- [ ] If observable (art/UI/movement): **verified in the browser** (`?fresh=1`), on-device via QR when it's feel/touch/art. *(The gate does not judge visuals — that's on you.)*
 - [ ] Staged **by explicit path** (`git add chart-quest.html index.html …`) — never `git add -A`.
 - [ ] Commit does **not** include `deploy.zip`, `_old_*.zip`, `.netlify-token`, `ChartQuestQA/`, `website/`, or unrelated `sw.js` changes.
 
 ## Fast self-audit commands (read-only)
 ```
+scripts/cq.sh verify               # the automated gate — PASS/FAIL (run this first)
 git status --short                 # what am I about to stage?
 git diff --stat HEAD -- chart-quest.html
-grep -n "BUILD_TAG =" chart-quest.html   # did I bump it?
-diff chart-quest.html index.html && echo "MIRROR OK"   # mirror in sync?
 ```
 
 ## If a box is unexpectedly "changed"

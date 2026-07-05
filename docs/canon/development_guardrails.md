@@ -19,11 +19,10 @@
 - **Bump `BUILD_TAG`** so a playtest can confirm which build loaded.
 
 ## After coding — before commit
-1. Run the **[regression_checklist.md](regression_checklist.md)** (assets/bosses/UI/lessons/progression unchanged unless requested).
-2. **Syntax-check** the inline script (extract `<script>` blocks, `node --check`).
-3. **Mirror**: `cp chart-quest.html index.html` (source → deployed mirror). Never hand-edit `index.html`.
-4. **Verify in the browser** if the change is observable (movement/art/UI): beginner mode `?fresh=1`, on-device via QR when it's feel/touch/art.
-5. **Commit only what the task touched.** Never `git add -A`. Do not sweep in `deploy.zip`, unrelated Swift, or `sw.js` changes.
+1. **Run `scripts/cq.sh ship`** — mirrors `index.html`, runs the regression gate (`scripts/verify.js`: syntax/boot, mirror, Finn canon, lessons/bosses/save, `BUILD_TAG`, large-file, protected-diff), and prints the tag. It **STOPS on FAIL**. Fix the FAIL, don't skip it. For an approved protected change: `CQ_ALLOW_PROTECTED=1 scripts/cq.sh ship`.
+2. Run the **[regression_checklist.md](regression_checklist.md)** as the human backstop for what the gate can't judge (assets/bosses/UI/lessons/progression unchanged unless requested; visuals; difficulty).
+3. **Verify in the browser** if the change is observable (movement/art/UI): beginner mode `?fresh=1`, on-device via QR when it's feel/touch/art.
+4. **Commit only what the task touched.** Never `git add -A`. Do not sweep in `deploy.zip`, unrelated Swift, or `sw.js` changes.
 
 ## Red flags that mean "stop and confirm"
 - The diff touches a **protected system**.

@@ -7,3 +7,10 @@ node_modules/
 
 # Local backup archives
 _old_*.zip
+
+# Build output (regenerated from chart-quest.html by build.js) — not source
+chart-quest.min.html
+
+# Large deploy/build artifacts — NEVER track (deploy.zip was 131MB in-tree)
+deploy.zip
+*.tmp

@@ -36,6 +36,7 @@ If a task would violate a canon or protected-systems rule, **stop and confirm wi
 | [progression_canon.md](progression_canon.md) | Phase 3 — levels, gating, save |
 | [protected_systems.md](protected_systems.md) | Phase 5 — do-not-touch list |
 | [development_guardrails.md](development_guardrails.md) | Phase 6 — the pre-change workflow |
+| [dev_workflow.md](dev_workflow.md) | Tooling: `scripts/cq.sh` helper + preview gotchas (frame-pump, overlay-canvas, LAN QR) |
 | [architecture_map.md](architecture_map.md) | Phase 7 — systems, dependencies, risk zones |
 | [regression_checklist.md](regression_checklist.md) | Phase 8 — pre-commit verification |
 | [development_health_report.md](development_health_report.md) | Phase 9 — risks + maintainability score |

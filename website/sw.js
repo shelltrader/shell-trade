@@ -7,7 +7,7 @@
  * the browser handle HTML navigation (and its redirects) natively avoids that
  * entire class of bug for /play, /bosses, /courses, etc.
  */
-const CACHE = 'chartquest-site-v3';
+const CACHE = 'chartquest-site-v4';
 const ASSETS = [
   './',
   './assets/site.css', './assets/site.js', './assets/config.js',

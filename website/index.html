@@ -1,352 +1,1297 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="js">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chart Quest — Learn to Trade, One Boss Fight at a Time</title>
-<meta name="description" content="Chart Quest is a side-scrolling trading RPG starring Shell the turtle. Hop across live crypto charts, take simulated trades, beat 11 Guardian bosses across 10 worlds, and learn to trade for real — free, in your browser.">
-<meta name="theme-color" content="#04060f">
+<title>ChartQuest — The World's First Trading RPG</title>
+<meta name="description" content="ChartQuest is the world's first trading RPG. Play as Finn the turtle explorer, dive inside real candlestick charts, defeat the Guardians, and become a trader. The chart is the world.">
+<meta name="theme-color" content="#060910">
+
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Chart Quest">
-<meta property="og:title" content="Chart Quest — Learn to Trade, One Boss Fight at a Time">
-<meta property="og:description" content="A turtle named Shell hops across live crypto charts and learns to trade. 10 worlds, 11 Guardian bosses, zero real money. Play free.">
+<meta name="apple-mobile-web-app-title" content="ChartQuest">
+
+<meta property="og:title" content="ChartQuest — The World's First Trading RPG">
+<meta property="og:description" content="Dive inside real charts as Finn the turtle. Candles are terrain. Setups are puzzles. Bosses teach trading. The chart is the world.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="assets/chartquest-poster.jpg">
-<link rel="stylesheet" href="assets/site.css">
-<script src="assets/config.js"></script>
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- Typography: Inter (body) + Space Grotesk (display).
+     NOTE: served from Google Fonts. If this page deploys under the strict CSP in
+     netlify.toml, add fonts.googleapis.com to style-src and fonts.gstatic.com to
+     font-src (or self-host the woff2 files). Falls back to system fonts otherwise. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+
+<!--
+  ═══════════════════════════════════════════════════════════════════════════════
+  MEDIA PLACEHOLDERS — designed layout around FUTURE assets. Nothing is faked.
+  Swap these when the real assets exist (search this file for the token):
+    [LIVE-CHART]   → hero portal: mount the live BTC/USD chart widget here
+    [VIDEO:trailer]→ Gameplay Preview: the main gameplay trailer (.mp4, muted loop)
+    [VIDEO:boss]   → Boss Battle preview clip
+    [SHOT:trade]   → First Trade preview screenshot
+    [ART:guardian] → real Guardian boss art (currently gold sigil medallions)
+  Finn mascot art (assets/finn-*.png) is real and used throughout — keep.
+  ═══════════════════════════════════════════════════════════════════════════════
+-->
+
+<style>
+/* ============================================================================
+   CHARTQUEST — V3 "PORTAL" experience.  The chart is the world.
+   Self-contained: no external fonts / frameworks / CDNs (CSP-safe).
+   ============================================================================ */
+:root{
+  --bg:#060910;--bg-2:#080d16;--panel:#0c131e;--panel-2:#111a27;--glass:rgba(14,22,34,.6);
+  --line:rgba(120,170,215,.12);--line-2:rgba(120,170,215,.24);
+  --green:#16C784;--green-2:#0f9d68;--red:#EA3943;--gold:#FFD60A;--gold-2:#e0b400;
+  --blue:#3EA6FF;--cyan:#46E0FF;
+  --ink:#EAF2FB;--ink-dim:#9AB0C6;--ink-faint:#5f7285;
+  --display:"Space Grotesk","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
+  --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+  --shadow:0 30px 70px rgba(0,0,0,.6);--radius:18px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* ---- Living world background (subtle, purposeful — no particle spam) ---- */
+.worldbg{position:fixed;inset:0;z-index:-3;pointer-events:none;overflow:hidden}
+.worldbg .glow{position:absolute;inset:0;
+  background:
+    radial-gradient(80% 60% at 20% -8%,rgba(22,199,132,.14),transparent 60%),
+    radial-gradient(70% 55% at 92% 4%,rgba(62,166,255,.10),transparent 55%),
+    radial-gradient(120% 80% at 50% 118%,rgba(255,214,10,.07),transparent 60%),
+    var(--bg)}
+.worldbg .grid{position:absolute;inset:0;opacity:.5;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:52px 52px;
+  -webkit-mask-image:radial-gradient(120% 100% at 50% 0%,#000 20%,transparent 72%);mask-image:radial-gradient(120% 100% at 50% 0%,#000 20%,transparent 72%)}
+/* distant candlestick "architecture" — a skyline of candles far in the fog */
+.worldbg .skyline{position:absolute;left:0;right:0;bottom:0;width:100%;height:44vh;opacity:.16;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 78%);mask-image:linear-gradient(180deg,transparent,#000 78%)}
+.worldbg .stream{position:absolute;top:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,rgba(70,224,255,.5),transparent);opacity:.25;animation:streamMove 9s linear infinite}
+.worldbg .stream.s2{left:38%;animation-duration:13s;animation-delay:-3s;background:linear-gradient(180deg,transparent,rgba(22,199,132,.5),transparent)}
+.worldbg .stream.s3{left:72%;animation-duration:11s;animation-delay:-6s}
+.worldbg .stream.s1{left:14%}
+@keyframes streamMove{0%{transform:translateY(-30%);opacity:0}20%{opacity:.28}80%{opacity:.28}100%{transform:translateY(30%);opacity:0}}
+
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block;height:auto}
+.wrap{width:min(1200px,92vw);margin-inline:auto}
+.center{text-align:center}
+.mono{font-family:var(--mono)}
+
+.display{font-size:clamp(44px,8.5vw,104px);line-height:.96;font-weight:900;letter-spacing:-.035em;margin:0}
+.big{font-size:clamp(30px,5vw,56px);line-height:1.03;font-weight:850;letter-spacing:-.025em;margin:0}
+.lead{font-size:clamp(16px,2vw,19px);color:var(--ink-dim);margin:14px 0 0}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);padding:7px 14px;border:1px solid rgba(255,214,10,.3);border-radius:999px;background:rgba(255,214,10,.05)}
+.grad{background:linear-gradient(100deg,var(--green),var(--cyan) 50%,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.gold{color:var(--gold)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:800;font-size:15.5px;border-radius:12px;padding:14px 24px;cursor:pointer;border:1px solid transparent;transition:transform .24s cubic-bezier(.2,.7,.2,1),box-shadow .24s cubic-bezier(.2,.7,.2,1),background .2s ease;white-space:nowrap}
+.btn:active{transform:translateY(1px)}
+.btn-lg{font-size:17px;padding:17px 32px;border-radius:14px}
+.btn-primary{background:linear-gradient(180deg,#1ce39a,var(--green-2));color:#032015;box-shadow:0 14px 34px rgba(22,199,132,.36),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 24px 56px rgba(22,199,132,.42),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn-ghost{background:rgba(120,170,215,.06);color:var(--ink);border-color:var(--line-2);backdrop-filter:blur(6px)}
+.btn-ghost:hover{background:rgba(120,170,215,.13);transform:translateY(-2px)}
+.btn-gold{background:linear-gradient(180deg,#ffe14d,var(--gold));color:#231b00;box-shadow:0 14px 34px rgba(255,214,10,.3)}
+.btn-gold:hover{transform:translateY(-2px)}
+.btn-row{display:flex;gap:14px;flex-wrap:wrap}
+
+.chip{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink-dim);border:1px solid var(--line-2);border-radius:999px;padding:8px 13px;background:rgba(120,170,215,.05)}
+
+.section{padding:clamp(70px,10vw,130px) 0;position:relative}
+.section-head{max-width:60ch;margin-inline:auto;text-align:center}
+.section-head .lead{margin-top:16px}
+.kicker{font-family:var(--mono);font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--green)}
+
+/* placeholder tag used on media zones (honest, tasteful) */
+.ph-tag{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);border:1px dashed var(--line-2);border-radius:7px;padding:5px 9px}
+
+/* ===================== NAV ===================== */
+.nav{position:sticky;top:0;z-index:60;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:rgba(6,9,16,.72);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;gap:18px;height:66px;width:min(1200px,92vw);margin-inline:auto}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:-.02em;font-size:18px}
+.brand .logomark{width:26px;height:26px;flex:0 0 auto}
+.brand b{color:var(--gold)}
+.nav-links{display:flex;align-items:center;gap:26px;margin-left:auto}
+.nav-links a{position:relative;font-size:14.5px;font-weight:600;color:var(--ink-dim);transition:color .2s ease}
+.nav-links a:not(.btn)::after{content:"";position:absolute;left:0;right:100%;bottom:-4px;height:1.5px;border-radius:2px;background:linear-gradient(90deg,var(--green),var(--gold));transition:right .28s cubic-bezier(.2,.7,.2,1)}
+.nav-links a:not(.btn):hover{color:var(--ink)}
+.nav-links a:not(.btn):hover::after{right:0}
+.nav-cta{display:flex;align-items:center;gap:12px}
+.nav-links .nav-cta{display:none}
+.nav-burger{display:none;margin-left:auto;width:44px;height:44px;border:1px solid var(--line-2);border-radius:11px;background:rgba(120,170,215,.06);cursor:pointer;position:relative}
+.nav-burger span,.nav-burger span::before,.nav-burger span::after{content:"";position:absolute;left:11px;width:22px;height:2px;background:var(--ink);border-radius:2px;transition:.2s}
+.nav-burger span{top:21px}.nav-burger span::before{top:-7px}.nav-burger span::after{top:7px}
+
+/* ===================== HERO PORTAL ===================== */
+.hero{padding:clamp(36px,5vw,64px) 0 clamp(30px,4vw,56px);position:relative}
+.hero-grid{display:grid;grid-template-columns:1.02fr 1.1fr;gap:clamp(28px,5vw,64px);align-items:center}
+.hero h1{margin:22px 0 0;max-width:12ch}
+.hero .sub{margin:22px 0 0;max-width:34ch;font-size:clamp(17px,2.1vw,21px);color:var(--ink-dim);font-weight:600;line-height:1.5}
+.hero .sub b{color:var(--ink);font-weight:800}
+.hero .btn-row{margin-top:30px}
+.trust{margin-top:20px;font-family:var(--mono);font-size:12px;color:var(--ink-faint);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.trust .sep{width:4px;height:4px;border-radius:50%;background:var(--ink-faint);display:inline-block}
+
+/* The portal: a window Finn dives INTO */
+.portal-stage{position:relative;perspective:1400px}
+.portal{position:relative;border-radius:24px;overflow:hidden;aspect-ratio:5/4;
+  background:radial-gradient(120% 100% at 50% 120%,rgba(22,199,132,.14),#04070d 62%);
+  border:1px solid rgba(255,214,10,.28);
+  box-shadow:var(--shadow),0 0 0 1px rgba(255,214,10,.08),0 0 90px rgba(22,199,132,.16),inset 0 0 90px rgba(4,7,13,.9);
+  transform:rotateY(-6deg) rotateX(2deg);transform-style:preserve-3d;transition:transform .2s ease-out}
+.portal::after{content:"";position:absolute;inset:0;border-radius:24px;pointer-events:none;
+  box-shadow:inset 0 0 60px rgba(255,214,10,.10),inset 0 0 120px rgba(4,7,13,.85);
+  background:radial-gradient(80% 55% at 50% 40%,transparent 40%,rgba(4,7,13,.55) 100%)}
+.portal svg.world{position:absolute;inset:0;width:100%;height:100%}
+.portal .p-tag{position:absolute;top:14px;left:14px;z-index:4;font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--green);display:inline-flex;align-items:center;gap:7px}
+.portal .p-live{position:absolute;top:14px;right:14px;z-index:4;font-family:var(--mono);font-size:11px;font-weight:800;color:var(--ink-dim);display:inline-flex;align-items:center;gap:6px}
+.portal .p-note{position:absolute;left:0;right:0;bottom:0;z-index:4;text-align:center;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);padding:9px;background:linear-gradient(0deg,rgba(4,7,13,.85),transparent);border-top:1px dashed rgba(120,170,215,.18)}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(22,199,132,.55);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,199,132,.5)}70%{box-shadow:0 0 0 9px rgba(22,199,132,0)}100%{box-shadow:0 0 0 0 rgba(22,199,132,0)}}
+.pcandle{transform-box:fill-box;transform-origin:bottom;animation:grow .8s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+/* Finn diving into the portal */
+.portal-finn{position:absolute;z-index:6;top:-6%;right:8%;width:34%;filter:drop-shadow(0 18px 26px rgba(0,0,0,.6));animation:dive 4.5s ease-in-out infinite}
+@keyframes dive{0%,100%{transform:translate(0,0) rotate(8deg)}50%{transform:translate(-6%,7%) rotate(3deg)}}
+.dive-arc{position:absolute;inset:0;z-index:5;width:100%;height:100%;pointer-events:none}
+.dive-arc path{stroke-dasharray:5 9;animation:arcMove 1.6s linear infinite}
+@keyframes arcMove{to{stroke-dashoffset:-28}}
+.enter-pulse{position:absolute;z-index:6;left:47%;top:44%;font-family:var(--mono);font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.1em;animation:floaty 2.6s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0);opacity:.85}50%{transform:translateY(-6px);opacity:1}}
+.scrollcue{margin-top:34px;display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+.scrollcue .arw{animation:bobArrow 1.8s ease-in-out infinite}
+@keyframes bobArrow{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
+/* ===================== WHAT IS CHARTQUEST (Explore/Trade/Battle) ===================== */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px}
+.pillar{position:relative;border:1px solid var(--line-2);border-radius:20px;overflow:hidden;background:linear-gradient(180deg,var(--panel-2),var(--panel));padding:0;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.pillar:hover{transform:translateY(-6px);border-color:rgba(255,214,10,.35);box-shadow:0 24px 50px rgba(0,0,0,.5)}
+.pillar .scene{position:relative;height:180px;overflow:hidden;border-bottom:1px solid var(--line);background:radial-gradient(120% 100% at 50% 120%,rgba(22,199,132,.12),#070c14)}
+.pillar .scene svg{position:absolute;inset:0;width:100%;height:100%}
+.pillar .scene .finn{position:absolute;bottom:8px;width:78px;z-index:2;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
+.pillar .body{padding:22px 22px 26px}
+.pillar .tagn{font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.pillar.explore .tagn{color:var(--green)}.pillar.trade .tagn{color:var(--cyan)}.pillar.battle .tagn{color:var(--gold)}
+.pillar h3{margin:8px 0 0;font-size:23px}
+.pillar p{margin:8px 0 0;color:var(--ink-dim);font-size:14.5px}
+
+/* ===================== GUARDIANS ===================== */
+.gud-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:52px}
+.gcard{position:relative;border:1px solid var(--line-2);border-radius:16px;padding:24px 18px;text-align:center;background:linear-gradient(180deg,rgba(18,26,40,.7),rgba(9,14,22,.7));overflow:hidden;transition:transform .2s ease,border-color .2s ease}
+.gcard::before{content:"";position:absolute;inset:0;background:radial-gradient(80% 60% at 50% 0%,rgba(255,214,10,.10),transparent 70%);opacity:0;transition:opacity .25s ease}
+.gcard:hover{transform:translateY(-5px);border-color:rgba(255,214,10,.4)}
+.gcard:hover::before{opacity:1}
+.medallion{width:74px;height:74px;margin:0 auto;border-radius:50%;display:grid;place-items:center;font-size:32px;
+  background:radial-gradient(circle at 38% 30%,rgba(255,214,10,.22),rgba(9,14,22,.9));border:2px solid rgba(255,214,10,.4);
+  box-shadow:0 0 22px rgba(255,214,10,.14),inset 0 0 18px rgba(0,0,0,.6)}
+.gcard.locked .medallion{filter:grayscale(.5) brightness(.7);border-color:var(--line-2);box-shadow:none}
+.gcard .gname{margin-top:14px;font-weight:800;font-size:15.5px}
+.gcard .gworld{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink-faint);margin-top:3px;text-transform:uppercase}
+.gcard .gteach{margin-top:10px;font-size:12.5px;color:var(--ink-dim);min-height:2.4em}
+.gcard .tag{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:9.5px;font-weight:800;letter-spacing:.08em;padding:3px 7px;border-radius:6px}
+.gcard .tag.boss{color:#231b00;background:var(--gold)}
+.gcard .tag.lock{color:var(--ink-faint);border:1px solid var(--line-2)}
+.gud-foot{text-align:center;margin-top:26px;font-family:var(--mono);font-size:12.5px;color:var(--ink-faint)}
+.gud-foot b{color:var(--gold)}
+
+/* ===================== HOW THE WORLD WORKS (descent) ===================== */
+.descent{position:relative;margin-top:56px;display:flex;flex-direction:column;gap:0}
+.dstep{display:grid;grid-template-columns:64px 1fr;gap:22px;padding:26px 0;position:relative}
+.dstep .rail{position:relative;display:flex;flex-direction:column;align-items:center}
+.dstep .rail .num{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-family:var(--mono);font-weight:900;font-size:18px;color:var(--gold);background:rgba(255,214,10,.08);border:1px solid rgba(255,214,10,.35);z-index:1}
+.dstep .rail .line{position:absolute;top:52px;bottom:-26px;width:2px;background:linear-gradient(180deg,rgba(255,214,10,.35),rgba(120,170,215,.12));left:calc(50% - 1px)}
+.dstep:last-child .rail .line{display:none}
+.dstep .d-body h4{margin:6px 0 0;font-size:clamp(20px,2.6vw,26px);font-weight:850}
+.dstep .d-body p{margin:8px 0 0;color:var(--ink-dim);max-width:52ch;font-size:15.5px}
+.dstep .d-body .finn-mini{width:56px;float:right;margin:-40px 0 0 14px;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
+
+/* ===================== GAMEPLAY PREVIEW (video placeholders) ===================== */
+.previews{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:auto auto;gap:18px;margin-top:52px}
+.vph{position:relative;border:1px solid var(--line-2);border-radius:18px;overflow:hidden;background:radial-gradient(120% 100% at 50% 0%,rgba(22,199,132,.08),#0a1019);min-height:170px;display:flex;align-items:center;justify-content:center;transition:border-color .2s ease,transform .2s ease}
+.vph:hover{border-color:rgba(255,214,10,.35);transform:translateY(-3px)}
+.vph.feature{grid-row:span 2;min-height:360px}
+.vph .grid-in{position:absolute;inset:0;opacity:.4;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:34px 34px;-webkit-mask-image:radial-gradient(80% 80% at 50% 50%,#000,transparent);mask-image:radial-gradient(80% 80% at 50% 50%,#000,transparent)}
+.vph .inner{position:relative;z-index:1;text-align:center;padding:20px}
+.vph .play{width:66px;height:66px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;font-size:22px;color:var(--ink);background:rgba(6,9,16,.7);border:1px solid var(--line-2);box-shadow:0 0 30px rgba(22,199,132,.16)}
+.vph .lbl{font-weight:800;font-size:16px}
+.vph .feature .lbl{font-size:20px}
+.vph .sub{color:var(--ink-dim);font-size:13px;margin-top:5px}
+.vph .corner{position:absolute;bottom:12px;left:14px;z-index:1}
+.vph .finn-cameo{position:absolute;right:14px;bottom:12px;width:64px;z-index:1;opacity:.95;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
+
+/* ===================== WHY > COURSES ===================== */
+.versus{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:stretch;margin-top:44px}
+.vs-col{border:1px solid var(--line-2);border-radius:var(--radius);padding:28px;background:var(--panel);position:relative;overflow:hidden}
+.vs-col.bad{background:linear-gradient(180deg,rgba(234,57,67,.06),var(--panel));border-color:rgba(234,57,67,.26)}
+.vs-col.good{background:linear-gradient(180deg,rgba(22,199,132,.08),var(--panel));border-color:rgba(22,199,132,.4);box-shadow:0 0 40px rgba(22,199,132,.1)}
+.vs-col .tagline{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px}
+.vs-col.bad .tagline{color:var(--red)}.vs-col.good .tagline{color:var(--green)}
+.vs-list{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.vs-list li{display:flex;gap:11px;align-items:flex-start;font-size:15px;color:var(--ink-dim)}
+.vs-list li .m{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:900;margin-top:1px}
+.vs-list.bad li .m{background:rgba(234,57,67,.14);color:var(--red)}.vs-list.good li .m{background:rgba(22,199,132,.16);color:var(--green)}
+.vs-list.good li{color:var(--ink)}
+.vs-mid{display:grid;place-items:center}
+.vs-mid span{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line-2);background:var(--bg-2);font-family:var(--mono);font-weight:900;color:var(--ink-faint)}
+
+/* ===================== MEET FINN ===================== */
+.finn-sec{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,64px);align-items:center}
+.finn-art{position:relative;text-align:center}
+.finn-art::before{content:"";position:absolute;inset:4% 10%;border-radius:50%;background:radial-gradient(closest-side,rgba(22,199,132,.32),rgba(255,214,10,.12) 55%,transparent 78%);filter:blur(8px);animation:finnAura 7s ease-in-out infinite}
+/* Finn idle — breathing + a barely-there sway (on the .finnb wrapper so the blink lids ride with it) */
+.finn-art .finnb{position:relative;width:min(440px,84%);transform-origin:50% 92%;animation:finnAlive 9s ease-in-out infinite}
+.finn-art img{position:relative;filter:drop-shadow(0 26px 34px rgba(0,0,0,.55))}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+/* breathing + an occasional 3D head-turn glance (rotateY) — reads as Finn looking around */
+@keyframes finnAlive{
+  0%{transform:perspective(700px) translateY(0) rotateY(0deg) rotate(-.5deg) scale(1)}
+  14%{transform:perspective(700px) translateY(-4px) rotateY(0deg) rotate(.12deg) scaleY(1.012) scaleX(.996)}
+  30%{transform:perspective(700px) translateY(-7px) rotateY(0deg) rotate(.45deg) scale(1.004)}
+  44%{transform:perspective(700px) translateY(-3px) rotateY(0deg) rotate(.05deg) scaleY(.993)}
+  57%{transform:perspective(700px) translateY(-3px) rotateY(-24deg) rotate(-.3deg) scale(1)}
+  65%{transform:perspective(700px) translateY(-4px) rotateY(-25deg) rotate(-.35deg) scale(1)}
+  76%{transform:perspective(700px) translateY(-2px) rotateY(0deg) rotate(.1deg) scale(1.002)}
+  100%{transform:perspective(700px) translateY(0) rotateY(0deg) rotate(-.5deg) scale(1)}
+}
+@keyframes finnAura{0%,100%{opacity:.82;transform:scale(1)}50%{opacity:1;transform:scale(1.045)}}
+.finn-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* ===================== ROADMAP (expedition) ===================== */
+.expedition{display:grid;grid-template-columns:repeat(5,1fr);margin-top:52px;position:relative}
+.ex-node{position:relative;padding:0 12px;text-align:center}
+.ex-node::before{content:"";position:absolute;top:11px;left:0;right:0;height:2px;background:var(--line-2);z-index:0}
+.ex-node:first-child::before{left:50%}.ex-node:last-child::before{right:50%}
+.ex-dot{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;margin:0 auto 16px;background:var(--bg);border:2px solid var(--line-2);display:grid;place-items:center}
+.ex-node.done .ex-dot{border-color:var(--green);background:var(--green);color:#032015}
+.ex-node.now .ex-dot{border-color:var(--gold);box-shadow:0 0 0 6px rgba(255,214,10,.14);animation:pg 2s infinite}
+@keyframes pg{0%,100%{box-shadow:0 0 0 4px rgba(255,214,10,.14)}50%{box-shadow:0 0 0 9px rgba(255,214,10,.05)}}
+.ex-phase{font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+.ex-node.done .ex-phase{color:var(--green)}.ex-node.now .ex-phase{color:var(--gold)}
+.ex-title{font-weight:800;font-size:15.5px;margin-top:4px}
+.ex-desc{font-size:12.5px;color:var(--ink-dim);margin-top:6px}
+
+/* ===================== FINAL CTA ===================== */
+.cta-portal{position:relative;border:1px solid rgba(255,214,10,.3);border-radius:28px;padding:clamp(46px,7vw,84px) 24px;text-align:center;overflow:hidden;
+  background:radial-gradient(100% 120% at 50% 0%,rgba(22,199,132,.18),rgba(62,166,255,.06) 45%,var(--panel));box-shadow:0 0 90px rgba(22,199,132,.14)}
+.cta-portal img{width:140px;margin:0 auto 16px;filter:drop-shadow(0 16px 24px rgba(0,0,0,.5));animation:dive 4.5s ease-in-out infinite}
+.cta-portal .btn-row{justify-content:center;margin-top:30px}
+
+/* ===================== FOOTER ===================== */
+.foot{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:20px;background:var(--bg-2)}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:32px}
+.foot h5{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 14px}
+.foot ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.foot ul a{font-size:14px;color:var(--ink-dim)}.foot ul a:hover{color:var(--ink)}
+.foot .brand{font-size:20px}
+.disclaimer{margin-top:34px;padding-top:22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-faint);line-height:1.7}
+.foot-bottom{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:20px;font-family:var(--mono);font-size:12px;color:var(--ink-faint)}
+
+/* Sticky mobile CTA */
+.sticky-cta{position:fixed;left:12px;right:12px;bottom:12px;z-index:70;display:none;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px 11px 18px;border-radius:16px;border:1px solid rgba(255,214,10,.3);background:rgba(8,13,22,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 30px rgba(0,0,0,.5);transform:translateY(150%);transition:transform .3s ease}
+.sticky-cta.show{transform:translateY(0)}
+.sticky-cta .sc-label{font-weight:800;font-size:14px}
+.sticky-cta .sc-sub{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+
+/* Modal */
+.modal{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(3,5,10,.74);backdrop-filter:blur(6px)}
+.modal.show{display:flex}
+.modal-card{width:min(560px,94vw);border:1px solid var(--line-2);border-radius:20px;background:var(--panel);padding:26px;position:relative}
+.modal-close{position:absolute;top:12px;right:14px;width:36px;height:36px;border-radius:10px;border:1px solid var(--line-2);background:rgba(120,170,215,.06);color:var(--ink);cursor:pointer;font-size:16px}
+.video-slot{aspect-ratio:16/9;border-radius:14px;overflow:hidden;border:1px solid var(--line-2);margin-top:8px;display:grid;place-items:center;background:radial-gradient(120% 120% at 50% 0%,rgba(22,199,132,.12),#0a1119);text-align:center;color:var(--ink-faint);font-family:var(--mono);font-size:12px}
+
+/* Reveal */
+html.js .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+html.js .reveal.in{opacity:1;transform:none}
+
+/* Responsive */
+@media (max-width:920px){
+  .hero-grid{grid-template-columns:1fr;gap:30px}
+  .hero .sub{max-width:56ch}
+  .pillars{grid-template-columns:1fr}
+  .gud-grid{grid-template-columns:repeat(2,1fr)}
+  .previews{grid-template-columns:1fr}
+  .vph.feature{grid-row:auto;min-height:220px}
+  .versus{grid-template-columns:1fr}
+  .vs-mid span{width:44px;height:44px}
+  .finn-sec{grid-template-columns:1fr}
+  .finn-art{order:-1}
+  .expedition{grid-template-columns:1fr;gap:8px}
+  .ex-node{display:grid;grid-template-columns:24px 1fr;text-align:left;gap:14px;align-items:start;padding:6px 0}
+  .ex-node::before{top:0;bottom:0;left:11px;right:auto;width:2px;height:auto}
+  .ex-node:first-child::before{top:11px}.ex-node:last-child::before{bottom:auto;height:11px}
+  .ex-dot{margin:0}
+  .foot-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:640px){
+  .nav-links{position:fixed;inset:66px 0 auto 0;flex-direction:column;gap:0;background:rgba(6,9,16,.98);border-bottom:1px solid var(--line);padding:8px 0;display:none}
+  .nav-links.open{display:flex}
+  .nav-links a{padding:14px 24px;width:100%;font-size:16px}
+  .nav-links .nav-cta{display:flex;padding:14px 24px;width:100%}
+  .nav-links .nav-cta .btn{width:100%}
+  .nav-burger{display:block}
+  .desktop-cta{display:none}
+  .gud-grid{grid-template-columns:1fr 1fr}
+  .foot-grid{grid-template-columns:1fr}
+  .sticky-cta{display:flex}
+  .worldbg .skyline{height:30vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;scroll-behavior:auto!important}
+  html.js .reveal{opacity:1;transform:none;transition:none}
+  .portal{transform:none}
+}
+
+/* ============================================================================
+   V4 ELEVATION — atmosphere, worldbuilding, the descent, the bestiary
+   ============================================================================ */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes flick{0%,100%{opacity:.5}50%{opacity:.85}}
+
+/* handcrafted film grain — kills the flat "AI page" look */
+.worldbg .grain{position:absolute;inset:-50%;opacity:.045;mix-blend-mode:overlay;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:140px 140px}
+
+/* HERO SCAPE — the world extends beyond the portal: candle mountains + glowing horizon */
+.hero{position:relative;isolation:isolate}
+.hero-scape{position:absolute;z-index:-1;left:50%;transform:translateX(-50%);top:-70px;width:100vw;height:calc(100% + 180px);pointer-events:none;overflow:hidden;
+  -webkit-mask-image:radial-gradient(130% 88% at 50% 46%,#000 52%,transparent 86%);mask-image:radial-gradient(130% 88% at 50% 46%,#000 52%,transparent 86%)}
+.hero-scape .horizon{position:absolute;left:0;right:0;bottom:24%;height:2px;background:linear-gradient(90deg,transparent,rgba(255,214,10,.55),transparent);box-shadow:0 0 70px 16px rgba(255,214,10,.12);animation:flick 6s ease-in-out infinite}
+.hero-scape .mountains{position:absolute;left:0;right:0;bottom:0;width:100%;height:66%;opacity:.24}
+.hero-scape .haze{position:absolute;left:0;right:0;bottom:0;height:40%;background:linear-gradient(0deg,rgba(6,9,16,.9),transparent)}
+
+/* DEPTH RAIL — one continuous journey downward */
+.depthrail{position:fixed;left:22px;top:50%;transform:translateY(-50%);z-index:40;display:flex;align-items:center;gap:11px;pointer-events:none;user-select:none}
+.depthrail .cap{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--mono);font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:var(--ink-faint)}
+.depthrail .track{position:relative;width:3px;height:220px;border-radius:3px;background:repeating-linear-gradient(180deg,rgba(120,170,215,.28) 0 1px,transparent 1px,transparent 31px)}
+.depthrail .fill{position:absolute;top:0;left:0;width:100%;height:0;border-radius:3px;background:linear-gradient(180deg,var(--green),var(--gold));box-shadow:0 0 12px rgba(255,214,10,.5);transition:height .15s linear}
+.depthrail .fill::after{content:"";position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px 2px rgba(255,214,10,.6)}
+.depthrail .now{writing-mode:vertical-rl;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);text-shadow:0 0 12px rgba(255,214,10,.4);min-height:120px;display:flex;align-items:center}
+
+/* GUARDIANS → THE BESTIARY (legendary, ominous) */
+#guardians{position:relative}
+#guardians::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(90% 50% at 50% 12%,rgba(234,57,67,.06),transparent 60%),radial-gradient(70% 60% at 50% 100%,rgba(255,214,10,.05),transparent 60%)}
+.gcard{background:linear-gradient(180deg,rgba(16,23,36,.75),rgba(8,12,20,.9))}
+.gcard .medallion{position:relative}
+.gcard .medallion::before{content:"";position:absolute;inset:-9px;border-radius:50%;border:1px dashed rgba(255,214,10,.32);animation:spin 22s linear infinite}
+.gcard.locked .medallion::before{border-color:var(--line-2);animation-duration:44s}
+.gcard.locked{background:linear-gradient(180deg,rgba(20,12,14,.7),rgba(8,10,16,.92))}
+/* featured final boss banner */
+.bestiary-final{position:relative;margin-top:44px;border:1px solid rgba(255,214,10,.32);border-radius:22px;overflow:hidden;
+  background:linear-gradient(120deg,rgba(24,12,8,.92),rgba(9,14,22,.92));display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;padding:28px 32px}
+.bestiary-final::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 130% at 10% 50%,rgba(234,57,67,.18),transparent 58%),radial-gradient(70% 120% at 100% 0%,rgba(255,214,10,.14),transparent 60%)}
+.bestiary-final>*{position:relative}
+.bf-sigil{position:relative;width:116px;height:116px;border-radius:50%;display:grid;place-items:center;font-size:52px;flex:0 0 auto;
+  background:radial-gradient(circle at 40% 30%,rgba(255,214,10,.24),rgba(9,14,22,.96));border:2px solid rgba(255,214,10,.5);box-shadow:0 0 44px rgba(255,214,10,.2),inset 0 0 22px rgba(0,0,0,.6)}
+.bf-sigil::before{content:"";position:absolute;inset:-12px;border-radius:50%;border:1px dashed rgba(255,214,10,.5);animation:spin 26s linear infinite}
+.bf-sigil::after{content:"";position:absolute;inset:-22px;border-radius:50%;border:1px solid rgba(234,57,67,.28);animation:spin 40s linear infinite reverse}
+.bf-meta .rank{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:800}
+.bf-meta h3{margin:8px 0 0;font-size:clamp(24px,3.2vw,36px);font-weight:900;letter-spacing:-.02em}
+.bf-meta p{margin:8px 0 0;color:var(--ink-dim);max-width:48ch;font-size:14.5px}
+.bf-side{display:flex;flex-direction:column;align-items:center;gap:12px;flex:0 0 auto}
+.bf-side .seal{font-family:var(--mono);font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(255,214,10,.4);border-radius:8px;padding:8px 12px;white-space:nowrap}
+.bf-side img{width:96px;filter:drop-shadow(0 10px 16px rgba(0,0,0,.55))}
+.gcard .st-threat{position:absolute;left:12px;bottom:12px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint)}
+.gcard .st-threat b{color:var(--red)}
+.gcard.locked .st-threat b{color:var(--gold)}
+/* nervous Finn peeking at the bestiary intro */
+.bestiary-finn{width:74px;margin:18px auto 0;filter:drop-shadow(0 10px 14px rgba(0,0,0,.5))}
+
+/* premium placeholder framing (viewfinder corners) */
+.vph::before,.vph::after{content:"";position:absolute;width:22px;height:22px;pointer-events:none;z-index:2;border:2px solid rgba(255,214,10,.55)}
+.vph::before{top:12px;left:12px;border-right:0;border-bottom:0;border-radius:5px 0 0 0}
+.vph::after{bottom:12px;right:12px;border-left:0;border-top:0;border-radius:0 0 5px 0}
+.vph .ph-tag.corner{background:rgba(6,9,16,.55)}
+
+/* wide screens: full labelled depth gauge · mid screens: thin depth line only · mobile: hidden */
+@media (max-width:1360px){.depthrail{left:14px;gap:0}.depthrail .cap,.depthrail .now{display:none}}
+@media (max-width:900px){.depthrail{display:none}}
+@media (max-width:920px){
+  .bestiary-final{grid-template-columns:1fr;text-align:center;justify-items:center;gap:16px;padding:26px 22px}
+  .bf-meta p{margin-inline:auto}
+  .hero-scape{top:-30px}
+}
+
+/* ============================================================================
+   V5 — fewer boxes, more world. De-frame the card grids; keep only a handful of
+   intentional frames (portal · final-boss banner · trailer · final CTA).
+   ============================================================================ */
+/* pillars → open vignettes (no card) */
+.pillar,.pillar:hover{border:0;background:none;box-shadow:none;transform:none;overflow:visible}
+.pillar .scene{border:0;border-radius:0;height:168px;background:radial-gradient(78% 96% at 50% 120%,rgba(22,199,132,.16),transparent 72%)}
+.pillar.trade .scene{background:radial-gradient(78% 96% at 50% 120%,rgba(70,224,255,.14),transparent 72%)}
+.pillar.battle .scene{background:radial-gradient(78% 96% at 50% 120%,rgba(255,214,10,.14),transparent 72%)}
+.pillar .body{padding:18px 4px 0}
+.pillar h3{transition:color .2s}.pillar:hover h3{color:#fff}
+
+/* comparison → open lists, no boxes */
+.vs-col,.vs-col.bad,.vs-col.good{border:0;background:none;box-shadow:none;padding:6px 6px}
+.vs-col.good{border-left:1px solid var(--line);padding-left:28px}
+.vs-mid span{background:var(--bg)}
+
+/* gameplay preview → ONE real frame; secondaries become ghost slots */
+.vph:not(.feature){background:none;border:1px dashed var(--line-2);min-height:148px}
+.vph:not(.feature)::before,.vph:not(.feature)::after{display:none}
+.vph:not(.feature) .grid-in{display:none}
+.vph:not(.feature) .play{background:transparent;box-shadow:none}
+.vph:not(.feature) .sub{display:none}
+.vph:not(.feature) .inner{padding-bottom:26px}
+
+/* Bestiary → a borderless WALL OF LEGENDS (sigils, not cards) */
+.bestiary-wall{display:grid;grid-template-columns:repeat(4,1fr);gap:36px 20px;margin-top:34px}
+.glegend{text-align:center;position:relative;transition:transform .2s ease}
+.glegend:hover{transform:translateY(-5px)}
+.glegend .medallion{margin:0 auto;position:relative}
+.glegend .medallion::before{content:"";position:absolute;inset:-9px;border-radius:50%;border:1px dashed rgba(255,214,10,.3);animation:spin 22s linear infinite}
+.glegend.locked .medallion{filter:grayscale(.6) brightness(.7)}
+.glegend.locked .medallion::before{border-color:var(--line-2);animation-duration:44s}
+.glegend .gname{margin-top:15px;font-weight:800;font-size:15.5px}
+.glegend .gtag{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;margin-top:5px;color:var(--gold)}
+.glegend.locked .gtag{color:var(--ink-faint)}
+.glegend .gteach{font-size:12.5px;color:var(--ink-dim);margin-top:9px;max-width:24ch;margin-inline:auto;line-height:1.45}
+@media (max-width:920px){
+  .bestiary-wall{grid-template-columns:repeat(2,1fr);gap:32px 16px}
+  .vs-col.good{border-left:0;padding-left:6px}
+}
+
+/* ============================================================================
+   V5 POLISH — typography (Space Grotesk display + Inter body), real live chart,
+   flatter portal, fewer mono labels.
+   ============================================================================ */
+.display,.big,h3,.brand{font-family:var(--display)}
+.display{font-weight:700;letter-spacing:-.02em}
+.big{font-weight:700;letter-spacing:-.015em}
+h3{font-weight:600;letter-spacing:-.01em}
+body{letter-spacing:-.006em}
+.lead{line-height:1.62}
+.hero .sub{font-weight:500}
+.eyebrow,.kicker{font-family:var(--sans);text-transform:uppercase;font-weight:600}
+.eyebrow{letter-spacing:.15em;font-size:12.5px}
+.kicker{letter-spacing:.14em;font-size:12.5px}
+.trust,.scrollcue{font-family:var(--sans);letter-spacing:.01em}
+
+/* real live BTC chart inside the portal */
+.portal{transform:none}
+.portal .tv-chart{position:absolute;inset:0;z-index:0;border-radius:inherit;overflow:hidden;pointer-events:none}
+.portal .tv-chart iframe{border:0!important;width:100%!important;height:100%!important}
+.portal .chart-load{position:absolute;inset:0;z-index:0;display:grid;place-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);background:radial-gradient(120% 100% at 50% 120%,rgba(22,199,132,.1),#04070d 62%)}
+/* story overlays sit above the chart but never block it */
+.portal-finn,.dive-arc,.enter-pulse,.p-note,.p-tag,.p-live{pointer-events:none}
+.p-tag,.p-live{text-shadow:0 1px 5px rgba(0,0,0,.95)}
+.p-note{background:linear-gradient(0deg,rgba(4,7,13,.92),transparent)}
+
+/* ============================================================================
+   HERO — CINEMATIC KEY ART (movie poster). Full-bleed boss art + text + a real
+   live chart feathered into the landscape. No cards, no fake widgets.
+   ============================================================================ */
+.hero-cine{position:relative;width:100%;height:clamp(580px,94vh,960px);overflow:hidden;display:flex;align-items:flex-end;padding-bottom:clamp(46px,9vh,104px);isolation:isolate}
+.hero-cine-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 54%;z-index:0}
+/* real live BTC/USD chart merged into the right of the scene (feathered, no frame) */
+.hero-cine-chart{position:absolute;z-index:1;pointer-events:none;overflow:hidden;right:0;bottom:5%;width:35%;height:40%;
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 40%),linear-gradient(to top,#000 82%,transparent);-webkit-mask-composite:source-in;
+  mask-image:linear-gradient(to right,transparent,#000 40%),linear-gradient(to top,#000 82%,transparent);mask-composite:intersect}
+.hero-cine-chart iframe{border:0!important;width:100%!important;height:100%!important}
+/* legibility scrim: dark on the far left (text) + a thin base fade — keeps bosses/Finn visible */
+.hero-cine-scrim{position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(90deg,rgba(3,6,11,.88) 0%,rgba(3,6,11,.52) 22%,rgba(3,6,11,.12) 42%,transparent 56%),
+             linear-gradient(0deg,rgba(6,9,16,.92) 0%,transparent 13%)}
+.hero-cine-copy{position:relative;z-index:4;width:min(1200px,92vw);margin-inline:auto}
+.hero-cine-copy .inner{max-width:min(640px,54%)}
+/* Hero headline supports the key art rather than competing with it: lighter weight,
+   slightly smaller, airier tracking, warm off-white + an extremely soft glow. */
+.hero-cine h1{font-size:clamp(25px,3.2vw,41px);margin:18px 0 0;font-weight:500;color:#f4eee2;line-height:1.04;letter-spacing:.015em;text-shadow:0 2px 20px rgba(0,0,0,.8),0 1px 3px rgba(0,0,0,.92),0 0 34px rgba(255,224,170,.08)}
+.hero-cine h1 .grad{text-shadow:none;font-weight:600}
+.hero-cine .sub{margin:16px 0 0;color:#dfe8f2;font-weight:500;font-size:clamp(15px,1.45vw,17px);line-height:1.55;max-width:40ch;text-shadow:0 2px 16px rgba(0,0,0,.95)}
+.hero-cine .btn-row{margin-top:32px;gap:12px}
+.hero-cine .eyebrow{background:rgba(10,14,22,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+@media (max-width:720px){
+  .hero-cine{align-items:flex-end;height:clamp(560px,88vh,820px);padding-bottom:6px}
+  .hero-cine-bg{object-position:50% 46%}
+  .hero-cine-chart{display:none}
+  .hero-cine-copy{padding-bottom:36px}
+  .hero-cine-copy .inner{max-width:100%}
+  .hero-cine-scrim{background:linear-gradient(0deg,rgba(4,7,12,.95) 6%,rgba(4,7,12,.62) 32%,rgba(4,7,12,.12) 56%,transparent 74%)}
+}
+
+/* ============================================================================
+   OPENING SEQUENCE — real-market bridge · Finn-enters animation · game mount ·
+   section continuity · subtle microinteractions. (CSS transforms/opacity only.)
+   ============================================================================ */
+/* hero galaxy: softly breathes + turns, almost imperceptible */
+.hero-cine-glow{position:absolute;z-index:1;left:50%;top:38%;width:min(30vw,360px);aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(circle,rgba(255,205,70,.13),rgba(255,160,40,.05) 44%,transparent 66%);animation:goldBreath 8s ease-in-out infinite}
+.hero-cine-glow::before{content:"";position:absolute;inset:4%;border-radius:50%;filter:blur(12px);mix-blend-mode:screen;opacity:.55;
+  background:conic-gradient(from 0deg,transparent 0deg,rgba(255,214,10,.16) 40deg,transparent 120deg,transparent 220deg,rgba(150,110,255,.12) 264deg,transparent 340deg);animation:slowSpin 64s linear infinite}
+@keyframes goldBreath{0%,100%{opacity:.5}50%{opacity:.92}}
+@keyframes slowSpin{to{transform:rotate(360deg)}}
+
+/* section continuity — soft fog so sections don't feel stacked */
+.realmarket,.gamestart{background:radial-gradient(120% 80% at 50% -8%,rgba(22,199,132,.05),transparent 55%)}
+.realmarket::before,.gamestart::before{content:"";position:absolute;left:0;right:0;top:-1px;height:170px;pointer-events:none;background:linear-gradient(180deg,rgba(6,9,16,.55),transparent)}
+
+/* THIS IS A REAL MARKET */
+.chart-stage{position:relative;max-width:1000px;margin-inline:auto}
+.chart-frame{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line-2);box-shadow:var(--shadow);background:radial-gradient(120% 100% at 50% 0%,rgba(22,199,132,.06),#080c12);transform:translateZ(0)}
+.chart-live{position:relative;z-index:0;height:clamp(360px,52vh,540px)}
+.chart-live iframe{border:0!important;width:100%!important;height:100%!important}
+.chart-live-tag{position:absolute;top:12px;left:14px;z-index:2;display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--green);text-shadow:0 1px 5px rgba(0,0,0,.9)}
+/* Finn-enters cinematic: waits beside the chart → jets up → dives through the surface;
+   a candle glows and a tiny Finn runs across INSIDE. Overlay only (pointer-events:none),
+   GPU transforms/opacity/filter, one-shot per viewport entry (JS replays on re-entry). */
+.finn-enter{position:absolute;left:4%;bottom:9%;z-index:3;width:74px;opacity:0;transform:translate(0,8px) scale(.96);pointer-events:none;will-change:transform,opacity;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
+.finn-enter img{display:block;width:100%}
+.cq-fx{position:absolute;inset:0;z-index:2;pointer-events:none}
+.cq-jet{position:absolute;left:8%;bottom:12%;width:5px;height:5px;border-radius:50%;background:radial-gradient(circle,#ffd27a,rgba(255,150,40,.15));opacity:0;will-change:transform,opacity}
+.cq-ripple{position:absolute;left:44%;top:42%;width:60px;height:60px;border-radius:50%;border:2px solid rgba(70,224,255,.7);opacity:0;transform:translate(-50%,-50%) scale(.2);will-change:transform,opacity}
+.cq-candle-glow{position:absolute;left:42%;top:38%;width:16px;height:26%;border-radius:4px;background:linear-gradient(180deg,rgba(255,214,10,.85),rgba(255,214,10,.12));box-shadow:0 0 22px 4px rgba(255,214,10,.5);opacity:0;transform-origin:bottom;will-change:opacity,transform}
+.cq-mini{position:absolute;left:42%;top:40%;width:30px;opacity:0;transform-origin:bottom center;filter:drop-shadow(0 6px 5px rgba(0,0,0,.55));will-change:transform,opacity}
+
+.chart-stage.playing .finn-enter{animation:finnLaunch 2.5s cubic-bezier(.5,.02,.4,1) forwards}
+.chart-stage.playing .finn-enter img{animation:jetPower 2.5s ease-out forwards}
+.chart-stage.playing .chart-frame{animation:chartPulse 1.1s ease-out 1.95s}
+.chart-stage.playing .cq-jet{animation:jetSpark 1.7s ease-out forwards}
+.chart-stage.playing .cq-jet.j2{animation-delay:.15s;left:11%}
+.chart-stage.playing .cq-jet.j3{animation-delay:.3s;left:6%}
+.chart-stage.playing .cq-jet.j4{animation-delay:.45s;left:13%}
+.chart-stage.playing .cq-ripple{animation:cqRipple 1.1s ease-out 1.9s forwards}
+.chart-stage.playing .cq-candle-glow{animation:cqCandle 1.2s ease-out 2.05s forwards}
+.chart-stage.playing .cq-mini{animation:cqMiniRun 2.5s ease-in-out 2.35s forwards}
+
+@keyframes finnLaunch{
+  0%{opacity:0;transform:translate(0,8px) scale(.96) rotate(-4deg)}
+  9%{opacity:1;transform:translate(0,0) scale(1) rotate(-4deg)}
+  22%{transform:translate(0,-3px) scale(1) rotate(-3deg)}
+  32%{transform:translate(3%,3px) scale(1) rotate(-7deg)}
+  50%{opacity:1;transform:translate(240%,-150%) scale(.82) rotate(12deg)}
+  66%{opacity:.5;transform:translate(430%,-190%) scale(.5) rotate(7deg)}
+  80%,100%{opacity:0;transform:translate(470%,-180%) scale(.34) rotate(3deg)}
+}
+@keyframes jetPower{
+  0%,9%{filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
+  22%{filter:drop-shadow(0 6px 16px rgba(255,150,40,.45)) drop-shadow(0 8px 12px rgba(0,0,0,.5))}
+  32%{filter:drop-shadow(0 4px 24px rgba(255,170,60,.8)) drop-shadow(0 8px 12px rgba(0,0,0,.5))}
+  50%{filter:drop-shadow(0 0 30px rgba(255,180,70,.9)) drop-shadow(0 8px 12px rgba(0,0,0,.5))}
+  74%,100%{filter:drop-shadow(0 0 0 rgba(255,180,70,0)) drop-shadow(0 8px 12px rgba(0,0,0,.4))}
+}
+@keyframes jetSpark{0%{opacity:0;transform:translate(0,0) scale(1)}20%{opacity:.9}100%{opacity:0;transform:translate(-6px,-30px) scale(.3)}}
+@keyframes cqRipple{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}20%{opacity:.75}100%{opacity:0;transform:translate(-50%,-50%) scale(2.6)}}
+@keyframes cqCandle{0%{opacity:0;transform:scaleY(.6)}30%{opacity:1;transform:scaleY(1.06)}60%{opacity:.7;transform:scaleY(1)}100%{opacity:0;transform:scaleY(1)}}
+/* Finn drops onto the glowing entry candle (squash on contact), then runs across the
+   candle field with a stepping bob — his feet stay in the candles, never the empty margin below. */
+@keyframes cqMiniRun{
+  0%{opacity:0;transform:translate(-4px,-30px) scaleY(1.06)}
+  7%{opacity:1;transform:translate(0,0) scaleY(.82)}
+  12%{transform:translate(7px,-6px) scaleY(1.02)}
+  24%{transform:translate(40px,2px) scaleY(1)}
+  38%{transform:translate(74px,-8px)}
+  52%{transform:translate(108px,0)}
+  66%{transform:translate(146px,-7px)}
+  80%{transform:translate(184px,1px)}
+  92%{opacity:1;transform:translate(214px,-5px)}
+  100%{opacity:0;transform:translate(232px,-2px)}
+}
+@keyframes chartPulse{0%,100%{box-shadow:var(--shadow);border-color:var(--line-2)}45%{box-shadow:var(--shadow),0 0 70px rgba(22,199,132,.4);border-color:rgba(22,199,132,.55)}}
+
+/* THE GAME — mount point (real game loads on click) */
+.game-mount{position:relative;width:100%;aspect-ratio:16/10;max-height:82vh;border-radius:22px;overflow:hidden;border:1px solid var(--line-2);box-shadow:var(--shadow),0 0 90px rgba(22,199,132,.1);background:radial-gradient(120% 100% at 50% 0%,rgba(22,199,132,.08),#070b12)}
+.game-mount iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.game-enter{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:radial-gradient(120% 100% at 50% 32%,rgba(22,199,132,.12),rgba(6,9,16,.72));border:0;cursor:pointer;color:var(--ink);transition:background .25s ease}
+.game-enter:hover{background:radial-gradient(120% 100% at 50% 32%,rgba(22,199,132,.2),rgba(6,9,16,.74))}
+.game-enter .finnb{width:118px;margin-bottom:8px;animation:dive 4.5s ease-in-out infinite}
+.game-enter .finnb>img{filter:drop-shadow(0 14px 22px rgba(0,0,0,.5))}
+.game-enter:hover .finnb>img{filter:drop-shadow(0 0 26px rgba(255,150,40,.55)) drop-shadow(0 14px 22px rgba(0,0,0,.5))}
+.game-enter .ge-title{font-family:var(--display);font-weight:700;font-size:clamp(22px,3vw,32px)}
+.game-enter .ge-sub{font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+.game-mount.loaded .game-enter{display:none}
+
+@media (prefers-reduced-motion:reduce){.hero-cine-glow{animation:none!important}.chart-stage .finn-enter,.chart-stage .cq-fx{display:none}}
+@media (max-width:720px){.chart-live{height:clamp(300px,58vh,460px)}.game-mount{aspect-ratio:3/4;max-height:88vh}}
+
+/* ============================================================================
+   QA POLISH — a11y focus, tap targets, game loading/error states, mobile CTAs
+   ============================================================================ */
+a.btn:focus-visible,button:focus-visible,.nav-links a:focus-visible,.foot a:focus-visible,.brand:focus-visible,.game-enter:focus-visible,.nav-burger:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:12px}
+.foot ul a{display:inline-block;padding:9px 2px;margin:-5px 0}
+/* game loading + graceful error (no broken/blank iframe) */
+.game-loading,.game-error{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;background:radial-gradient(120% 100% at 50% 32%,rgba(22,199,132,.1),rgba(6,9,16,.92));color:var(--ink)}
+.gl-spin{width:46px;height:46px;border-radius:50%;border:3px solid rgba(120,170,215,.18);border-top-color:var(--green);animation:slowSpin .9s linear infinite}
+.gl-text{font-family:var(--mono);font-size:13px;letter-spacing:.08em;color:var(--ink-dim)}
+.game-error .ge-emoji{font-size:42px}
+.game-error p{color:var(--ink-dim);margin:0;font-size:15px;max-width:34ch}
+/* mobile: hero CTAs stack full-width (no ragged wrap / no clip) */
+@media (max-width:720px){.hero-cine .btn-row{flex-direction:column;align-items:stretch;gap:12px}.hero-cine .btn-row .btn{width:100%}}
+
+/* ============================================================================
+   RESTRAINT PASS — typographic rhythm + compact "How it works" cards
+   ============================================================================ */
+/* medium heading size (live chart · comparison) for rhythm */
+.big.h-mid{font-size:clamp(25px,3.3vw,38px)}
+
+/* ============================================================================
+   COMPARISON TABLE — course vs ChartQuest in one tight Apple-style table.
+   Same copy, ~half the height of the old two-column layout. (Phase-1 relayout)
+   ============================================================================ */
+.cmp{max-width:860px;margin:36px auto 0}
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line-2);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,var(--panel-2),var(--panel));box-shadow:0 24px 60px rgba(0,0,0,.32)}
+.cmp-h{display:flex;flex-direction:column;gap:3px;padding:16px 20px;border-bottom:1px solid var(--line-2)}
+.cmp-h .cmp-key{font-family:var(--display);font-weight:700;font-size:15.5px}
+.cmp-h .cmp-say{font-size:12.5px;color:var(--ink-faint);letter-spacing:.01em}
+.cmp-h.bad .cmp-key{color:#f0c9cc}
+.cmp-h.good{background:linear-gradient(180deg,rgba(22,199,132,.12),transparent);border-left:1px solid var(--line-2)}
+.cmp-h.good .cmp-key{color:#bff0d8}
+.cmp-row{display:flex;align-items:center;gap:11px;padding:12px 20px;font-size:14px;color:var(--ink-dim);border-top:1px solid var(--line);transition:background .2s ease}
+.cmp-row.good{border-left:1px solid var(--line);color:var(--ink);background:rgba(22,199,132,.035)}
+.cmp-row:hover{background:rgba(120,170,215,.05)}
+.cmp-row.good:hover{background:rgba(22,199,132,.075)}
+.cmp-row .m{flex:0 0 auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900}
+.cmp-row.bad .m{background:rgba(234,57,67,.14);color:var(--red)}
+.cmp-row.good .m{background:rgba(22,199,132,.16);color:var(--green)}
+@media (max-width:560px){
+  .cmp-h{padding:13px}.cmp-h .cmp-key{font-size:13.5px}.cmp-h .cmp-say{font-size:11px}
+  .cmp-row{padding:11px 13px;font-size:12.7px;gap:8px}
+}
+
+/* ============================================================================
+   BACKGROUND LIFE — slow drifting motes + rare sparkle. Tiny, GPU only. (Phase-1)
+   ============================================================================ */
+.worldbg .motes{position:absolute;inset:0;overflow:hidden}
+.worldbg .mote{position:absolute;bottom:-8px;width:var(--s,3px);height:var(--s,3px);border-radius:50%;
+  background:rgba(70,224,255,.55);box-shadow:0 0 7px rgba(70,224,255,.5);opacity:0;
+  animation:moteRise var(--d,28s) linear var(--dl,0s) infinite}
+.worldbg .mote.m-c{background:rgba(22,199,132,.55);box-shadow:0 0 7px rgba(22,199,132,.5)}
+.worldbg .mote.m-g{background:rgba(255,214,10,.5);box-shadow:0 0 7px rgba(255,214,10,.45)}
+@keyframes moteRise{0%{opacity:0;transform:translateY(0)}10%{opacity:.5}85%{opacity:.5}100%{opacity:0;transform:translateY(-86vh)}}
+.worldbg .spark{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:0;
+  box-shadow:0 0 6px 1px rgba(255,255,255,.55);animation:sparkle 9s ease-in-out var(--dl,0s) infinite}
+@keyframes sparkle{0%,92%,100%{opacity:0;transform:scale(.6)}96%{opacity:.85;transform:scale(1)}}
+
+/* ============================================================================
+   PHASE 2 — LIVING WORLD. Cinematic depth + atmosphere layered OVER the (flat)
+   key art, ambient world FX, a fog-bridge descent, Finn cursor-lean, and the
+   Trading Journal teaser. All GPU (transform/opacity/filter), IntersectionObserver-
+   paused offscreen + paused on tab-hide, and disabled under prefers-reduced-motion.
+   NOTE: the hero is ONE baked .jpg — painted anatomy (Market Maker fingers/strings,
+   boss necks/eyes, Finn's necklace) can't move; we layer light + particles instead.
+   ============================================================================ */
+/* perf: pause a section's ambient FX while it's offscreen (JS toggles .fx-off) or tab hidden */
+.fx-off,.fx-off *{animation-play-state:paused!important}
+body.tab-hidden *{animation-play-state:paused!important}
+/* nav anchor jumps clear the sticky header */
+:where(section[id],header[id]){scroll-margin-top:84px}
+
+/* ---- HERO ATMOSPHERE (below the legibility scrim → feels embedded in the scene) ---- */
+.hero-atmos{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.ha-rays{position:absolute;left:50%;top:-12%;width:130vw;height:92%;transform:translateX(-50%);mix-blend-mode:screen;
+  background:conic-gradient(from 0deg at 50% 0%,transparent 4deg,rgba(255,222,150,.05) 8deg,transparent 13deg,transparent 28deg,rgba(120,180,255,.03) 33deg,transparent 39deg,transparent 62deg,rgba(255,222,150,.045) 67deg,transparent 73deg,transparent 96deg,rgba(150,120,255,.03) 101deg,transparent 107deg);
+  -webkit-mask-image:radial-gradient(58% 82% at 50% 2%,#000,transparent 74%);mask-image:radial-gradient(58% 82% at 50% 2%,#000,transparent 74%);
+  animation:haRays 26s ease-in-out infinite}
+@keyframes haRays{0%,100%{opacity:.4;transform:translateX(-50%) rotate(-1.1deg)}50%{opacity:.68;transform:translateX(-50%) rotate(1.1deg)}}
+.ha-fog{position:absolute;left:-20%;right:-20%;bottom:0;height:58%;
+  background:radial-gradient(58% 100% at 28% 100%,rgba(90,130,180,.10),transparent 70%),radial-gradient(52% 100% at 74% 100%,rgba(130,95,185,.08),transparent 72%);
+  animation:haFog 36s ease-in-out infinite}
+@keyframes haFog{0%,100%{transform:translateX(-3%)}50%{transform:translateX(3%)}}
+.ha-embers{position:absolute;inset:0}
+.ha-embers i{position:absolute;bottom:-6px;width:3px;height:3px;border-radius:50%;background:rgba(255,190,95,.7);box-shadow:0 0 8px rgba(255,160,60,.6);opacity:0;animation:haEmber var(--ed,22s) linear var(--edl,0s) infinite}
+@keyframes haEmber{0%{opacity:0;transform:translateY(0)}12%{opacity:.6}80%{opacity:.38}100%{opacity:0;transform:translateY(-72vh) translateX(12px)}}
+
+/* ---- HERO LENS (above the scrim → galaxy orbit particles, boss eye-glints, vignette) ---- */
+.hero-lens{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+.ha-orbit{position:absolute;left:50%;top:38%;width:0;height:0;animation:haOrbit 46s linear infinite}
+.ha-orbit i{position:absolute;left:0;top:0;width:3px;height:3px;border-radius:50%;background:rgba(185,150,255,.9);box-shadow:0 0 8px rgba(150,110,255,.7);animation:haTwinkle 6s ease-in-out infinite}
+.ha-orbit i:nth-child(1){transform:rotate(0deg) translateX(58px)}
+.ha-orbit i:nth-child(2){transform:rotate(95deg) translateX(72px);background:rgba(120,205,255,.9);box-shadow:0 0 8px rgba(70,224,255,.7);animation-delay:-2.2s}
+.ha-orbit i:nth-child(3){transform:rotate(188deg) translateX(52px);background:rgba(255,214,120,.9);box-shadow:0 0 8px rgba(255,190,80,.6);animation-delay:-4s}
+.ha-orbit i:nth-child(4){transform:rotate(268deg) translateX(66px);animation-delay:-1.1s}
+@keyframes haOrbit{to{transform:rotate(360deg)}}
+@keyframes haTwinkle{0%,100%{opacity:.12}50%{opacity:.7}}
+.ha-glints i{position:absolute;width:3px;height:3px;border-radius:50%;background:rgba(215,255,240,.95);box-shadow:0 0 7px 1px rgba(120,230,200,.7);opacity:0;transform:translate(-50%,-50%);animation:haGlint 22s ease-in-out var(--gd,0s) infinite}
+@keyframes haGlint{0%,90%,100%{opacity:0}93%{opacity:.6}95%{opacity:.18}97%{opacity:.5}}
+.ha-vignette{position:absolute;inset:0;box-shadow:inset 0 0 170px 36px rgba(2,4,9,.5),inset 0 -70px 120px rgba(2,4,9,.42)}
+@media (max-width:720px){.ha-glints,.ha-orbit i{display:none}}
+
+/* ---- WORLD ATMOSPHERE (fixed bg) — drifting data-fog + rising data fragments ---- */
+.worldbg .wfog{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(42% 40% at 18% 28%,rgba(70,224,255,.045),transparent 70%),radial-gradient(46% 46% at 82% 62%,rgba(150,110,255,.04),transparent 72%);
+  animation:wfogDrift 52s ease-in-out infinite}
+@keyframes wfogDrift{0%,100%{transform:translate(0,0)}50%{transform:translate(2.4%,-2.2%)}}
+.worldbg .frag{position:absolute;bottom:-14px;font-family:var(--mono);font-size:9px;font-weight:700;color:rgba(70,224,255,.32);text-shadow:0 0 6px rgba(70,224,255,.3);opacity:0;animation:moteRise var(--d,40s) linear var(--dl,0s) infinite}
+
+/* ---- REAL-CHART DESCENT — particles fall from the fantasy world into the live market ---- */
+.descent-bridge{position:absolute;left:50%;top:-34px;width:2px;height:130px;transform:translateX(-50%);pointer-events:none;z-index:0}
+.descent-bridge i{position:absolute;left:50%;top:0;width:3px;height:3px;border-radius:50%;transform:translateX(-50%);background:rgba(22,199,132,.85);box-shadow:0 0 8px rgba(22,199,132,.6);opacity:0;animation:haDescend 4.6s ease-in var(--dd,0s) infinite}
+.descent-bridge i:nth-child(2){animation-delay:.9s;background:rgba(70,224,255,.85);box-shadow:0 0 8px rgba(70,224,255,.6)}
+.descent-bridge i:nth-child(3){animation-delay:1.8s}
+.descent-bridge i:nth-child(4){animation-delay:2.7s;background:rgba(255,214,10,.75);box-shadow:0 0 8px rgba(255,190,60,.55)}
+.descent-bridge i:nth-child(5){animation-delay:3.6s}
+@keyframes haDescend{0%{opacity:0;transform:translateX(-50%) translateY(0)}14%{opacity:.85}82%{opacity:.42}100%{opacity:0;transform:translateX(-50%) translateY(128px)}}
+
+/* ---- FINN — cursor-lean (JS sets transform on .finn-art; the img keeps breathing) ---- */
+.finn-art{transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.finn-art.lean{transition:transform .12s linear}
+
+/* ---- TRADING JOURNAL — teaser only (creates curiosity; never reveals the interface) ---- */
+.journal-teaser{position:relative;max-width:540px;margin:0 auto;border:1px solid rgba(255,214,10,.26);border-radius:18px;padding:22px 24px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(22,18,8,.72),rgba(12,14,20,.72));display:flex;gap:18px;align-items:center;
+  box-shadow:0 24px 60px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.04);transition:transform .3s cubic-bezier(.2,.7,.2,1),border-color .3s ease,box-shadow .3s ease}
+.journal-teaser:hover{transform:translateY(-4px);border-color:rgba(255,214,10,.5);box-shadow:0 30px 72px rgba(0,0,0,.5),0 0 42px rgba(255,214,10,.1)}
+.jt-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(60% 100% at 12% 50%,rgba(255,214,10,.1),transparent 60%);animation:goldBreath 7s ease-in-out infinite}
+.jt-lock{position:relative;flex:0 0 auto;width:56px;height:56px;border-radius:14px;display:grid;place-items:center;font-size:23px;
+  background:radial-gradient(circle at 40% 30%,rgba(255,214,10,.18),rgba(9,14,22,.92));border:1px solid rgba(255,214,10,.35);box-shadow:inset 0 0 16px rgba(0,0,0,.55)}
+.jt-body{position:relative;z-index:1}
+.jt-title{font-family:var(--display);font-weight:700;font-size:19px;display:flex;align-items:center;gap:10px}
+.jt-tag{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(255,214,10,.4);border-radius:999px;padding:3px 9px}
+.jt-unlock{margin:6px 0 0;font-size:13px;color:var(--gold);font-weight:600}
+.jt-lines{margin:7px 0 0;font-size:13.5px;color:var(--ink-dim);line-height:1.5}
+.jt-lines b{color:var(--ink)}
+@media (max-width:560px){.journal-teaser{flex-direction:column;text-align:center;gap:14px}.jt-title{justify-content:center}}
+
+/* ---- FINN BLINK — a real upper-eyelid sweep (skin-matched #93b622) ~every 4s. Eye rects are
+   per-sprite CSS vars measured from each PNG; the lids live INSIDE the sprite wrapper so they ride
+   its breathe/bob transform and stay glued to the eyes. GPU (scaleY); off under reduced-motion. ---- */
+.finnb{position:relative;display:inline-block;line-height:0}
+.finnb>img{display:block;width:100%;height:auto}
+.finnb .lid{position:absolute;pointer-events:none;transform:scaleY(0);transform-origin:top center;will-change:transform;
+  background:linear-gradient(180deg,#a8c92d 0%,#93b622 60%,#7f9f1b 100%);
+  box-shadow:inset 0 -1.5px 0 rgba(35,52,10,.42);border-radius:46% 46% 50% 50% / 40% 40% 62% 62%;
+  animation:finnBlink 4s ease-in-out var(--bd,0s) infinite}
+.finnb .l1{left:var(--e1x);top:var(--e1y);width:var(--e1w);height:var(--e1h)}
+.finnb .l2{left:var(--e2x);top:var(--e2y);width:var(--e2w);height:var(--e2h)}
+/* quick blink — ~95ms of the 4s cycle (≈65% faster than before), same cadence */
+@keyframes finnBlink{0%,97.6%,100%{transform:scaleY(0)}98.8%,99.2%{transform:scaleY(1)}}
+
+/* Rocket-pack flame — a live flicker screen-blended over the baked flame. Position vars are
+   measured from each PNG's flame; it rides the sprite wrapper so it stays on the nozzle. */
+.flame{position:absolute;left:var(--flx);top:var(--fly);width:var(--flw);height:var(--flh);pointer-events:none;
+  border-radius:52% 48% 46% 54% / 36% 40% 64% 60%;transform-origin:62% 18%;will-change:transform,opacity;
+  background:radial-gradient(52% 56% at 54% 30%,rgba(255,247,200,.95),rgba(255,174,64,.66) 40%,rgba(255,94,28,.30) 66%,transparent 82%);
+  mix-blend-mode:screen;filter:blur(1.4px);animation:flameFlicker .5s ease-in-out var(--fld,0s) infinite}
+@keyframes flameFlicker{
+  0%{opacity:.68;transform:scale(1,1)}
+  18%{opacity:1;transform:scale(1.05,1.16)}
+  33%{opacity:.58;transform:scale(.95,.89)}
+  50%{opacity:.94;transform:scale(1.03,1.18)}
+  68%{opacity:.64;transform:scale(.98,.93)}
+  84%{opacity:1;transform:scale(1.05,1.08)}
+  100%{opacity:.7;transform:scale(1,1)}
+}
+
+/* Finn head-turn — an occasional 3D glance (rotateY) so the pillar Finns look alive, not static.
+   Lids ride the wrapper's rotateY, so they stay on the eyes through the turn. */
+.finnb.finn{transform-origin:50% 85%;animation:finnLook 12s ease-in-out var(--lookd,0s) infinite}
+.pillar.trade .finnb{--lookd:-4s}
+.pillar.battle .finnb{--lookd:-8s}
+@keyframes finnLook{
+  0%{transform:perspective(480px) translateY(0) rotateY(0deg)}
+  20%{transform:perspective(480px) translateY(-2px) rotateY(0deg)}
+  42%{transform:perspective(480px) translateY(0) rotateY(0deg)}
+  55%{transform:perspective(480px) translateY(-1px) rotateY(-22deg)}
+  64%{transform:perspective(480px) translateY(-1px) rotateY(-22deg)}
+  74%{transform:perspective(480px) translateY(0) rotateY(0deg)}
+  88%{transform:perspective(480px) translateY(-2px) rotateY(0deg)}
+  100%{transform:perspective(480px) translateY(0) rotateY(0deg)}
+}
+</style>
 </head>
-<body data-page="home">
-<div id="nav"></div>
+<body>
 
-<!-- ===================== HERO ===================== -->
-<header class="hero wrap">
-  <div class="reveal">
-    <span class="ticker"><span class="pulse"></span>LIVE ON-CHAIN · BTC/USD · BLOCK #840,127</span>
-    <h1 class="display" style="margin:18px auto 0;max-width:15ch">Learn to trade, <span class="grad-text">inside the chain</span>.</h1>
-    <p class="lead measure">Meet <b>Shell</b> — a turtle who hops across <b>real, live crypto charts</b> and learns to trade. Climb 10 worlds, defeat 11 Guardian bosses, and pick up genuine skills with <b>zero real money</b> on the line.</p>
-    <div class="btn-row" style="justify-content:center;margin-top:28px">
-      <a class="btn btn-primary btn-lg" href="play.html">▶ Play Free</a>
-      <a class="btn btn-ghost btn-lg" href="#how">See how it works</a>
+<!-- Living world background (fixed, subtle) -->
+<div class="worldbg" aria-hidden="true">
+  <div class="glow"></div>
+  <div class="grain"></div>
+  <div class="grid"></div>
+  <svg class="skyline" viewBox="0 0 1440 320" preserveAspectRatio="xMidYMax slice">
+    <g stroke-linecap="round">
+      <!-- distant candlestick "architecture" skyline -->
+      <line x1="60" y1="150" x2="60" y2="320" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="46" y="170" width="28" height="120" fill="#16C784"/>
+      <line x1="150" y1="110" x2="150" y2="320" stroke="#EA3943" stroke-width="3" opacity=".5"/><rect x="136" y="130" width="28" height="150" fill="#EA3943"/>
+      <line x1="240" y1="180" x2="240" y2="320" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="226" y="200" width="28" height="100" fill="#16C784"/>
+      <line x1="330" y1="90" x2="330" y2="320" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="316" y="110" width="28" height="180" fill="#16C784"/>
+      <line x1="430" y1="140" x2="430" y2="320" stroke="#EA3943" stroke-width="3" opacity=".5"/><rect x="416" y="160" width="28" height="130" fill="#EA3943"/>
+      <line x1="520" y1="70" x2="520" y2="320" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="506" y="92" width="28" height="200" fill="#16C784"/>
+      <line x1="620" y1="120" x2="620" y2="320" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="606" y="140" width="28" height="160" fill="#16C784"/>
+      <line x1="720" y1="180" x2="720" y2="320" stroke="#EA3943" stroke-width="3" opacity=".5"/><rect x="706" y="200" width="28" height="100" fill="#EA3943"/>
+      <line x1="820" y1="60" x2="820" y2="320" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="806" y="82" width="28" height="210" fill="#16C784"/>
+      <line x1="920" y1="130" x2="920" y2="320" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="906" y="150" width="28" height="150" fill="#16C784"/>
+      <line x1="1020" y1="100" x2="1020" y2="320" stroke="#EA3943" stroke-width="3" opacity=".5"/><rect x="1006" y="120" width="28" height="170" fill="#EA3943"/>
+      <line x1="1120" y1="150" x2="1120" y2="320" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="1106" y="170" width="28" height="130" fill="#16C784"/>
+      <line x1="1220" y1="80" x2="1220" y2="320" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="1206" y="100" width="28" height="195" fill="#16C784"/>
+      <line x1="1320" y1="140" x2="1320" y2="320" stroke="#EA3943" stroke-width="3" opacity=".5"/><rect x="1306" y="160" width="28" height="140" fill="#EA3943"/>
+      <line x1="1410" y1="110" x2="1410" y2="320" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="1396" y="130" width="28" height="165" fill="#16C784"/>
+    </g>
+  </svg>
+  <!-- Background life: slow blockchain data-streams, drifting motes, rare sparkle (GPU only) -->
+  <div class="streams" aria-hidden="true">
+    <span class="stream s1"></span><span class="stream s2"></span><span class="stream s3"></span>
+  </div>
+  <div class="motes" aria-hidden="true">
+    <span class="mote" style="left:12%;--d:26s;--dl:-4s;--s:3px"></span>
+    <span class="mote m-c" style="left:28%;--d:32s;--dl:-13s;--s:2px"></span>
+    <span class="mote m-g" style="left:44%;--d:22s;--dl:-2s;--s:3px"></span>
+    <span class="mote" style="left:61%;--d:30s;--dl:-17s;--s:2px"></span>
+    <span class="mote m-c" style="left:74%;--d:24s;--dl:-8s;--s:3px"></span>
+    <span class="mote m-g" style="left:88%;--d:34s;--dl:-21s;--s:2px"></span>
+    <span class="spark" style="left:20%;top:30%;--dl:-3s"></span>
+    <span class="spark" style="left:82%;top:22%;--dl:-7s"></span>
+    <span class="spark" style="left:56%;top:64%;--dl:-11s"></span>
+    <span class="frag" style="left:34%;--d:38s;--dl:-6s">01</span>
+    <span class="frag" style="left:67%;--d:44s;--dl:-22s">10</span>
+  </div>
+  <div class="wfog" aria-hidden="true"></div>
+</div>
+
+<a href="#main" style="position:absolute;left:-9999px" onfocus="this.style.left='12px';this.style.top='12px';this.style.zIndex='200';this.style.background='#0c131e';this.style.padding='10px 14px';this.style.borderRadius='10px'">Skip to content</a>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-in">
+    <a class="brand" href="index.html" aria-label="ChartQuest home">
+      <svg class="logomark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect x="6" y="10" width="6" height="14" rx="2" fill="#16C784"/><rect x="8" y="4" width="2" height="24" rx="1" fill="#16C784"/>
+        <rect x="20" y="8" width="6" height="12" rx="2" fill="#EA3943"/><rect x="22" y="4" width="2" height="24" rx="1" fill="#EA3943"/>
+      </svg>
+      <span>Chart<b>Quest</b></span>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="#what">The world</a>
+      <a href="#why">Why ChartQuest</a>
+      <span class="nav-cta"><a class="btn btn-primary" href="play.html">Play Free</a></span>
     </div>
-    <div class="trust-line">
-      <span class="stars">★★★★★</span> Loved by new traders
-      <span class="dot-sep"></span> No download
-      <span class="dot-sep"></span> Play money only
-      <span class="dot-sep"></span> Starts in 5 seconds
+    <span class="nav-cta desktop-cta" style="margin-left:auto"><a class="btn btn-primary" href="play.html">Play Free</a></span>
+    <button class="nav-burger" id="navBurger" aria-label="Menu" aria-expanded="false"><span></span></button>
+  </div>
+</nav>
+
+<!-- DEPTH RAIL — the page is one descent into the chart -->
+<aside class="depthrail" id="depthRail" aria-hidden="true"
+       data-layers="top:Surface|what:The Gates|realmarket:The Threshold|why:The Trials|roadmap:The Map|play:The Portal">
+  <span class="cap">▾ Depth</span>
+  <div class="track"><span class="fill" id="depthFill"></span></div>
+  <span class="now" id="depthNow">Surface</span>
+</aside>
+
+<main id="main">
+
+<!-- ===================== 1 · HERO PORTAL ===================== -->
+<!-- ===================== HERO — CINEMATIC KEY ART (movie poster) ===================== -->
+<header class="hero-cine">
+  <!-- Official key art: Finn faces the eleven Guardians. The image does the selling. -->
+  <img class="hero-cine-bg" src="assets/hero-key-art.jpg" alt="Finn the turtle stands before the eleven Guardian bosses on a rising candlestick chart" width="1672" height="941" fetchpriority="high">
+
+  <!-- microinteraction: the galaxy at the Market Maker's core softly breathes + turns (almost imperceptible) -->
+  <div class="hero-cine-glow" aria-hidden="true"></div>
+
+  <!-- Phase 2 atmosphere (BELOW the scrim → embedded in the scene): god-rays, drifting fog, rising embers -->
+  <div class="hero-atmos" aria-hidden="true" data-fx="hero">
+    <div class="ha-rays"></div>
+    <div class="ha-fog"></div>
+    <div class="ha-embers">
+      <i style="left:16%;--ed:21s;--edl:-2s"></i><i style="left:33%;--ed:26s;--edl:-11s"></i><i style="left:52%;--ed:19s;--edl:-6s"></i>
+      <i style="left:68%;--ed:24s;--edl:-15s"></i><i style="left:82%;--ed:22s;--edl:-9s"></i><i style="left:93%;--ed:28s;--edl:-19s"></i>
     </div>
   </div>
 
-  <!-- animated chart stage -->
-  <div class="stage reveal" aria-label="Shell the turtle hopping across a live candlestick chart">
-    <div class="stage-grid"></div>
-    <span class="stage-tag">● BTC/USDT · LIVE</span>
-    <span class="stage-hp">SHELL HP <span class="bar"><i></i></span></span>
-    <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice">
-      <polyline class="glowline" fill="none" stroke="#46e0ff" stroke-width="3" stroke-linejoin="round"
-        points="70,360 122,330 174,345 226,300 278,270 330,300 382,240 434,210 486,185 538,218 590,158 642,128"/>
-      <g stroke-linecap="round">
-        <line x1="70" y1="345" x2="70" y2="420" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="57" y="360" width="26" height="50" rx="4" fill="#16f29a" style="animation-delay:.05s"/>
-        <line x1="122" y1="315" x2="122" y2="388" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="109" y="330" width="26" height="45" rx="4" fill="#16f29a" style="animation-delay:.12s"/>
-        <line x1="174" y1="320" x2="174" y2="378" stroke="#ef5f66" stroke-width="3" opacity=".55"/><rect class="candle" x="161" y="330" width="26" height="35" rx="4" fill="#ef5f66" style="animation-delay:.19s"/>
-        <line x1="226" y1="288" x2="226" y2="358" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="213" y="300" width="26" height="45" rx="4" fill="#16f29a" style="animation-delay:.26s"/>
-        <line x1="278" y1="258" x2="278" y2="325" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="265" y="270" width="26" height="42" rx="4" fill="#16f29a" style="animation-delay:.33s"/>
-        <line x1="330" y1="258" x2="330" y2="312" stroke="#ef5f66" stroke-width="3" opacity=".55"/><rect class="candle" x="317" y="268" width="26" height="32" rx="4" fill="#ef5f66" style="animation-delay:.4s"/>
-        <line x1="382" y1="228" x2="382" y2="298" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="369" y="240" width="26" height="45" rx="4" fill="#16f29a" style="animation-delay:.47s"/>
-        <line x1="434" y1="198" x2="434" y2="265" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="421" y="210" width="26" height="42" rx="4" fill="#16f29a" style="animation-delay:.54s"/>
-        <line x1="486" y1="172" x2="486" y2="238" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="473" y="185" width="26" height="40" rx="4" fill="#16f29a" style="animation-delay:.61s"/>
-        <line x1="538" y1="178" x2="538" y2="230" stroke="#ef5f66" stroke-width="3" opacity=".55"/><rect class="candle" x="525" y="188" width="26" height="30" rx="4" fill="#ef5f66" style="animation-delay:.68s"/>
-        <line x1="590" y1="146" x2="590" y2="210" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="577" y="158" width="26" height="40" rx="4" fill="#16f29a" style="animation-delay:.75s"/>
-        <line x1="642" y1="116" x2="642" y2="182" stroke="#16f29a" stroke-width="3" opacity=".55"/><rect class="candle" x="629" y="128" width="26" height="42" rx="4" fill="#16f29a" style="animation-delay:.82s"/>
-      </g>
-    </svg>
-    <div class="stage-turtle bob" data-turtle="mascot"></div>
-    <div class="stage-pop">LONG · +2.4R 🎯</div>
-    <div class="stage-pop b">STOP-LOSS SAVED YOU 🛡️</div>
+  <div class="hero-cine-scrim"></div>
+
+  <!-- Phase 2 lens (ABOVE the scrim → galaxy orbit particles, faint boss eye-glints, soft vignette for depth) -->
+  <div class="hero-lens" aria-hidden="true" data-fx="hero">
+    <div class="ha-orbit"><i></i><i></i><i></i><i></i></div>
+    <div class="ha-glints">
+      <i style="left:27%;top:57%;--gd:0s"></i><i style="left:45%;top:50%;--gd:5s"></i><i style="left:61%;top:48%;--gd:10s"></i><i style="left:78%;top:53%;--gd:15s"></i><i style="left:90%;top:49%;--gd:19s"></i>
+    </div>
+    <div class="ha-vignette"></div>
   </div>
 
-  <!-- stats -->
-  <div class="stats reveal" style="margin-top:38px;max-width:880px;margin-left:auto;margin-right:auto">
-    <div class="stat"><div class="n">10</div><div class="l">Worlds to climb</div></div>
-    <div class="stat"><div class="n">11</div><div class="l">Guardian bosses</div></div>
-    <div class="stat"><div class="n">38</div><div class="l">Trading terms</div></div>
-    <div class="stat"><div class="n">6</div><div class="l">Crypto factions</div></div>
+  <div class="hero-cine-copy">
+    <div class="inner reveal">
+      <span class="eyebrow">The world's first trading RPG</span>
+      <h1 class="display">THE CHART<br>IS THE <span class="grad">WORLD</span></h1>
+      <p class="sub">A living Bitcoin chart, eleven bosses, and one turtle learning to trade for real.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="play.html">▶ Play Free</a>
+        <a class="btn btn-ghost" href="#realmarket">▶ Watch Trailer</a>
+      </div>
+    </div>
   </div>
 </header>
 
-<!-- ===================== HOW IT WORKS ===================== -->
-<section class="section" id="how">
-  <div class="wrap center">
-    <span class="eyebrow reveal">How it works</span>
-    <h2 class="big reveal" style="margin-top:14px">Three simple moves. That's the whole game.</h2>
-    <p class="lead measure reveal">If you can play a platformer, you can learn to trade. Here's the loop you repeat — and master — as you climb.</p>
+<!-- ===================== 2 · WHAT IS CHARTQUEST ===================== -->
+<section class="section" id="what">
+  <div class="wrap section-head">
+    <span class="kicker reveal">What is ChartQuest?</span>
+    <h2 class="big reveal" style="margin-top:14px">A turtle. A living chart.<br>Three ways to play.</h2>
+    <p class="lead reveal">ChartQuest drops you <b>inside</b> the market. Not a course. Not a simulator. A world you explore, trade, and battle your way through.</p>
   </div>
-  <div class="wrap grid g-3" style="margin-top:48px">
-    <div class="card reveal"><div class="step-num">1</div><h3>Run the chart</h3><p>Shell sprints along a <b>live candlestick chart</b> — every candle is a platform. Green means buyers won that round, red means sellers did. You're reading the market just by playing.</p></div>
-    <div class="card reveal"><div class="step-num">2</div><h3>Take the trade</h3><p>Spot a setup and place a <b>practice trade</b>: go long or short, choose your risk, and set a stop-loss. It's the real decision a trader makes — with play money, so mistakes are free.</p></div>
-    <div class="card reveal"><div class="step-num">3</div><h3>Beat the Guardian</h3><p>Each world ends with a <b>Guardian boss</b> — a fast quiz-fight that tests the exact skill you just learned. Win, rank up, and the next layer of the ocean unlocks.</p></div>
-  </div>
-</section>
-
-<!-- ===================== WHAT IS IT ===================== -->
-<section class="section" id="game">
-  <div class="wrap center">
-    <span class="eyebrow reveal">The whole game</span>
-    <h2 class="big reveal measure" style="margin-top:14px">A real game that teaches a real skill</h2>
-    <p class="lead measure reveal">Most people learn trading the painful way — by losing money. Chart Quest flips that. You learn <b>risk management before you ever risk a dollar</b>, wrapped in an adventure you'll actually want to finish.</p>
-  </div>
-
-  <div class="wrap" style="margin-top:60px;display:flex;flex-direction:column;gap:clamp(52px,8vw,96px)">
-
-    <div class="split reveal">
-      <div class="splat">
-        <span class="kicker">▍LIVE CHARTS AS LEVELS</span>
-        <h3 class="big" style="font-size:clamp(25px,3.4vw,36px)">The market <em>is</em> the map</h3>
-        <p class="lead">The terrain isn't made up. Candles are pulled from real crypto market data, so the wicks, bodies, and trends you jump across are the same ones pro traders stare at all day. Learn the chart by living in it.</p>
+  <div class="wrap pillars">
+    <div class="pillar explore reveal">
+      <div class="scene">
+        <svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g stroke-linecap="round">
+          <line x1="40" y1="120" x2="40" y2="170" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="28" y="130" width="24" height="34" rx="3" fill="#16C784"/>
+          <line x1="110" y1="95" x2="110" y2="150" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="98" y="106" width="24" height="34" rx="3" fill="#16C784"/>
+          <line x1="180" y1="110" x2="180" y2="160" stroke="#EA3943" stroke-width="3" opacity=".5"/><rect x="168" y="120" width="24" height="26" rx="3" fill="#EA3943"/>
+          <line x1="250" y1="80" x2="250" y2="140" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="238" y="92" width="24" height="36" rx="3" fill="#16C784"/>
+          <line x1="320" y1="70" x2="320" y2="130" stroke="#16C784" stroke-width="3" opacity=".5"/><rect x="308" y="82" width="24" height="36" rx="3" fill="#16C784"/>
+        </g></svg>
+        <span class="finnb finn" aria-hidden="true" style="left:44%;--e1x:73.4%;--e1y:18.8%;--e1w:13.1%;--e1h:23.7%;--e2x:90.8%;--e2y:21.5%;--e2w:7.1%;--e2h:20.4%;--bd:0s"><img src="assets/finn-run.png" alt="" width="282" height="186"><b class="lid l1"></b><b class="lid l2"></b></span>
       </div>
-      <div class="feature-visual" aria-hidden="true">
-        <div class="stage-grid"></div>
-        <svg viewBox="0 0 600 450" style="position:absolute;inset:0;width:100%;height:100%">
+      <div class="body"><div class="tagn">◈ Explore</div><h3>Run the chart</h3><p>Every candle is ground to stand on. Sprint across live markets, from tutorial hills to volatile peaks.</p></div>
+    </div>
+    <div class="pillar trade reveal">
+      <div class="scene">
+        <svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <line x1="30" y1="70" x2="370" y2="70" stroke="#46E0FF" stroke-width="1.5" stroke-dasharray="5 7" opacity=".6"/>
+          <line x1="30" y1="120" x2="370" y2="120" stroke="#EA3943" stroke-width="1.5" stroke-dasharray="5 7" opacity=".6"/>
+          <text x="34" y="63" fill="#7fd4ff" font-size="11" font-family="monospace">take profit</text>
+          <text x="34" y="135" fill="#ef9298" font-size="11" font-family="monospace">stop loss</text>
           <g stroke-linecap="round">
-            <line x1="80" y1="250" x2="80" y2="330" stroke="#16f29a" stroke-width="4" opacity=".55"/><rect x="64" y="265" width="32" height="52" rx="5" fill="#16f29a"/>
-            <line x1="160" y1="210" x2="160" y2="300" stroke="#16f29a" stroke-width="4" opacity=".55"/><rect x="144" y="225" width="32" height="55" rx="5" fill="#16f29a"/>
-            <line x1="240" y1="220" x2="240" y2="290" stroke="#ef5f66" stroke-width="4" opacity=".55"/><rect x="224" y="232" width="32" height="40" rx="5" fill="#ef5f66"/>
-            <line x1="320" y1="170" x2="320" y2="255" stroke="#16f29a" stroke-width="4" opacity=".55"/><rect x="304" y="185" width="32" height="52" rx="5" fill="#16f29a"/>
-            <line x1="400" y1="140" x2="400" y2="220" stroke="#16f29a" stroke-width="4" opacity=".55"/><rect x="384" y="152" width="32" height="50" rx="5" fill="#16f29a"/>
-            <line x1="480" y1="150" x2="480" y2="215" stroke="#ef5f66" stroke-width="4" opacity=".55"/><rect x="464" y="160" width="32" height="36" rx="5" fill="#ef5f66"/>
+            <line x1="200" y1="55" x2="200" y2="150" stroke="#16C784" stroke-width="4" opacity=".55"/><rect x="184" y="72" width="32" height="60" rx="4" fill="#16C784"/>
           </g>
-          <line x1="40" y1="300" x2="560" y2="300" stroke="#46e0ff" stroke-width="2" stroke-dasharray="6 8" opacity=".55"/>
-          <text x="46" y="292" fill="#7fd4ff" font-size="13" font-family="JetBrains Mono" font-weight="700">support</text>
         </svg>
-        <div class="stage-turtle bob" style="left:53%;top:16%;width:96px" data-turtle="mascot"></div>
+        <span class="finnb finn" aria-hidden="true" style="left:38%;width:88px;--e1x:74.4%;--e1y:18.5%;--e1w:12.5%;--e1h:24.5%;--e2x:91.2%;--e2y:20.9%;--e2w:7.6%;--e2h:21.4%;--bd:-1.4s;--flx:0%;--fly:43%;--flw:23%;--flh:34%;--fld:-.2s"><img src="assets/finn-hero.png" alt="" width="622" height="383"><b class="flame"></b><b class="lid l1"></b><b class="lid l2"></b></span>
       </div>
+      <div class="body"><div class="tagn">◈ Trade</div><h3>Read the setup</h3><p>Spot the signal, pick a side, set your risk. Real trader decisions — with play money, so mistakes are free.</p></div>
     </div>
-
-    <div class="split rev reveal">
-      <div class="splat">
-        <span class="kicker">▍SIMULATED TRADES</span>
-        <h3 class="big" style="font-size:clamp(25px,3.4vw,36px)">Make every mistake for free</h3>
-        <p class="lead">Long or short. Choose your risk. Set a stop-loss and a take-profit. Reach for leverage — if you dare. Every trade is play money, so blowing up an account teaches you a lesson instead of emptying your wallet. Then you see exactly what would've happened.</p>
-        <div class="chips" style="justify-content:flex-start;margin-top:18px"><span class="chip">Long / Short</span><span class="chip">Stop-loss</span><span class="chip">Risk sizing</span><span class="chip">Leverage math</span></div>
+    <div class="pillar battle reveal">
+      <div class="scene">
+        <svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <circle cx="300" cy="90" r="52" fill="none" stroke="#FFD60A" stroke-width="2" opacity=".4"/>
+          <circle cx="300" cy="90" r="34" fill="rgba(255,214,10,.08)" stroke="#FFD60A" stroke-width="1.5" opacity=".7"/>
+          <text x="300" y="100" fill="#FFD60A" font-size="30" text-anchor="middle" font-family="monospace">?</text>
+        </svg>
+        <span class="finnb finn" aria-hidden="true" style="left:12%;width:70px;--e1x:67.9%;--e1y:7.3%;--e1w:13.5%;--e1h:15%;--e2x:87.6%;--e2y:8.6%;--e2w:8.3%;--e2h:13.2%;--bd:-2.7s;--flx:2%;--fly:52%;--flw:26%;--flh:40%;--fld:-.35s"><img src="assets/finn-boost.png" alt="" width="193" height="220"><b class="flame"></b><b class="lid l1"></b><b class="lid l2"></b></span>
       </div>
-      <div class="feature-visual" style="display:flex;align-items:center;justify-content:center">
-        <div style="width:78%;background:rgba(10,18,38,.85);border:1px solid var(--line-2);border-radius:18px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.5)">
-          <div style="display:flex;justify-content:space-between;color:#9fb4cf;font-family:'JetBrains Mono';font-size:12px;font-weight:700">NEW TRADE<span style="color:var(--green)">● READY</span></div>
-          <div style="display:flex;gap:10px;margin:14px 0">
-            <div style="flex:1;background:linear-gradient(180deg,#1cffa6,#11d588);color:#022417;text-align:center;padding:12px;border-radius:12px;font-weight:800">LONG ▲</div>
-            <div style="flex:1;background:rgba(120,160,230,.1);color:#7e93b0;text-align:center;padding:12px;border-radius:12px;font-weight:800">SHORT ▼</div>
+      <div class="body"><div class="tagn">◈ Battle</div><h3>Defeat the Guardians</h3><p>Each world is sealed by a boss who tests the skill you just learned. Beat them to unlock what lies deeper.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- (Guardians / Bestiary section removed in V5 — reintroduce later as one cinematic image of all 11 Guardians.) -->
+
+<!-- ===================== THIS IS A REAL MARKET (fantasy → reality bridge) ===================== -->
+<section class="section realmarket" id="realmarket">
+  <!-- Phase 2: fog-bridge descent — particles fall from the fantasy world down into the live market -->
+  <div class="descent-bridge" aria-hidden="true" data-fx="descent"><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="wrap section-head">
+    <span class="kicker reveal">Fantasy, meet reality</span>
+    <h2 class="big h-mid reveal" style="margin-top:14px">This is a <span class="gold">real</span> market.</h2>
+    <p class="lead reveal">Every adventure begins on a real Bitcoin chart. This one updates live, right now. Finn jumps inside it — and so will you.</p>
+  </div>
+
+  <div class="wrap reveal" style="margin-top:46px">
+    <!-- Finn enters the chart: plays ONCE when scrolled into view (GPU-only, respects reduced-motion) -->
+    <div class="chart-stage" id="chartStage">
+      <div class="chart-frame">
+        <span class="chart-live-tag"><span class="pulse"></span>BTC/USD · LIVE · 5m</span>
+        <!-- REAL live BTC/USD chart (TradingView · 5m · dark · candles · minimal). CSP: allow tradingview.com + binance on deploy. -->
+        <div class="chart-live">
+          <div class="tradingview-widget-container" style="height:100%;width:100%">
+            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+            {"autosize":true,"symbol":"COINBASE:BTCUSD","interval":"5","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","hide_top_toolbar":true,"hide_legend":true,"hide_side_toolbar":true,"allow_symbol_change":false,"save_image":false,"backgroundColor":"rgba(8,11,18,1)","gridColor":"rgba(120,170,215,0.05)","hide_volume":true,"support_host":"https://www.tradingview.com"}
+            </script>
           </div>
-          <div style="display:flex;justify-content:space-between;color:#cfe1f2;font-size:14px;padding:8px 0;border-top:1px solid var(--line)"><span>Risk</span><b class="mono">2%</b></div>
-          <div style="display:flex;justify-content:space-between;color:#cfe1f2;font-size:14px;padding:8px 0;border-top:1px solid var(--line)"><span>Stop-loss</span><b class="mono" style="color:#ef9298">−1.1%</b></div>
-          <div style="display:flex;justify-content:space-between;color:#cfe1f2;font-size:14px;padding:8px 0;border-top:1px solid var(--line)"><span>Take-profit</span><b class="mono" style="color:var(--green)">+2.6%</b></div>
         </div>
-      </div>
-    </div>
-
-    <div class="split reveal">
-      <div class="splat">
-        <span class="kicker">▍THE TRADING JOURNAL</span>
-        <h3 class="big" style="font-size:clamp(25px,3.4vw,36px)">Everything you do is logged</h3>
-        <p class="lead">A built-in journal records every trade, every term, and every lesson — and lets you <b>replay each trade</b> with annotations showing your entry, stop, and what actually happened. With a <b>38-term glossary</b> built in, the habit that separates real traders from gamblers is baked right into the game.</p>
-        <div class="chips" style="justify-content:flex-start;margin-top:18px"><span class="chip">📖 Terms</span><span class="chip">🎓 Lessons</span><span class="chip">📊 Trade replays</span><span class="chip">📝 Notes</span></div>
-      </div>
-      <div class="feature-visual" style="display:flex;align-items:center;justify-content:center">
-        <div style="width:80%;display:flex;flex-direction:column;gap:10px">
-          <div style="background:rgba(10,18,38,.85);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;color:#dce7f2;font-weight:700;font-size:14px">BTC · Long <span class="mono" style="color:var(--green)">+2.4R ✓</span></div>
-          <div style="background:rgba(10,18,38,.85);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;color:#dce7f2;font-weight:700;font-size:14px">ETH · Short <span class="mono" style="color:#ef9298">−1.0R</span></div>
-          <div style="background:rgba(10,18,38,.85);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;color:#dce7f2;font-weight:700;font-size:14px">SOL · Long <span class="mono" style="color:var(--green)">+1.8R ✓</span></div>
-          <div style="text-align:center;color:#7fd4ff;font-size:13px;font-weight:700;margin-top:4px;font-family:'JetBrains Mono'">▶ tap any trade to replay it</div>
+        <!-- Finn-enters overlay FX (above the chart, pointer-events:none) -->
+        <div class="cq-fx" aria-hidden="true">
+          <span class="cq-jet j1"></span><span class="cq-jet j2"></span><span class="cq-jet j3"></span><span class="cq-jet j4"></span>
+          <span class="cq-ripple"></span>
+          <img class="cq-mini" src="assets/finn-run.png" alt="" width="282" height="186">
         </div>
+        <div class="finn-enter" aria-hidden="true"><img src="assets/finn-boost.png" alt="" width="193" height="220"><b class="flame" style="--flx:2%;--fly:52%;--flw:26%;--flh:40%;--fld:-.1s"></b></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===================== THE 10 WORLDS AS A BLOCKCHAIN ===================== -->
-<section class="section" id="worlds">
-  <div class="wrap center">
-    <span class="eyebrow reveal">The curriculum, on-chain</span>
-    <h2 class="big reveal measure" style="margin-top:14px">10 worlds. One linked chain of skills.</h2>
-    <p class="lead measure reveal">Each world is a block in the chain — a single trading skill that builds on the last. You can't skip ahead; every block is sealed by a Guardian until you prove you've learned it. Here's the whole climb.</p>
+<!-- ===================== WHY > COURSES ===================== -->
+<section class="section" id="why">
+  <div class="wrap section-head">
+    <span class="kicker reveal">Quests &gt; courses</span>
+    <h2 class="big h-mid reveal" style="margin-top:14px">You don't finish courses.<br>You finish games.</h2>
   </div>
+  <div class="wrap cmp reveal">
+    <div class="cmp-grid">
+      <div class="cmp-h bad"><span class="cmp-key">✕ A trading course</span><span class="cmp-say">Watch. Memorize. Forget.</span></div>
+      <div class="cmp-h good"><span class="cmp-key">✓ ChartQuest</span><span class="cmp-say">Play. Explore. Master.</span></div>
 
-  <div class="chain reveal" style="margin-top:48px">
-    <div class="block"><div class="bidx"><span class="h">BLOCK</span><span class="n">00</span></div><div><h4>Enter the Ocean <span style="color:var(--ink-faint);font-weight:500">· tutorial</span></h4><div class="sub">Your very first candles — what green and red really mean.</div><div class="tip">A candle is a fight between buyers and sellers — not a coin flip.</div></div><div class="boss-tag">🎲 The Gambler</div></div>
-    <div class="chain-link"></div>
-    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">01</span></div><div><h4>Your First Trades</h4><div class="sub">Read a candle, take a trade, wait for the close.</div><div class="tip">Green = up, red = down. Wait for the candle to CLOSE before you commit.</div></div><div class="boss-tag">🌀 False-Breakout Eel</div></div>
-    <div class="chain-link"></div>
-    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">02</span></div><div><h4>Trend &amp; Levels</h4><div class="sub">Direction, and the levels price reacts at.</div><div class="tip">Trade WITH the trend. Higher highs + higher lows = up.</div></div><div class="boss-tag">🦀 Trend Crab</div></div>
-    <div class="chain-link"></div>
-    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">03</span></div><div><h4>Market Structure</h4><div class="sub">Breaks that continue (BOS) vs breaks that flip (ChoCh).</div><div class="tip">A break WITH the trend continues. A break AGAINST it may be a reversal.</div></div><div class="boss-tag">🐉 Structure Serpent</div></div>
-    <div class="chain-link"></div>
-    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">04</span></div><div><h4>The Big-Player Zones</h4><div class="sub">Where institutions entered — and price returns.</div><div class="tip">The purple zone is where giants entered. Price often comes back to it.</div></div><div class="boss-tag">🧱 Order-Block Golem</div></div>
-    <div class="chain-link"></div>
-    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">05</span></div><div><h4>Manage Your Risk</h4><div class="sub">Stop loss, sizing &amp; living to trade again.</div><div class="tip">A stop loss is your safety exit. Never risk it all on one trade.</div></div><div class="boss-tag">🐙 Risk Hydra</div></div>
-    <div class="chain-link"></div>
-    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">06</span></div><div><h4>The Fair-Value Line</h4><div class="sub">Trade around the average price (VWAP).</div><div class="tip">The yellow line is the average price — price keeps returning to it.</div></div><div class="boss-tag">🔮 VWAP Oracle</div></div>
-    <div class="chain-link"></div>
-    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">07</span></div><div><h4>Leverage &amp; Edge</h4><div class="sub">Borrowed power — handle with care.</div><div class="tip">Only reach for leverage when your setup is high-probability.</div></div><div class="boss-tag">👑 Margin King</div></div>
-    <div class="chain-link"></div>
-    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">08</span></div><div><h4>Zoom Out</h4><div class="sub">Always check the bigger picture.</div><div class="tip">Tap the 5m / 15m / 1h panel before every trade.</div></div><div class="boss-tag">🌊 Timeframe Titan</div></div>
-    <div class="chain-link"></div>
-    <div class="block"><div class="bidx"><span class="h">WORLD</span><span class="n">09</span></div><div><h4>Chart Patterns</h4><div class="sub">Flags, triangles &amp; head-and-shoulders.</div><div class="tip">A pattern is price drawing the same story again — spot the shape.</div></div><div class="boss-tag">🦑 Confluence Kraken</div></div>
-    <div class="chain-link"></div>
-    <div class="block" style="border-color:rgba(22,242,154,.4);box-shadow:0 0 30px rgba(22,242,154,.12)"><div class="bidx" style="background:linear-gradient(180deg,rgba(22,242,154,.25),rgba(22,242,154,.06));border-color:rgba(22,242,154,.5)"><span class="h" style="color:var(--green)">FINAL</span><span class="n">10</span></div><div><h4>Confluence Mastery</h4><div class="sub">Stack every signal you've learned into one decision.</div><div class="tip">One signal is a guess. Three aligned signals is a plan.</div></div><div class="boss-tag">🎩 Market Maker</div></div>
-  </div>
+      <div class="cmp-row bad"><span class="m">✕</span>Hours of talking-head videos</div>
+      <div class="cmp-row good"><span class="m">✓</span>A world you actually want to finish</div>
 
-  <div class="center" style="margin-top:36px" data-boss-gated>
-    <a class="btn btn-ghost btn-lg reveal" href="bosses.html">Meet all 11 Guardians →</a>
+      <div class="cmp-row bad"><span class="m">✕</span>Dry theory, no stakes</div>
+      <div class="cmp-row good"><span class="m">✓</span>Real skills, learned by doing</div>
+
+      <div class="cmp-row bad"><span class="m">✕</span>You quit at lesson 3</div>
+      <div class="cmp-row good"><span class="m">✓</span>Bosses, ranks, worlds to unlock</div>
+
+      <div class="cmp-row bad"><span class="m">✕</span>Nothing sticks</div>
+      <div class="cmp-row good"><span class="m">✓</span>It sticks — because you lived it</div>
+    </div>
   </div>
 </section>
 
-<!-- ===================== FACTIONS ===================== -->
+<!-- ===================== 7 · MEET FINN ===================== -->
 <section class="section">
-  <div class="wrap center">
-    <span class="eyebrow reveal">Pick your faction</span>
-    <h2 class="big reveal" style="margin-top:14px">Choose your coin, choose your chaos</h2>
-    <p class="lead measure reveal">Every run is built on a real crypto asset with its own personality and volatility. Start with three; unlock the rest as you level up.</p>
-  </div>
-  <div class="wrap grid g-3" style="margin-top:44px">
-    <div class="faction reveal" style="--fc:#f7931a"><div class="sym">₿</div><div><h4>Bitcoin</h4><div class="t">The Original · Digital Gold</div></div><div class="lock">START</div></div>
-    <div class="faction reveal" style="--fc:#7b9cff"><div class="sym">Ξ</div><div><h4>Ethereum</h4><div class="t">World Computer · DeFi Native</div></div><div class="lock">START</div></div>
-    <div class="faction reveal" style="--fc:#19e0b4"><div class="sym">◎</div><div><h4>Solana</h4><div class="t">Speed Demon · High Beta</div></div><div class="lock">START</div></div>
-    <div class="faction reveal" style="--fc:#46e0ff"><div class="sym">✕</div><div><h4>XRP</h4><div class="t">Global Payments · Institutional</div></div><div class="lock">🔒 UNLOCK</div></div>
-    <div class="faction reveal" style="--fc:#ffce5c"><div class="sym">Ð</div><div><h4>Dogecoin</h4><div class="t">Meme Legend · Pure Chaos</div></div><div class="lock">🔒 UNLOCK</div></div>
-    <div class="faction reveal" style="--fc:#f3ba2f"><div class="sym">B</div><div><h4>BNB</h4><div class="t">Exchange Coin · DeFi Power</div></div><div class="lock">🔒 UNLOCK</div></div>
-  </div>
-</section>
-
-<!-- ===================== MEET SHELL ===================== -->
-<section class="section">
-  <div class="wrap split">
-    <div class="splat reveal center"><div class="holo bob" style="display:inline-block;width:min(330px,74vw)" data-turtle="mascot"></div></div>
+  <div class="wrap finn-sec">
+    <div class="finn-art reveal"><span class="finnb" style="--e1x:74.4%;--e1y:18.5%;--e1w:12.5%;--e1h:24.5%;--e2x:91.2%;--e2y:20.9%;--e2w:7.6%;--e2h:21.4%;--bd:-.5s;--flx:0%;--fly:43%;--flw:23%;--flh:34%;--fld:0s"><img src="assets/finn-hero.png" alt="Finn, the turtle explorer" width="622" height="383" loading="lazy" decoding="async"><b class="flame" aria-hidden="true"></b><b class="lid l1" aria-hidden="true"></b><b class="lid l2" aria-hidden="true"></b></span></div>
     <div class="reveal">
-      <span class="eyebrow">Your guide</span>
-      <h2 class="big" style="margin:14px 0 0">Shell, the turtle who trades</h2>
-      <p class="lead">In a world obsessed with bulls, apes, and diamond hands, your teacher is a turtle — on purpose. Shell is calm under pressure, allergic to FOMO, and never panics on a red candle. Slow and steady really does win this race.</p>
-      <p class="lead">Shell is learning right alongside you. Every lesson you pick up, Shell picks up too — which is exactly why a total beginner can keep up the whole way.</p>
-      <div class="chips" style="justify-content:flex-start;margin-top:8px"><span class="chip">🐢 Slow and steady</span><span class="chip">🛡️ Protect the shell</span><span class="chip">🚫 Never trade naked</span></div>
+      <span class="kicker" style="color:var(--gold)">Your guide</span>
+      <h2 class="big" style="margin-top:12px">This is Finn.</h2>
+      <p class="lead">A turtle explorer lost inside the blockchain, searching for the way to become a Master Trader. He's calm under pressure, allergic to FOMO, and he'll be beside you the whole way down — because he's learning it too.</p>
+      <p class="lead">Follow Finn and you can't get lost. Slow and steady really does win this one.</p>
+      <div class="finn-chips"><span class="chip">🐢 Slow &amp; steady</span><span class="chip">🛡️ Protects the shell</span><span class="chip">🧭 Always finds the way</span></div>
     </div>
   </div>
 </section>
 
-<!-- ===================== RANK LADDER ===================== -->
-<section class="section">
-  <div class="wrap center">
-    <span class="eyebrow reveal">Your climb</span>
-    <h2 class="big reveal" style="margin-top:14px">From Drifter to Trader</h2>
-    <p class="lead measure reveal">Every Guardian you beat earns a new rank — a real, visible marker of how far your skills have come.</p>
-    <div class="ladder reveal" style="margin-top:40px">
-      <div class="rank"><span class="em">🌊</span><span class="nm">DRIFTER</span></div>
-      <div class="rank"><span class="em">🦠</span><span class="nm">PLANKTON</span></div>
-      <div class="rank"><span class="em">🐟</span><span class="nm">MINNOW</span></div>
-      <div class="rank"><span class="em">🦀</span><span class="nm">CRAB</span></div>
-      <div class="rank"><span class="em">🐡</span><span class="nm">PUFFER</span></div>
-      <div class="rank"><span class="em">🐙</span><span class="nm">OCTOPUS</span></div>
-      <div class="rank"><span class="em">🐬</span><span class="nm">DOLPHIN</span></div>
-      <div class="rank"><span class="em">🦈</span><span class="nm">SHARK</span></div>
-      <div class="rank"><span class="em">🐋</span><span class="nm">WHALE</span></div>
-      <div class="rank"><span class="em">🐲</span><span class="nm">LEVIATHAN</span></div>
-      <div class="rank final"><span class="em">👑</span><span class="nm">TRADER</span></div>
+<!-- ===================== 8 · ROADMAP ===================== -->
+<section class="section" id="roadmap">
+  <div class="wrap section-head">
+    <span class="kicker reveal">The expedition</span>
+    <h2 class="big reveal" style="margin-top:14px">The map ahead</h2>
+    <p class="lead reveal">ChartQuest is being built in the open. Here's the journey — and where you jump in.</p>
+  </div>
+  <div class="wrap expedition reveal">
+    <div class="ex-node done"><div class="ex-dot">✓</div><div><div class="ex-phase">Phase 01</div><div class="ex-title">Alpha</div><div class="ex-desc">The core world &amp; first Guardians.</div></div></div>
+    <div class="ex-node now"><div class="ex-dot"></div><div><div class="ex-phase">Phase 02 · Now</div><div class="ex-title">Open Beta</div><div class="ex-desc">10 worlds, 11 Guardians, playable free.</div></div></div>
+    <div class="ex-node"><div class="ex-dot"></div><div><div class="ex-phase">Phase 03</div><div class="ex-title">Launch</div><div class="ex-desc">Every device. The full descent.</div></div></div>
+    <div class="ex-node"><div class="ex-dot"></div><div><div class="ex-phase">Phase 04</div><div class="ex-title">New Realms</div><div class="ex-desc">Fresh worlds, factions &amp; setups.</div></div></div>
+    <div class="ex-node"><div class="ex-dot"></div><div><div class="ex-phase">Phase 05</div><div class="ex-title">Guilds</div><div class="ex-desc">Leaderboards, events &amp; challenges.</div></div></div>
+  </div>
+
+</section>
+
+<!-- ===================== THE GAME — the website becomes the game ===================== -->
+<section class="section gamestart" id="play">
+  <div class="wrap section-head">
+    <span class="kicker reveal" style="color:var(--gold)">You've reached the portal</span>
+    <h2 class="display reveal" style="font-size:clamp(34px,6.2vw,72px)">ENTER THE <span class="grad">CHART.</span></h2>
+    <p class="lead reveal">No download. No sign-up. The world is live and waiting. Step inside.</p>
+  </div>
+  <div class="wrap reveal" style="margin-top:42px">
+    <!-- The REAL game mounts here on click (lazy · borderless · fills width). Not a fake, not a popup, no redirect. -->
+    <div class="game-mount" id="gameMount">
+      <button class="game-enter" id="gameEnter" type="button" data-game="play.html" aria-label="Enter ChartQuest and start playing">
+        <span class="finnb" aria-hidden="true" style="--e1x:67.9%;--e1y:7.3%;--e1w:13.5%;--e1h:15%;--e2x:87.6%;--e2y:8.6%;--e2w:8.3%;--e2h:13.2%;--bd:-2s;--flx:2%;--fly:52%;--flw:26%;--flh:40%;--fld:-.15s"><img src="assets/finn-boost.png" alt="" width="193" height="220"><b class="flame"></b><b class="lid l1"></b><b class="lid l2"></b></span>
+        <span class="ge-title">▶ Enter the Chart</span>
+        <span class="ge-sub">Free · loads right here · no new page</span>
+      </button>
+    </div>
+    <p class="center reveal" style="margin-top:16px;font-family:var(--mono);font-size:12px;color:var(--ink-faint)">
+      <a href="play.html" target="_blank" rel="noopener" style="color:var(--ink-faint)">or open it full-screen ↗</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="index.html">
+          <svg class="logomark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect x="6" y="10" width="6" height="14" rx="2" fill="#16C784"/><rect x="8" y="4" width="2" height="24" rx="1" fill="#16C784"/>
+            <rect x="20" y="8" width="6" height="12" rx="2" fill="#EA3943"/><rect x="22" y="4" width="2" height="24" rx="1" fill="#EA3943"/>
+          </svg>
+          <span>Chart<b>Quest</b></span>
+        </a>
+        <p style="max-width:300px;color:var(--ink-dim);margin-top:14px;font-size:14px">The world's first trading RPG. Dive inside real charts as Finn, defeat the Guardians, and learn to trade — free, in your browser.</p>
+      </div>
+      <div>
+        <h5>The world</h5>
+        <ul><li><a href="#what">What is ChartQuest</a></li><li><a href="#why">Why ChartQuest</a></li><li><a href="play.html">Play free</a></li></ul>
+      </div>
+      <div>
+        <h5>More</h5>
+        <ul><li><a href="#realmarket">The live market</a></li><li><a href="#roadmap">Roadmap</a></li><li><a href="#play">Enter the chart</a></li><li><a href="#" data-discord data-url="">Join the guild</a></li></ul>
+      </div>
+    </div>
+    <p class="disclaimer"><b>Important:</b> ChartQuest is an educational game. All trades in the game are <b>simulated with play money</b> — you never risk real funds to play. Nothing in ChartQuest is financial advice, and we are not financial advisors. Trading real assets (including crypto) carries significant risk, including loss of capital. Always do your own research.</p>
+    <div class="foot-bottom">
+      <span>© <span id="yr">2026</span> ChartQuest // the chart is the world</span>
+      <span>Built with 🐢 for explorers everywhere</span>
     </div>
   </div>
-</section>
+</footer>
 
-<!-- ===================== WHY IT WORKS ===================== -->
-<section class="section">
-  <div class="wrap center">
-    <span class="eyebrow reveal">Why it actually works</span>
-    <h2 class="big reveal measure" style="margin-top:14px">Built like a game. Rigorous like a course.</h2>
-  </div>
-  <div class="wrap grid g-2" style="margin-top:46px;max-width:920px">
-    <div class="card reveal"><span class="ico">🧠</span><h3>Learn by doing, not cramming</h3><p>You don't memorize definitions — you make the trade, see the result, and the lesson sticks. That's why it works for a curious 12-year-old and a 65-year-old new to crypto alike.</p></div>
-    <div class="card reveal"><span class="ico">💸</span><h3>Risk-free reps</h3><p>The fastest way to get good at a risky skill is to practice where mistakes are free. Blow up as many practice accounts as you need — that's the point.</p></div>
-    <div class="card reveal"><span class="ico">⏱️</span><h3>Five minutes a day</h3><p>Bite-sized worlds and a daily streak mean you make progress in a coffee break, and keep coming back like your favorite learning app.</p></div>
-    <div class="card reveal"><span class="ico">🌍</span><h3>No jargon left behind</h3><p>VWAP, order blocks, leverage — every scary term is introduced in plain English the moment you need it, never before. You're never lost.</p></div>
-  </div>
-</section>
-
-<!-- ===================== INSTALL ===================== -->
-<section class="section" id="install">
-  <div class="wrap split">
-    <div class="reveal">
-      <span class="eyebrow">Take Shell anywhere</span>
-      <h2 class="big" style="margin:14px 0 0">Install it like a real app</h2>
-      <p class="lead">Chart Quest runs in any browser — but you can also add it to your home screen and it opens full-screen, just like an App Store app. <b>No store, no download, no waiting.</b> Works on iPhone, iPad, Android, and desktop.</p>
-      <div class="btn-row" style="margin-top:24px"><button class="btn btn-primary btn-lg" onclick="cqInstall()">⬇ Install the app</button><a class="btn btn-ghost btn-lg" href="play.html">Or play in browser</a></div>
-      <p class="faint" style="font-size:14px;margin-top:14px;font-family:'JetBrains Mono'">iPhone: Share → Add to Home Screen. Android: tap Install when it pops up.</p>
-    </div>
-    <div class="reveal center"><img src="assets/chartquest-poster.jpg" alt="Chart Quest app tile" style="width:min(320px,74vw);border-radius:30px;box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 50px rgba(22,242,154,.18);margin:0 auto"></div>
-  </div>
-</section>
-
-<!-- ===================== TESTIMONIALS ===================== -->
-<section class="section">
-  <div class="wrap center">
-    <span class="eyebrow reveal">What early players say</span>
-    <h2 class="big reveal" style="margin-top:14px">People who "never got" charts — now get them</h2>
-    <div class="trust-line reveal" style="justify-content:center;margin-top:14px"><span class="stars">★★★★★</span> from new traders learning the ropes</div>
-  </div>
-  <div class="wrap grid g-3" style="margin-top:44px">
-    <div class="card reveal"><div class="stars" style="margin-bottom:10px">★★★★★</div><p style="color:#eaf1ff;font-size:16.5px">"I got liquidated once and swore off crypto. Chart Quest taught me what a stop-loss actually does in about 20 minutes. The turtle is now my financial advisor."</p><p class="mono" style="margin-top:14px;font-weight:700;font-size:13px;color:var(--green)">Luis, 24 · came back from a blow-up</p></div>
-    <div class="card reveal"><div class="stars" style="margin-bottom:10px">★★★★★</div><p style="color:#eaf1ff;font-size:16.5px">"I treat it like Duolingo for trading — five minutes on my commute. I finally understand VWAP and I'm not scared of the jargon anymore."</p><p class="mono" style="margin-top:14px;font-weight:700;font-size:13px;color:var(--green)">Casey, 29 · total beginner</p></div>
-    <div class="card reveal"><div class="stars" style="margin-bottom:10px">★★★★★</div><p style="color:#eaf1ff;font-size:16.5px">"My nephew was about to YOLO his savings off a Discord call. I sent him this instead. Now he won't shut up about 'protecting the shell.'"</p><p class="mono" style="margin-top:14px;font-weight:700;font-size:13px;color:var(--green)">Wendy, 45 · worried aunt</p></div>
-  </div>
-  <p class="center faint reveal" style="font-size:13px;margin-top:24px">Sample reviews shown for illustration — swap in your real player quotes any time.</p>
-</section>
-
-<!-- ===================== COURSES TEASER ===================== -->
-<section class="section">
-  <div class="wrap center">
-    <span class="eyebrow reveal">Ready to go deeper?</span>
-    <h2 class="big reveal measure" style="margin-top:14px">The game is free. The mastery is optional.</h2>
-    <p class="lead measure reveal">Beat the game and want the full playbook? <b>Chart Quest Academy</b> takes you from confident beginner to a trader with a real, written plan — two courses, your pace, lifetime access.</p>
-    <div class="btn-row" style="justify-content:center;margin-top:26px"><a class="btn btn-primary btn-lg reveal" href="courses.html">Explore the courses →</a></div>
-    <div class="chips reveal" style="margin-top:26px"><span class="chip">🎓 Foundations · $39.99</span><span class="chip">👑 Pro Trader Mastery · $149.99</span><span class="chip">✅ 30-day money-back</span></div>
-  </div>
-</section>
-
-<!-- ===================== FAQ ===================== -->
-<section class="section" id="faq">
-  <div class="wrap center"><span class="eyebrow reveal">Questions, answered</span><h2 class="big reveal" style="margin-top:14px">Everything you might be wondering</h2></div>
-  <div class="faq reveal" style="margin-top:40px">
-    <div class="qa"><button>Is it really free? <span class="pls">+</span></button><div class="ans"><p>Yes — the full game is free to play, with no sign-up required to start. The optional paid courses (Chart Quest Academy) are a separate, deeper product for people who want to go further.</p></div></div>
-    <div class="qa"><button>Do I trade real money? <span class="pls">+</span></button><div class="ans"><p>Never. Every trade in Chart Quest uses play money on top of real chart data. You get all the learning and none of the risk — that's the entire idea.</p></div></div>
-    <div class="qa"><button>I'm a complete beginner. Will I be lost? <span class="pls">+</span></button><div class="ans"><p>Not at all. Chart Quest starts with "what is a candle?" and introduces every term in plain English exactly when you need it. Whether you're 12 or 65, you'll be fine.</p></div></div>
-    <div class="qa"><button>What devices does it work on? <span class="pls">+</span></button><div class="ans"><p>Any modern web browser — iPhone, iPad, Android phone or tablet, Mac, or PC. You can also add it to your home screen so it opens full-screen like an installed app, no app store needed.</p></div></div>
-    <div class="qa"><button>Do I need a crypto account or wallet? <span class="pls">+</span></button><div class="ans"><p>No. There's no wallet, no exchange, and no KYC to play. Chart Quest is a game and a teacher, not an exchange. We never touch your money.</p></div></div>
-    <div class="qa"><button>Is this financial advice? <span class="pls">+</span></button><div class="ans"><p>No. Chart Quest is educational entertainment. It teaches how charts and trading mechanics work, but nothing here is a recommendation to buy or sell anything. Real trading carries real risk — always do your own research.</p></div></div>
-  </div>
-</section>
-
-<!-- ===================== FINAL CTA ===================== -->
-<section class="section">
-  <div class="wrap"><div class="cta-band reveal">
-    <div class="holo bob" style="display:inline-block;width:140px;margin-bottom:8px" data-turtle="mascot"></div>
-    <h2 class="display">Your first trade is one hop away.</h2>
-    <p class="lead" style="margin:14px auto 0">Free to play. No download. No real money. Just you, a turtle, and a live chart.</p>
-    <div class="btn-row" style="justify-content:center;margin-top:28px"><a class="btn btn-primary btn-lg" href="play.html">▶ Play Chart Quest Free</a><button class="btn btn-ghost btn-lg" onclick="cqInstall()">⬇ Install the app</button></div>
-  </div></div>
-</section>
-
-<div id="footer"></div>
-
-<div class="sticky-cta" id="cqSticky">
-  <div><div class="sc-label">Play Chart Quest 🐢</div><div class="sc-sub">Free · no download</div></div>
+<!-- Sticky mobile CTA -->
+<div class="sticky-cta" id="stickyCta">
+  <div><div class="sc-label">Enter ChartQuest 🐢</div><div class="sc-sub">Free · no download</div></div>
   <a class="btn btn-primary" href="play.html">▶ Play Free</a>
 </div>
 
-<div class="modal" id="cqInstallModal"><div class="modal-card">
-  <div style="width:90px;margin:0 auto 6px" data-turtle="mascot"></div>
-  <h3>Add Chart Quest to your phone</h3>
-  <div data-iostext><p class="muted">On iPhone &amp; iPad, in Safari:</p><div class="steps2"><div><b>1</b><span>Tap the <b>Share</b> button (square with an arrow).</span></div><div><b>2</b><span>Scroll and tap <b>Add to Home Screen</b>.</span></div><div><b>3</b><span>Tap <b>Add</b> — Shell now lives on your home screen.</span></div></div></div>
-  <div data-andtext><p class="muted">On Android, in Chrome:</p><div class="steps2"><div><b>1</b><span>Tap the <b>⋮</b> menu (top-right).</span></div><div><b>2</b><span>Tap <b>Install app</b> / <b>Add to Home screen</b>.</span></div><div><b>3</b><span>Confirm — Chart Quest installs like any app.</span></div></div></div>
-  <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="cqCloseModal()">Got it 🐢</button>
-</div></div>
+<script>
+/* CHARTQUEST — portal experience. Edit URLs in one place: */
+var CQ = { game:"play.html", discord:"" };
+(function(){
+  document.documentElement.classList.add('js');
+  var yr=document.getElementById('yr'); if(yr) yr.textContent=new Date().getFullYear();
 
-<script src="assets/site.js" defer></script>
+  /* Mobile menu */
+  var burger=document.getElementById('navBurger'), links=document.getElementById('navLinks');
+  if(burger) burger.addEventListener('click',function(){var o=links.classList.toggle('open');burger.setAttribute('aria-expanded',o?'true':'false');});
+  links&&links.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){links.classList.remove('open');burger&&burger.setAttribute('aria-expanded','false');});});
+
+  /* Reveal (robust safety net) */
+  (function(){
+    var items=[].slice.call(document.querySelectorAll('.reveal'));
+    function show(el){el.classList.add('in');}
+    function inView(el){var r=el.getBoundingClientRect(),vh=window.innerHeight||document.documentElement.clientHeight||0;return vh>0&&r.top<vh*0.95&&r.bottom>0;}
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){show(en.target);io.unobserve(en.target);}});},{threshold:.08,rootMargin:'0px 0px -6% 0px'});
+      items.forEach(function(el){io.observe(el);});
+      items.forEach(function(el){if(inView(el))show(el);});
+      setTimeout(function(){if(!document.querySelector('.reveal.in'))items.forEach(show);},1200);
+    } else items.forEach(show);
+  })();
+
+  /* Sticky mobile CTA */
+  var sticky=document.getElementById('stickyCta');
+  if(sticky){var on=function(){window.scrollY>640?sticky.classList.add('show'):sticky.classList.remove('show');};window.addEventListener('scroll',on,{passive:true});on();}
+
+  /* Depth rail — the page as one descent: fill = scroll progress, label = active layer */
+  (function(){
+    var rail=document.getElementById('depthRail'), fill=document.getElementById('depthFill'), now=document.getElementById('depthNow');
+    if(!rail||!fill||!now) return;
+    var layers=rail.getAttribute('data-layers').split('|').map(function(p){var i=p.indexOf(':');return {id:p.slice(0,i),name:p.slice(i+1)};});
+    function onScroll(){
+      var st=window.scrollY||document.documentElement.scrollTop||0;
+      var max=(document.documentElement.scrollHeight-window.innerHeight)||1;
+      fill.style.height=Math.max(0,Math.min(100,st/max*100))+'%';
+      var mark=st+window.innerHeight*0.42, active=0;
+      for(var i=0;i<layers.length;i++){var el=layers[i].id==='top'?null:document.getElementById(layers[i].id);var top=el?el.offsetTop:0;if(top<=mark)active=i;}
+      if(now.textContent!==layers[active].name) now.textContent=layers[active].name;
+    }
+    window.addEventListener('scroll',onScroll,{passive:true});
+    window.addEventListener('resize',onScroll); onScroll();
+  })();
+
+  /* Finn enters the chart — replays each time the section scrolls into view.
+     One-shot per entry (animations never loop); resets on exit so it can play again. */
+  (function(){
+    var stage=document.getElementById('chartStage');
+    if(!stage) return;
+    var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce) return;
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(es){es.forEach(function(en){
+        if(en.isIntersecting){
+          stage.classList.remove('playing');
+          void stage.offsetWidth;              /* reflow so the one-shot restarts cleanly */
+          stage.classList.add('playing');
+        } else {
+          stage.classList.remove('playing');   /* arm it for the next entry */
+        }
+      });},{threshold:.45});
+      io.observe(stage);
+    } else stage.classList.add('playing');
+  })();
+
+  /* The real game mounts here on click — lazy · borderless · no redirect/popup */
+  (function(){
+    var btn=document.getElementById('gameEnter'), mount=document.getElementById('gameMount');
+    if(!btn||!mount) return;
+    btn.addEventListener('click',function(){
+      var src=btn.getAttribute('data-game')||CQ.game;
+      mount.classList.add('loaded');
+      var load=document.createElement('div'); load.className='game-loading';
+      load.innerHTML='<div class="gl-spin"></div><div class="gl-text">Entering the chart…</div>';
+      mount.appendChild(load);
+      var done=false;
+      function fail(){ if(done) return; done=true; clearTimeout(to);
+        load.className='game-error';
+        load.innerHTML='<div class="ge-emoji">🐢</div><p>The world didn\'t load here — your connection may be blocking the embed.</p><a class="btn btn-primary" href="'+src+'" target="_blank" rel="noopener">▶ Open ChartQuest full-screen</a>'; }
+      var to=setTimeout(fail,15000);
+      var f=document.createElement('iframe');
+      f.title='ChartQuest'; f.loading='eager';
+      f.setAttribute('allow','fullscreen; autoplay; clipboard-write');
+      f.addEventListener('load',function(){ if(done) return; done=true; clearTimeout(to); load.remove(); });
+      f.addEventListener('error',fail);
+      f.src=src;
+      mount.appendChild(f);
+    });
+  })();
+
+  /* Subtle hero parallax (transform only · desktop · reduced-motion off) */
+  (function(){
+    var bg=document.querySelector('.hero-cine-bg'), hero=document.querySelector('.hero-cine');
+    var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(!bg||!hero||reduce||!window.matchMedia('(pointer:fine)').matches) return;
+    var ticking=false;
+    function upd(){var t=hero.getBoundingClientRect().top; bg.style.transform='translateY('+(Math.max(0,-t)*0.06)+'px) scale(1.1)'; ticking=false;}
+    bg.style.willChange='transform';
+    window.addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(upd);}},{passive:true}); upd();
+  })();
+
+  /* Phase 2 — pause a section's ambient FX while it's offscreen (IntersectionObserver) + on tab-hide (battery) */
+  (function(){
+    var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var fx=[].slice.call(document.querySelectorAll('[data-fx]'));
+    if(!reduce && 'IntersectionObserver' in window && fx.length){
+      var io=new IntersectionObserver(function(es){es.forEach(function(en){en.target.classList.toggle('fx-off',!en.isIntersecting);});},{rootMargin:'140px'});
+      fx.forEach(function(el){io.observe(el);});
+    }
+    document.addEventListener('visibilitychange',function(){document.body.classList.toggle('tab-hidden',document.hidden);});
+  })();
+
+  /* Phase 2 — Finn leans toward the cursor (subtle attention / "eye-tracking"; desktop pointer, motion-safe).
+     Transform rides on .finn-art (CSS-transition smoothed); the <img> keeps its breathing idle inside. */
+  (function(){
+    var art=document.querySelector('.finn-art');
+    var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(!art||reduce||!(window.matchMedia&&window.matchMedia('(pointer:fine)').matches)) return;
+    var onscreen=false,ticking=false,mx=0,my=0;
+    function apply(){ticking=false;
+      art.style.transform='perspective(760px) rotateY('+(mx*5).toFixed(2)+'deg) rotateX('+(-my*4).toFixed(2)+'deg) translate('+(mx*6).toFixed(1)+'px,'+(my*5).toFixed(1)+'px)';}
+    if('IntersectionObserver' in window){ new IntersectionObserver(function(es){onscreen=es[0].isIntersecting;},{threshold:.15}).observe(art); }
+    else onscreen=true;
+    function rest(){mx=0;my=0;art.classList.remove('lean');art.style.transform='';}
+    window.addEventListener('mousemove',function(e){
+      if(!onscreen)return;
+      var r=art.getBoundingClientRect();
+      mx=Math.max(-1,Math.min(1,(e.clientX-(r.left+r.width/2))/(window.innerWidth*0.5)));
+      my=Math.max(-1,Math.min(1,(e.clientY-(r.top+r.height/2))/(window.innerHeight*0.5)));
+      art.classList.add('lean');
+      if(!ticking){ticking=true;requestAnimationFrame(apply);}
+    },{passive:true});
+    window.addEventListener('mouseout',function(e){if(e.relatedTarget)return;rest();});
+    window.addEventListener('blur',rest);
+  })();
+
+  /* Modals */
+  function openM(m){if(m){m.classList.add('show');m.setAttribute('aria-hidden','false');}}
+  function closeM(m){if(m){m.classList.remove('show');m.setAttribute('aria-hidden','true');}}
+  document.querySelectorAll('.modal').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)closeM(m);});m.querySelectorAll('[data-close]').forEach(function(b){b.addEventListener('click',function(){closeM(m);});});});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal.show').forEach(closeM);});
+
+  /* Discord (graceful until a URL is set) */
+  document.querySelectorAll('[data-discord]').forEach(function(a){
+    var url=a.getAttribute('data-url')||CQ.discord;
+    if(url){a.setAttribute('href',url);a.setAttribute('target','_blank');a.setAttribute('rel','noopener');}
+    else a.addEventListener('click',function(e){e.preventDefault();alert("The guild opens soon! 🐢\n\nPaste your Discord invite into CQ.discord (in this page's script) or the button's data-url to activate it.");});
+  });
+
+  /* PWA install */
+  var deferred=null;
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;});
+  window.cqInstall=function(){if(deferred){deferred.prompt();deferred.userChoice.finally(function(){deferred=null;});}};
+
+  /* Service worker */
+  if('serviceWorker' in navigator) window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
+})();
+</script>
 </body>
 </html>

@@ -273,7 +273,7 @@
   <button class="tab-btn" data-tab="content">🎬 Content</button>
   <button class="tab-btn" data-tab="minigames">🎮 Mini Games</button>
   <button class="tab-btn" data-tab="qa">🧪 QA Testing Center</button>
-  <button class="tab-btn" data-tab="release">🚀 Release</button>
+  <button class="tab-btn" data-tab="release">🚀 Deployment</button>
 </nav>
 
 <main>
@@ -529,82 +529,143 @@
     </div>
   </section>
 
-  <!-- ============ RELEASE CONTROL CENTER (Phase 1.8) ============ -->
+  <!-- ============ DEPLOYMENT VERIFICATION (Phase 2) ============ -->
   <section class="panel" id="panel-release">
     <div class="section-head">
-      <h2>🚀 Release Control Center</h2>
+      <h2>🚀 Deployment Verification</h2>
     </div>
     <div style="color:#8a97a8;font-size:13px;margin:-6px 0 16px;line-height:1.6;">
-      Operational status for the ChartQuest beta deployment. <b style="color:#d7e0ee;">Manual snapshot — last updated 2026-07-09 (Phase 1.8).</b>
-      Update this block whenever the build, branch, or approval state changes. (A future task can wire it to live git/GitHub data.)
+      Operational control center for the ChartQuest production deployment. <b style="color:#d7e0ee;">Snapshot: 2026-07-09 (Phase 2 — Cloudflare migration).</b>
+      The live-status row auto-refreshes from the site on load. Update the static fields on each release (build/commit/tag).
     </div>
 
-    <div class="subhead">Release state</div>
+    <!-- live status strip (auto-updates same-origin) -->
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;background:linear-gradient(180deg,#16281c,#131f18);border:1px solid #2c5a3a;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
+      <div>
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Production</div>
+        <a href="https://playchartquest.com" target="_blank" rel="noopener" style="font-size:16px;color:#7fd7a0;font-weight:700;text-decoration:none;">playchartquest.com ↗</a>
+      </div>
+      <div style="width:1px;height:32px;background:#2c5a3a;"></div>
+      <div>
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Live status</div>
+        <div id="dv-livestatus" style="font-size:15px;color:#8a97a8;font-weight:600;">● checking…</div>
+      </div>
+      <div>
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Live build</div>
+        <div id="dv-livebuild" style="font-size:15px;color:#e7eefb;font-weight:600;">…</div>
+      </div>
+    </div>
+
+    <div class="subhead">Deployment record</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:20px;">
       <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
-        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Current branch</div>
-        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">security-scaling-hardening</div>
-        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● in sync with origin (pushed)</div>
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Production URL</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">https://playchartquest.com</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● HTTPS enforced</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Deployment branch</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">main</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● auto-deploys on push</div>
       </div>
       <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
         <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Current build</div>
         <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">build 254</div>
-        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● index.html mirrors source (sha-identical)</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● official Finn (run.png)</div>
       </div>
       <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
-        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">GitHub source of truth</div>
-        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Up to date</div>
-        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● no verified work is laptop-only</div>
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Git commit</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;font-family:monospace;">1eb1218</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● shelltrader/shell-trade</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Git tag</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">v0.1.0-beta</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● first rollback anchor</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Cloudflare project</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">chartquest</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● chartquest.pages.dev</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Latest deployment</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">main @ 1eb1218</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● 2026-07-09</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Deployment status</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Live</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● Success · Region: Earth</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">SSL status</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Active</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● Universal SSL · valid cert</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">DNS status</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Active</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● CNAME @ → chartquest.pages.dev</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Verification result</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">PASS</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● Finn renders · assets 200 · console clean</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Rollback version</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">v0.1.0-beta</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● Pages: revert previous deploy</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Last successful verification</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">2026-07-09</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● live boot on playchartquest.com</div>
       </div>
       <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
         <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Release candidate</div>
-        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">RC ready — build 254</div>
-        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● regression gate PASS (game)</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">build 254 → Production</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● promoted 2026-07-09</div>
       </div>
       <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
-        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Latest verification</div>
-        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">2026-07-09</div>
-        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● gate 7✓ · boot + Finn render + assets 200</div>
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Pending releases</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">None</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● main == production</div>
       </div>
       <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
-        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Deployment branch</div>
-        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Not decided</div>
-        <div style="font-size:12px;color:#e0a53a;margin-top:3px;">▲ awaiting approval (recommend → main)</div>
-      </div>
-      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
-        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Cloudflare Pages</div>
-        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Ready, not connected</div>
-        <div style="font-size:12px;color:#e0a53a;margin-top:3px;">▲ static · no build · no env vars</div>
-      </div>
-      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
-        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Deployment manifest</div>
-        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Exists</div>
-        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● docs/operations/DeploymentManifest.md</div>
-      </div>
-      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
-        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Rollback</div>
-        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Documented</div>
-        <div style="font-size:12px;color:#e0a53a;margin-top:3px;">▲ host history + _old_*.zip · 0 tags yet</div>
-      </div>
-      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
-        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Repository health</div>
-        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">4.5 / 10</div>
-        <div style="font-size:12px;color:#e0a53a;margin-top:3px;">▲ 630 MB unpacked .git — gc recommended</div>
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Redirect</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">chartquestgame.com</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● 301 → playchartquest.com</div>
       </div>
     </div>
 
-    <div class="subhead">Pending approvals — required before Cloudflare connect</div>
-    <ol style="color:#c7d2e2;font-size:13.5px;line-height:1.8;margin:6px 0 20px;padding-left:22px;">
-      <li><b style="color:#e7eefb;">Choose the deployment branch</b> — recommend merging <code>security-scaling-hardening</code> → <code>main</code> so Cloudflare deploys production truth. (Not yet done — needs your OK.)</li>
-      <li><b style="color:#e7eefb;">Create the first release tag</b> — recommend <code>v0.1.0-beta</code> on the verified build-254 commit. (Not created.)</li>
-      <li><b style="color:#e7eefb;">Connect Cloudflare Pages</b> — git integration, output = repo root, no build command, no env vars.</li>
-    </ol>
-
-    <div class="subhead">Recommended next action</div>
-    <div style="background:linear-gradient(180deg,#16281c,#131f18);border:1px solid #2c5a3a;border-radius:10px;padding:14px 16px;color:#d6efdd;font-size:13.5px;line-height:1.6;">
-      Approve merging build 254 to <code>main</code> and tagging <code>v0.1.0-beta</code>. After that, Cloudflare Pages can be connected immediately (git-integrated, repo-root output). Rollback anchor = the tag + host deploy history.
-    </div>
+    <div class="subhead">Deployment notes</div>
+    <ul style="color:#c7d2e2;font-size:13.5px;line-height:1.8;margin:6px 0 20px;padding-left:22px;">
+      <li><b style="color:#e7eefb;">CD pipeline live:</b> every push to <code>main</code> on <code>shelltrader/shell-trade</code> auto-builds &amp; deploys via Cloudflare Pages. The old manual <code>netlify-direct-deploy.command</code> is retired.</li>
+      <li><b style="color:#e7eefb;">To roll back:</b> Cloudflare Pages → project <code>chartquest</code> → Deployments → previous deployment → <i>Rollback</i>; or redeploy tag <code>v0.1.0-beta</code>.</li>
+      <li><b style="color:#e7eefb;">Domains:</b> <code>playchartquest.com</code> = production; <code>chartquestgame.com</code> + <code>www</code> → 301 to production (query/path preserved).</li>
+      <li><b style="color:#e0a53a;">Follow-ups:</b> add a <code>_headers</code> file for CSP/HSTS parity; keep Netlify up until confident, then retire.</li>
+    </ul>
   </section>
+  <script>
+  // Deployment Verification — same-origin live health check (auto-updates on load).
+  (function(){
+    var s = document.getElementById('dv-livestatus'), b = document.getElementById('dv-livebuild');
+    if (!s) return;
+    fetch('/?_dv=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function(t){
+        var m = t.match(/BUILD_TAG\s*=\s*'build\s+(\d+)/);
+        s.textContent = '● Live'; s.style.color = '#4ea36a';
+        if (b) b.textContent = m ? ('build ' + m[1]) : 'reachable';
+      })
+      .catch(function(){
+        s.textContent = '● unknown'; s.style.color = '#e0a53a';
+        if (b) b.textContent = 'open on playchartquest.com';
+      });
+  })();
+  </script>
 
 </main>
 

@@ -1,6 +1,14 @@
 # Cloudflare Pages Deployment
 
-**Status:** Deployment *plan* for moving ChartQuest to Cloudflare Pages. **Do not deploy from this doc yet.** It documents framework, build, output, env, headers, and DNS so the cutover is a known, reversible operation.
+> **✅ LIVE as of 2026-07-09 (Phase 2).** Production is served by Cloudflare Pages.
+> - **Project:** `chartquest` (`chartquest.pages.dev`) · connected to `shelltrader/shell-trade`, production branch **`main`** → **auto-deploys on every push** (CD live).
+> - **Production URL:** https://playchartquest.com (Universal SSL, HTTPS enforced) · tagged **`v0.1.0-beta`** (commit `1eb1218`).
+> - **Redirect:** `chartquestgame.com` + `www` → **301** → `https://playchartquest.com` (proxied A `@`/`www` → 192.0.2.1 + Redirect Rule).
+> - **Rollback:** Cloudflare Pages → Deployments → previous → *Rollback*; or redeploy tag `v0.1.0-beta`.
+> - **Retired:** the manual `netlify-direct-deploy.command`. Keep Netlify up until confident, then decommission.
+> - **Open follow-up:** add a `_headers` file for CSP/HSTS parity (Cloudflare ignores `netlify.toml`); see §5.
+
+**Status:** Reference for the Cloudflare Pages setup (now executed). Documents framework, build, output, env, headers, and DNS.
 
 ---
 

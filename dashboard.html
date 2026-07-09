@@ -273,6 +273,7 @@
   <button class="tab-btn" data-tab="content">🎬 Content</button>
   <button class="tab-btn" data-tab="minigames">🎮 Mini Games</button>
   <button class="tab-btn" data-tab="qa">🧪 QA Testing Center</button>
+  <button class="tab-btn" data-tab="release">🚀 Release</button>
 </nav>
 
 <main>
@@ -525,6 +526,83 @@
           <div class="qa-log" id="qaLog"></div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ RELEASE CONTROL CENTER (Phase 1.8) ============ -->
+  <section class="panel" id="panel-release">
+    <div class="section-head">
+      <h2>🚀 Release Control Center</h2>
+    </div>
+    <div style="color:#8a97a8;font-size:13px;margin:-6px 0 16px;line-height:1.6;">
+      Operational status for the ChartQuest beta deployment. <b style="color:#d7e0ee;">Manual snapshot — last updated 2026-07-09 (Phase 1.8).</b>
+      Update this block whenever the build, branch, or approval state changes. (A future task can wire it to live git/GitHub data.)
+    </div>
+
+    <div class="subhead">Release state</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:20px;">
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Current branch</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">security-scaling-hardening</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● in sync with origin (pushed)</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Current build</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">build 254</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● index.html mirrors source (sha-identical)</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">GitHub source of truth</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Up to date</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● no verified work is laptop-only</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Release candidate</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">RC ready — build 254</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● regression gate PASS (game)</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Latest verification</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">2026-07-09</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● gate 7✓ · boot + Finn render + assets 200</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Deployment branch</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Not decided</div>
+        <div style="font-size:12px;color:#e0a53a;margin-top:3px;">▲ awaiting approval (recommend → main)</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Cloudflare Pages</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Ready, not connected</div>
+        <div style="font-size:12px;color:#e0a53a;margin-top:3px;">▲ static · no build · no env vars</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Deployment manifest</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Exists</div>
+        <div style="font-size:12px;color:#4ea36a;margin-top:3px;">● docs/operations/DeploymentManifest.md</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Rollback</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">Documented</div>
+        <div style="font-size:12px;color:#e0a53a;margin-top:3px;">▲ host history + _old_*.zip · 0 tags yet</div>
+      </div>
+      <div style="background:#131b26;border:1px solid #223042;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b7889;">Repository health</div>
+        <div style="font-size:15px;color:#e7eefb;font-weight:600;margin-top:3px;">4.5 / 10</div>
+        <div style="font-size:12px;color:#e0a53a;margin-top:3px;">▲ 630 MB unpacked .git — gc recommended</div>
+      </div>
+    </div>
+
+    <div class="subhead">Pending approvals — required before Cloudflare connect</div>
+    <ol style="color:#c7d2e2;font-size:13.5px;line-height:1.8;margin:6px 0 20px;padding-left:22px;">
+      <li><b style="color:#e7eefb;">Choose the deployment branch</b> — recommend merging <code>security-scaling-hardening</code> → <code>main</code> so Cloudflare deploys production truth. (Not yet done — needs your OK.)</li>
+      <li><b style="color:#e7eefb;">Create the first release tag</b> — recommend <code>v0.1.0-beta</code> on the verified build-254 commit. (Not created.)</li>
+      <li><b style="color:#e7eefb;">Connect Cloudflare Pages</b> — git integration, output = repo root, no build command, no env vars.</li>
+    </ol>
+
+    <div class="subhead">Recommended next action</div>
+    <div style="background:linear-gradient(180deg,#16281c,#131f18);border:1px solid #2c5a3a;border-radius:10px;padding:14px 16px;color:#d6efdd;font-size:13.5px;line-height:1.6;">
+      Approve merging build 254 to <code>main</code> and tagging <code>v0.1.0-beta</code>. After that, Cloudflare Pages can be connected immediately (git-integrated, repo-root output). Rollback anchor = the tag + host deploy history.
     </div>
   </section>
 

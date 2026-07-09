@@ -31,6 +31,7 @@ If a task would violate a canon or protected-systems rule, **stop and confirm wi
 | [character_canon.md](character_canon.md) | Phase 3 — character identity (Finn + boss roster) |
 | [animation_canon.md](animation_canon.md) | Phase 3 — approved animation systems & states |
 | [gameplay_canon.md](gameplay_canon.md) | Phase 3 — movement + core loop |
+| [trading_canon.md](trading_canon.md) | **The permanent trading doctrine — every trade L1→finale (Constitution, Entry, Stop, TP, Quality, Portal, Review). Read before any trading change** |
 | [ui_canon.md](ui_canon.md) | Phase 3 — screens, overlays, HUD |
 | [boss_canon.md](boss_canon.md) | Phase 3 — the boss/Guardian systems |
 | [progression_canon.md](progression_canon.md) | Phase 3 — levels, gating, save |

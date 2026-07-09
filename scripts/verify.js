@@ -81,14 +81,17 @@ function run() {
     const legFlag = count(s, /FINN_LEG_RIG/g);
     const rigLegCalls = count(s, /drawFinnRigLeg\(/g) - count(s, /function drawFinnRigLeg\(/g);
     const rigTailCalls = count(s, /drawFinnRigTail\(/g) - count(s, /function drawFinnRigTail\(/g);
-    // The GROUNDED walk-sheet fallback (build-232 "ONE-PIECE WALK fallback") is the deprecated
-    // path that must be gone. NOTE: walk-sheet frames are still used for the AIRBORNE wick-fling
-    // dash (chart-quest.html ~13901) — that's current behavior, deliberately NOT flagged here.
-    const groundedWalkSheet = count(s, /ONE-PIECE WALK fallback/g);
-    const ok = rigOn === 0 && legFlag === 0 && rigLegCalls <= 0 && rigTailCalls <= 0 && groundedWalkSheet === 0;
-    add('2', 'Deprecated Finn (grounded rig / walk-sheet) inactive', ok ? 'PASS' : 'FAIL',
-      ok ? 'grounded render clean: no _rigOn, no FINN_LEG_RIG, rig legs uncalled, no build-232 walk-sheet fallback'
-         : `_rigOn=${rigOn} FINN_LEG_RIG=${legFlag} rigLegCalls=${rigLegCalls} rigTailCalls=${rigTailCalls} groundedWalkSheetBranch=${groundedWalkSheet}`);
+    // build 254 — the OLD turtle model is DELETED and must stay gone: no deprecated asset
+    // filenames referenced, no walk-sheet frame array in use, and the PNGs themselves absent.
+    // (Set in stone: this check FAILS the gate if any of them ever come back.)
+    const deprAssetRef = count(s, /walk-sheet\.png|finn\/body\.png|finn\/leg\.png/g);
+    const walkArrayRef = count(s, /FINN_SPRITES\.walk\b/g);
+    const deprFiles = ['finn/walk-sheet.png', 'finn/body.png', 'finn/leg.png'].filter(f => exists(f));
+    const ok = rigOn === 0 && legFlag === 0 && rigLegCalls <= 0 && rigTailCalls <= 0
+      && deprAssetRef === 0 && walkArrayRef === 0 && deprFiles.length === 0;
+    add('2', 'Deprecated Finn (rig / walk-sheet / body / leg) DELETED', ok ? 'PASS' : 'FAIL',
+      ok ? 'old model fully gone: no rig flags/calls, no walk-sheet/body/leg refs or arrays, deprecated PNGs absent'
+         : `_rigOn=${rigOn} FINN_LEG_RIG=${legFlag} rigLegCalls=${rigLegCalls} rigTailCalls=${rigTailCalls} deprAssetRefs=${deprAssetRef} walkArrayRefs=${walkArrayRef} deprFilesPresent=[${deprFiles.join(', ')}]`);
   }
 
   // 3a — syntax (boot proxy): parse every inline <script> block
@@ -114,12 +117,12 @@ function run() {
 
   // 5 — bosses load
   {
-    const hasGT = /GuardianTrial\s*=\s*\(function/.test(s);
+    const hasBossEngine = /function openBoss\s*\(/.test(s) && /function bossRound\s*\(/.test(s);
     const missing = [];
     for (let i = 0; i <= 10; i++) if (!['png', 'jpg', 'jpeg', 'webp'].some(e => exists(`bosses/boss-${i}.${e}`))) missing.push(i);
-    const ok = hasGT && missing.length === 0;
-    add('5', 'Bosses load (GuardianTrial + 11 boss art)', ok ? 'PASS' : 'FAIL',
-      ok ? 'GuardianTrial present; boss-0..10 art present' : `GuardianTrial=${hasGT} missingBossArt=[${missing}]`);
+    const ok = hasBossEngine && missing.length === 0;
+    add('5', 'Bosses load (openBoss/bossRound exam + 11 boss art)', ok ? 'PASS' : 'FAIL',
+      ok ? 'boss exam engine (openBoss + bossRound) present; boss-0..10 art present' : `bossEngine=${hasBossEngine} missingBossArt=[${missing}]`);
   }
 
   // 6 — save init
@@ -176,7 +179,8 @@ function run() {
         if (JSON.stringify(extractCFG(head)) !== JSON.stringify(extractCFG(s))) changed.push('Movement CFG');
         if (cqKeys(head).join() !== cqKeys(s).join()) changed.push('Save keys');
         if (lessonKeyCount(head) !== lessonKeyCount(s)) changed.push('Lesson set');
-        if (/GuardianTrial\s*=\s*\(function/.test(head) !== /GuardianTrial\s*=\s*\(function/.test(s)) changed.push('Boss engine');
+        const bossSig = x => `${/function openBoss\s*\(/.test(x)}|${/function bossRound\s*\(/.test(x)}|${/const BOSSES\s*=/.test(x)}`;
+        if (bossSig(head) !== bossSig(s)) changed.push('Boss engine');
         const allow = process.env.CQ_ALLOW_PROTECTED === '1';
         if (changed.length === 0) add('10', 'Protected systems unchanged', 'PASS', 'Finn / CFG / save keys / lesson set / boss engine identical to HEAD');
         else if (allow) add('10', 'Protected systems changed (APPROVED)', 'WARN', `changed: ${changed.join(', ')} — allowed via CQ_ALLOW_PROTECTED=1`);

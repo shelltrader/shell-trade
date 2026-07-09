@@ -23,7 +23,7 @@ Every place where two+ implementations of the same job exist, ranked by how like
 ## 🟠 HIGH
 
 ### H1 — Deprecated boss data still in the file
-- Legacy `rounds`/`bossHP`/`playerHP` object (9206, self-labeled `⚠ LEGACY OBJECT — DO NOT treat as a Guardian source`), plus a "previous, deprecated roster" (9525). The live system is `GuardianTrial` (9948).
+- Legacy `rounds`/`bossHP`/`playerHP` object (9206, self-labeled `⚠ LEGACY OBJECT — DO NOT treat as a Guardian source`), plus a "previous, deprecated roster" (9525). The live boss system is the mini-game exam (`openBoss`/`bossRound`).
 - **Why high:** a future boss task could read the deprecated object and resurrect an old roster/HP model.
 
 ### H2 — `index.html` / `chart-quest.html` / `chart-quest.min.html` — 3 copies of the game

@@ -41,8 +41,7 @@ The game is a **single-file monolith**: ~20,600 lines, **810 functions**, 4 inli
 ## 4. Boss Systems
 | Component | Where | Status |
 |---|---|---|
-| `GuardianTrial` (V2, on live chart) | 9948 | ✅ Official |
-| `chartTrial` (wick-swirl trial state) | 10386 | ✅ Active (works with GuardianTrial) |
+| boss exam (`openBoss` → `launchRound` → `bossRound`) | ~11189 | ✅ Official — the boss is a mini-game knowledge exam |
 | `#bossFight` DOM UI + `bfState` | 442 (CSS), in-file | ✅ Active |
 | `BossArena` (per-boss animated bg) | 18540 | ✅ Active |
 | `triggerIntroBoss` | 16653 | ✅ Active |

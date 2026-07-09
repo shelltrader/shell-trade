@@ -2389,7 +2389,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 250 — new-art Finn walks with STATIC legs (finn/run.png); dropped the build-244 procedural leg swing';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 254 — delete the OLD turtle model: cinematic + academy now render the official Finn (run.png); deprecated walk-sheet/body/leg assets + code paths removed; regression gate blocks their return';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -3026,7 +3026,6 @@ function cartoonCandle(lvl) {
 }
 
 function nextCandle() {
-  if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active) return chartTrialCandle();   // Guardian chart trial drives a fair green-crossing stream
   const _lvl = (typeof session !== 'undefined' && session && session.level) ? session.level : 1;
   if (_lvl <= 3 && typeof trade !== 'undefined' && trade && trade._l1Outcome) return tradeDrivenCandle();   // Guardians 1-3: drive price to the decided line so the win/loss is SEEN (and fair)
   if (_lvl <= 3) {
@@ -3198,13 +3197,6 @@ function initCandles() {
 // candles always print on screen, on any device. Clamped, then lightly varied so
 // the chart still looks organic without changing the on-screen count much.
 function candleW() {
-  // CHART TRIAL — BIG, easy-to-land-on candles. Use the NORMAL anchor (not the trial's left 0.34
-  // anchor, which was shrinking them) and go ~20% wider so Finn fits comfortably on each one.
-  if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active) {
-    const refAnchor = (_ctCamSaved != null ? _ctCamSaved : 0.72);
-    const tb = (W * refAnchor) / CFG.candleTargetVisible * 1.2;
-    return Math.round(Math.max(CFG.candleMinW, Math.min(CFG.candleMaxW + 14, tb)) * rand(0.97, 1.05));
-  }
   const base = (W * CFG.cameraAnchor) / CFG.candleTargetVisible;
   const c = Math.max(CFG.candleMinW, Math.min(CFG.candleMaxW, base));
   return Math.round(c * rand(0.92, 1.1));
@@ -3978,16 +3970,6 @@ function shellTuck() {
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; // don't eat auth typing
   if (window.cineActive) return;   // opening cinematic handles its own keys
-  if (typeof GuardianTrial !== 'undefined' && GuardianTrial.active) {   // Guardian Trial owns input
-    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') { e.preventDefault(); GuardianTrial.onTap(); }
-    return;
-  }
-  if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active && chartTrial.swirl) {   // wick swirl owns input: W/Space = launch off, S = drop down
-    e.preventDefault();
-    if (e.code === 'ArrowDown' || e.code === 'KeyS') chartTrial._swirlDown = true;
-    else if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') chartTrial._swirlLaunch = true;
-    return;
-  }
   if (lessonOpen) { // lesson card owns input — Space/Enter = OK
     if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); dismissLesson(); }
     return;
@@ -4015,8 +3997,6 @@ window.addEventListener('pointerdown', (e) => {
   // have e.target === canvas, so they still work.
   if (typeof canvas !== 'undefined' && e.target !== canvas) return;
   if (window.cineActive) return;   // opening cinematic handles its own pointer input
-  if (typeof GuardianTrial !== 'undefined' && GuardianTrial.active) { e.preventDefault(); GuardianTrial.onTap(); return; }   // Guardian Trial owns the tap
-  if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active && chartTrial.swirl) { e.preventDefault(); chartTrial._swirlLaunch = true; return; }   // MOBILE — tap launches off the wick swirl (matches W/Space)
   // Candle Academy greeting: any tap dismisses immediately
   if (candleAcademy.active) {
     e.preventDefault();
@@ -4071,7 +4051,22 @@ window.addEventListener('pointerdown', (e) => {
   if (!pointer.uiTap) {
     _tapTimer = setTimeout(() => {
       _tapTimer = null;
-      if (pointer && !pointer.fired) { pointer.fired = true; jump(); }
+      if (pointer && !pointer.fired) {
+        pointer.fired = true;
+        // FOLLOW-THE-FINGER (build 253, founder-approved protected #4 change): a tap to Finn's
+        // LEFT/RIGHT turns him and hops that way; a tap in his own column jumps straight up.
+        // Direction only — jump/boost/dive physics are untouched. Finn sits at ~W*cameraAnchor
+        // on screen (the camera anchor), clamped at the level start where cameraX pins to 0.
+        try {
+          const _cx = Math.max(0, turtle.x - W * CFG.cameraAnchor);
+          const _finnX = (turtle.x + turtle.w / 2) - _cx;
+          const _tapX = pointer.x0 - stageX;
+          const _margin = turtle.w * 0.6;   // dead-zone over Finn's body = "jump straight up"
+          if (_tapX < _finnX - _margin)      { turtle.dir = -1; turtle.halt = false; }
+          else if (_tapX > _finnX + _margin) { turtle.dir =  1; turtle.halt = false; }
+        } catch (e) {}
+        jump();
+      }
     }, 60);
   }
 });
@@ -6643,7 +6638,6 @@ function _anyBlockingUI() {
   return false;
 }
 function showTradeIncoming() {
-  if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active) return;   // no trade banners during a chart trial
   // HARD RULE — NEVER appear over any other message/popup/button/question. If anything is on
   // screen, wait and retry so the player never misses text. (Self-guards every caller.)
   try {
@@ -9917,756 +9911,9 @@ function bossRound() {
     '<div style="font-size:12px;color:#9fb0c4;line-height:1.55;margin:13px auto 20px;max-width:300px">' + esc(g ? g.objective : '') + '</div>' +
     '<button id="bfFight" style="padding:14px 32px;border-radius:11px;font:800 14px var(--font-ui);background:linear-gradient(180deg,#19d08a,#0e9b64);border:1px solid #16c784;color:#04130c;cursor:pointer">⚔ FIGHT →</button></div>';
 }
-/* ════════════════════════════════════════════════════════════════════════════════════════
-   GUARDIAN TRIAL FRAMEWORK  (flag-gated: ?trials=1  or  localStorage cq_trials=1)
-   A boss round is "whatever runs between launchRound() and onRoundDone()". Instead of a DOM
-   quiz, a Guardian Trial is a MOVEMENT challenge on the MAIN canvas: Finn physically jumps to
-   the correct candle. It reuses the platformer (turtle + CFG physics + drawTurtle) and hands
-   back to the existing round flow via onRoundDone(score, passed) — so crystal HP, reactions and
-   victory all keep working. See GUARDIAN-TRIAL-FRAMEWORK.md. This is the GOLD-STANDARD reference
-   (P1 · JUMP TO TARGET); every future trial inherits its structure and game feel.
-   ════════════════════════════════════════════════════════════════════════════════════════ */
-const TRIALS_ON = (() => { try { return /[?&]trials=1/.test(location.search) || localStorage.getItem('cq_trials') === '1'; } catch (e) { return false; } })();
-
-// GUARDIAN TRIALS 2.0 — movement-based, data-authored. Each trial = one concept taught through
-// physical traversal (never a button click). Types: cross | highest | wick | liquidity.
-const TRIAL_DEFS = {
-  // taunt = the Guardian's single spoken line (the hook). cue = the minimal in-play challenge.
-  // No paragraphs of instruction — the player learns by surviving, not by reading.
-  cross_green: { id:'cross_green', type:'cross', safe:'green', taunt:'Only fools stand where sellers won.', cue:'Stand where BUYERS won', win:'BUYERS HOLD' },
-  cross_red:   { id:'cross_red',   type:'cross', safe:'red',   taunt:'The herd buys the top. You won’t.',   cue:'Walk where SELLERS won', win:'SELLERS HOLD' },
-  highest:     { id:'highest',     type:'highest', taunt:'Show me the strongest hand.', cue:'Reach the strongest move', win:'STRONGEST MOVE' },
-  wick_climb:  { id:'wick_climb',  type:'wick', taunt:'Climb — or be left behind.', cue:'Climb the wick', win:'TO THE TOP' },
-  liquidity:   { id:'liquidity',   type:'liquidity', taunt:'Take it before it vanishes.', cue:'Grab it — fast', win:'LIQUIDITY TAKEN' },
-};
-// The Gambler (level 0) = 3 crystals → the three crossing/strength trials. Wick & liquidity are
-// authored and testable now (QA), ready to assign to later Guardians.
-const GUARDIAN_TRIALS = {
-  0: [ TRIAL_DEFS.cross_green, TRIAL_DEFS.cross_red, TRIAL_DEFS.highest ],
-};
-
-const GuardianTrial = (function () {
-  let st = null;                 // active trial state (null = inactive)
-  const TWALK = 120;             // arena run speed
-  const BOOST_VY = -680;         // per-tap boost (wick/liquidity ascent)
-  function W_() { return (typeof W !== 'undefined' && W) ? W : window.innerWidth; }
-  function H_() { return (typeof H !== 'undefined' && H) ? H : window.innerHeight; }
-  function accent() { try { return (bfTheme() || {}).acc || '#ff5d6c'; } catch (e) { return '#ff5d6c'; } }
-  function forRound(level, idx) { const list = GUARDIAN_TRIALS[level]; if (!list) return null; return list[idx] || list[list.length - 1] || null; }
-  function byId(id) { return TRIAL_DEFS[id] || null; }
-
-  // ── ARENA BUILDERS (one per trial type) — all in screen space (cameraX = 0, no scroll) ──
-  function buildArena(trial) {
-    const W0 = W_(), H0 = H_();
-    const baseY = Math.min((typeof groundY !== 'undefined' && groundY) ? groundY : H0 * 0.74, H0 - 78);
-    const a = { baseY, type: trial.type, cands: [], goal: null, base: null, wick: null, shells: [], startX: 20 };
-    if (trial.type === 'cross') {
-      // A REAL chart silhouette: SAFE candles (trial colour) form a walkable terrain of gentle
-      // peaks & valleys; the wrong-colour candles are TALLER SPIKES you must JUMP over (landing on
-      // a wrong candle collapses it). Crystal sits on the far-right candle.
-      const safe = trial.safe, wrong = safe === 'green' ? 'red' : 'green', n = 8, cw = (W0 - 12) / n;
-      const haz = {}; let tries = 0;
-      while (Object.keys(haz).length < 3 && tries++ < 80) { const i = 2 + Math.floor(Math.random() * (n - 3)); if (!haz[i] && !haz[i - 1] && !haz[i + 1]) haz[i] = 1; }  // never adjacent, never first/last
-      let top = baseY - 92;
-      for (let i = 0; i < n; i++) {
-        const isHaz = !!haz[i];
-        if (!isHaz) { top += (Math.random() - 0.5) * 42; top = Math.max(baseY - 150, Math.min(baseY - 70, top)); }   // gentle random-walk terrain
-        const cTop = isHaz ? Math.max(baseY - 188, top - (60 + Math.random() * 40)) : top;                            // spikes clearly taller
-        a.cands.push({ cx: 6 + i * cw, w: cw - 2, top: cTop, bodyH: baseY - cTop, color: isHaz ? wrong : safe, safe: !isHaz, peak: false, dead: false, crack: 0, rise: 0, crumb: [], wickUp: 5 + Math.random() * (isHaz ? 12 : 26) });
-      }
-      const last = a.cands[n - 1]; a.goal = { x: last.cx + last.w / 2, y: last.top - 30, got: false };
-      a.startX = a.cands[0].cx + 6; a.lastSafeX = a.startX;
-    } else if (trial.type === 'highest') {
-      // A real chart with one clearly tallest candle — climb the terrain and stand on the peak.
-      const n = 8, cw = (W0 - 12) / n, peak = 2 + Math.floor(Math.random() * (n - 3));
-      let top = baseY - 86;
-      for (let i = 0; i < n; i++) {
-        top += (Math.random() - 0.5) * 40; top = Math.max(baseY - 132, Math.min(baseY - 64, top));
-        const isPeak = i === peak, cTop = isPeak ? (baseY - 208) : top;
-        a.cands.push({ cx: 6 + i * cw, w: cw - 2, top: cTop, bodyH: baseY - cTop, color: isPeak ? 'green' : (Math.random() < 0.5 ? 'green' : 'red'), peak: isPeak, safe: true, dead: false, crack: 0, rise: 0, crumb: [], wickUp: 5 + Math.random() * 24 });
-      }
-      const pc = a.cands[peak]; a.goal = { x: pc.cx + pc.w / 2, y: pc.top - 30, got: false };
-      a.startX = a.cands[0].cx + 6; a.lastSafeX = a.startX;
-    } else if (trial.type === 'wick') {
-      // A single candle with a long WICK pole. Finn TWIRLS up it (reusing the pole-spin) — crystal at the tip.
-      const bx = W0 / 2 - 34;
-      a.base = { cx: bx, w: 68, top: baseY - 70, bodyH: 70, color: 'green', safe: true, dead: false, crack: 0, rise: 1, crumb: [], wickUp: 0 };
-      a.wick = { x: W0 / 2, y0: baseY - 70, y1: Math.max(74, H0 * 0.16) };
-      a.goal = { x: W0 / 2, y: a.wick.y1 - 6, got: false };
-      a.startX = bx + 12;
-    } else if (trial.type === 'liquidity') {
-      // Twirl up the wick, then BOOST through a stack of 5 shells (the liquidity) above the tip.
-      const bx = W0 / 2 - 34;
-      a.base = { cx: bx, w: 68, top: baseY - 70, bodyH: 70, color: 'green', safe: true, dead: false, crack: 0, rise: 1, crumb: [], wickUp: 0 };
-      a.wick = { x: W0 / 2, y0: baseY - 70, y1: Math.max(150, H0 * 0.34) };
-      for (let i = 0; i < 5; i++) a.shells.push({ x: W0 / 2, y: a.wick.y1 - 24 - i * 30, got: false });
-      a.goal = { x: W0 / 2, y: a.shells[a.shells.length - 1].y, got: false };
-      a.startX = bx + 12;
-    }
-    return a;
-  }
-
-  function run(trial, onDone) {
-    if (st) return;
-    // GUARDIAN TRIALS V2 — the isolated arena is RETIRED. Every caller now delegates to the
-    // on-chart trial system (mapped to the three V2 trials), so the old arena never renders.
-    if (typeof startChartTrial === 'function') { startChartTrial(ctMap(trial && (trial.id || trial)), onDone); return; }
-    const a = buildArena(trial);
-    st = Object.assign({
-      trial, onDone, phase: 'speak', t: 0, speakT: 0, speakDur: 2.1, goT: 0, prevBottom: 0,
-      shake: 0, flash: 0, darken: 0, hint: '', hintT: 0, boostCd: 0,
-      gBob: 0, gRecoil: 0, gLean: 0, gEyeFlash: 0, gGlow: 0, gGrowl: 0, gIntro: 0,
-      crystals: (typeof bfState !== 'undefined' && bfState) ? bfState.bossHP : 3,
-      crystalBreak: 0, doneT: 0, particles: [], dust: [], embers: [], rings: [], timeLeft: a.timeLimit || 0,
-      climbY: 0, climbV: 0, spinPhase: 0, collected: 0,
-    }, a);
-    if (st.type === 'wick' || st.type === 'liquidity') { st.climbY = st.wick.y0 - 4; st.climbV = 0; st.spinPhase = 0; st.collected = 0; }
-    try {
-      turtle.x = st.startX; turtle.y = st.baseY - turtle.h;
-      if (st.type === 'wick' || st.type === 'liquidity') { turtle.x = (st.base.cx + st.base.w / 2 - turtle.w / 2); turtle.y = st.base.top - turtle.h; }
-      turtle.vy = 0; turtle.onGround = true; turtle.halt = true; turtle.dir = 1;
-      turtle.tucked = false; turtle.spinning = false; turtle.vxBoost = 0; turtle.boostsUsed = 0; turtle.rot = 0;
-    } catch (e) {}
-    st.prevBottom = turtle.y + turtle.h;
-    try { document.body.classList.add('trialActive'); } catch (e) {}
-    try { if (typeof CineAudio !== 'undefined' && CineAudio.appear) CineAudio.appear(); } catch (e) {}
-  }
-
-  function finish(passed) {
-    if (!st || st.handing) return;
-    st.handing = true; const cb = st.onDone;
-    try { document.body.classList.remove('trialActive'); } catch (e) {}
-    try { turtle.rot = 0; turtle.spinning = false; } catch (e) {}
-    st = null;
-    try { if (cb) cb(passed ? 100 : 0, passed); } catch (e) {}
-  }
-
-  // ── INPUT ── type-aware: cross/highest → JUMP (boost in air for highest); wick/liquidity → BOOST.
-  function onTap() {
-    if (!st) return;
-    if (st.phase === 'speak') { st.speakT = Math.max(st.speakT, st.speakDur - 0.15); return; }   // tap skips the taunt
-    if (st.phase !== 'play') return;
-    const t = st.type;
-    if (t === 'wick' || t === 'liquidity') {                 // each tap boosts the twirl up the wick
-      if (st.boostCd > 0) return;
-      st.climbV = BOOST_VY; turtle.flameT = 0.4; st.boostCd = 0.15;
-      try { if (typeof CineAudio !== 'undefined' && CineAudio.warp) CineAudio.warp(); } catch (e) {}
-      return;
-    }
-    if (turtle.onGround) {                       // cross / highest — jump
-      turtle.vy = CFG.jumpVelocity; turtle.onGround = false; turtle.flameT = 0.2;
-      spawnDust(turtle.x + turtle.w / 2, st.baseY); try { if (typeof CineAudio !== 'undefined' && CineAudio.warp) CineAudio.warp(); } catch (e) {}
-    } else if (t === 'highest' && turtle.boostsUsed < 1) {   // one air-boost to climb to the peak
-      turtle.boostsUsed = 1; turtle.vy = BOOST_VY * 0.9; turtle.flameT = 0.4;
-    }
-  }
-
-  function spawnDust(x, y) { for (let i = 0; i < 7; i++) st.dust.push({ x, y, vx: (Math.random() - 0.5) * 90, vy: -Math.random() * 60, life: 0.4 }); }
-  function burst(x, y, col, n) { for (let i = 0; i < n; i++) { const ang = Math.random() * 6.28, s = 80 + Math.random() * 260; st.particles.push({ x, y, vx: Math.cos(ang) * s, vy: Math.sin(ang) * s - 60, life: 0.7 + Math.random() * 0.5, col }); } }
-
-  function reactWin() {
-    if (st.phase === 'win') return;
-    st.phase = 'win'; st.doneT = 0; st.goal.got = true;
-    try { turtle.spinning = false; turtle.rot = 0; } catch (e) {}   // drop out of the twirl for the win drop
-    // "I HURT THE BOSS" — flash, heavy shake, Guardian recoils + growls, a crystal shatters.
-    st.flash = 0.6; st.shake = 22; st.gRecoil = 36; st.gEyeFlash = 0.8; st.gGrowl = 1; st.crystalBreak = 1.0;
-    if (st.crystals > 0) st.crystals--;
-    st.rings.push({ x: st.goal.x, y: st.goal.y, rad: 8, spd: 560, life: 0.55, col: '#7fe9ff' });
-    st.rings.push({ x: st.goal.x, y: st.goal.y, rad: 4, spd: 360, life: 0.5, col: accent() });
-    burst(st.goal.x, st.goal.y, '#16c784', 34); burst(st.goal.x, st.goal.y, accent(), 20); burst(st.goal.x, st.goal.y, '#ffffff', 10);
-    try { bossHitFX && bossHitFX('hurt'); } catch (e) {}
-    try { if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting('win'); } catch (e) {}
-  }
-  function reactStumble(msg, fx, fy) {
-    // The Guardian leans in, the world reddens, the platform you trusted breaks beneath you.
-    st.shake = Math.max(st.shake, 14); st.darken = 0.55; st.gLean = 18; st.gGlow = 0.85; st.gGrowl = 0.7;
-    st.hint = msg || ''; st.hintT = 1.5;
-    if (fx != null) {
-      st.rings.push({ x: fx, y: fy, rad: 4, spd: 300, life: 0.4, col: '#ff6470' });
-      for (let i = 0; i < 8; i++) st.dust.push({ x: fx + (Math.random() - 0.5) * 22, y: fy, vx: (Math.random() - 0.5) * 90, vy: -Math.random() * 90, life: 0.6, spark: '#6b6b78' });
-    }
-    try { bossTaunt && bossTaunt(); } catch (e) {}
-    try { if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting('lose'); } catch (e) {}
-  }
-
-  // ── STEP ──
-  function step(dt) {
-    st.t += dt; st.gBob += dt; st.gIntro = Math.min(1, st.gIntro + dt * 1.4);
-    if (st.boostCd > 0) st.boostCd -= dt;
-    st.shake = Math.max(0, st.shake - dt * 60); st.flash = Math.max(0, st.flash - dt * 1.6);
-    st.darken = Math.max(0, st.darken - dt * 1.2); st.hintT = Math.max(0, st.hintT - dt);
-    st.gRecoil = Math.max(0, st.gRecoil - dt * 70); st.gLean = Math.max(0, st.gLean - dt * 50);
-    st.gEyeFlash = Math.max(0, st.gEyeFlash - dt * 1.6); st.gGlow = Math.max(0, st.gGlow - dt * 1.4);
-    st.gGrowl = Math.max(0, st.gGrowl - dt * 2.2); st.crystalBreak = Math.max(0, st.crystalBreak - dt * 1.1);
-    // ambient embers rising from the abyss — the arena breathes even when nothing happens
-    if (Math.random() < dt * 7) st.embers.push({ x: Math.random() * W_(), y: H_() + 8, vx: (Math.random() - 0.5) * 14, vy: -(18 + Math.random() * 44), r: 1 + Math.random() * 2.2, life: 2.6 + Math.random() * 2 });
-    st.embers = st.embers.filter(p => (p.life -= dt) > 0); st.embers.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; });
-    st.rings = st.rings.filter(r => (r.life -= dt) > 0); st.rings.forEach(r => { r.rad += r.spd * dt; });
-    st.particles = st.particles.filter(p => (p.life -= dt) > 0); st.dust = st.dust.filter(p => (p.life -= dt) > 0);
-    st.particles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 520 * dt; });
-    st.dust.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.spark ? 60 : 260) * dt; });
-    turtle.animT += dt;
-    st.cands.forEach(c => {
-      // candles RISE in the second half of the taunt → "Guardian speaks, then the trial appears"
-      if ((st.phase !== 'speak' || st.speakT > st.speakDur * 0.5) && c.rise < 1) c.rise = Math.min(1, c.rise + dt * 3.2);
-      if (c.crack > 0) { c.crack -= dt; if (c.crack <= 0) { c.dead = true; c.crumb = []; for (let i = 0; i < 16; i++) c.crumb.push({ x: c.cx + Math.random() * c.w, y: c.top + Math.random() * c.bodyH, vx: (Math.random() - 0.5) * 140, vy: -Math.random() * 80, life: 0.9 }); } }
-      if (c.dead && c.crumb) c.crumb.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; p.life -= dt; });
-    });
-
-    if (st.phase === 'speak') { st.speakT += dt; if (st.speakT >= st.speakDur) { st.phase = 'play'; st.goT = 0; turtle.halt = false; try { if (typeof CineAudio !== 'undefined' && CineAudio.warp) CineAudio.warp(); } catch (e) {} } return; }
-    if (st.phase === 'play') st.goT += dt;
-    if (st.phase === 'win') { st.doneT += dt; turtle.vy += CFG.gravity * dt; turtle.y += turtle.vy * dt; if (turtle.y + turtle.h > st.baseY) { turtle.y = st.baseY - turtle.h; turtle.vy = 0; } if (st.doneT > 0.95) finish(true); return; }
-
-    if (st.type === 'cross') return stepCross(dt);
-    if (st.type === 'highest') return stepHighest(dt);
-    if (st.type === 'wick') return stepWick(dt);
-    if (st.type === 'liquidity') return stepLiquidity(dt);
-  }
-
-  function landOnCandles(dt) {            // shared landing onto candle tops; returns the candle landed on
-    turtle.vy += CFG.gravity * dt; turtle.y += turtle.vy * dt;
-    if (turtle.flameT > 0) turtle.flameT -= dt;
-    const newBottom = turtle.y + turtle.h, footL = turtle.x + turtle.w * 0.34, footR = turtle.x + turtle.w * 0.66;
-    let landed = null, onG = false;
-    if (turtle.vy >= 0) {
-      for (const c of st.cands) {
-        if (c.dead) continue;
-        if (footR > c.cx && footL < c.cx + c.w && st.prevBottom <= c.top + 2 && newBottom >= c.top) { turtle.y = c.top - turtle.h; turtle.vy = 0; onG = true; landed = c; break; }
-      }
-    }
-    turtle.onGround = onG; st.prevBottom = turtle.y + turtle.h; return landed;
-  }
-
-  // Shared terrain runner (CROSS & HIGHEST): Finn auto-runs across a real chart silhouette —
-  // following gentle slopes, blocked by taller candles (jump up/over them), falling off edges.
-  function runTerrain(dt, mode) {
-    const W0 = W_();
-    const feetY = () => turtle.y + turtle.h;
-    const centerC = () => { const cxc = turtle.x + turtle.w / 2; return st.cands.find(c => !c.dead && cxc >= c.cx && cxc < c.cx + c.w); };
-    if (!turtle.halt) { turtle.x += (mode === 'highest' ? TWALK * 0.9 : TWALK) * dt; }
-    if (turtle.x < 2) turtle.x = 2;
-    if (turtle.x + turtle.w > W0 - 4) turtle.x = W0 - 4 - turtle.w;
-    // WALL: a candle whose top is well ABOVE the feet blocks the run — you must JUMP it.
-    if (turtle.onGround) {
-      for (const c of st.cands) { if (c.dead) continue;
-        if (turtle.x + turtle.w > c.cx && turtle.x < c.cx && c.top < feetY() - 28) { turtle.x = c.cx - turtle.w; break; }
-      }
-    }
-    let sc = centerC();
-    if (turtle.onGround) {
-      if (!sc || sc.top > feetY() + 10) { turtle.onGround = false; }            // ran off an edge → fall
-      else { turtle.y = sc.top - turtle.h; st.prevBottom = feetY(); onStand(sc, mode); if (sc.dead) turtle.onGround = false; }   // follow terrain
-    }
-    if (!turtle.onGround) {
-      turtle.vy += CFG.gravity * dt; turtle.y += turtle.vy * dt;
-      if (turtle.flameT > 0) turtle.flameT -= dt;
-      sc = centerC();
-      if (turtle.vy >= 0 && sc && !sc.dead && st.prevBottom <= sc.top + 2 && feetY() >= sc.top) { turtle.y = sc.top - turtle.h; turtle.vy = 0; turtle.onGround = true; onStand(sc, mode); }
-      st.prevBottom = feetY();
-    }
-    if (feetY() > st.baseY + 92) {                                              // fell → respawn at last safe footing
-      const cxs = st.lastSafeX + turtle.w / 2;
-      const s0 = st.cands.find(c => !c.dead && cxs >= c.cx && cxs < c.cx + c.w) || st.cands.find(c => !c.dead) || st.cands[0];
-      turtle.x = st.lastSafeX; turtle.y = (s0 ? s0.top : st.baseY) - turtle.h; turtle.vy = 0; turtle.onGround = true; st.prevBottom = feetY();
-    }
-    if (mode === 'cross' && !st.goal.got && turtle.x + turtle.w / 2 >= st.goal.x - 18) reactWin();
-  }
-  function onStand(c, mode) {
-    if (mode === 'highest') { st.lastSafeX = c.cx + 4; turtle.boostsUsed = 0; if (c.peak) reactWin(); return; }
-    if (c.safe) { st.lastSafeX = c.cx + 4; turtle.boostsUsed = 0; }
-    else if (c.crack <= 0) { c.crack = 0.32; reactStumble(st.trial.safe === 'green' ? 'STAY ON GREEN' : 'STAY ON RED', c.cx + c.w / 2, c.top); }   // landed on the wrong colour → it collapses
-  }
-  function stepCross(dt) { runTerrain(dt, 'cross'); }
-  function stepHighest(dt) { runTerrain(dt, 'highest'); }
-
-  // ── WICK CLIMB ── reuses the pole-spin twirl: each tap boosts Finn UP while he spins around the wick.
-  function climbStep(dt) {
-    const w = st.wick;
-    turtle.spinning = true; st.spinPhase += dt * 7.5; turtle.spinPhase = st.spinPhase;   // continuous twirl
-    st.climbV += CFG.gravity * 0.40 * dt; st.climbY += st.climbV * dt;                    // light, floaty gravity
-    if (st.climbY > w.y0) { st.climbY = w.y0; st.climbV = 0; }                            // can't sink below the base
-    const radius = 16, cx = w.x + Math.sin(st.spinPhase) * radius;
-    turtle.x = cx - turtle.w / 2; turtle.y = st.climbY - turtle.h / 2;
-    turtle.rot = Math.sin(st.spinPhase) * 0.18; turtle.onGround = false;
-    if (turtle.flameT > 0) turtle.flameT -= dt;
-    try { if (turtle.trail) turtle.trail.push({ x: cx, y: st.climbY, life: 0.5 }); } catch (e) {}
-  }
-  function stepWick(dt) {
-    climbStep(dt);
-    if (!st.goal.got && st.climbY <= st.wick.y1 + 10) reactWin();                         // reached the tip
-  }
-  function stepLiquidity(dt) {
-    climbStep(dt);
-    for (const s of st.shells) {
-      if (!s.got && st.climbY <= s.y + 14) { s.got = true; st.collected++; burst(s.x, s.y, '#7fe9ff', 14); st.rings.push({ x: s.x, y: s.y, rad: 3, spd: 260, life: 0.35, col: '#aef0ff' }); st.flash = Math.max(st.flash, 0.16); try { if (typeof CineAudio !== 'undefined' && CineAudio.warp) CineAudio.warp(); } catch (e) {} }
-    }
-    if (st.collected >= st.shells.length && !st.goal.got) reactWin();                     // grabbed all the liquidity
-  }
-
-  // ── DRAW ── the whole arena reads as ONE boss encounter: the Guardian looms behind,
-  // the candles are alive in front of him, and every hit visibly wounds him.
-  function hexA(h, a) { h = (h || '#ff5d6c').replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); const v = isNaN(n) ? 0xff5d6c : n; return 'rgba(' + ((v >> 16) & 255) + ',' + ((v >> 8) & 255) + ',' + (v & 255) + ',' + a + ')'; }
-
-  function draw() {
-    const W0 = W_(), H0 = H_(), acc = accent();
-    ctx.save();
-    ctx.translate((Math.random() - 0.5) * st.shake, (Math.random() - 0.5) * st.shake);
-    // deep, ominous void
-    const bg = ctx.createLinearGradient(0, 0, 0, H0); bg.addColorStop(0, '#0a0610'); bg.addColorStop(0.45, '#0c0a18'); bg.addColorStop(1, '#04050b');
-    ctx.fillStyle = bg; ctx.fillRect(-40, -40, W0 + 80, H0 + 80);
-    if (st.darken > 0) { ctx.fillStyle = 'rgba(60,0,12,' + (st.darken * 0.45) + ')'; ctx.fillRect(-40, -40, W0 + 80, H0 + 80); }
-    for (const p of st.embers) { ctx.globalAlpha = Math.max(0, Math.min(0.45, p.life * 0.2)); ctx.fillStyle = hexA(acc, 1); ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.28); ctx.fill(); } ctx.globalAlpha = 1;
-    drawGuardian(W0, H0, acc);                  // the Guardian is ALWAYS here, behind the arena
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, st.baseY + 0.5); ctx.lineTo(W0, st.baseY + 0.5); ctx.stroke();
-    if (st.base) drawBase(st.base);
-    if (st.wick) drawWick(st.wick, acc);
-    for (const c of st.cands) drawCandle(c);     // candles in FRONT of him → he watches from behind them
-    if (st.goal && st.type !== 'liquidity') drawGoal(st.goal, acc);
-    // liquidity = a glowing STACK OF SHELLS above the wick tip (the prize is the main currency)
-    for (const s of st.shells) { if (s.got) continue; const bob = Math.sin(st.t * 4 + s.y * 0.05) * 3; try { drawShell(ctx, s.x, s.y + bob, 12, 0.6 + 0.4 * Math.sin(st.t * 6)); } catch (e) {} }
-    for (const p of st.dust) { ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 1.8)); ctx.fillStyle = p.spark || '#cdbb88'; ctx.beginPath(); ctx.arc(p.x, p.y, p.spark ? 2.4 : 3, 0, 6.28); ctx.fill(); } ctx.globalAlpha = 1;
-    try { drawTurtle(0); } catch (e) {}
-    for (const r of st.rings) { ctx.globalAlpha = Math.max(0, Math.min(1, r.life * 1.7)); ctx.strokeStyle = r.col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, 6.28); ctx.stroke(); } ctx.globalAlpha = 1;
-    for (const p of st.particles) { ctx.globalAlpha = Math.max(0, Math.min(1, p.life)); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, 3.4, 0, 6.28); ctx.fill(); } ctx.globalAlpha = 1;
-    drawCrystals(W0, H0, acc);
-    drawHUD(W0, H0, acc);
-    if (st.flash > 0) { ctx.fillStyle = 'rgba(255,255,255,' + Math.min(0.7, st.flash) + ')'; ctx.fillRect(-40, -40, W0 + 80, H0 + 80); }
-    const vg = ctx.createRadialGradient(W0 / 2, H0 * 0.52, H0 * 0.28, W0 / 2, H0 * 0.52, H0 * 0.78); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.5)'); ctx.fillStyle = vg; ctx.fillRect(-40, -40, W0 + 80, H0 + 80);
-    ctx.restore();
-  }
-  function drawBase(b) {   // the base candle renders like a real chart candle
-    ctx.save();
-    ctx.fillStyle = '#16c784'; ctx.fillRect(b.cx, b.top, b.w, b.bodyH);
-    ctx.lineWidth = 1; ctx.strokeStyle = '#0c9c69'; ctx.strokeRect(b.cx + 0.5, b.top + 0.5, b.w - 1, b.bodyH - 1);
-    ctx.globalAlpha = 0.5; ctx.fillStyle = '#5dedb5'; ctx.fillRect(b.cx + 1, b.top + 1, b.w - 2, 3); ctx.globalAlpha = 1;
-    ctx.restore();
-  }
-  function drawWick(w, acc) {   // the wick is a tall pole Finn twirls up
-    ctx.save(); ctx.lineCap = 'round';
-    ctx.strokeStyle = '#9fb0c8'; ctx.globalAlpha = 0.95; ctx.lineWidth = 4; ctx.shadowColor = acc; ctx.shadowBlur = 12 + 7 * Math.sin(st.t * 5);
-    ctx.beginPath(); ctx.moveTo(w.x, w.y0); ctx.lineTo(w.x, w.y1); ctx.stroke();
-    ctx.restore();
-  }
-  function drawGoal(g, acc) {
-    if (g.got) return;
-    const pulse = 1 + 0.14 * Math.sin(st.t * 6), x = g.x, y = g.y - 3 * Math.sin(st.t * 3);
-    ctx.save();
-    const hal = ctx.createRadialGradient(x, y, 2, x, y, 34); hal.addColorStop(0, 'rgba(127,233,255,0.5)'); hal.addColorStop(1, 'rgba(127,233,255,0)'); ctx.fillStyle = hal; ctx.beginPath(); ctx.arc(x, y, 34, 0, 6.28); ctx.fill();
-    ctx.translate(x, y); ctx.scale(pulse, pulse);
-    ctx.fillStyle = '#bdf3ff'; ctx.shadowColor = '#7fe9ff'; ctx.shadowBlur = 22;
-    ctx.beginPath(); ctx.moveTo(0, -14); ctx.lineTo(12, -3); ctx.lineTo(7, 13); ctx.lineTo(-7, 13); ctx.lineTo(-12, -3); ctx.closePath(); ctx.fill();
-    ctx.restore();
-  }
-  function drawCandle(c) {
-    if (c.dead) { if (c.crumb) for (const p of c.crumb) { ctx.globalAlpha = Math.max(0, p.life / 0.9); ctx.fillStyle = c.color === 'green' ? '#16c784' : '#ea3943'; ctx.fillRect(p.x, p.y, 5, 5); } ctx.globalAlpha = 1; return; }
-    const rise = c.rise, full = c.bodyH, h = Math.max(4, full * rise), top = c.top + (full - h);
-    const cracking = c.crack > 0, green = c.color === 'green';
-    const body = green ? '#16c784' : '#ea3943', edge = green ? '#0c9c69' : '#c0212c', sheen = green ? '#5dedb5' : '#f3838a';
-    const mid = c.cx + c.w / 2;
-    ctx.save();
-    let jit = 0; if (cracking) jit = (Math.random() - 0.5) * 6;
-    ctx.translate(jit, 0);
-    // upper wick (real chart) — appears once the body has mostly risen
-    if (c.wickUp > 1 && rise > 0.6) { ctx.strokeStyle = body; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(mid, top); ctx.lineTo(mid, top - c.wickUp * rise); ctx.stroke(); }
-    // body: flat fill + crisp darker border — the real candlestick look
-    ctx.globalAlpha = cracking ? 0.72 : 1; ctx.fillStyle = body; ctx.fillRect(c.cx, top, c.w, h);
-    if (h >= 3 && c.w > 5) { ctx.lineWidth = 1; ctx.strokeStyle = edge; ctx.strokeRect(c.cx + 0.5, top + 0.5, c.w - 1, h - 1); }
-    // subtle top sheen so the body isn't dead-flat
-    ctx.globalAlpha = (cracking ? 0.72 : 1) * 0.5; ctx.fillStyle = sheen; ctx.fillRect(c.cx + 1, top + 1, c.w - 2, Math.max(1, Math.min(3, h * 0.12))); ctx.globalAlpha = 1;
-    // the peak (highest trial) wears a bright glowing crown so it's unmistakable
-    if (c.peak) { ctx.save(); ctx.shadowColor = '#7fffd0'; ctx.shadowBlur = 14 + 8 * Math.sin(st.t * 5); ctx.globalAlpha = 0.6 + 0.4 * Math.sin(st.t * 5); ctx.fillStyle = '#eafff6'; ctx.fillRect(c.cx + 1, top - 1, c.w - 2, 3); ctx.restore(); ctx.globalAlpha = 1; }
-    // a collapsing candle cracks apart and vents smoke
-    if (cracking) {
-      ctx.strokeStyle = 'rgba(15,4,6,0.75)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(mid, top); ctx.lineTo(mid - c.w * 0.16, top + h * 0.4); ctx.lineTo(mid + c.w * 0.1, top + h * 0.7); ctx.lineTo(mid - c.w * 0.05, top + h); ctx.stroke();
-      if (Math.random() < 0.6) st.dust.push({ x: c.cx + Math.random() * c.w, y: top + Math.random() * h, vx: (Math.random() - 0.5) * 30, vy: -(20 + Math.random() * 30), life: 0.6, spark: '#5a5a66' });
-    }
-    ctx.restore();
-  }
-  function drawGuardian(W0, H0, acc) {
-    const intro = st.gIntro, speaking = st.phase === 'speak';
-    const cx = W0 / 2, breathe = Math.sin(st.gBob * 1.1) * 4, lean = st.gLean + (speaking ? 6 : 0);
-    const ty = H0 * 0.05 - st.gRecoil * 0.9 + breathe + lean * 0.4, hw = Math.min(W0 * 0.66, 480), hh = H0 * 0.34;
-    const eyY = ty + hh * 0.46 + lean * 0.3, scale = (0.82 + 0.18 * intro) * (1 + st.gGrowl * 0.05);
-    ctx.save();
-    ctx.translate(cx, eyY); ctx.scale(scale, scale); ctx.translate(-cx, -eyY);
-    // the room glows with his presence — brighter when angry or flashing
-    const halo = ctx.createRadialGradient(cx, eyY, 12, cx, eyY, W0 * 0.6);
-    halo.addColorStop(0, hexA(acc, 0.16 + st.gGlow * 0.22 + st.gEyeFlash * 0.28)); halo.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = halo; ctx.fillRect(0, 0, W0, H0 * 0.62);
-    // shoulder pillars descend behind the candle road (he fills the whole arena)
-    ctx.fillStyle = 'rgba(10,6,16,0.55)';
-    ctx.beginPath(); ctx.moveTo(cx - hw * 0.5, ty + hh * 0.5); ctx.lineTo(cx - hw * 0.74, st.baseY); ctx.lineTo(cx - hw * 0.34, st.baseY); ctx.lineTo(cx - hw * 0.2, ty + hh * 0.7); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(cx + hw * 0.5, ty + hh * 0.5); ctx.lineTo(cx + hw * 0.74, st.baseY); ctx.lineTo(cx + hw * 0.34, st.baseY); ctx.lineTo(cx + hw * 0.2, ty + hh * 0.7); ctx.closePath(); ctx.fill();
-    // horned head silhouette
-    ctx.shadowColor = acc; ctx.shadowBlur = 26 + st.gGlow * 30 + st.gEyeFlash * 26;
-    ctx.fillStyle = '#0c0712'; ctx.strokeStyle = hexA(acc, 0.55); ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(cx - hw * 0.30, ty);
-    ctx.lineTo(cx - hw * 0.46, ty - hh * 0.22);
-    ctx.lineTo(cx - hw * 0.16, ty + hh * 0.06);
-    ctx.quadraticCurveTo(cx, ty - hh * 0.04, cx + hw * 0.16, ty + hh * 0.06);
-    ctx.lineTo(cx + hw * 0.46, ty - hh * 0.22);
-    ctx.lineTo(cx + hw * 0.30, ty);
-    ctx.lineTo(cx + hw * 0.5, ty + hh * 0.36);
-    ctx.lineTo(cx + hw * 0.30, ty + hh * 0.96);
-    ctx.lineTo(cx, ty + hh * 1.06);
-    ctx.lineTo(cx - hw * 0.30, ty + hh * 0.96);
-    ctx.lineTo(cx - hw * 0.5, ty + hh * 0.36);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.shadowBlur = 0;
-    // angled glowing eyes (white on a hit, red when angry)
-    const eo = hw * 0.2, er = 10 + st.gGlow * 4 + (speaking ? 1.5 * Math.sin(st.t * 8) : 0);
-    const eyeCol = st.gEyeFlash > 0 ? '#ffffff' : (st.gGlow > 0 ? '#ff5a5a' : acc);
-    for (const dx of [-eo, eo]) {
-      ctx.save(); ctx.translate(cx + dx, eyY); ctx.rotate(dx < 0 ? 0.32 : -0.32);
-      ctx.shadowColor = eyeCol; ctx.shadowBlur = 18 + st.gGlow * 22 + st.gEyeFlash * 24; ctx.fillStyle = eyeCol;
-      ctx.beginPath(); ctx.ellipse(0, 0, er * 1.5, er * 0.8, 0, 0, 6.28); ctx.fill();
-      ctx.fillStyle = '#180010'; ctx.beginPath(); ctx.ellipse(0, 0, er * 0.55, er * 0.4, 0, 0, 6.28); ctx.fill();
-      ctx.restore();
-    }
-    // maw that glows + opens when he growls
-    const mw = hw * 0.34, my = ty + hh * 0.74;
-    ctx.fillStyle = hexA(acc, 0.12 + st.gGrowl * 0.5);
-    ctx.beginPath(); ctx.moveTo(cx - mw / 2, my); ctx.quadraticCurveTo(cx, my + hh * 0.16 + st.gGrowl * 8, cx + mw / 2, my); ctx.lineTo(cx + mw * 0.36, my + 4); ctx.quadraticCurveTo(cx, my + hh * 0.1, cx - mw * 0.36, my + 4); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = hexA('#e8e0ff', 0.5 + st.gGrowl * 0.4);
-    for (let i = -2; i <= 2; i++) { const txp = cx + i * (mw * 0.16); ctx.beginPath(); ctx.moveTo(txp - 3, my + 1); ctx.lineTo(txp + 3, my + 1); ctx.lineTo(txp, my + 7 + (i % 2 === 0 ? 2 : 0)); ctx.closePath(); ctx.fill(); }
-    ctx.restore();
-  }
-  function drawCrystals(W0, H0, acc) {
-    const total = (typeof bfState !== 'undefined' && bfState) ? bfState.maxBossHP : 3, remain = st.crystals;
-    const gap = 38, x0 = W0 / 2 - ((total - 1) * gap) / 2, y = Math.min(H0 * 0.30, st.baseY - 150);
-    for (let i = 0; i < total; i++) {
-      const x = x0 + i * gap, on = i < remain, breaking = (i === remain) && st.crystalBreak > 0;
-      ctx.save();
-      if (breaking) { const k = st.crystalBreak; ctx.globalAlpha = k; ctx.translate(x, y); ctx.scale(1 + (1 - k) * 1.1, 1 + (1 - k) * 1.1); ctx.translate(-x, -y); }
-      ctx.fillStyle = on ? acc : 'rgba(120,120,140,0.22)'; ctx.shadowColor = on ? acc : 'transparent'; ctx.shadowBlur = on ? 14 : 0;
-      ctx.beginPath(); ctx.moveTo(x, y - 13); ctx.lineTo(x + 11, y - 3); ctx.lineTo(x + 7, y + 12); ctx.lineTo(x - 7, y + 12); ctx.lineTo(x - 11, y - 3); ctx.closePath(); ctx.fill();
-      if (on) { ctx.globalAlpha = 0.5; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(x, y - 13); ctx.lineTo(x + 4, y - 5); ctx.lineTo(x - 2, y + 2); ctx.closePath(); ctx.fill(); }
-      ctx.restore();
-    }
-  }
-  function drawHUD(W0, H0, acc) {
-    ctx.save(); ctx.textAlign = 'center';
-    // ── GUARDIAN SPEAKS ── one short taunt, no lecture
-    if (st.phase === 'speak') {
-      const k = Math.min(1, st.speakT * 2.2) * Math.min(1, (st.speakDur - st.speakT) * 3), ly = Math.min(H0 * 0.42, st.baseY - 120);
-      ctx.globalAlpha = Math.max(0, k); ctx.fillStyle = '#fff'; ctx.font = '800 ' + Math.round(Math.min(26, W0 * 0.058)) + 'px ' + SANS;
-      ctx.shadowColor = hexA(acc, 0.8); ctx.shadowBlur = 16; ctx.fillText('“' + (st.trial.taunt || '') + '”', W0 / 2, ly); ctx.shadowBlur = 0;
-      ctx.globalAlpha = Math.max(0, k * 0.7); ctx.fillStyle = acc; ctx.font = '700 11px ' + SANS; ctx.fillText('THE GUARDIAN', W0 / 2, ly + 22);
-      ctx.globalAlpha = 1; ctx.restore(); return;
-    }
-    // ── PLAY ── a brief challenge cue, the GO! beat, then mostly silence
-    if (st.phase === 'play' && st.goT < 2.6) {
-      const a = Math.min(1, st.goT * 3) * Math.min(1, (2.6 - st.goT) * 1.6);
-      ctx.globalAlpha = Math.max(0, a); ctx.fillStyle = '#fff'; ctx.font = '800 ' + Math.round(Math.min(20, W0 * 0.05)) + 'px ' + SANS;
-      ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8; ctx.fillText(st.trial.cue || '', W0 / 2, Math.min(H0 * 0.40, st.baseY - 150)); ctx.shadowBlur = 0; ctx.globalAlpha = 1;
-    }
-    if (st.phase === 'play' && st.goT < 0.5) { const k = 1 - st.goT / 0.5; ctx.globalAlpha = Math.min(1, k * 2); ctx.fillStyle = '#16c784'; ctx.font = '900 ' + Math.round(44 + k * 18) + 'px ' + SANS; ctx.shadowColor = 'rgba(22,199,132,0.6)'; ctx.shadowBlur = 16; ctx.fillText('GO!', W0 / 2, st.baseY - 110); ctx.shadowBlur = 0; ctx.globalAlpha = 1; }
-    if (st.type === 'liquidity' && st.phase === 'play') {   // shells-collected pips
-      const tot = st.shells.length, gap = 22, x0 = W0 / 2 - ((tot - 1) * gap) / 2, by = Math.min(H0 * 0.13, 40);
-      for (let i = 0; i < tot; i++) { const on = i < st.collected; ctx.globalAlpha = on ? 1 : 0.3; try { drawShell(ctx, x0 + i * gap, by, 8, on ? 1 : 0.2); } catch (e) {} } ctx.globalAlpha = 1;
-    }
-    if (st.phase === 'win') { const k = Math.min(1, st.doneT * 4); ctx.globalAlpha = k; ctx.fillStyle = '#16c784'; ctx.font = '900 ' + Math.round(28 + k * 10) + 'px ' + SANS; ctx.shadowColor = 'rgba(22,199,132,0.6)'; ctx.shadowBlur = 20; ctx.fillText(st.trial.win || 'CLEARED', W0 / 2, st.baseY - 120); ctx.shadowBlur = 0; ctx.globalAlpha = 1; }
-    if (st.hintT > 0) { ctx.globalAlpha = Math.min(1, st.hintT); ctx.fillStyle = '#ff8a93'; ctx.font = '900 16px ' + SANS; ctx.fillText(st.hint, W0 / 2, st.baseY - 120); ctx.globalAlpha = 1; }
-    if (st.phase === 'play' && st.goT < 2.4) { ctx.globalAlpha = 0.55 + 0.45 * Math.sin(st.t * 6); ctx.fillStyle = '#cfe0ff'; ctx.font = '800 13px ' + SANS; ctx.fillText((st.type === 'wick' || st.type === 'liquidity') ? 'TAP — CLIMB' : 'TAP — JUMP', W0 / 2, st.baseY + 40); ctx.globalAlpha = 1; }
-    ctx.restore();
-  }
-
-  function frame(dt) { if (!st) return; step(Math.min(dt, 1 / 30)); if (st) draw(); }
-
-  return { get active() { return !!st; }, forRound, byId, run, onTap, frame };
-})();
-
-/* ════════ CHART TRIAL — the Guardian tests you on the LIVE Trade-Mode chart ════════
-   Runs INSIDE the normal game loop: real candles, real physics, Trader-Mode zoom. Finn walks
-   the real chart — GREEN candles are safe footing, RED candles are traps to JUMP. The Guardian's
-   eyes watch from above and react. Every hook below is a NO-OP unless chartTrial is active, so
-   normal play is completely untouched. */
-let chartTrial = null;
-let _ctCamSaved = null;   // original cameraAnchor, restored when a trial ends
-
-/* ════════ GUARDIAN TRIALS V2 — three boss trials that play out ON the live chart ════════
-   No separate screens, no modals. They run inside the normal game loop using the existing turtle
-   movement (walk / jump / jetpack / wick-spin) and the Trader-View zoomed-out camera. The chart
-   itself becomes the boss arena; a crystal on the chart is the boss's health. */
-const CHART_TRIALS = {
-  green_ascent: { type: 'climb', safe: 'green', dir:  1, speak: 'CLIMB. ONLY BUYERS HOLD HERE.', cue: 'Climb the GREEN candles UP', win: 'BUYERS WON' },
-  red_descent:  { type: 'climb', safe: 'red',   dir: -1, speak: 'DESCEND. SELLERS RULE BELOW.',  cue: 'Drop down the RED candles', win: 'SELLERS WON' },
-  liquidity:    { type: 'wick',  speak: 'LIQUIDITY HIDES AT THE EXTREMES.',       cue: 'Swirl the wick → BOOST off to the shells', win: 'LIQUIDITY TAKEN' },
-};
-const CT_LAUGH = ['Hah.', 'Wrong.', 'Too slow.', 'Again.', 'Weak.'];
-const CT_IDLE  = ['Interesting…', 'Show me.', 'Again.'];
-function ctMap(id) {   // tolerate older ids → the three movement trials
-  if (id === 'green_ascent' || id === 'buyers_won' || id === 'cross_green') return 'green_ascent';
-  if (id === 'red_descent' || id === 'cross_red' || id === 'momentum') return 'red_descent';
-  if (id === 'liquidity' || id === 'wick_climb' || id === 'highest') return 'liquidity';
-  return CHART_TRIALS[id] ? id : 'green_ascent';
-}
-
-function startChartTrial(id, onDone, quick) {
-  id = ctMap(typeof id === 'string' ? id : 'buyers_won');
-  const def = CHART_TRIALS[id];
-  chartTrial = {
-    id, type: def.type, def, active: true, done: false, won: false, onDone: onDone || null,
-    phase: 'intro', t: 0, introT: 0, introDur: quick ? 1.6 : 6, bannerStart: 0,   // chained sub-trials use a short intro (eyes already present)
-    eyesIn: quick ? 1 : 0, darken: 0, speakLine: '', speakT: 0, eyeFlinch: 0, eyeAnger: 0, idleSpeakT: 7,
-    level: (typeof market !== 'undefined' && market) ? market.level : 200,
-    _i: 0, _sinceRed: 9, _redRun: 0,
-    _mode: 'safe', _left: 3, _base: (typeof market !== 'undefined' && market) ? market.level : 200, _ladderStep: 0,   // climb cluster state (safe run → trap cluster)
-    routeLen: (def.type === 'climb') ? (16 + (Math.random() * 3 | 0)) : 22,
-    wickAt: 8, strikes: 0, wickPlaced: false,                                                             // wick visible from the very start of the approach
-    shells: [], swirl: null, _swirlLaunch: false, _swirlDown: false, swirlPhase: 0,                       // Trial 2 swirl + shells
-    collapseX: -1e9, collapseSpd: 0, danger: 0, projTiles: [], projT: 1.4,
-  };
-  // CLIMB trials need vertical room: ascent starts LOW (room to climb up), descent starts HIGH
-  // (room to drop down) so the route reads as a real ascent/descent on the chart.
-  if (def.type === 'climb') { chartTrial.level = (def.dir > 0) ? 160 : 680; chartTrial._base = chartTrial.level; }
-  // REVEAL THE LIVE CHART + force active play (works standalone from QA or from inside a boss round).
-  try { const bf = document.getElementById('bossFight'); if (bf) { bf.classList.remove('fighting', 'won', 'lost', 'introcard'); bf.style.display = 'none'; } } catch (e) {}
-  try { if (typeof session !== 'undefined' && session) session.inModal = false; } catch (e) {}
-  try { paused = false; } catch (e) {}
-  try { lessonOpen = false; } catch (e) {}
-  try { turtle.halt = true; turtle.dir = 1; turtle.tucked = false; turtle.spinning = false; turtle.rot = 0; } catch (e) {}   // halted through the 6s intro
-  try { setupZone = null; pending = null; bannerT = 0; setupCountdown = 0; } catch (e) {}
-  try { document.body.classList.add('trialActive'); } catch (e) {}
-  // PHASE 1 — hold Finn ~34% from the left edge (not 72%) so the player SEES upcoming candles/hazards/wicks.
-  try { if (_ctCamSaved === null) _ctCamSaved = CFG.cameraAnchor; CFG.cameraAnchor = 0.34; } catch (e) {}
-  try { turtle.fuel = CFG.fuelMax; } catch (e) {}   // PHASE 2 — boost is reliable (refilled each frame in the tick)
-  try { chartTrial._mkt = (typeof market !== 'undefined' && market) ? { level: market.level, price: market.price } : null; } catch (e) {}   // restore the chart after the trial mutates it
-  try { if (typeof GameMusic !== 'undefined' && GameMusic.boss) GameMusic.boss(); } catch (e) {}
-}
-function stopChartTrial() {
-  try { if (chartTrial && chartTrial._mkt && typeof market !== 'undefined' && market) { market.level = chartTrial._mkt.level; market.price = chartTrial._mkt.price; } } catch (e) {}
-  chartTrial = null;
-  try { if (_ctCamSaved !== null) { CFG.cameraAnchor = _ctCamSaved; _ctCamSaved = null; } } catch (e) {}   // restore the normal camera
-  try { document.body.classList.remove('trialActive'); } catch (e) {}
-}
-// GUARDIAN TRIAL SEQUENCE — chains the three movement sub-trials into one ~30-45s gauntlet on the
-// chart (a preamble BEFORE the boss exam). On completion it fires the portal punch + runs onComplete.
-function startGuardianSequence(level, onComplete) {
-  if (window._guardianRunning) return;
-  window._guardianRunning = true;
-  const seq = ['green_ascent', 'red_descent', 'liquidity'];   // climb greens UP → descend reds DOWN → grab liquidity → portal
-  let i = 0;
-  function next() {
-    if (i >= seq.length) {
-      window._guardianRunning = false;
-      try { shakeT = Math.max(shakeT || 0, 0.9); flashT = Math.max(flashT || 0, 0.5); } catch (e) {}   // PORTAL punch — amplify the moment
-      try { if (typeof GameMusic !== 'undefined' && GameMusic.boss) GameMusic.boss(level); } catch (e) {}   // guardian roar / boss sting
-      try { if (typeof CineAudio !== 'undefined' && CineAudio.appear) CineAudio.appear(); } catch (e) {}
-      try { if (onComplete) onComplete(); } catch (e) {}
-      return;
-    }
-    const id = seq[i++];
-    startChartTrial(id, function () { setTimeout(next, 140); }, i > 1);   // i>1 → quick intro for the 2nd & 3rd sub-trials
-  }
-  next();
-}
-function ctSpeak(line, dur) { if (!chartTrial) return; chartTrial.speakLine = line; chartTrial.speakT = dur || 2.0; }
-function ctLaugh() { ctSpeak(CT_LAUGH[Math.floor(Math.random() * CT_LAUGH.length)], 1.4); if (chartTrial) chartTrial.eyeAnger = 1; }
-
-// Candle stream while a chart trial runs — branches per trial type. (Returned from nextCandle.)
-function chartTrialCandle() {
-  const ct = chartTrial; ct._i++;
-  const prevH = candles.length ? candles[candles.length - 1].h : ct.level;
-  const Hh = (typeof H !== 'undefined' ? H : 700);
-  const out = (h, color, extra) => { h = Math.max(34, h); if (typeof market !== 'undefined' && market) { market.level = Math.max(40, h); market.price = Math.max(1, market.price * (1 + ((h - prevH) / CFG.pxPerPct) / 100)); } return Object.assign({ h, color, wick: 0, wick2: 0, bos: false, sweep: false, choch: false, ob: false, price: (typeof market !== 'undefined' && market ? market.price : 1), _trial: true }, extra || {}); };
-
-  // ── WICK (liquidity): a FLAT, easy green approach, then ONE giant-wick pole (tall enough to be
-  //    visible from the very start of the approach). Shells get placed above its tip at runtime. ──
-  if (ct.type === 'wick') {
-    if (ct._i === ct.wickAt && !ct.wickPlaced) {
-      ct.wickPlaced = true; ct.level = Math.max(150, Math.min(300, ct.level + 8));
-      return out(ct.level, 'green', { wick: Math.max(440, Hh * 0.62), _giantWick: true, _crystal: true });
-    }
-    ct.level = Math.min(320, ct.level + (4 + Math.random() * 7));   // always ticks UP → clean green approach (color derives from open vs close)
-    return out(ct.level, 'green');
-  }
-
-  // ── CLIMB (green_ascent / red_descent): a directional staircase of SAFE-colour steps you ride
-  //    (UP for green, DOWN for red — because an up-tick IS green and a down-tick IS red), broken by
-  //    short clusters of WRONG-colour traps (against the trend) that collapse if you land on them.
-  //    Crystal at the far end (top for ascent, bottom for descent). ──
-  {
-    const dir = ct.def.dir, safe = ct.def.safe, wrong = (safe === 'green' ? 'red' : 'green');
-    if (ct._i === ct.routeLen) { ct.level += dir * 70; return out(ct.level, safe, { _crystal: true }); }   // the prize at the extreme
-    if (ct._left <= 0) {
-      if (ct._mode === 'safe') { ct._mode = 'trap'; ct._left = 2 + (Math.random() * 2 | 0); }              // 2-3 wrong-colour traps
-      else { ct._mode = 'safe'; ct._left = 2 + (Math.random() * 2 | 0); ct.level = ct._base; }              // resume the safe line
-    }
-    ct._left--;
-    if (ct._mode === 'trap') { return out(prevH - dir * (24 + Math.random() * 18), wrong); }               // a cluster AGAINST the trend → collapses if landed on
-    ct.level += dir * (dir > 0 ? (48 + Math.random() * 24) : (38 + Math.random() * 14)); ct._base = ct.level;   // SAFE steps ride the trend (jump up / drop down between them)
-    return out(ct.level, safe);
-  }
-}
-
-// Per-frame trial logic. Called from the main loop AFTER update() (so it still runs during a
-// wick-spin, when update returns early). Computes the candle Finn is over itself.
-function chartTrialTick(dt) {
-  const ct = chartTrial; ct.t += dt;
-  ct.eyeFlinch = Math.max(0, ct.eyeFlinch - dt * 2.2);
-  ct.eyeAnger = Math.max(0, ct.eyeAnger - dt * 1.4);
-  ct.speakT = Math.max(0, ct.speakT - dt);
-  for (const c of candles) { if (c._crackT > 0) c._crackT -= dt; if (c._shatter > 0) c._shatter -= dt; }
-  if (ct.projTiles.length) { for (const p of ct.projTiles) { p.y += p.vy * dt; p.vy += 620 * dt; } ct.projTiles = ct.projTiles.filter(p => !p.dead && p.y < (groundY + 240)); }
-
-  // ── INTRO TIMELINE (0→6s): appear → eyes(2s) → darken(4s) → speak(5s) → begin(6s) ──
-  if (ct.phase === 'intro') {
-    ct.introT += dt;
-    ct.eyesIn = Math.min(1, ct.introT / 2);
-    ct.darken = Math.min(0.5, Math.max(0, ct.introT - 4) * 0.5);
-    if (ct.introT >= 5 && !ct.speakLine) ctSpeak(ct.def.speak, 2.6);
-    if (ct.introT >= ct.introDur) { ct.phase = 'play'; ct.bannerStart = ct.t; turtle.halt = false; if (ct.type === 'momentum') ct.collapseX = turtle.x - 240; }
-    return;
-  }
-  if (ct.done) return;
-
-  try { turtle.fuel = CFG.fuelMax; } catch (e) {}   // PHASE 2 — boost never fails mid-trial
-  if (turtle.halt) turtle.halt = false;             // never freeze the player in play
-
-  const midX = turtle.x + turtle.w / 2;
-  const cur = candles.find(c => midX >= c.x && midX < c.x + c.w);
-  const crystalC = candles.find(c => c._crystal && !c.dead);
-
-  // FALLING WRONG-COLOUR CANDLES — a flagged candle sinks (open/h drop → candleTop falls) then dies.
-  for (const c of candles) { if (c._fallV != null && !c.dead) { c._fallV += 1600 * dt; c.open -= c._fallV * dt; c.h -= c._fallV * dt; if (Math.max(c.open, c.h) < -200) c.dead = true; } }
-
-  if (ct.type === 'climb') {
-    const safe = ct.def.safe;                                          // green for ASCENT, red for DESCENT
-    // landed on the WRONG colour → it cracks + collapses, knockback + laugh
-    if (cur && cur._trial && turtle.onGround && cur.color !== safe && cur._crackT <= 0 && cur._fallV == null) {
-      cur._crackT = 0.5; ct.strikes++;
-      turtle.vy = -380; turtle.vxBoost = 0; turtle.x -= 22; turtle.onGround = false;
-      try { shakeT = Math.max(shakeT, 0.3); flashT = Math.max(flashT, 0.18); } catch (e) {}
-      ctLaugh();
-      try { floaters.push({ text: (safe === 'green' ? 'RED COLLAPSES — STAY GREEN' : 'GREEN COLLAPSES — STAY RED'), color: '#ff6b78', y: H * 0.32, t: 1.0, center: true, size: 14, glow: true }); } catch (e) {}
-      try { GameMusic && GameMusic.sting && GameMusic.sting('lose'); } catch (e) {}
-    }
-    // landed on a SAFE step → the wrong-colour cluster behind FALLS away (drama + keep moving)
-    if (cur && cur._trial && turtle.onGround && cur.color === safe && cur.id !== ct._lastGreen) {
-      ct._lastGreen = cur.id; ct.eyeFlinch = 1;
-      for (const c of candles) { if (c._trial && c.color !== safe && !c.dead && c._fallV == null && c.x < cur.x && c.x > cur.x - 380) { c._fallV = 30 + Math.random() * 60; c._crackT = 0.3; } }
-    }
-    if (crystalC && (turtle.x + turtle.w / 2) >= (crystalC.x + crystalC.w / 2 - 8)) chartTrialWin(crystalC);
-
-  } else if (ct.type === 'wick') {
-    const gw = candles.find(c => c._giantWick && !c.dead);
-    if (gw && !ct.shells.length) {                                  // place the shell stack above the wick tip (once)
-      const tipY = candleTop(gw) - (gw.wick || 0);
-      for (let k = 0; k < 4; k++) ct.shells.push({ x: gw.x + gw.w / 2, y: tipY - 42 - k * 46, got: false });
-    }
-    if (gw) {
-      const wx = gw.x + gw.w / 2, baseY = candleTop(gw), tipY = candleTop(gw) - (gw.wick || 0);
-      // ENTER the swirl when Finn reaches the wick (near its x, at/below the tip, not already launching up)
-      if (!ct.swirl && Math.abs((turtle.x + turtle.w / 2) - wx) < 50 && turtle.y > tipY + 10 && turtle.vy >= -60) {
-        ct.swirl = { y: Math.min(baseY, turtle.y) }; turtle.vy = 0;
-      }
-      if (ct.swirl) {
-        ct.swirlPhase += dt * 7; turtle.spinning = true; turtle.spinPhase = ct.swirlPhase; turtle.rot = Math.sin(ct.swirlPhase) * 0.18;
-        ct.swirl.y -= 150 * dt;                                      // auto-rise up the wick while swirling (snappy)
-        if (ct._swirlDown) ct.swirl.y += 150 * dt;                   // tap S/Down → drop back down the wick
-        ct.swirl.y = Math.max(tipY, Math.min(baseY, ct.swirl.y));
-        turtle.x = wx - turtle.w / 2; turtle.y = ct.swirl.y; turtle.onGround = false; turtle.vy = 0;
-        try { if (turtle.trail) turtle.trail.push({ x: wx + Math.sin(ct.swirlPhase) * 16, y: ct.swirl.y, life: 0.5 }); } catch (e) {}
-        if (ct._swirlLaunch) {                                       // JUMP/BOOST off the wick → launch vertically toward the shells
-          ct.swirl = null; turtle.spinning = false; turtle.rot = 0; turtle.vy = -1080; turtle.vxBoost = 0;
-          try { turtle.flameT = 0.4; if (typeof CineAudio !== 'undefined' && CineAudio.warp) CineAudio.warp(); } catch (e) {}
-        }
-      }
-    }
-    ct._swirlLaunch = false; ct._swirlDown = false;
-    for (const s of ct.shells) { if (!s.got) { const dx = (turtle.x + turtle.w / 2) - s.x, dy = (turtle.y + turtle.h / 2) - s.y; if (Math.hypot(dx, dy) < 32) { s.got = true; ct.eyeFlinch = 1; try { if (typeof rings !== 'undefined') rings.push({ x: s.x, y: s.y - camY, r: 5, t: 0.4 }); } catch (e) {} try { GameMusic && GameMusic.sting && GameMusic.sting('level'); } catch (e) {} } } }
-    if (ct.shells.length && ct.shells.every(s => s.got)) chartTrialWin(candles.find(c => c._giantWick));
-  }
-
-  ct.idleSpeakT -= dt;
-  if (ct.idleSpeakT <= 0) { ct.idleSpeakT = 6 + Math.random() * 4; if (ct.speakT <= 0 && Math.random() < 0.5) ctSpeak(CT_IDLE[Math.floor(Math.random() * CT_IDLE.length)], 1.4); }
-}
-
-function chartTrialWin(crystalC) {
-  const ct = chartTrial; if (!ct || ct.done) return; ct.done = true; ct.won = true;
-  const cb = ct.onDone;
-  if (crystalC) crystalC._shatter = 0.8;                                            // crystal shatters
-  try { flashT = Math.max(flashT, 0.6); shakeT = Math.max(shakeT, 0.6); } catch (e) {}
-  try { if (typeof rings !== 'undefined' && crystalC) { rings.push({ x: crystalC.x + crystalC.w / 2, y: candleTop(crystalC) - camY, r: 8, t: 0.6 }); rings.push({ x: crystalC.x + crystalC.w / 2, y: candleTop(crystalC) - camY, r: 4, t: 0.5 }); } } catch (e) {}
-  ctSpeak('Interesting…', 1.8);
-  try { GameMusic && GameMusic.sting && GameMusic.sting('win'); } catch (e) {}
-  try { bossHitFX && bossHitFX('hurt'); } catch (e) {}
-  try { floaters.push({ text: ct.def.win + '  ✓', color: '#16c784', y: H * 0.40, t: 1.8, center: true, size: 24, glow: true, big: true }); } catch (e) {}
-  setTimeout(function () { stopChartTrial(); try { if (cb) cb(100, true); } catch (e) {} }, 1000);
-}
-function chartTrialFail(msg) {
-  const ct = chartTrial; if (!ct || ct.done) return; ct.done = true; ct.won = false;
-  const cb = ct.onDone;
-  try { shakeT = Math.max(shakeT, 0.5); flashT = Math.max(flashT, 0.3); } catch (e) {}
-  ctLaugh();
-  try { GameMusic && GameMusic.sting && GameMusic.sting('lose'); } catch (e) {}
-  try { floaters.push({ text: msg || 'FAILED', color: '#ff6b78', y: H * 0.40, t: 1.8, center: true, size: 22, glow: true, big: true }); } catch (e) {}
-  setTimeout(function () { stopChartTrial(); try { if (cb) cb(0, false); } catch (e) {} }, 1100);
-}
-
-// WORLD-SPACE draw (called from render's world layer, after the candles): the crystal on its candle,
-// the Guardian's projectiles, and the momentum collapse wall.
-function drawChartTrialWorld(cameraX) {
-  const ct = chartTrial; if (!ct) return;
-  const c = candles.find(cc => cc._crystal);
-  if (c) {
-    const sx = c.x - cameraX + c.w / 2;
-    let topY = candleTop(c); if (ct.type === 'wick') topY = candleTop(c) - (c.wick || 0);
-    const sy = topY - 16, sh = c._shatter || 0, pulse = 1 + 0.14 * Math.sin(ct.t * 6);
-    ctx.save();
-    if (sh > 0) { ctx.globalAlpha = Math.max(0, sh / 0.8); ctx.translate(sx, sy); ctx.scale(1 + (0.8 - sh) * 2.4, 1 + (0.8 - sh) * 2.4); ctx.translate(-sx, -sy); }
-    const hal = ctx.createRadialGradient(sx, sy, 2, sx, sy, 36); hal.addColorStop(0, 'rgba(127,233,255,0.55)'); hal.addColorStop(1, 'rgba(127,233,255,0)'); ctx.fillStyle = hal; ctx.beginPath(); ctx.arc(sx, sy, 36, 0, 6.28); ctx.fill();
-    ctx.translate(sx, sy); ctx.scale(pulse, pulse);
-    ctx.fillStyle = '#bdf3ff'; ctx.shadowColor = '#7fe9ff'; ctx.shadowBlur = 24;
-    ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(13, -3); ctx.lineTo(8, 15); ctx.lineTo(-8, 15); ctx.lineTo(-13, -3); ctx.closePath(); ctx.fill();
-    ctx.restore();
-  }
-  // liquidity shells stacked above the wick tip (the prize you launch up to grab)
-  for (const s of ct.shells) { if (s.got) continue; const sx = s.x - cameraX, bob = Math.sin(ct.t * 4 + s.y * 0.05) * 3; try { drawShell(ctx, sx, s.y + bob, 13, 0.6 + 0.4 * Math.sin(ct.t * 6)); } catch (e) {} }
-  for (const p of ct.projTiles) { const sx = p.x - cameraX, sy = p.y; ctx.save(); ctx.fillStyle = '#ff5a5a'; ctx.shadowColor = '#ff5a5a'; ctx.shadowBlur = 14; ctx.beginPath(); ctx.arc(sx, sy, 8, 0, 6.28); ctx.fill(); ctx.restore(); }
-  if (ct.type === 'escape' && ct.collapseX > -1e8) {
-    const sx = ct.collapseX - cameraX;
-    ctx.save();
-    const g = ctx.createLinearGradient(sx - 140, 0, sx, 0); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(120,8,14,0.55)'); ctx.fillStyle = g; ctx.fillRect(sx - 140, camY - 240, 140, (typeof H !== 'undefined' ? H : 700) + 480);
-    ctx.strokeStyle = 'rgba(255,80,90,0.85)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx, camY - 240); ctx.lineTo(sx, camY + (typeof H !== 'undefined' ? H : 700) + 240); ctx.stroke();
-    ctx.restore();
-  }
-}
-
-// SCREEN-SPACE overlay: chart darken, danger vignette, the Guardian's watching eyes + dialogue + cue.
-function drawChartTrialOverlay() {
-  const ct = chartTrial; if (!ct) return;
-  const cx = W / 2;
-  const dim = Math.max(ct.darken || 0, (ct.danger || 0) * 0.4);
-  if (dim > 0) { ctx.save(); ctx.fillStyle = 'rgba(10,2,6,' + Math.min(0.6, dim) + ')'; ctx.fillRect(0, 0, W, H); ctx.restore(); }
-  if ((ct.danger || 0) > 0.15) { ctx.save(); const vg = ctx.createRadialGradient(cx, H / 2, H * 0.3, cx, H / 2, H * 0.72); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(180,20,30,' + Math.min(0.5, ct.danger * 0.5) + ')'); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H); ctx.restore(); }
-  const eyeY = 72 - (ct.eyeFlinch || 0) * 6 + (ct.eyeAnger > 0 ? (Math.random() - 0.5) * 5 : 0);
-  const eo = Math.min(66, W * 0.17), er = 14, a = (ct.eyesIn != null ? ct.eyesIn : 1);
-  const col = ct.eyeFlinch > 0 ? '#ffffff' : (ct.eyeAnger > 0 ? '#ff5a5a' : '#ffd23f');
-  ctx.save(); ctx.globalAlpha = a;
-  const halo = ctx.createRadialGradient(cx, eyeY, 8, cx, eyeY, W * 0.55); halo.addColorStop(0, 'rgba(255,160,60,' + (0.10 + (ct.eyeAnger || 0) * 0.22 + (ct.eyeFlinch || 0) * 0.18) + ')'); halo.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = halo; ctx.fillRect(0, 0, W, 220);
-  for (const dx of [-eo, eo]) {
-    ctx.save(); ctx.translate(cx + dx, eyeY); ctx.rotate(dx < 0 ? 0.3 : -0.3);
-    ctx.shadowColor = col; ctx.shadowBlur = 18 + (ct.eyeAnger || 0) * 22 + (ct.eyeFlinch || 0) * 20; ctx.fillStyle = col;
-    ctx.beginPath(); ctx.ellipse(0, 0, er * 1.5, er * 0.82, 0, 0, 6.28); ctx.fill();
-    ctx.fillStyle = '#180010'; ctx.beginPath(); ctx.ellipse(0, 0, er * 0.5, er * 0.4, 0, 0, 6.28); ctx.fill();
-    ctx.restore();
-  }
-  ctx.restore();
-  ctx.save(); ctx.textAlign = 'center';
-  if (ct.speakLine && ct.speakT > 0) { ctx.globalAlpha = Math.min(1, ct.speakT * 1.6); ctx.fillStyle = '#fff'; ctx.font = '900 ' + Math.round(Math.min(22, W * 0.05)) + 'px ' + SANS; ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 10; ctx.fillText('“' + ct.speakLine + '”', cx, eyeY + 46); ctx.shadowBlur = 0; ctx.globalAlpha = 1; }
-  const since = ct.t - (ct.bannerStart || 0);
-  if (ct.phase === 'play' && since < 2.6) { const k = Math.min(1, since * 3) * Math.min(1, (2.6 - since) * 1.5); ctx.globalAlpha = Math.max(0, k); ctx.fillStyle = '#cfe0ff'; ctx.font = '800 13px ' + SANS; ctx.fillText(ct.def.cue, cx, eyeY + 72); ctx.globalAlpha = 1; }
-  if (ct.phase === 'play' && since < 0.5) { const k = 1 - since / 0.5; ctx.globalAlpha = Math.min(1, k * 2); ctx.fillStyle = '#16c784'; ctx.font = '900 ' + Math.round(40 + k * 16) + 'px ' + SANS; ctx.fillText('GO!', cx, H * 0.42); ctx.globalAlpha = 1; }
-  ctx.restore();
-}
 
 function launchRound() {
-  // RESTRUCTURE — the Boss is a SEPARATE KNOWLEDGE EXAM again (mini-game rounds). The Guardian Trial
-  // is now a movement preamble that runs BEFORE the boss (see startGuardianSequence / openBoss).
+  // The Boss is a KNOWLEDGE EXAM: an ordered playlist of mini-game rounds (see openBoss / MG.run).
   try { const _bf = $('bossFight'); if (_bf) { _bf.classList.add('fighting'); _bf.classList.remove('won', 'lost', 'introcard'); } } catch (e) {}
   // Clear the boss INTRO/round card out of #bfBody before the round runs. The
   // mini-game floats transparently over the realm (see .inBoss CSS), so anything
@@ -11188,14 +10435,6 @@ function playBossIntroCinematic(level, onArrive) {
 
 function openBoss(level) {
   const boss = BOSSES[level]; if (!boss) { closeIntermission(true); return; }
-  // ── GUARDIAN TRIAL PREAMBLE ── a movement gauntlet on the chart precedes the boss EXAM. Run the
-  // Guardian sequence first; when it ends (liquidity crystal → portal punch) we re-enter to the boss
-  // realm. Flag-gated; runs once per boss entry. (Trial ≠ Boss — they are now separate systems.)
-  if ((TRIALS_ON || window.__forceTrials) && !window._guardianCleared && typeof startGuardianSequence === 'function') {
-    startGuardianSequence(level, function () { window._guardianCleared = true; openBoss(level); });
-    return;
-  }
-  window._guardianCleared = false;
   // GUARD: never open/animate the same boss twice in quick succession (the cause of the
   // "intro animation plays twice"). Legitimate retries happen seconds later, so they pass.
   const _now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -11776,6 +11015,19 @@ function commitTrade() {
   //   • a LOSS: the stop sits exactly where a real candle crosses it, so the stop-out is
   //     SHOWN on the chart instead of price sailing past an untouched line.
   const _introTrade = introFlow.active && introFlow.awaitingTrade && !introFlow.firstTradeDone;
+  // Note 2a (playtest 253) — the FIRST guided trade repositions Finn onto the entry line (below).
+  // If entryH came from a setup candle that isn't under him, the entry line (and Finn) float in the
+  // AIR above the chart — the reported "first-trade entry is above the chart" bug. Re-anchor the
+  // entry to the candle he's actually standing on so it sits ON the surface. Only the intro trade
+  // repositions, so only it needs this; the SL/TP/room math below all derive from entryH, so they
+  // follow correctly, and every later trade is untouched.
+  if (_introTrade) {
+    try {
+      const _ecx = turtle.x + turtle.w / 2;
+      const _ec = candles.find(function (cc) { return _ecx >= cc.x && _ecx < cc.x + cc.w; });
+      if (_ec) { trade.entryH = Math.max(_ec.open, _ec.h); trade.entryPrice = (_ec.price != null ? _ec.price : trade.entryPrice); trade.lastPrice = trade.entryH; }
+    } catch (e) {}
+  }
   // MEANINGFUL R (build 215) — the ticket can recommend a stop as tight as ~14 height units;
   // at that scale the SL↔TP band is a sliver and the driven chart crosses it in 1-2 candles
   // (the on-device "trade ended in one second" bug). Floor 1R so every driven trade has real
@@ -11821,6 +11073,8 @@ function commitTrade() {
   trade.quality = cf.grade.replace('+', '');   // backward-compat (A/B/C/D/F) for existing displays
   trade.path = [];   // candles AFTER entry, recorded live → the replay "film"
   closePanel();
+  // Note 1 (playtest 253) — pattern-break to the FOCUS bed the moment the trade goes live.
+  try { if (localStorage.getItem('cq_music') !== 'off') GameMusic.play('trade'); } catch (e) {}
   clearBeginnerSetup();   // PHASE 2 — the setup was taken; drop its state + fly-in portal
   // FIX 6 — the FIRST trade is THE moment. Freeze the chart and walk the player through
   // their ENTRY → STOP → TARGET with pointing arrows, so a beginner actually understands
@@ -12197,7 +11451,6 @@ function drawFlowRead(cameraX) {
 }
 function spawnQuickRead(c) {
   if (!c) return;
-  if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active) return;   // no quick-reads during a chart trial
   if (FLOW_READS) return spawnFlowRead(c);   // PROTOTYPE: in-motion swipe-read instead of the freeze-and-popup quiz
   // FAIRNESS (mobile) — never quiz while Finn is airborne. Only ask once he has LANDED and the
   // chart is steady, so the target candle holds still and the player has time to read it.
@@ -12352,7 +11605,6 @@ function drawQuickRead(cameraX) {
 
 // like a real position. Each new candle is a price tick.
 function onCandleEntered(c) {
-  if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active) return;   // chart trial suppresses normal setups/trades
   // The hour advances one market-minute per candle
   if (!session.inModal) {
     session.candles++;
@@ -12482,8 +11734,13 @@ function onCandleEntered(c) {
       const _finnSL = trade.dir === 'long' ? _finnH <= trade.slH : _finnH >= trade.slH;
       // PHASE 3 — cap raised (40 → 90) so the slower, emotional ~30-60s drive can play out fully;
       // the trade still normally resolves the instant Finn tags the line, with this as a backstop.
-      if (trade._l1Outcome === 'win') { if (_finnTP || trade._held >= 90) resolveTrade('win'); }
-      else                            { if (_finnSL || trade._held >= 90) resolveTrade('loss'); }
+      // Note 2b (playtest 253) — a trade must BREATHE. The Finn-reaches-the-line trigger had no
+      // min-duration gate, so Finn climbing onto a tall candle could end the trade in 3–4 candles,
+      // skipping the whole dip→hold→recover→run arc. Gate it on MIN_TRADE_CANDLES (matching the
+      // price-snap gate in tradeDrivenCandle) so every early-guardian trade lasts ~30+ candles.
+      const _mayEnd = trade._held >= MIN_TRADE_CANDLES;
+      if (trade._l1Outcome === 'win') { if ((_finnTP && _mayEnd) || trade._held >= 90) resolveTrade('win'); }
+      else                            { if ((_finnSL && _mayEnd) || trade._held >= 90) resolveTrade('loss'); }
     } else if (hitTP) {
       resolveTrade('win');    // Levels 4+ resolve honestly on real-data TP / SL.
     }
@@ -12804,6 +12061,8 @@ function resolveTrade(result) {
   trade = null;
   setupZone = null; // the setup that spawned this trade is done
   closeBtnEl.style.display = 'none';
+  // Note 1 (playtest 253) — the trade's over; ease back to the calm explore bed.
+  try { if (localStorage.getItem('cq_music') !== 'off') GameMusic.play('explore'); } catch (e) {}
   nextSetupIn();
   clearBeginnerSetup(); genSetupIn = 20 + (Math.random() * 8 | 0);   // PHASE 2 — cool down ≥20 candles before the next beginner setup develops
   // Sprint 2 — L2/L3 level-flow: the next concept beat unlocks after this trade completes
@@ -13090,7 +12349,7 @@ function update(dt) {
   turtle.trail = turtle.trail.filter(p => (p.life -= dt * 2.5) > 0);
 
   if (turtle.cdSpin > 0) turtle.cdSpin -= dt;
-  if (turtle.spinning && !(typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active)) { updateSpin(dt); return; } // spin owns the body (chart trials drive their own swirl)
+  if (turtle.spinning) { updateSpin(dt); return; } // spin owns the body
 
   /* --- Horizontal: walk in the facing direction + decaying fling boost.
          Halted (at a setup) = standing still until the player acts --- */
@@ -13191,7 +12450,7 @@ function update(dt) {
      line (the segment from the candle top up to the wick tip) this
      frame — walking into it OR falling past it — he grabs and spins.
      Only tall wicks count, and a cooldown stops back-to-back spins. */
-  if (!turtle.spinning && !turtle.tucked && turtle.cdSpin <= 0 && !(typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active)) {   // chart trials handle the wick swirl themselves
+  if (!turtle.spinning && !turtle.tucked && turtle.cdSpin <= 0) {
     for (const c of candles) {
       if (c.wick < CFG.spinMinWick) continue;
       const wickX = c.x + c.w / 2;
@@ -13493,20 +12752,6 @@ function drawCandle(c, cameraX) {
     ctx.globalAlpha = 1;
   }
 
-  // CHART TRIAL highlight: GREEN candles glow as safe footing; RED candles read as danger
-  // (and crack when stepped on). Only the trial's own candles light up.
-  if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active && c._trial) {
-    ctx.save();
-    if (c.color === 'green') { ctx.shadowColor = 'rgba(22,199,132,0.95)'; ctx.shadowBlur = 16 + 6 * Math.sin(turtle.animT * 4); }
-    else { ctx.shadowColor = 'rgba(234,57,67,0.9)'; ctx.shadowBlur = 12; }
-    ctx.fillStyle = bodyCol; ctx.fillRect(bx, top, bw, bodyH);
-    ctx.restore();
-    if (c.color === 'red' && c._crackT > 0) {   // cracking from a wrong step
-      ctx.save(); ctx.strokeStyle = 'rgba(255,214,214,0.9)'; ctx.lineWidth = 2; const m = bx + bw / 2;
-      ctx.beginPath(); ctx.moveTo(m, top); ctx.lineTo(m - bw * 0.2, top + bodyH * 0.5); ctx.lineTo(m + bw * 0.12, top + bodyH); ctx.stroke(); ctx.restore();
-    }
-  }
-
   // Body: open → close, floating on the chart. Flat fill + a crisp 1px border in a darker
   // shade of the same colour — this is what gives a real candlestick chart its clean, defined
   // look (and visually separates touching candles without breaking the walkable surface).
@@ -13670,53 +12915,32 @@ function drawCoinGlyph(ticker, cx, cy, s, color) {
    docs/finn-canon/02-Finn-Animation-Bible.md. Physics, the 36×24 hitbox and every CFG value are
    untouched. If ANY sprite fails to load, the procedural Finn below renders exactly as before —
    graceful fallback, never a blank hero. */
-const FINN_SPRITES = { ready: false, img: {}, mip: {}, walk: [], walkC: [] };
+const FINN_SPRITES = { ready: false, img: {}, mip: {} };   // build 254: walk/walkC (old walk-sheet frame arrays) removed with the deprecated asset
 (function loadFinnSprites() {
   // FOUNDER-CURATED SET (2026-07-03): one grounded frame WITH the jetpack (run — the
   // jetpack-less walk/idle frames were deleted by the founder), the new vertical-boost art,
   // jump, landing skid, the shell ball for dive/spin, and dazed (big falls only).
   const files = { run: 'finn/run.png', jump: 'finn/jump.png', vboost: 'finn/vboost.png',
                   shell: 'finn/shell-fall-roll.png', land: 'finn/land.png',
-                  dazed: 'finn/dazed-after-fall.png', walk: 'finn/walk-sheet.png',
-                  body: 'finn/body.png', leg: 'finn/leg.png' };   // PROCEDURAL LEG RIG (build 244): leg-cleared canon body + one clean canon leg reused for all 4, animated at runtime
+                  dazed: 'finn/dazed-after-fall.png' };   // build 254: deprecated walk-sheet/body/leg assets DELETED — the old model no longer loads (see finn_canon.md)
   const keys = Object.keys(files); let got = 0;
   keys.forEach(k => {
     const im = new Image();
     im.onload = function () {
       try {
-        if (k === 'walk') {
-          // WALK SHEET (build 232 "one-piece Finn"): 24 pre-baked COMPLETE frames — 12 gait
-          // phases × (eyes open / eyes closed) — composed OFFLINE from the canon art (legs
-          // rotated at the hip under feathered masks; closed eyes grafted from land.png's own
-          // closed-eye arcs). The renderer always draws ONE whole bitmap, so seams/"puzzle
-          // lines" are impossible by construction. 2px gutters stop mip-downscale bleed.
-          const TW = 238, TH = 186, GUT = 2, COLS = 4;
-          const mh = Math.round((FINN_H.run || 31) * 4.2);
-          const mw = Math.max(1, Math.round(TW * mh / TH));
-          for (let i = 0; i < 24; i++) {
-            const c = document.createElement('canvas');
-            c.width = mw; c.height = mh;
-            const mctx = c.getContext('2d');
-            mctx.imageSmoothingEnabled = true;
-            try { mctx.imageSmoothingQuality = 'high'; } catch (e) {}
-            mctx.drawImage(im, GUT + (i % COLS) * (TW + GUT), GUT + Math.floor(i / COLS) * (TH + GUT),
-                           TW, TH, 0, 0, mw, mh);
-            (i < 12 ? FINN_SPRITES.walk : FINN_SPRITES.walkC).push(c);
-          }
-        } else {
-          // MIP — pre-shrink each frame to ~2× its largest on-screen device size so every draw
-          // is a ≤2:1 minification (clean even where imageSmoothingQuality is ignored — iOS).
-          const mh = Math.round((FINN_H[k] || 31) * 4.2);
-          if (im.naturalHeight > mh * 1.15) {
-            const c = document.createElement('canvas');
-            c.width = Math.max(1, Math.round(im.naturalWidth * mh / im.naturalHeight));
-            c.height = mh;
-            const mctx = c.getContext('2d');
-            mctx.imageSmoothingEnabled = true;
-            try { mctx.imageSmoothingQuality = 'high'; } catch (e) {}
-            mctx.drawImage(im, 0, 0, c.width, c.height);
-            FINN_SPRITES.mip[k] = c;
-          }
+        // build 254 — the deprecated walk-sheet slicing was DELETED along with its asset.
+        // MIP — pre-shrink each frame to ~2× its largest on-screen device size so every draw
+        // is a ≤2:1 minification (clean even where imageSmoothingQuality is ignored — iOS).
+        const mh = Math.round((FINN_H[k] || 31) * 4.2);
+        if (im.naturalHeight > mh * 1.15) {
+          const c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(im.naturalWidth * mh / im.naturalHeight));
+          c.height = mh;
+          const mctx = c.getContext('2d');
+          mctx.imageSmoothingEnabled = true;
+          try { mctx.imageSmoothingQuality = 'high'; } catch (e) {}
+          mctx.drawImage(im, 0, 0, c.width, c.height);
+          FINN_SPRITES.mip[k] = c;
         }
       } catch (e) {}   // mips/tiles are optimizations — never let them block sprite readiness
       if (++got === keys.length) FINN_SPRITES.ready = true;
@@ -13727,7 +12951,7 @@ const FINN_SPRITES = { ready: false, img: {}, mip: {}, walk: [], walkC: [] };
   });
 })();
 // Per-frame draw height in the 46×30 authoring frame (width follows each sprite's own aspect).
-const FINN_H = { run: 31, jump: 32, vboost: 36, shell: 25, land: 25, dazed: 23, body: 31 };
+const FINN_H = { run: 31, jump: 32, vboost: 36, shell: 25, land: 25, dazed: 23 };
 // Nozzle-mouth anchor for the live flame, as a fraction of the WALK-SHEET tile (tiles are
 // pre-cropped at bake time, so the baked plume never ships — the drawn flame is the only fire).
 const FINN_NOZZLE = { x: 0.029, y: 0.50 };
@@ -13758,36 +12982,6 @@ function finnLiveFlame(nx, ny, p) {
 }
 // DAZED — founder rule: the dazed art appears ONLY after Finn falls off a LARGE candle.
 let finnDazedT = 0, _finnDazeCd = 0, _finnFallTop = null;
-
-// PROCEDURAL LEG RIG (build 244): draw the ONE real canon leg (finn/leg.png) from a hip pivot, rotated
-// by the gait swing. Called inside drawFinnSprite's body-centred transform (origin = feet line; the
-// body spans y = -dh .. 0). Reused for all four legs — near legs full/bright, far legs smaller/faded.
-function drawFinnRigLeg(L, hipX, hipY, angle, legH, alpha, lift) {
-  if (!L || !L.naturalWidth) return;
-  const lw = legH * L.naturalWidth / L.naturalHeight;
-  ctx.save();
-  ctx.globalAlpha = (alpha == null) ? 1 : alpha;
-  ctx.translate(hipX, hipY - (lift || 0));       // lift raises the whole leg → the FOOT steps up off the ground
-  ctx.rotate(angle);                             // swing about the hip
-  ctx.drawImage(L, -lw * 0.5, -legH * 0.16, lw, legH);   // thigh top sits ~at the hip pivot, foot hangs below
-  ctx.restore();
-}
-// Small canon-green TAIL nub (build 245) — the leg-clear removed it; draw it back at the lower-back.
-function drawFinnRigTail(bx, by, s, wag) {
-  ctx.save();
-  ctx.translate(bx, by);
-  ctx.rotate(0.15 + wag);
-  ctx.fillStyle = COLOR.turtleBody || '#7ED957';
-  ctx.strokeStyle = COLOR.turtleOutline || '#0c5a2a';
-  ctx.lineWidth = Math.max(1, s * 0.16); ctx.lineJoin = 'round';
-  ctx.beginPath();
-  ctx.moveTo(0, -s * 0.5);
-  ctx.quadraticCurveTo(-s * 1.5, -s * 0.1, -s * 1.9, s * 0.5);   // taper to a point, back+down
-  ctx.quadraticCurveTo(-s * 0.9, s * 0.55, 0, s * 0.5);
-  ctx.closePath();
-  ctx.fill(); ctx.stroke();
-  ctx.restore();
-}
 
 function drawFinnSprite(cameraX) {
   const I = FINN_SPRITES.img;
@@ -13895,16 +13089,10 @@ function drawFinnSprite(cameraX) {
     // airborne poses rotate about the body centre so the nose leads naturally
     ctx.translate(w / 2, h - dh / 2);
     ctx.rotate(rot);
-    if (key === 'run' && FINN_SPRITES.walk.length === 12) {
-      // Wick-fling dash — same one-piece frames, paddling fast, full live flame trailing
-      const cyc = (turtle.animT * 14) / (Math.PI * 2);
-      const fr = FINN_SPRITES.walk[Math.floor((cyc - Math.floor(cyc)) * 12) % 12];
-      const fw = dh * fr.width / fr.height;
-      ctx.drawImage(fr, -fw / 2, -dh / 2, fw, dh);
-      finnLiveFlame(-fw / 2 + fw * FINN_NOZZLE.x, -dh / 2 + dh * FINN_NOZZLE.y, 1.15);
-    } else {
-      ctx.drawImage(src, -dw / 2, -dh / 2, dw, dh);
-    }
+    // build 254 — the walk-sheet "paddling" dash frames were DELETED with the asset; the wick-fling
+    // dash now draws the one-piece run.png frame with the live flame trailing (same art as grounded).
+    ctx.drawImage(src, -dw / 2, -dh / 2, dw, dh);
+    if (key === 'run') finnLiveFlame(-dw / 2 + dw * FINN_NOZZLE.x, -dh / 2 + dh * FINN_NOZZLE.y, 1.15);
   } else {
     // Grounded — ONE jetpack frame animated by continuous transforms (founder note: the old
     // 2-frame gait snapped AND flashed a jetpack-less frame; both retired with walk.png).
@@ -14989,7 +14177,6 @@ function render(cameraX) {
   }
 
   for (const c of candles) drawCandle(c, cameraX);
-  if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active) drawChartTrialWorld(cameraX);   // crystal + projectiles + collapse wall (world space)
 
   // VWAP line + trend lines (layered over candle bodies). Volume bars were
   // removed — they cluttered the space under the chart where the mission
@@ -15740,8 +14927,19 @@ function drawHUD() {
   ctx.globalAlpha = 1; ctx.textAlign = 'left';
 
   // Floating P&L / level-up texts (rise and fade under the balance)
+  const _cenBands = [];   // Note 6 (playtest 253): anti-overlap for centered sentence/box popups
   for (const f of floaters) {
     ctx.globalAlpha = Math.min(1, f.t);
+    // Never let two centered popups stack on the same line (the "two sentences overlap and you
+    // can't read anything" bug — e.g. the pre-Guardian-1 double). Push each centered popup below
+    // any already placed this frame; the floaters rise in lockstep so the offset stays stable.
+    let _yoff = 0;
+    if (f.center || f.big || f.plate) {
+      let _ry = f.y, _g = 0;
+      while (_cenBands.some(function (b) { return Math.abs(_ry - b) < 42; }) && _g < 8) { _ry += 42; _g++; }
+      _yoff = _ry - f.y; _cenBands.push(_ry);
+    }
+    const _fy = f.y + _yoff;
     if (f.finn) {                        // milestone hero — big smiling Finn, centred
       try { drawHeroFinn(f); } catch (e) {}
       ctx.globalAlpha = 1; ctx.textAlign = 'left';
@@ -15760,7 +14958,7 @@ function drawHUD() {
       let _plw = 0; (f.lines || []).forEach(l => { _plw = Math.max(_plw, ctx.measureText(l).width); });
       const _pbw = Math.min(W - 14, Math.max(_ptw, _plw) + 46);
       const _pbh = 44 + (f.lines ? f.lines.length : 0) * 19 + 12;
-      const _pbx = W / 2 - _pbw / 2, _pby = f.y - 30, _pr = 12;
+      const _pbx = W / 2 - _pbw / 2, _pby = _fy - 30, _pr = 12;
       ctx.globalAlpha = Math.min(1, f.t) * 0.96;
       ctx.beginPath();
       ctx.moveTo(_pbx + _pr, _pby); ctx.arcTo(_pbx + _pbw, _pby, _pbx + _pbw, _pby + _pbh, _pr);
@@ -15783,7 +14981,7 @@ function drawHUD() {
       ctx.textAlign = 'center';
       ctx.shadowColor = f.color; ctx.shadowBlur = 18;
       ctx.fillStyle = f.color;
-      fillTextShell(ctx, f.text, W / 2, f.y, 'center', 12);
+      fillTextShell(ctx, f.text, W / 2, _fy, 'center', 12);
       ctx.shadowBlur = 0;
     } else if (f.center) {                 // celebration sub-line — centred, FITTED to the screen, soft glow
       let _cs = f.size || 14; ctx.font = 'bold ' + _cs + 'px ' + MONO;
@@ -15791,7 +14989,7 @@ function drawHUD() {
       ctx.textAlign = 'center';
       if (f.glow) { ctx.shadowColor = f.color; ctx.shadowBlur = 10; }
       ctx.fillStyle = f.color;
-      fillTextShell(ctx, f.text, W / 2, f.y, 'center', 8);
+      fillTextShell(ctx, f.text, W / 2, _fy, 'center', 8);
       ctx.shadowBlur = 0;
     } else if (f.shell) {
       // SHELL REWARD — draw the SAME canonical blue shell the player just collected, so the
@@ -15895,6 +15093,21 @@ function drawHUD() {
    ========================================================= */
 
 function drawAcadShell(cx, cy, scale, emotion, noCap) {
+  // build 254 — render the OFFICIAL Finn (run.png) everywhere this mascot appears (opening
+  // cinematic, Candle Academy, drills) instead of the old procedural turtle. The procedural body
+  // below stays ONLY as a graceful fallback until the sprite has loaded. emotion is best-effort
+  // (the sprite has one friendly face); positioning/scale match the old ~40-wide footprint.
+  try {
+    const _run = (typeof FINN_SPRITES !== 'undefined' && FINN_SPRITES.ready) ? (FINN_SPRITES.mip.run || FINN_SPRITES.img.run) : null;
+    if (_run && (_run.naturalWidth || _run.width)) {
+      const _dw = 46 * scale, _dh = _dw * (_run.naturalHeight || _run.height) / (_run.naturalWidth || _run.width);
+      ctx.save();
+      ctx.imageSmoothingEnabled = true; try { ctx.imageSmoothingQuality = 'high'; } catch (e) {}
+      ctx.drawImage(_run, cx - _dw / 2, cy - _dh / 2, _dw, _dh);
+      ctx.restore();
+      return;
+    }
+  } catch (e) {}
   ctx.save();
   ctx.translate(cx, cy);
   ctx.scale(scale, scale);
@@ -18424,7 +17637,14 @@ const GameMusic = (() => {
     started = true;
   }
   function play(name) {
-    if (name === 'explore') {
+    // Note 1 (playtest 253) — a distinct FOCUS bed for the "taking a trade / exercise" moment:
+    // a tense, mid-tempo minor pulse with a soft heartbeat drum, so the music itself signals
+    // "this matters" and pattern-breaks from the calm explore bed. Returns to 'explore' after.
+    if (name === 'trade' || name === 'focus') {
+      run(build({ root: 50, scale: MINOR, bpm: 96, leadOn: true, dense: false, leadOct: 1,
+        waveLead: 'sine', waveBass: 'triangle', leadVol: 0.055, bassVol: 0.12, vol: 0.145, drums: true }),
+        { name: 'trade', vol: 0.145 });
+    } else {
       run(build({ root: 57, scale: PENTA, bpm: 84, leadOn: true, dense: false, leadOct: 1,
         waveLead: 'triangle', waveBass: 'sine', leadVol: 0.05, bassVol: 0.10, vol: 0.12, drums: false }),
         { name: 'explore', vol: 0.12 });
@@ -18655,7 +17875,7 @@ let camY = 0; // vertical camera offset (negative = looking up)
 // back (zoom out) with easing + a brief slow-mo so the player can SEE the whole trade (entry,
 // stop, target, trend) at once. Gameplay never pauses. Returns smoothly when the trade ends.
 let camZoom = 1, camZoomTarget = 1, slowmoT = 0, tradeT = 0, _zoomWasTrade = false;
-const TRADER_STAGE1 = 0.66, TRADER_STAGE2 = 0.5, TRIAL_ZOOM = 0.52, SLOWMO_DUR = 0.28;   // two-stage cinematic pull-back (+ a wider view for chart trials — big candles, ~12-14 visible ahead)
+const TRADER_STAGE1 = 0.66, TRADER_STAGE2 = 0.5, SLOWMO_DUR = 0.28;   // two-stage cinematic pull-back
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CHART CONTINUITY GUARD — enforces the GLOBAL VISUAL RULE: the chart must always
@@ -18745,9 +17965,6 @@ function frame(now) {
   _dtEMA = _dtEMA > 0 ? _dtEMA + (_rawDt - _dtEMA) * 0.15 : _rawDt;
   const dt = _dtEMA;
 
-  // A Guardian Trial owns the screen while active (movement-based boss round on the main canvas).
-  if (typeof GuardianTrial !== 'undefined' && GuardianTrial.active) { GuardianTrial.frame(dt); requestAnimationFrame(frame); return; }
-
   // Opening cinematic owns the screen while it's running.
   if (introCine.active) { IntroCinematic.update(dt); IntroCinematic.draw(); requestAnimationFrame(frame); return; }
 
@@ -18770,15 +17987,14 @@ function frame(now) {
   // develop in front of them as they walk, through the ticket, and during the trade.
   const _developing = (typeof setupFlow !== 'undefined' && !!setupFlow);
   const _approaching = (typeof tradeIncomingActive !== 'undefined' && tradeIncomingActive) || (typeof pending !== 'undefined' && pending) || _developing;
-  const _chartTrialOn = (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active);
-  const _zoomActive = (trade || _approaching || _chartTrialOn) && !firstTradeGuide;
+  const _zoomActive = (trade || _approaching) && !firstTradeGuide;
   if (_zoomActive) {
     if (trade && !_zoomWasTrade) { slowmoT = SLOWMO_DUR; try { GameMusic && GameMusic.sting && GameMusic.sting('enter'); } catch (e) {} }  // the moment the trade opens
     if (trade) tradeT += dt; else tradeT = 0;
     // Non-trade zoom = a general pull-back to read the setup. While a trade is LIVE the camera
     // instead FITS the stop↔target band (see the vertical-camera block) so price visibly nears
     // each line. (chart trials keep their own wide zoom.)
-    camZoomTarget = _chartTrialOn ? TRIAL_ZOOM : TRADER_STAGE1;
+    camZoomTarget = TRADER_STAGE1;
   } else { tradeT = 0; camZoomTarget = 1; }
   _zoomWasTrade = !!trade;
   if (slowmoT > 0) slowmoT = Math.max(0, slowmoT - dt);
@@ -18788,8 +18004,6 @@ function frame(now) {
     update(dt * _slowF);
     // Banner stays until player taps TRADE or SKIP — no auto-expiry
   }
-  // CHART TRIAL tick — runs after update (so it still ticks during a wick-spin's early return)
-  if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active) chartTrialTick(dt * _slowF);
   // ANTI-FREEZE (intro first trade) — the candle-count anti-stall can't fire when the world stops
   // producing candles (e.g. Finn left HALTED at a setup the player walked past / a stale portal),
   // which soft-locked the game. This wall-clock watchdog can NEVER be defeated by frozen candles:
@@ -18828,8 +18042,12 @@ function frame(now) {
     const pnl = trade.riskAmt * (trade.leverage || 1) * tradeR();
     closeBtnEl.style.display = 'block';
     closeBtnEl.className = pnl >= 0 ? 'pos' : 'neg';
-    closeBtnEl.textContent = 'CLOSE POSITION  ' +
-                             (pnl >= 0 ? '+' : '−') + fmt(Math.abs(pnl)) + ' SHELLS';
+    // Note 2c (playtest 253) — make live P&L the star: lead with the swinging +/− SHELLS and the
+    // live R-multiple (both update every frame), so the player WATCHES the number move and feels
+    // the trade. "Tap to close" is the secondary line now.
+    const _r = tradeR();
+    closeBtnEl.textContent = (pnl >= 0 ? '+' : '−') + fmt(Math.abs(pnl)) + ' 🐚   ' +
+                             (_r >= 0 ? '+' : '−') + Math.abs(_r).toFixed(1) + 'R   ·   TAP TO CLOSE';
   } else if (firstTradeGuide) {
     // The CLOSE POSITION button must NOT overlap the guided walkthrough card — hide it
     // until the walkthrough ends (the player can't close mid-explanation anyway).
@@ -18959,7 +18177,6 @@ function frame(now) {
   if (Math.abs(camZoom - camZoomTarget) < 0.002) camZoom = camZoomTarget;
 
   render(cameraX);
-  if (typeof chartTrial !== 'undefined' && chartTrial && chartTrial.active) drawChartTrialOverlay();   // Guardian eyes watching + prompt + progress
   drawSetupSpotlight(cameraX);   // dim the chart + spotlight a live trade setup
   drawFirstTradeGuide();         // FIX 6 — the guided first-trade entry walkthrough (on top)
   if (FLOW_READS) drawFlowRead(cameraX);   // PROTOTYPE: in-motion read glow + hint (self-guards on active)
@@ -19953,13 +19170,16 @@ function openIntroLesson(sceneKey, onDone){
   try { prevPaused = paused; paused = true; session.inModal = true; turtle.halt = true; } catch (e) {}
   const FT = (typeof QR_F !== 'undefined' ? QR_F : 'system-ui,sans-serif');
   const cap = (LessonChart.SCENES[sceneKey] && LessonChart.SCENES[sceneKey].caption) || '';
+  // Note 5 (playtest 253) — name the lesson in the header so the player knows the topic at a glance.
+  const _LTITLES = { candle:'Candles', momentum:'Momentum', pullback:'Pullback', trend:'Trend', trendline:'Trend', sr:'Support & Resistance', bos:'Break of Structure', choch:'Change of Character', ob:'Order Blocks', vwap:'VWAP', htf:'Timeframes', liquidity:'Liquidity', sweep:'Liquidity Sweep' };
+  const _lTitle = _LTITLES[sceneKey] || (sceneKey ? sceneKey.charAt(0).toUpperCase() + sceneKey.slice(1) : 'Lesson');
   const ov = document.createElement('div');
   ov.id = 'cqLesson';
   ov.style.cssText = 'position:fixed;inset:0;z-index:99990;display:flex;flex-direction:column;align-items:center;justify-content:center;'
     + 'background:radial-gradient(120% 90% at 50% 24%, #0a1422 0%, #07090e 64%, #000 100%);'
     + 'font-family:' + FT + ';padding:max(20px,env(safe-area-inset-top)) 16px 22px;';
   ov.innerHTML =
-      '<div style="font-size:11px;letter-spacing:.22em;color:#a855f7;text-transform:uppercase;opacity:.9;margin-bottom:8px">📈 Lesson</div>'
+      '<div style="font-size:11px;letter-spacing:.16em;color:#a855f7;text-transform:uppercase;opacity:.9;margin-bottom:8px">📈 Lesson · ' + _lTitle + '</div>'
     + '<canvas id="cqlCv" style="width:100%;max-width:560px;height:42vh;min-height:0;border-radius:14px;background:rgba(8,12,20,.55);border:1px solid rgba(168,85,247,.22)"></canvas>'
     + '<div style="max-width:520px;font-size:15px;line-height:1.5;color:#dfe7f0;text-align:center;margin:16px 4px 18px">' + cap + '</div>'
     + '<button id="cqlGo" style="width:100%;max-width:300px;background:linear-gradient(180deg,#7c4dff,#5a32d6);color:#fff;border:0;font-weight:800;font-size:16px;letter-spacing:.03em;padding:15px 22px;border-radius:13px;cursor:pointer;box-shadow:0 7px 24px rgba(124,77,255,.34)">GOT IT →</button>';
@@ -20061,7 +19281,7 @@ const FW={
   build(){clearArea();const sub=$('#pSubmit');sub.style.display='block';sub.disabled=false;sub.textContent='SUBMIT';
     addHTML(`<div class="prompt">${STATE.desc}</div>`);
     const x=cv.getContext('2d');const dpr=Math.min(devicePixelRatio||1,2);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;x.setTransform(dpr,0,0,dpr,0,0);
-    const W=cv.width/dpr,H=cv.height/dpr,top=58,bot=H-30,cx=W/2;
+    const W=cv.width/dpr,H=cv.height/dpr,top=58,bot=H-58,cx=W/2;   /* Note 7 (playtest 253): reserve the bottom band so a dragged-far-down candle/handle/label can never overlap the SUBMIT/answer button */
     const Y=v=>top+(1-v/100)*(bot-top),priceAt=py=>clamp((1-(py-top)/(bot-top))*100,0,100);
     RESP={open:42,close:58,high:72,low:28};let drag=null;
     const handles=()=>[['high',cx,RESP.high,'#4cc3ff'],['low',cx,RESP.low,'#4cc3ff'],['open',cx-32,RESP.open,'#ffd60a'],['close',cx+32,RESP.close,'#16c784']];
@@ -20262,29 +19482,6 @@ return {run:MG_run,REG:REG};
   function forceWin() { try { if (typeof bfState !== 'undefined' && bfState) { bfState.bossHP = 0; bossWin(); post({ type: 'ack', cmd: 'forceWin' }); } else post({ type: 'error', msg: 'no active boss' }); } catch (e) { post({ type: 'error', msg: String(e) }); } }
   function forceLose() { try { if (typeof bfState !== 'undefined' && bfState) { bfState.playerHP = 0; bossLose(); post({ type: 'ack', cmd: 'forceLose' }); } else post({ type: 'error', msg: 'no active boss' }); } catch (e) { post({ type: 'error', msg: String(e) }); } }
 
-  // QA — launch a movement Guardian Trial INSTANTLY (no playthrough). Two modes:
-  //   • a.trial = a TRIAL id → run that single trial standalone on the canvas (fast feel-testing).
-  //   • else → force the trial path on and open the FULL boss at a.level / a.idx (real flow).
-  function QAtrial(a) {
-    a = a || {}; closeOverlays();
-    try {
-      window.__forceTrials = true;
-      // GUARDIAN TRIALS V2 — every trial runs on the live Trade-Mode chart.
-      if (a.trial && typeof startChartTrial === 'function') {
-        const _id = (typeof ctMap === 'function') ? ctMap(a.trial) : a.trial;
-        startChartTrial(_id, function (score, passed) { post({ type: 'result', result: { kind: 'trial', id: _id, passed: passed } }); });
-        post({ type: 'ack', cmd: 'trial', trial: _id });
-        return;
-      }
-      // FULL BOSS — openBoss now runs the whole new flow itself: Guardian Trial gauntlet → portal →
-      // boss realm → exam. (No more manual launchRound; bfState is created inside the boss phase.)
-      const level = a.level || 0;
-      window._guardianCleared = false;
-      if (typeof openBoss === 'function') openBoss(level);
-      post({ type: 'ack', cmd: 'trial', level: level });
-    } catch (e) { post({ type: 'error', msg: String(e) }); }
-  }
-
   function QAmini(id, diff) {
     closeOverlays(); diff = diff || 'intermediate';
     try { MG.run(id, diff, function (score, passed) { post({ type: 'result', result: { kind: 'mini', id, diff, score, passed } }); }); post({ type: 'ack', cmd: 'mini', id, diff }); }
@@ -20363,7 +19560,6 @@ return {run:MG_run,REG:REG};
       case 'catalog': post({ type: 'catalog', data: catalog() }); break;
       case 'state': post({ type: 'state', data: stateSnap() }); break;
       case 'boss': QAboss(a.level, a.diff); break;
-      case 'trial': QAtrial(a); break;
       case 'forceWin': forceWin(); break;
       case 'forceLose': forceLose(); break;
       case 'resetBoss': try { if (typeof bossesDone !== 'undefined') bossesDone.delete(a.level); } catch (e) {} post({ type: 'ack', cmd: c, level: a.level }); break;

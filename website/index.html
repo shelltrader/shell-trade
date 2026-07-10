@@ -543,71 +543,8 @@ body{letter-spacing:-.006em}
 @keyframes slowSpin{to{transform:rotate(360deg)}}
 
 /* section continuity — soft fog so sections don't feel stacked */
-.realmarket,.gamestart{background:radial-gradient(120% 80% at 50% -8%,rgba(22,199,132,.05),transparent 55%)}
-.realmarket::before,.gamestart::before{content:"";position:absolute;left:0;right:0;top:-1px;height:170px;pointer-events:none;background:linear-gradient(180deg,rgba(6,9,16,.55),transparent)}
-
-/* THIS IS A REAL MARKET */
-.chart-stage{position:relative;max-width:1000px;margin-inline:auto}
-.chart-frame{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line-2);box-shadow:var(--shadow);background:radial-gradient(120% 100% at 50% 0%,rgba(22,199,132,.06),#080c12);transform:translateZ(0)}
-.chart-live{position:relative;z-index:0;height:clamp(360px,52vh,540px)}
-.chart-live iframe{border:0!important;width:100%!important;height:100%!important}
-.chart-live-tag{position:absolute;top:12px;left:14px;z-index:2;display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--green);text-shadow:0 1px 5px rgba(0,0,0,.9)}
-/* Finn-enters cinematic: waits beside the chart → jets up → dives through the surface;
-   a candle glows and a tiny Finn runs across INSIDE. Overlay only (pointer-events:none),
-   GPU transforms/opacity/filter, one-shot per viewport entry (JS replays on re-entry). */
-.finn-enter{position:absolute;left:4%;bottom:9%;z-index:3;width:74px;opacity:0;transform:translate(0,8px) scale(.96);pointer-events:none;will-change:transform,opacity;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
-.finn-enter img{display:block;width:100%}
-.cq-fx{position:absolute;inset:0;z-index:2;pointer-events:none}
-.cq-jet{position:absolute;left:8%;bottom:12%;width:5px;height:5px;border-radius:50%;background:radial-gradient(circle,#ffd27a,rgba(255,150,40,.15));opacity:0;will-change:transform,opacity}
-.cq-ripple{position:absolute;left:44%;top:42%;width:60px;height:60px;border-radius:50%;border:2px solid rgba(70,224,255,.7);opacity:0;transform:translate(-50%,-50%) scale(.2);will-change:transform,opacity}
-.cq-candle-glow{position:absolute;left:42%;top:38%;width:16px;height:26%;border-radius:4px;background:linear-gradient(180deg,rgba(255,214,10,.85),rgba(255,214,10,.12));box-shadow:0 0 22px 4px rgba(255,214,10,.5);opacity:0;transform-origin:bottom;will-change:opacity,transform}
-.cq-mini{position:absolute;left:42%;top:40%;width:30px;opacity:0;transform-origin:bottom center;filter:drop-shadow(0 6px 5px rgba(0,0,0,.55));will-change:transform,opacity}
-
-.chart-stage.playing .finn-enter{animation:finnLaunch 2.5s cubic-bezier(.5,.02,.4,1) forwards}
-.chart-stage.playing .finn-enter img{animation:jetPower 2.5s ease-out forwards}
-.chart-stage.playing .chart-frame{animation:chartPulse 1.1s ease-out 1.95s}
-.chart-stage.playing .cq-jet{animation:jetSpark 1.7s ease-out forwards}
-.chart-stage.playing .cq-jet.j2{animation-delay:.15s;left:11%}
-.chart-stage.playing .cq-jet.j3{animation-delay:.3s;left:6%}
-.chart-stage.playing .cq-jet.j4{animation-delay:.45s;left:13%}
-.chart-stage.playing .cq-ripple{animation:cqRipple 1.1s ease-out 1.9s forwards}
-.chart-stage.playing .cq-candle-glow{animation:cqCandle 1.2s ease-out 2.05s forwards}
-.chart-stage.playing .cq-mini{animation:cqMiniRun 2.5s ease-in-out 2.35s forwards}
-
-@keyframes finnLaunch{
-  0%{opacity:0;transform:translate(0,8px) scale(.96) rotate(-4deg)}
-  9%{opacity:1;transform:translate(0,0) scale(1) rotate(-4deg)}
-  22%{transform:translate(0,-3px) scale(1) rotate(-3deg)}
-  32%{transform:translate(3%,3px) scale(1) rotate(-7deg)}
-  50%{opacity:1;transform:translate(240%,-150%) scale(.82) rotate(12deg)}
-  66%{opacity:.5;transform:translate(430%,-190%) scale(.5) rotate(7deg)}
-  80%,100%{opacity:0;transform:translate(470%,-180%) scale(.34) rotate(3deg)}
-}
-@keyframes jetPower{
-  0%,9%{filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
-  22%{filter:drop-shadow(0 6px 16px rgba(255,150,40,.45)) drop-shadow(0 8px 12px rgba(0,0,0,.5))}
-  32%{filter:drop-shadow(0 4px 24px rgba(255,170,60,.8)) drop-shadow(0 8px 12px rgba(0,0,0,.5))}
-  50%{filter:drop-shadow(0 0 30px rgba(255,180,70,.9)) drop-shadow(0 8px 12px rgba(0,0,0,.5))}
-  74%,100%{filter:drop-shadow(0 0 0 rgba(255,180,70,0)) drop-shadow(0 8px 12px rgba(0,0,0,.4))}
-}
-@keyframes jetSpark{0%{opacity:0;transform:translate(0,0) scale(1)}20%{opacity:.9}100%{opacity:0;transform:translate(-6px,-30px) scale(.3)}}
-@keyframes cqRipple{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}20%{opacity:.75}100%{opacity:0;transform:translate(-50%,-50%) scale(2.6)}}
-@keyframes cqCandle{0%{opacity:0;transform:scaleY(.6)}30%{opacity:1;transform:scaleY(1.06)}60%{opacity:.7;transform:scaleY(1)}100%{opacity:0;transform:scaleY(1)}}
-/* Finn drops onto the glowing entry candle (squash on contact), then runs across the
-   candle field with a stepping bob — his feet stay in the candles, never the empty margin below. */
-@keyframes cqMiniRun{
-  0%{opacity:0;transform:translate(-4px,-30px) scaleY(1.06)}
-  7%{opacity:1;transform:translate(0,0) scaleY(.82)}
-  12%{transform:translate(7px,-6px) scaleY(1.02)}
-  24%{transform:translate(40px,2px) scaleY(1)}
-  38%{transform:translate(74px,-8px)}
-  52%{transform:translate(108px,0)}
-  66%{transform:translate(146px,-7px)}
-  80%{transform:translate(184px,1px)}
-  92%{opacity:1;transform:translate(214px,-5px)}
-  100%{opacity:0;transform:translate(232px,-2px)}
-}
-@keyframes chartPulse{0%,100%{box-shadow:var(--shadow);border-color:var(--line-2)}45%{box-shadow:var(--shadow),0 0 70px rgba(22,199,132,.4);border-color:rgba(22,199,132,.55)}}
+.gamestart{background:radial-gradient(120% 80% at 50% -8%,rgba(22,199,132,.05),transparent 55%)}
+.gamestart::before{content:"";position:absolute;left:0;right:0;top:-1px;height:170px;pointer-events:none;background:linear-gradient(180deg,rgba(6,9,16,.55),transparent)}
 
 /* THE GAME — mount point (real game loads on click) */
 .game-mount{position:relative;width:100%;aspect-ratio:16/10;max-height:82vh;border-radius:22px;overflow:hidden;border:1px solid var(--line-2);box-shadow:var(--shadow),0 0 90px rgba(22,199,132,.1);background:radial-gradient(120% 100% at 50% 0%,rgba(22,199,132,.08),#070b12)}
@@ -621,8 +558,8 @@ body{letter-spacing:-.006em}
 .game-enter .ge-sub{font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
 .game-mount.loaded .game-enter{display:none}
 
-@media (prefers-reduced-motion:reduce){.hero-cine-glow{animation:none!important}.chart-stage .finn-enter,.chart-stage .cq-fx{display:none}}
-@media (max-width:720px){.chart-live{height:clamp(300px,58vh,460px)}.game-mount{aspect-ratio:3/4;max-height:88vh}}
+@media (prefers-reduced-motion:reduce){.hero-cine-glow{animation:none!important}}
+@media (max-width:720px){.game-mount{aspect-ratio:3/4;max-height:88vh}}
 
 /* ============================================================================
    QA POLISH — a11y focus, tap targets, game loading/error states, mobile CTAs
@@ -733,15 +670,6 @@ body.tab-hidden *{animation-play-state:paused!important}
 @keyframes wfogDrift{0%,100%{transform:translate(0,0)}50%{transform:translate(2.4%,-2.2%)}}
 .worldbg .frag{position:absolute;bottom:-14px;font-family:var(--mono);font-size:9px;font-weight:700;color:rgba(70,224,255,.32);text-shadow:0 0 6px rgba(70,224,255,.3);opacity:0;animation:moteRise var(--d,40s) linear var(--dl,0s) infinite}
 
-/* ---- REAL-CHART DESCENT — particles fall from the fantasy world into the live market ---- */
-.descent-bridge{position:absolute;left:50%;top:-34px;width:2px;height:130px;transform:translateX(-50%);pointer-events:none;z-index:0}
-.descent-bridge i{position:absolute;left:50%;top:0;width:3px;height:3px;border-radius:50%;transform:translateX(-50%);background:rgba(22,199,132,.85);box-shadow:0 0 8px rgba(22,199,132,.6);opacity:0;animation:haDescend 4.6s ease-in var(--dd,0s) infinite}
-.descent-bridge i:nth-child(2){animation-delay:.9s;background:rgba(70,224,255,.85);box-shadow:0 0 8px rgba(70,224,255,.6)}
-.descent-bridge i:nth-child(3){animation-delay:1.8s}
-.descent-bridge i:nth-child(4){animation-delay:2.7s;background:rgba(255,214,10,.75);box-shadow:0 0 8px rgba(255,190,60,.55)}
-.descent-bridge i:nth-child(5){animation-delay:3.6s}
-@keyframes haDescend{0%{opacity:0;transform:translateX(-50%) translateY(0)}14%{opacity:.85}82%{opacity:.42}100%{opacity:0;transform:translateX(-50%) translateY(128px)}}
-
 /* ---- FINN — cursor-lean (JS sets transform on .finn-art; the img keeps breathing) ---- */
 .finn-art{transition:transform .5s cubic-bezier(.2,.7,.2,1)}
 .finn-art.lean{transition:transform .12s linear}
@@ -807,6 +735,178 @@ body.tab-hidden *{animation-play-state:paused!important}
   88%{transform:perspective(480px) translateY(-2px) rotateY(0deg)}
   100%{transform:perspective(480px) translateY(0) rotateY(0deg)}
 }
+
+/* ============================================================================
+   THE WORLD RUNS ON CHARTS
+   One real chart (TradingView Lightweight Charts, vendored) that crossfades
+   through six real markets. Finn hovers in the chart's right gutter watching the
+   newest candle — he never covers price or candles. Every few markets the chart
+   briefly *becomes* ChartQuest: candle tops turn into platforms and Finn lands
+   on one. Lazy-loaded; rotation pauses offscreen and on tab-hide.
+   ============================================================================ */
+.markets{padding-top:clamp(56px,8vw,112px);padding-bottom:clamp(50px,7vw,102px);position:relative;overflow:hidden}
+.mk-head{max-width:min(880px,92vw);margin-inline:auto;text-align:center}
+.mk-title{font-family:var(--display);font-weight:700;letter-spacing:-.032em;line-height:1.03;font-size:clamp(33px,5.9vw,72px);margin:0}
+.mk-sub{margin:22px auto 0;max-width:54ch;color:var(--ink-dim);font-size:clamp(15.5px,1.85vw,19px);line-height:1.62;font-weight:500}
+.mk-names{display:block;color:var(--ink);font-weight:800;margin-bottom:11px;font-size:clamp(16px,2vw,21px);letter-spacing:-.005em}
+
+/* ---- stage ---- */
+.mk-stagewrap{width:min(1280px,96vw);margin:clamp(30px,4.6vw,58px) auto 0}
+.mk-stage{position:relative;border-radius:20px;overflow:hidden;isolation:isolate;border:1px solid var(--line-2);
+  background:#0a0f17;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.045)}
+.mk-stage::after{content:"";position:absolute;inset:0;z-index:6;pointer-events:none;
+  box-shadow:inset 0 0 90px rgba(0,0,0,.45);transition:box-shadow .7s ease}
+.mk-stage.gamemode::after{box-shadow:inset 0 0 120px rgba(255,214,10,.18),inset 0 0 40px rgba(0,0,0,.35)}
+
+/* glass header — the only thing that changes between markets */
+.mk-bar{position:relative;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:13px clamp(13px,1.9vw,22px);border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(15,23,35,.9),rgba(10,16,24,.6));
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.mk-id{display:flex;align-items:center;gap:9px;min-width:0}
+.mk-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:var(--green);box-shadow:0 0 10px 1px rgba(22,199,132,.7)}
+.mk-dot.dn{background:var(--red);box-shadow:0 0 10px 1px rgba(234,57,67,.7)}
+.mk-name{font-family:var(--display);font-weight:700;font-size:clamp(15.5px,2.1vw,22px);letter-spacing:-.012em;white-space:nowrap}
+.mk-ticker{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--ink-faint);
+  border:1px solid var(--line-2);border-radius:6px;padding:3px 7px;white-space:nowrap}
+.mk-price{display:flex;align-items:baseline;gap:9px;font-family:var(--mono);white-space:nowrap}
+.mk-last{font-size:clamp(13.5px,1.7vw,18px);font-weight:700;color:var(--ink)}
+.mk-chg{font-size:clamp(11px,1.3vw,13.5px);font-weight:700;color:var(--green)}
+.mk-chg.dn{color:var(--red)}
+.mk-bar .mk-id,.mk-bar .mk-price{transition:opacity .26s ease,transform .26s ease}
+.mk-stage.swapping .mk-id,.mk-stage.swapping .mk-price{opacity:0;transform:translateY(-5px)}
+
+/* chart panes — two stacked, opaque, ping-pong crossfade (never flashes white) */
+.mk-chart{position:relative;transform-origin:50% 58%;transition:transform .95s cubic-bezier(.2,.8,.2,1)}
+.mk-stage.gamemode .mk-chart{transform:scale(1.05)}
+.mk-panes{position:relative;height:clamp(300px,52vh,520px);touch-action:pan-y;transition:filter .95s ease}
+.mk-stage.gamemode .mk-panes{filter:saturate(.5) brightness(.7)}
+.mk-pane{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .7s ease;will-change:opacity}
+.mk-pane.is-on{opacity:1}
+
+/* overlay — platforms, tooltip, Finn (never intercepts pointer events) */
+.mk-overlay{position:absolute;inset:0;z-index:3;pointer-events:none}
+
+/* the gameplay morph: real candle tops become ChartQuest platforms */
+.mk-platforms{position:absolute;inset:0}
+.mk-platforms i{position:absolute;left:0;top:0;height:9px;width:var(--w);border-radius:5px;opacity:0;
+  background:linear-gradient(180deg,#ffe98a,var(--gold));
+  box-shadow:0 0 16px rgba(255,214,10,.45),0 4px 10px rgba(0,0,0,.45);
+  transform:translate3d(var(--x),calc(var(--y) + 16px),0);will-change:transform,opacity;
+  transition:opacity .3s ease var(--d),transform .44s cubic-bezier(.2,.9,.3,1) var(--d)}
+.mk-platforms.on i{opacity:1;transform:translate3d(var(--x),var(--y),0)}
+
+/* Finn — outer node is positioned by JS, inner nodes carry the life */
+.mk-finn{position:absolute;left:0;top:0;width:clamp(52px,7vw,80px);opacity:0;
+  transition:transform 1s cubic-bezier(.25,.9,.3,1),opacity .6s ease;will-change:transform,opacity}
+.mk-finn.in{opacity:1}
+.mk-fbob{display:block;animation:mkFloat 5.4s ease-in-out infinite}
+.mk-finn .finnb{display:block;width:100%;animation:mkLook 11s ease-in-out infinite}
+.mk-finn img{width:100%;height:auto;display:block;filter:drop-shadow(0 10px 16px rgba(0,0,0,.55))}
+/* hover + a slow exhale */
+@keyframes mkFloat{0%,100%{transform:translateY(0) scale(1)}28%{transform:translateY(-5px) scale(1.014)}62%{transform:translateY(-1px) scale(.993)}}
+/* reads the chart, glances aside, tiny shell check */
+@keyframes mkLook{0%,40%,100%{transform:perspective(620px) rotateY(0) rotate(0)}
+  48%,58%{transform:perspective(620px) rotateY(-21deg) rotate(-1.5deg)}
+  68%{transform:perspective(620px) rotateY(0) rotate(0)}
+  80%,86%{transform:perspective(620px) rotateY(12deg) rotate(1deg)}}
+.mk-finn.land .mk-fbob{animation:mkLand .6s cubic-bezier(.2,.9,.3,1)}
+@keyframes mkLand{0%{transform:translateY(-7px) scaleY(1.05)}38%{transform:translateY(0) scaleY(.84) scaleX(1.09)}70%{transform:translateY(0) scaleY(1.04) scaleX(.98)}100%{transform:translateY(0) scale(1)}}
+
+/* one quiet educational moment at a time */
+.mk-tip{position:absolute;left:0;top:0;width:0;height:0;opacity:0;transition:opacity .45s ease;will-change:opacity,transform}
+.mk-tip.on{opacity:1}
+/* the anchor is a 0×0 point, so the bubble must size to its text (max-content)
+   rather than shrink-to-fit against a zero-width containing block */
+.mk-tip-bub{position:absolute;left:0;bottom:19px;transform:translateX(-50%);
+  width:max-content;max-width:min(340px,74vw);
+  font-size:12.5px;font-weight:700;color:var(--ink);background:rgba(10,16,24,.92);
+  border:1px solid rgba(255,214,10,.34);border-radius:10px;padding:8px 12px;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 10px 26px rgba(0,0,0,.5)}
+.mk-tip.sell .mk-tip-bub{border-color:rgba(234,57,67,.4)}
+.mk-tip.below .mk-tip-bub{bottom:auto;top:19px}
+.mk-tip-anchor{position:absolute;left:0;top:0}
+.mk-tip-dot{position:absolute;left:-4.5px;top:-4.5px;width:9px;height:9px;border-radius:50%;background:var(--gold);
+  box-shadow:0 0 0 3px rgba(255,214,10,.16),0 0 14px 2px rgba(255,214,10,.55)}
+.mk-tip.sell .mk-tip-dot{background:var(--red);box-shadow:0 0 0 3px rgba(234,57,67,.16),0 0 14px 2px rgba(234,57,67,.5)}
+.mk-tip-stem{position:absolute;left:-.5px;bottom:5px;width:1px;height:13px;background:linear-gradient(180deg,rgba(255,214,10,0),rgba(255,214,10,.8))}
+.mk-tip.below .mk-tip-stem{bottom:auto;top:5px;background:linear-gradient(0deg,rgba(255,214,10,0),rgba(255,214,10,.8))}
+
+/* graceful failure — never a broken box */
+.mk-fallback{position:absolute;inset:0;z-index:7;display:none;place-items:center;text-align:center;padding:26px;
+  color:var(--ink-dim);font-size:14.5px;background:#0a0f17}
+.mk-stage.failed .mk-fallback{display:grid}
+
+/* the markets themselves — also the reduced-motion / no-JS carrier of the idea */
+.mk-rail{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin-top:18px}
+.mk-chip{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--ink-faint);
+  border:1px solid var(--line-2);background:rgba(120,170,215,.04);border-radius:999px;padding:8px 14px;cursor:pointer;
+  transition:color .25s ease,border-color .25s ease,background .25s ease,transform .25s ease}
+.mk-chip:hover{color:var(--ink);transform:translateY(-1px)}
+.mk-chip.on{color:#231b00;background:linear-gradient(180deg,#ffe14d,var(--gold));border-color:transparent}
+.mk-credit{display:block;text-align:center;margin-top:15px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-faint);transition:color .2s ease}
+.mk-credit:hover{color:var(--ink-dim)}
+
+@media (max-width:720px){
+  .mk-panes{height:clamp(280px,46vh,380px)}
+  .mk-ticker{display:none}
+  .mk-tip-bub{max-width:min(58vw,220px);font-size:11.5px;padding:7px 10px}
+  .mk-chip{font-size:11px;padding:7px 11px}
+}
+@media (prefers-reduced-motion:reduce){
+  .mk-pane,.mk-finn,.mk-chart,.mk-panes{transition:none}
+  .mk-finn{opacity:1}
+}
+
+/* ============================================================================
+   LEVEL 0 — onboarding polish.
+   The page is the game's first level: every section hands the visitor to the
+   next one with a single sentence, so nothing ever feels like a jump cut.
+   ============================================================================ */
+
+/* ---- section bridge: hairline → one sentence → a way down ---- */
+.bridge{position:relative;width:min(660px,88vw);margin-inline:auto;text-align:center;padding:0 0 clamp(16px,2.4vw,34px)}
+.bridge::before{content:"";display:block;width:1px;height:clamp(44px,6.5vw,104px);margin:0 auto;
+  background:linear-gradient(180deg,transparent,var(--line-2))}
+.bridge p{margin:clamp(20px,3vw,32px) 0 0;font-size:clamp(17px,2.2vw,25px);line-height:1.45;font-weight:600;
+  letter-spacing:-.015em;color:var(--ink-dim);text-wrap:balance}
+.bridge p b{color:var(--ink);font-weight:800}
+.bridge p .g{color:var(--gold);font-weight:800}
+.bridge-next{display:inline-grid;place-items:center;width:34px;height:34px;margin-top:clamp(16px,2.4vw,26px);
+  border-radius:50%;border:1px solid var(--line-2);color:var(--gold);background:rgba(255,214,10,.05);
+  transition:background .25s ease,transform .25s ease}
+.bridge-next:hover{background:rgba(255,214,10,.13);transform:translateY(2px)}
+.bridge-next svg{animation:bridgeBob 2.4s ease-in-out infinite}
+@keyframes bridgeBob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+/* the bridge already carries the breathing room — don't stack it with the next section's */
+.bridge + .section{padding-top:clamp(28px,4vw,54px)}
+
+/* ---- hero: remove friction, point the way down ---- */
+.hero-trust{margin:15px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+/* bottom-RIGHT, not centre: the key art's Finn owns the centre, and the hero's
+   last ~15px sit below the fold, so anchor it clear of both */
+.hero-scroll{position:absolute;right:clamp(16px,3vw,44px);bottom:clamp(30px,5.5vh,62px);z-index:5;
+  display:grid;justify-items:center;gap:9px;color:var(--ink-faint);transition:color .25s ease}
+.hero-scroll:hover{color:var(--ink-dim)}
+.hs-txt{font-family:var(--mono);font-size:9.5px;letter-spacing:.26em;text-transform:uppercase}
+.hs-wheel{position:relative;width:22px;height:34px;border-radius:12px;border:1.5px solid currentColor;opacity:.7}
+.hs-wheel i{position:absolute;left:50%;top:6px;width:3px;height:6px;border-radius:2px;background:currentColor;
+  transform:translateX(-50%);animation:wheelDrop 1.9s ease-in-out infinite}
+@keyframes wheelDrop{0%{opacity:0;transform:translate(-50%,0)}22%{opacity:1}70%{opacity:0;transform:translate(-50%,13px)}100%{opacity:0;transform:translate(-50%,13px)}}
+@media (max-width:720px){.hero-scroll{display:none}}   /* would collide with the hero copy */
+
+/* ---- the one thing to remember from the markets section ---- */
+.mk-lesson{max-width:min(560px,90vw);margin:clamp(20px,3vw,30px) auto 0;text-align:center;
+  font-size:clamp(14.5px,1.75vw,17.5px);line-height:1.55;color:var(--ink-dim);font-weight:500;text-wrap:balance}
+.mk-lesson b{color:var(--ink);font-weight:800}
+
+/* ---- closing CTA: no second pitch, just the door again ---- */
+.cta-slim{width:min(1200px,92vw);margin:0 auto;border-top:1px solid var(--line);
+  padding:clamp(32px,4.6vw,56px) 0 clamp(48px,6.5vw,80px);
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:clamp(14px,2.2vw,26px)}
+.cta-slim .cs-txt{font-size:clamp(16px,2vw,20px);font-weight:700;color:var(--ink-dim)}
+.cta-slim .cs-txt b{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -869,6 +969,7 @@ body.tab-hidden *{animation-play-state:paused!important}
       <span>Chart<b>Quest</b></span>
     </a>
     <div class="nav-links" id="navLinks">
+      <a href="#markets">The markets</a>
       <a href="#what">The world</a>
       <a href="#why">Why ChartQuest</a>
       <span class="nav-cta"><a class="btn btn-primary" href="play.html">Play Free</a></span>
@@ -880,7 +981,7 @@ body.tab-hidden *{animation-play-state:paused!important}
 
 <!-- DEPTH RAIL — the page is one descent into the chart -->
 <aside class="depthrail" id="depthRail" aria-hidden="true"
-       data-layers="top:Surface|what:The Gates|realmarket:The Threshold|why:The Trials|roadmap:The Map|play:The Portal">
+       data-layers="top:Surface|markets:The Markets|what:The Gates|play:The Portal|why:The Trials|roadmap:The Map">
   <span class="cap">▾ Depth</span>
   <div class="track"><span class="fill" id="depthFill"></span></div>
   <span class="now" id="depthNow">Surface</span>
@@ -922,81 +1023,162 @@ body.tab-hidden *{animation-play-state:paused!important}
     <div class="inner reveal">
       <span class="eyebrow">The world's first trading RPG</span>
       <h1 class="display">THE CHART<br>IS THE <span class="grad">WORLD</span></h1>
-      <p class="sub">A living Bitcoin chart, eleven bosses, and one turtle learning to trade for real.</p>
+      <p class="sub">Real market charts become a world you can explore. Finn teaches you to read them as you play.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="play.html">▶ Play Free</a>
-        <a class="btn btn-ghost" href="#realmarket">▶ Watch Trailer</a>
       </div>
+      <p class="hero-trust">Free · No download · No sign-up</p>
     </div>
   </div>
+
+  <a class="hero-scroll" href="#markets" data-fx="scroll" aria-label="Scroll down to the real markets">
+    <span class="hs-txt">Scroll</span>
+    <span class="hs-wheel" aria-hidden="true"><i></i></span>
+  </a>
 </header>
 
-<!-- ===================== 2 · WHAT IS CHARTQUEST ===================== -->
+<!-- ===================== BRIDGE · hero → real markets ===================== -->
+<div class="bridge reveal" data-fx="bridge">
+  <p>The same chart that moves <b>Bitcoin</b> also moves <b>Apple</b>, <b>Tesla</b> and <b>Gold</b>.</p>
+  <a class="bridge-next" href="#markets" aria-label="See the real markets">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+  </a>
+</div>
+
+<!-- ===================== 2 · THE WORLD RUNS ON CHARTS ===================== -->
+<section class="section markets" id="markets" data-fx="markets">
+  <div class="wrap mk-head">
+    <h2 class="mk-title reveal">The World Runs on <span class="grad">Charts</span></h2>
+    <p class="mk-sub reveal">
+      <b class="mk-names">Bitcoin. Apple. Tesla. Gold.</b>
+      Millions of people are buying and selling right now. Every choice they make draws these charts.
+    </p>
+  </div>
+
+  <div class="mk-stagewrap reveal">
+    <div class="mk-stage" id="mkStage">
+
+      <div class="mk-bar">
+        <div class="mk-id">
+          <span class="mk-dot" id="mkDot"></span>
+          <span class="mk-name" id="mkName">Bitcoin</span>
+          <span class="mk-ticker" id="mkTicker">BTC/USD</span>
+        </div>
+        <div class="mk-price">
+          <span class="mk-last" id="mkLast">—</span>
+          <span class="mk-chg" id="mkChg">—</span>
+        </div>
+      </div>
+
+      <div class="mk-chart" id="mkChart">
+        <!-- two stacked chart panes; the incoming one fades in over the outgoing -->
+        <div class="mk-panes" id="mkPanes"><div class="mk-pane"></div><div class="mk-pane"></div></div>
+
+        <div class="mk-overlay" aria-hidden="true">
+          <div class="mk-platforms" id="mkPlatforms"></div>
+          <div class="mk-tip" id="mkTip">
+            <div class="mk-tip-bub"></div>
+            <span class="mk-tip-anchor"><i class="mk-tip-stem"></i><i class="mk-tip-dot"></i></span>
+          </div>
+          <div class="mk-finn" id="mkFinn">
+            <span class="mk-fbob">
+              <span class="finnb" style="--e1x:67.9%;--e1y:7.3%;--e1w:13.5%;--e1h:15%;--e2x:87.6%;--e2y:8.6%;--e2w:8.3%;--e2h:13.2%;--bd:-1.4s;--flx:2%;--fly:52%;--flw:26%;--flh:40%;--fld:-.15s">
+                <img src="assets/finn-boost.png" alt="" width="193" height="220">
+                <b class="flame"></b><b class="lid l1"></b><b class="lid l2"></b>
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <div class="mk-fallback" id="mkFallback">
+          <p>Real market charts couldn't load here — but they're waiting for you inside ChartQuest.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mk-rail" role="group" aria-label="Choose a market">
+      <button type="button" class="mk-chip on">Bitcoin</button>
+      <button type="button" class="mk-chip">Apple</button>
+      <button type="button" class="mk-chip">Tesla</button>
+      <button type="button" class="mk-chip">Gold</button>
+      <button type="button" class="mk-chip">S&amp;P 500</button>
+      <button type="button" class="mk-chip">Ethereum</button>
+    </div>
+    <p class="mk-lesson reveal">Same chart. Different market. <b>Learn to read one, and you can read them all.</b></p>
+    <a class="mk-credit" href="https://www.tradingview.com" target="_blank" rel="noopener">Charts by TradingView</a>
+  </div>
+</section>
+
+<!-- (Guardians / Bestiary section removed in V5 — reintroduce later as one cinematic image of all 11 Guardians.) -->
+
+<!-- ===================== BRIDGE · real markets → gameplay ===================== -->
+<div class="bridge reveal" data-fx="bridge">
+  <p>Now imagine stepping <span class="g">inside</span> one.</p>
+  <a class="bridge-next" href="#what" aria-label="See what the game looks like">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+  </a>
+</div>
+
+<!-- ===================== 3 · WHAT IS CHARTQUEST ===================== -->
 <section class="section" id="what">
   <div class="wrap section-head">
     <span class="kicker reveal">What is ChartQuest?</span>
     <h2 class="big reveal" style="margin-top:14px">A turtle. A living chart.<br>Three ways to play.</h2>
-    <p class="lead reveal">ChartQuest drops you <b>inside</b> the market. Not a course. Not a simulator. A world you explore, trade, and battle your way through.</p>
+    <p class="lead reveal">This is what a chart looks like from the inside.</p>
   </div>
   <div class="wrap pillars">
     <div class="pillar explore reveal">
       <div class="scene">
         <img class="shot" src="assets/EXPLORE.jpg" alt="Finn sprinting across live BTC candles" loading="lazy" decoding="async">
       </div>
-      <div class="body"><div class="tagn">◈ Explore</div><h3>Run the chart</h3><p>Every candle is ground to stand on. Sprint across live markets, from tutorial hills to volatile peaks.</p></div>
+      <div class="body"><div class="tagn">◈ Explore</div><h3>Run the chart</h3><p>Every candle is solid ground. Run and jump your way across a real market.</p></div>
     </div>
     <div class="pillar trade reveal">
       <div class="scene">
         <img class="shot" src="assets/TRADE.jpg" alt="A short setup with entry, stop-loss and take-profit lines" loading="lazy" decoding="async">
       </div>
-      <div class="body"><div class="tagn">◈ Trade</div><h3>Read the setup</h3><p>Spot the signal, pick a side, set your risk. Real trader decisions — with play money, so mistakes are free.</p></div>
+      <div class="body"><div class="tagn">◈ Trade</div><h3>Read the setup</h3><p>Spot the clue. Guess up or down. It's play money, so a wrong call costs you nothing.</p></div>
     </div>
     <div class="pillar battle reveal">
       <div class="scene">
         <img class="shot" src="assets/BATTLE.jpg" alt="Facing a Guardian boss — a towering serpent made of candles" loading="lazy" decoding="async">
       </div>
-      <div class="body"><div class="tagn">◈ Battle</div><h3>Defeat the Guardians</h3><p>Each world is sealed by a boss who tests the skill you just learned. Beat them to unlock what lies deeper.</p></div>
+      <div class="body"><div class="tagn">◈ Battle</div><h3>Defeat the Guardians</h3><p>A boss guards every world. Beat it using the skill you just learned.</p></div>
     </div>
   </div>
 </section>
 
-<!-- (Guardians / Bestiary section removed in V5 — reintroduce later as one cinematic image of all 11 Guardians.) -->
+<!-- ===================== BRIDGE · gameplay → play ===================== -->
+<div class="bridge reveal" data-fx="bridge">
+  <p>You've seen the market. Now <span class="g">experience</span> it.</p>
+  <a class="bridge-next" href="#play" aria-label="Start playing">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+  </a>
+</div>
 
-<!-- ===================== THIS IS A REAL MARKET (fantasy → reality bridge) ===================== -->
-<section class="section realmarket" id="realmarket">
-  <!-- Phase 2: fog-bridge descent — particles fall from the fantasy world down into the live market -->
-  <div class="descent-bridge" aria-hidden="true" data-fx="descent"><i></i><i></i><i></i><i></i><i></i></div>
+<!-- ===================== 4 · THE GAME — the website becomes the game ===================== -->
+<section class="section gamestart" id="play">
   <div class="wrap section-head">
-    <span class="kicker reveal">Fantasy, meet reality</span>
-    <h2 class="big h-mid reveal" style="margin-top:14px">This is a <span class="gold">real</span> market.</h2>
-    <p class="lead reveal">Every adventure begins on a real Bitcoin chart. This one updates live, right now. Finn jumps inside it — and so will you.</p>
+    <span class="kicker reveal" style="color:var(--gold)">You're ready</span>
+    <h2 class="display reveal" style="font-size:clamp(34px,6.2vw,72px)">ENTER THE <span class="grad">CHART.</span></h2>
+    <p class="lead reveal">You already know more than you did a minute ago. That's enough to begin.</p>
   </div>
-
-  <div class="wrap reveal" style="margin-top:46px">
-    <!-- Finn enters the chart: plays ONCE when scrolled into view (GPU-only, respects reduced-motion) -->
-    <div class="chart-stage" id="chartStage">
-      <div class="chart-frame">
-        <span class="chart-live-tag"><span class="pulse"></span>BTC/USD · LIVE · 5m</span>
-        <!-- REAL live BTC/USD chart (TradingView · 5m · dark · candles · minimal). CSP: allow tradingview.com + binance on deploy. -->
-        <div class="chart-live">
-          <div class="tradingview-widget-container" style="height:100%;width:100%">
-            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-            {"autosize":true,"symbol":"COINBASE:BTCUSD","interval":"5","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","hide_top_toolbar":true,"hide_legend":true,"hide_side_toolbar":true,"allow_symbol_change":false,"save_image":false,"backgroundColor":"rgba(8,11,18,1)","gridColor":"rgba(120,170,215,0.05)","hide_volume":true,"support_host":"https://www.tradingview.com"}
-            </script>
-          </div>
-        </div>
-        <!-- Finn-enters overlay FX (above the chart, pointer-events:none) -->
-        <div class="cq-fx" aria-hidden="true">
-          <span class="cq-jet j1"></span><span class="cq-jet j2"></span><span class="cq-jet j3"></span><span class="cq-jet j4"></span>
-          <span class="cq-ripple"></span>
-          <img class="cq-mini" src="assets/finn-run.png" alt="" width="282" height="186">
-        </div>
-        <div class="finn-enter" aria-hidden="true"><img src="assets/finn-boost.png" alt="" width="193" height="220"><b class="flame" style="--flx:2%;--fly:52%;--flw:26%;--flh:40%;--fld:-.1s"></b></div>
-      </div>
+  <div class="wrap reveal" style="margin-top:42px">
+    <!-- The REAL game mounts here on click (lazy · borderless · fills width). Not a fake, not a popup, no redirect. -->
+    <div class="game-mount" id="gameMount">
+      <button class="game-enter" id="gameEnter" type="button" data-game="play.html" aria-label="Enter ChartQuest and start playing">
+        <span class="finnb" aria-hidden="true" style="--e1x:67.9%;--e1y:7.3%;--e1w:13.5%;--e1h:15%;--e2x:87.6%;--e2y:8.6%;--e2w:8.3%;--e2h:13.2%;--bd:-2s;--flx:2%;--fly:52%;--flw:26%;--flh:40%;--fld:-.15s"><img src="assets/finn-boost.png" alt="" width="193" height="220"><b class="flame"></b><b class="lid l1"></b><b class="lid l2"></b></span>
+        <span class="ge-title">▶ Enter the Chart</span>
+        <span class="ge-sub">Free · loads right here · no new page</span>
+      </button>
     </div>
+    <p class="center reveal" style="margin-top:16px;font-family:var(--mono);font-size:12px;color:var(--ink-faint)">
+      <a href="play.html" target="_blank" rel="noopener" style="color:var(--ink-faint)">or open it full-screen ↗</a>
+    </p>
   </div>
 </section>
+
+<!-- ── Everything below is supporting content: why it works, who Finn is, what's next. ── -->
 
 <!-- ===================== WHY > COURSES ===================== -->
 <section class="section" id="why">
@@ -1031,7 +1213,7 @@ body.tab-hidden *{animation-play-state:paused!important}
     <div class="reveal">
       <span class="kicker" style="color:var(--gold)">Your guide</span>
       <h2 class="big" style="margin-top:12px">This is Finn.</h2>
-      <p class="lead">A turtle explorer lost inside the blockchain, searching for the way to become a Master Trader. He's calm under pressure, allergic to FOMO, and he'll be beside you the whole way down — because he's learning it too.</p>
+      <p class="lead">Finn is a turtle who got lost inside a chart. He's learning to read it — the same as you. He stays calm, never rushes, and never leaves your side.</p>
       <p class="lead">Follow Finn and you can't get lost. Slow and steady really does win this one.</p>
       <div class="finn-chips"><span class="chip">🐢 Slow &amp; steady</span><span class="chip">🛡️ Protects the shell</span><span class="chip">🧭 Always finds the way</span></div>
     </div>
@@ -1055,27 +1237,11 @@ body.tab-hidden *{animation-play-state:paused!important}
 
 </section>
 
-<!-- ===================== THE GAME — the website becomes the game ===================== -->
-<section class="section gamestart" id="play">
-  <div class="wrap section-head">
-    <span class="kicker reveal" style="color:var(--gold)">You've reached the portal</span>
-    <h2 class="display reveal" style="font-size:clamp(34px,6.2vw,72px)">ENTER THE <span class="grad">CHART.</span></h2>
-    <p class="lead reveal">No download. No sign-up. The world is live and waiting. Step inside.</p>
-  </div>
-  <div class="wrap reveal" style="margin-top:42px">
-    <!-- The REAL game mounts here on click (lazy · borderless · fills width). Not a fake, not a popup, no redirect. -->
-    <div class="game-mount" id="gameMount">
-      <button class="game-enter" id="gameEnter" type="button" data-game="play.html" aria-label="Enter ChartQuest and start playing">
-        <span class="finnb" aria-hidden="true" style="--e1x:67.9%;--e1y:7.3%;--e1w:13.5%;--e1h:15%;--e2x:87.6%;--e2y:8.6%;--e2w:8.3%;--e2h:13.2%;--bd:-2s;--flx:2%;--fly:52%;--flw:26%;--flh:40%;--fld:-.15s"><img src="assets/finn-boost.png" alt="" width="193" height="220"><b class="flame"></b><b class="lid l1"></b><b class="lid l2"></b></span>
-        <span class="ge-title">▶ Enter the Chart</span>
-        <span class="ge-sub">Free · loads right here · no new page</span>
-      </button>
-    </div>
-    <p class="center reveal" style="margin-top:16px;font-family:var(--mono);font-size:12px;color:var(--ink-faint)">
-      <a href="play.html" target="_blank" rel="noopener" style="color:var(--ink-faint)">or open it full-screen ↗</a>
-    </p>
-  </div>
-</section>
+<!-- ===================== CLOSING CTA — the door again, no second pitch ===================== -->
+<div class="cta-slim reveal">
+  <span class="cs-txt">Ready when you are, <b>explorer</b>.</span>
+  <a class="btn btn-primary btn-lg" href="play.html">▶ Play Free</a>
+</div>
 
 </main>
 
@@ -1099,7 +1265,7 @@ body.tab-hidden *{animation-play-state:paused!important}
       </div>
       <div>
         <h5>More</h5>
-        <ul><li><a href="#realmarket">The live market</a></li><li><a href="#roadmap">Roadmap</a></li><li><a href="#play">Enter the chart</a></li><li><a href="#" data-discord data-url="">Join the guild</a></li></ul>
+        <ul><li><a href="#markets">The markets</a></li><li><a href="#roadmap">Roadmap</a></li><li><a href="#play">Enter the chart</a></li><li><a href="#" data-discord data-url="">Join the guild</a></li></ul>
       </div>
     </div>
     <p class="disclaimer"><b>Important:</b> ChartQuest is an educational game. All trades in the game are <b>simulated with play money</b> — you never risk real funds to play. Nothing in ChartQuest is financial advice, and we are not financial advisors. Trading real assets (including crypto) carries significant risk, including loss of capital. Always do your own research.</p>
@@ -1162,25 +1328,285 @@ var CQ = { game:"play.html", discord:"" };
     window.addEventListener('resize',onScroll); onScroll();
   })();
 
-  /* Finn enters the chart — replays each time the section scrolls into view.
-     One-shot per entry (animations never loop); resets on exit so it can play again. */
+  /* ── THE WORLD RUNS ON CHARTS ─────────────────────────────────────────────
+     One chart, six real markets, crossfaded. Finn hovers in the chart's right
+     gutter watching the newest candle (so he can never cover price or candles),
+     glides to follow each new market, and every few markets the chart briefly
+     becomes ChartQuest — candle tops rise into platforms and Finn lands on one.
+     The lib + data are fetched only as the section approaches the viewport. */
   (function(){
-    var stage=document.getElementById('chartStage');
-    if(!stage) return;
+    var sec=document.getElementById('markets'); if(!sec) return;
+    var stage=document.getElementById('mkStage');
+    var panesEl=document.getElementById('mkPanes');
+    var finnEl=document.getElementById('mkFinn');
+    var tipEl=document.getElementById('mkTip');
+    var tipBub=tipEl.querySelector('.mk-tip-bub');
+    var tipAnc=tipEl.querySelector('.mk-tip-anchor');
+    var platEl=document.getElementById('mkPlatforms');
+    var nameEl=document.getElementById('mkName'), tickEl=document.getElementById('mkTicker');
+    var lastEl=document.getElementById('mkLast'), chgEl=document.getElementById('mkChg'), dotEl=document.getElementById('mkDot');
+    var chips=[].slice.call(sec.querySelectorAll('.mk-chip'));
     var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if(reduce) return;
-    if('IntersectionObserver' in window){
-      var io=new IntersectionObserver(function(es){es.forEach(function(en){
-        if(en.isIntersecting){
-          stage.classList.remove('playing');
-          void stage.offsetWidth;              /* reflow so the one-shot restarts cleanly */
-          stage.classList.add('playing');
-        } else {
-          stage.classList.remove('playing');   /* arm it for the next entry */
-        }
-      });},{threshold:.45});
-      io.observe(stage);
-    } else stage.classList.add('playing');
+
+    /* GUTTER = empty bars kept to the right of the newest candle. It is Finn's
+       parking space: wide enough that he never overlaps the last candle or the
+       price axis, at any viewport width. */
+    var DWELL=3000, FADE=700, GUTTER=10, MORPH_EVERY=3, MORPH_MS=3600;
+    var TIPS={1:'buy',4:'sell'};
+    var TIP_TXT={buy:'Thousands of people decided to buy here.',sell:'More people sold than bought.'};
+
+    var MK=null, panes=[], cur=0, idx=0, sinceMorph=0;
+    var timer=null, tipTimer=null, running=false, locked=false, morphing=false, ready=false;
+
+    /* ---- lazy bootstrap: load the chart lib + real OHLC as we approach ---- */
+    var booted=false;
+    function near(){var r=sec.getBoundingClientRect();return r.top<(window.innerHeight||0)+600 && r.bottom>-600;}
+    function load(src,ok,err){var s=document.createElement('script');s.src=src;s.async=true;s.onload=ok;s.onerror=err;document.head.appendChild(s);}
+    function fail(){stage.classList.add('failed');}
+    function boot(){
+      if(booted||!near()) return; booted=true;
+      window.removeEventListener('scroll',boot); window.removeEventListener('resize',boot);
+      load('assets/lightweight-charts.standalone.production.js',function(){
+        load('assets/market-data.js',init,fail);
+      },fail);
+    }
+    if('IntersectionObserver' in window) new IntersectionObserver(function(es){if(es[0].isIntersecting)boot();},{rootMargin:'600px'}).observe(sec);
+    window.addEventListener('scroll',boot,{passive:true});
+    window.addEventListener('resize',boot);
+    boot();
+
+    /* ---- chart panes ---- */
+    function mkPane(el){
+      var LC=window.LightweightCharts;
+      var chart=LC.createChart(el,{
+        autoSize:true,
+        layout:{background:{type:'solid',color:'#0a0f17'},textColor:'#5d7186',fontFamily:'Inter,system-ui,sans-serif',attributionLogo:false},
+        grid:{vertLines:{color:'rgba(120,170,215,.04)'},horzLines:{color:'rgba(120,170,215,.055)'}},
+        rightPriceScale:{borderColor:'rgba(120,170,215,.10)',scaleMargins:{top:.14,bottom:.10}},
+        timeScale:{borderColor:'rgba(120,170,215,.10)',fixLeftEdge:true,lockVisibleTimeRangeOnResize:true},
+        crosshair:{vertLine:{visible:false,labelVisible:false},horzLine:{visible:false,labelVisible:false}},
+        handleScroll:false,handleScale:false   /* never steals the page scroll */
+      });
+      var series=chart.addCandlestickSeries({upColor:'#16C784',downColor:'#EA3943',borderVisible:false,
+        wickUpColor:'rgba(22,199,132,.6)',wickDownColor:'rgba(234,57,67,.6)'});
+      return {el:el,chart:chart,series:series,m:null};
+    }
+    function draw(p,m){
+      p.m=m;
+      p.series.applyOptions({priceFormat:{type:'price',precision:m.p,minMove:Math.pow(10,-m.p)}});
+      p.series.setData(m.c.map(function(k){return {time:k[0],open:k[1],high:k[2],low:k[3],close:k[4]};}));
+      /* identical bar count + right gutter on every market => identical zoom */
+      p.chart.timeScale().setVisibleLogicalRange({from:-0.5,to:m.c.length-0.5+GUTTER});
+    }
+    function geom(p){
+      var ts=p.chart.timeScale();
+      var x0=ts.logicalToCoordinate(0), x1=ts.logicalToCoordinate(1);
+      if(x0==null||x1==null) return null;
+      var scaleW=p.chart.priceScale('right').width()||0;
+      return {bar:x1-x0, h:p.el.clientHeight, timeW:p.el.clientWidth-scaleW,
+              barX:function(i){return ts.logicalToCoordinate(i);},
+              priceY:function(v){return p.series.priceToCoordinate(v);}};
+    }
+    function afterPaint(fn){requestAnimationFrame(function(){requestAnimationFrame(fn);});}
+    function fmt(v,p){return v.toLocaleString('en-US',{minimumFractionDigits:p,maximumFractionDigits:p});}
+
+    /* ---- Finn: parks in the right gutter, level with the newest candle ----
+       He only fades in once he has real coordinates — otherwise he'd flash at the
+       chart's top-left corner (his unpositioned origin) on a slow/backgrounded load. */
+    function place(p,snap){
+      p=p||panes[cur]; if(!p||!p.m) return false;
+      var g=geom(p); if(!g) return false;
+      var fw=finnEl.offsetWidth, fh=finnEl.offsetHeight||fw*1.14;
+      var li=p.m.c.length-1, x=g.barX(li), y=g.priceY(p.m.c[li][4]);
+      if(x==null||y==null) return false;
+      var fx=Math.min(Math.max(x+Math.max(14,g.bar*0.9),8), g.timeW-fw-8);
+      var fy=Math.min(Math.max(y-fh*0.62,6), g.h-fh-6);
+      /* snap = teleport (first paint, resize, tab-return). Otherwise he glides,
+         which is what "Finn smoothly follows" means on a market swap. */
+      if(snap) finnEl.style.transition='none';
+      finnEl.style.transform='translate3d('+fx.toFixed(1)+'px,'+fy.toFixed(1)+'px,0)';
+      if(snap){ void finnEl.offsetWidth; finnEl.style.transition=''; }
+      finnEl.classList.add('in');
+      return true;
+    }
+    /* Re-park Finn after the chart's own geometry settles. A plain ResizeObserver
+       fires mid-relayout, when the time scale still reports its old width. */
+    var rt;
+    function resettle(){
+      clearTimeout(rt); hideTip();
+      rt=setTimeout(function(){
+        place(null,true);
+        /* platforms hold snapshotted candle coords — re-derive them if the plot resized mid-morph */
+        if(morphing && buildPlatforms()) afterPaint(function(){platEl.classList.add('on');});
+      },120);
+    }
+
+    /* ---- one quiet educational moment at a time ---- */
+    function hideTip(){clearTimeout(tipTimer);tipEl.classList.remove('on');}
+    function pick(m,kind){
+      var best=-1,bv=0;
+      for(var i=5;i<m.c.length-9;i++){                 /* skip edges: never collide with Finn */
+        var b=m.c[i][4]-m.c[i][1], v=(kind==='buy')?b:-b;
+        if(v>bv){bv=v;best=i;}
+      }
+      return best;
+    }
+    function showTip(){
+      var kind=TIPS[idx]; if(!kind||reduce||morphing) return;
+      var p=panes[cur], g=geom(p); if(!g||!p.m) return;
+      var i=pick(p.m,kind); if(i<0) return;
+      var c=p.m.c[i], x=g.barX(i), y=g.priceY(Math.max(c[1],c[4]));
+      if(x==null||y==null) return;
+      tipBub.textContent=TIP_TXT[kind];
+      tipEl.classList.toggle('sell',kind==='sell');
+      tipEl.classList.toggle('below',y<74);
+      var bw=tipBub.offsetWidth||190;
+      var cx=Math.min(Math.max(x,bw/2+10), g.timeW-bw/2-10);
+      tipEl.style.transform='translate3d('+cx.toFixed(1)+'px,'+y.toFixed(1)+'px,0)';
+      tipAnc.style.transform='translateX('+(x-cx).toFixed(1)+'px)';  /* dot stays on the candle */
+      tipEl.classList.add('on');
+      tipTimer=setTimeout(hideTip,DWELL+FADE-450);
+    }
+
+    /* ---- the moment: real candles become ChartQuest platforms ---- */
+    function buildPlatforms(){
+      var p=panes[cur], g=geom(p);
+      if(!g||!p.m) return false;
+      var n=p.m.c.length, w=Math.max(6,g.bar*0.78), f=document.createDocumentFragment();
+      for(var i=0;i<n;i++){
+        var x=g.barX(i), y=g.priceY(Math.max(p.m.c[i][1],p.m.c[i][4]));
+        if(x==null||y==null) continue;
+        var b=document.createElement('i');
+        b.style.setProperty('--x',(x-w/2).toFixed(1)+'px');
+        b.style.setProperty('--y',(y-4).toFixed(1)+'px');
+        b.style.setProperty('--w',w.toFixed(1)+'px');
+        b.style.setProperty('--d',(i*7)+'ms');
+        f.appendChild(b);
+      }
+      platEl.innerHTML=''; platEl.appendChild(f);
+      return true;
+    }
+    function morph(){
+      var p=panes[cur], g=geom(p);
+      if(!g||!p.m){schedule();return;}
+      morphing=true; hideTip(); clearTimeout(timer);
+      buildPlatforms();
+      stage.classList.add('gamemode');
+      afterPaint(function(){platEl.classList.add('on');});
+
+      /* Finn drops out of the gutter and lands on a platform inside the chart */
+      var li=Math.max(0,p.m.c.length-9), lx=g.barX(li), ly=g.priceY(Math.max(p.m.c[li][1],p.m.c[li][4]));
+      var fw=finnEl.offsetWidth, fh=finnEl.offsetHeight;
+      setTimeout(function(){
+        if(lx!=null&&ly!=null) finnEl.style.transform='translate3d('+(lx-fw/2).toFixed(1)+'px,'+(ly-fh+3).toFixed(1)+'px,0)';
+        setTimeout(function(){
+          finnEl.classList.add('land');
+          setTimeout(function(){finnEl.classList.remove('land');},620);
+        },820);
+      },240);
+
+      setTimeout(function(){
+        platEl.classList.remove('on');
+        stage.classList.remove('gamemode');
+        setTimeout(function(){platEl.innerHTML='';},440);
+        place(); morphing=false;
+        if(running&&!locked){advance();}
+      },MORPH_MS);
+    }
+
+    /* ---- rotation ---- */
+    function head(m){
+      nameEl.textContent=m.n; tickEl.textContent=m.t;
+      lastEl.textContent=fmt(m.last,m.p);
+      chgEl.textContent=(m.chg>=0?'▲ +':'▼ ')+Math.abs(m.chg).toFixed(1)+'%';
+      chgEl.classList.toggle('dn',m.chg<0);
+      dotEl.className='mk-dot'+(m.chg<0?' dn':'');
+    }
+    /* `seq` fences one swap from the next. Without it, a chip click landing during
+       a rotation swap makes both calls target the same pane, and the older call's
+       pending timer strips `is-on` from the pane that is now visible (blank chart). */
+    var seq=0;
+    function show(i,first){
+      if(!ready) return;
+      var my=++seq;
+      idx=i; var m=MK[i];
+      chips.forEach(function(c,k){c.classList.toggle('on',k===i);c.setAttribute('aria-pressed',k===i?'true':'false');});
+      hideTip();
+      if(first){
+        draw(panes[0],m); panes[0].el.style.zIndex=2; panes[0].el.classList.add('is-on'); cur=0; head(m);
+        place(null,true);                                  /* place now if coords are ready… */
+        afterPaint(function(){place(null,true);showTip();});/* …and again once painted */
+        return;
+      }
+      var nx=1-cur;
+      draw(panes[nx],m);
+      stage.classList.add('swapping');
+      afterPaint(function(){
+        if(my!==seq) return;                               /* superseded by a newer swap */
+        panes[nx].el.style.zIndex=2; panes[cur].el.style.zIndex=1;
+        panes[nx].el.classList.add('is-on');
+        place(panes[nx]);                                  /* Finn glides across as the chart dissolves */
+        /* swap the label at the dissolve midpoint, while it's faded out */
+        setTimeout(function(){if(my!==seq)return;head(m);stage.classList.remove('swapping');},Math.round(FADE*0.46));
+        var old=cur; cur=nx;
+        setTimeout(function(){if(my!==seq)return;panes[old].el.classList.remove('is-on');showTip();},FADE);
+      });
+    }
+    function advance(){ show((idx+1)%MK.length); sinceMorph++; schedule(); }
+    function schedule(){
+      clearTimeout(timer);
+      /* document.hidden also covers "loaded in a background tab", where no
+         visibilitychange ever fires and rAF never runs — rotating there would
+         queue swaps that all land at once when the tab is finally shown. */
+      if(!running||locked||reduce||document.hidden) return;
+      timer=setTimeout(function(){
+        if(!running||locked||morphing||document.hidden) return;
+        if(sinceMorph>=MORPH_EVERY){sinceMorph=0;morph();return;}
+        advance();
+      },DWELL+FADE);
+    }
+
+    /* ---- init ---- */
+    function init(){
+      MK=window.CQ_MARKETS;
+      if(!window.LightweightCharts||!MK||!MK.length) return fail();
+      try{
+        panes.push(mkPane(panesEl.children[0]));
+        panes.push(mkPane(panesEl.children[1]));
+      }catch(e){ return fail(); }
+      ready=true;
+      show(0,true);                                        /* place() fades Finn in once he has coords */
+      running=!reduce;                                     /* default ON; the observer only pauses it */
+      schedule();
+
+      if('IntersectionObserver' in window){
+        new IntersectionObserver(function(es){
+          var vis=es[0].isIntersecting;
+          running=vis&&!reduce&&!locked;
+          if(running) schedule(); else {clearTimeout(timer);hideTip();}
+        },{threshold:.12}).observe(stage);
+      }
+      document.addEventListener('visibilitychange',function(){
+        if(document.hidden){clearTimeout(timer);hideTip();}
+        else {place(null,true);if(running) schedule();}   /* re-settle Finn: rAF was frozen while hidden */
+      });
+      window.addEventListener('resize',resettle,{passive:true});
+      /* authoritative: the time scale tells us when ITS width really changed */
+      panes.forEach(function(p){
+        var ts=p.chart.timeScale();
+        if(ts.subscribeSizeChange) ts.subscribeSizeChange(function(){ if(panes[cur]===p) resettle(); });
+      });
+      if('ResizeObserver' in window) new ResizeObserver(resettle).observe(panesEl);
+
+      /* visitor takes the wheel: pick a market, auto-rotation stops */
+      chips.forEach(function(c,k){
+        c.addEventListener('click',function(){
+          if(morphing) return;
+          locked=true; running=false; clearTimeout(timer);
+          if(k!==idx) show(k);
+        });
+      });
+    }
   })();
 
   /* The real game mounts here on click — lazy · borderless · no redirect/popup */

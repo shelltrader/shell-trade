@@ -5,34 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <title>Play Chart Quest</title>
 <meta name="description" content="Play Chart Quest free in your browser — hop across live crypto charts and learn to trade.">
-<meta name="theme-color" content="#04060f">
+<meta name="theme-color" content="#060910">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="assets/pwa/icon-192.png">
+<link rel="apple-touch-icon" href="assets/pwa/icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Chart Quest">
 <link rel="stylesheet" href="assets/site.css">
 <script src="assets/config.js"></script>
 <style>
-  html,body{height:100%;margin:0;background:#070b10;overflow:hidden}
-  .play-bar{position:fixed;top:0;left:0;right:0;height:52px;z-index:20;display:flex;align-items:center;gap:12px;
-    padding:0 14px;background:rgba(7,11,16,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  /* 100dvh, not 100%: on mobile Safari/Chrome the URL bar collapses and a vh-based
+     height leaves the bottom of the game under the browser chrome. */
+  html,body{height:100dvh;margin:0;background:#070b10;overflow:hidden;overscroll-behavior:none}
+  :root{--bar:52px;--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
+        --sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
+  .play-bar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:10px;
+    height:calc(var(--bar) + var(--sat));padding:var(--sat) calc(12px + var(--sar)) 0 calc(12px + var(--sal));
+    background:rgba(7,11,16,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     border-bottom:1px solid rgba(120,160,200,.16);color:#e7eef6}
-  .play-bar a.home{display:flex;align-items:center;gap:8px;color:#cfe1f2;font-weight:700;font-size:14px}
-  .play-bar .tmark{width:30px;height:26px}
+  .play-bar a.home{display:flex;align-items:center;gap:8px;color:#cfe1f2;font-weight:700;font-size:14px;min-height:44px}
+  .play-bar .tmark{width:26px;height:26px}
   .play-bar .sp{flex:1}
   .play-bar button{background:rgba(255,255,255,.08);border:1px solid rgba(120,160,200,.2);color:#dce7f2;
-    border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+    border-radius:10px;padding:0 12px;min-height:44px;min-width:44px;font-weight:700;font-size:13px;cursor:pointer;
+    display:inline-flex;gap:6px;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
   .play-bar button:hover{background:rgba(255,255,255,.15)}
   .play-bar button.prime{background:var(--green);color:#06281b;border-color:transparent}
-  .frame-wrap{position:fixed;inset:52px 0 0 0;background:#070b10}
+  .play-bar button[hidden]{display:none}
+  .frame-wrap{position:fixed;top:calc(var(--bar) + var(--sat));left:0;right:0;bottom:0;background:#070b10}
   .frame-wrap iframe{width:100%;height:100%;border:0;display:block}
+  /* In fullscreen the bar is gone, so the game takes the whole element. */
+  .frame-wrap:fullscreen{top:0}
+  .frame-wrap:-webkit-full-screen{top:0}
+  body.is-fs .play-bar{display:none}
   .loader{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
     background:radial-gradient(120% 120% at 50% 28%,rgba(22,242,154,.1),#04060f 62%),#04060f;color:#eaf5ee;transition:opacity .6s ease}
-  .loader .tmark{filter:drop-shadow(0 0 26px rgba(22,242,154,.45))}
   .loader.hide{opacity:0;pointer-events:none}
-  .loader .tmark{width:150px;height:130px;animation:bob 2.4s ease-in-out infinite}
   .loader .lbar{width:200px;height:8px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden}
   .loader .lbar i{display:block;height:100%;width:36%;border-radius:6px;background:linear-gradient(90deg,#16c784,#5ad1ff);animation:load 1.5s ease-in-out infinite}
   @keyframes load{0%{margin-left:-40%}100%{margin-left:110%}}
@@ -44,12 +54,17 @@
 <body data-page="play">
 
 <div class="play-bar">
-  <a class="home" href="index.html"><span data-turtle style="display:inline-flex;width:30px"></span><span class="hideSm">Chart Quest</span></a>
+  <a class="home" href="index.html">
+    <svg class="tmark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <rect x="6" y="10" width="6" height="14" rx="2" fill="#16C784"/><rect x="8" y="4" width="2" height="24" rx="1" fill="#16C784"/>
+      <rect x="20" y="8" width="6" height="12" rx="2" fill="#EA3943"/><rect x="22" y="4" width="2" height="24" rx="1" fill="#EA3943"/>
+    </svg><span class="hideSm">ChartQuest</span>
+  </a>
   <span style="font-size:12px;color:#7e93a8;font-weight:700;letter-spacing:.05em" class="hideSm">▶ NOW PLAYING</span>
   <span class="sp"></span>
-  <button data-install style="display:none" onclick="cqInstall()">⬇ Install app</button>
-  <button onclick="cqFull()">⛶ <span class="hideSm">Fullscreen</span></button>
-  <button class="prime" onclick="document.getElementById('cqGame').src=CQ_GAME">↻ <span class="hideSm">Restart</span></button>
+  <button id="cqInstallBtn" type="button" hidden aria-label="Install ChartQuest">⬇ <span class="hideSm">Install app</span></button>
+  <button id="cqFsBtn" type="button" hidden aria-label="Enter fullscreen">⛶ <span class="hideSm" id="cqFsLabel">Fullscreen</span></button>
+  <button id="cqRestartBtn" class="prime" type="button" aria-label="Restart the game">↻ <span class="hideSm">Restart</span></button>
 </div>
 
 <div class="frame-wrap" id="frameWrap">
@@ -57,10 +72,9 @@
 </div>
 
 <div class="loader" id="cqLoader">
-  <span data-turtle style="display:inline-flex;width:150px"></span>
   <div style="text-align:center">
     <h3>Diving into the Blockchain Ocean…</h3>
-    <p>Loading live charts &amp; waking up Shell 🐢</p>
+    <p>Loading live charts &amp; waking up Finn 🐢</p>
   </div>
   <div class="lbar"><i></i></div>
   <a id="cqOpenTab" href="game.html" target="_blank" style="color:#6f8597;font-size:13px;text-decoration:underline;display:none">Taking too long? Open the game in a new tab →</a>
@@ -69,11 +83,11 @@
 <!-- install instructions modal -->
 <div class="modal" id="cqInstallModal">
   <div class="modal-card">
-    <div style="width:90px;margin:0 auto 6px" data-turtle="mascot"></div>
-    <h3>Add Chart Quest to your phone</h3>
+    <img src="icon-192.png" alt="" width="192" height="192" style="width:82px;height:82px;border-radius:20px;margin:0 auto 8px;display:block">
+    <h3>Add ChartQuest to your phone</h3>
     <div data-iostext>
       <p class="muted">On iPhone &amp; iPad, in Safari:</p>
-      <div class="steps2"><div><b>1</b><span>Tap the <b>Share</b> button (square with an arrow).</span></div><div><b>2</b><span>Scroll and tap <b>Add to Home Screen</b>.</span></div><div><b>3</b><span>Tap <b>Add</b> — Shell now lives on your home screen.</span></div></div>
+      <div class="steps2"><div><b>1</b><span>Tap the <b>Share</b> button (square with an arrow).</span></div><div><b>2</b><span>Scroll and tap <b>Add to Home Screen</b>.</span></div><div><b>3</b><span>Tap <b>Add</b> — ChartQuest now lives on your home screen.</span></div></div>
     </div>
     <div data-andtext>
       <p class="muted">On Android, in Chrome:</p>
@@ -93,11 +107,84 @@
   // safety: hide loader after 9s no matter what, and offer the new-tab escape after 5s
   setTimeout(function(){ document.getElementById('cqOpenTab').style.display='inline'; }, 5000);
   setTimeout(function(){ loader.classList.add('hide'); }, 9000);
-  window.cqFull = function(){
-    var el = document.getElementById('frameWrap');
-    if(!document.fullscreenElement){ (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); }
-    else { (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document); }
-  };
+
+  document.getElementById('cqRestartBtn').addEventListener('click', function(){ gframe.src = CQ_GAME; });
+
+  /* ── Fullscreen ─────────────────────────────────────────────────────────────
+     The old code did `(el.requestFullscreen || el.webkitRequestFullscreen || noop)`
+     — on iPhone Safari BOTH are undefined (the Fullscreen API only exists there for
+     <video>), so the button silently did nothing. That was the "can't go fullscreen"
+     bug. There is no script-callable fullscreen on iPhone at all; the only way to
+     lose the browser chrome is to install to the home screen. So:
+
+       installed PWA        -> already chromeless: hide the button
+       Fullscreen API works -> real fullscreen + try to lock orientation
+       iPhone Safari        -> relabel to "Fullscreen" -> opens the install sheet   */
+  (function(){
+    var wrap  = document.getElementById('frameWrap');
+    var fsBtn = document.getElementById('cqFsBtn');
+    var fsLbl = document.getElementById('cqFsLabel');
+    var instBtn = document.getElementById('cqInstallBtn');
+
+    function standalone(){
+      return window.matchMedia('(display-mode: standalone)').matches
+          || window.matchMedia('(display-mode: fullscreen)').matches
+          || navigator.standalone === true;
+    }
+    function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function fsSupported(){
+      var enabled = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+      var reqable = !!(wrap.requestFullscreen || wrap.webkitRequestFullscreen);
+      return !!(enabled && reqable);
+    }
+    function enter(){
+      var p = (wrap.requestFullscreen || wrap.webkitRequestFullscreen).call(wrap);
+      /* Chrome returns a promise that rejects without a user gesture or when the
+         embedding context forbids it — never leave that unhandled. */
+      if(p && p.catch) p.catch(function(){ sync(); });
+      /* Orientation lock is only permitted while fullscreen, and only on Android.
+         It throws on desktop/iOS; the failure is expected and harmless. */
+      try{ if(screen.orientation && screen.orientation.lock) screen.orientation.lock('portrait').catch(function(){}); }catch(e){}
+    }
+    function exit(){
+      var f = document.exitFullscreen || document.webkitExitFullscreen;
+      if(f){ var p = f.call(document); if(p && p.catch) p.catch(function(){}); }
+      try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
+    }
+    function sync(){
+      var on = !!fsElement();
+      document.body.classList.toggle('is-fs', on);
+      if(fsLbl) fsLbl.textContent = on ? 'Exit' : 'Fullscreen';
+      fsBtn.setAttribute('aria-label', on ? 'Exit fullscreen' : 'Enter fullscreen');
+    }
+    ['fullscreenchange','webkitfullscreenchange'].forEach(function(ev){
+      document.addEventListener(ev, sync);
+    });
+    /* Android back / Esc leaves fullscreen without a click — sync then too. */
+    window.addEventListener('pageshow', sync);
+
+    if(standalone()){
+      fsBtn.hidden = true;                       /* nothing to gain: no browser chrome */
+    } else if(fsSupported()){
+      fsBtn.hidden = false;
+      fsBtn.addEventListener('click', function(){ fsElement() ? exit() : enter(); });
+    } else {
+      /* iPhone Safari. Be honest: the only real fullscreen is the installed app. */
+      fsBtn.hidden = false;
+      fsBtn.addEventListener('click', function(){ if(window.cqInstall) window.cqInstall(); });
+    }
+    sync();
+
+    /* Install button: site.js only reveals it on beforeinstallprompt, which never
+       fires on iOS. Show it on any touch device that isn't already installed. */
+    var touch = window.matchMedia('(hover:none) and (pointer:coarse)').matches;
+    if(instBtn){
+      if(standalone()) instBtn.hidden = true;
+      else if(touch)   instBtn.hidden = false;
+      instBtn.addEventListener('click', function(){ if(window.cqInstall) window.cqInstall(); });
+      window.addEventListener('appinstalled', function(){ instBtn.hidden = true; fsBtn.hidden = true; });
+    }
+  })();
 </script>
 </body>
 </html>

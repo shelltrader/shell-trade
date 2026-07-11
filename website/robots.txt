@@ -1,0 +1,15 @@
+# ChartQuest — https://playchartquest.com
+#
+# This file must exist. Cloudflare Pages' not-found handler returns index.html with
+# a 200 for any missing path, so without a real robots.txt crawlers were being served
+# the HTML landing page as though it were robots.txt.
+
+User-agent: *
+Allow: /
+
+# The game shell is a 1.3MB canvas app with no indexable content.
+Disallow: /game
+Disallow: /game.html
+Disallow: /offline.html
+
+Sitemap: https://playchartquest.com/sitemap.xml

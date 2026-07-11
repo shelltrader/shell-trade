@@ -1,16 +1,43 @@
 {
-  "name": "Chart Quest",
-  "short_name": "Chart Quest",
-  "description": "Learn to read crypto charts and trade like a pro — one boss fight at a time. A side-scrolling RPG starring Shell the turtle.",
-  "start_url": "./index.html",
+  "id": "/",
+  "name": "ChartQuest — The World's First Trading RPG",
+  "short_name": "ChartQuest",
+  "description": "Dive inside real market charts as Finn the turtle. Run the candles, read the setups, defeat the Guardians — and learn to trade. Free, in your browser.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "any",
-  "background_color": "#04060f",
-  "theme_color": "#04060f",
+  "background_color": "#060910",
+  "theme_color": "#060910",
+  "prefer_related_applications": false,
+  "categories": ["games", "education", "finance"],
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "assets/pwa/icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa/icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa/icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa/icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa/icon-256.png", "sizes": "256x256", "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa/icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
-  "categories": ["games", "education", "finance"]
+  "screenshots": [
+    { "src": "assets/EXPLORE.jpg", "sizes": "720x900", "type": "image/jpeg", "form_factor": "narrow", "label": "Run across live market candles as Finn" },
+    { "src": "assets/TRADE.jpg",   "sizes": "720x900", "type": "image/jpeg", "form_factor": "narrow", "label": "Read the setup and pick a side" },
+    { "src": "assets/BATTLE.jpg",  "sizes": "720x900", "type": "image/jpeg", "form_factor": "narrow", "label": "Defeat the Guardians" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Play now",
+      "short_name": "Play",
+      "description": "Jump straight into the chart",
+      "url": "./play.html",
+      "icons": [{ "src": "assets/pwa/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
 }

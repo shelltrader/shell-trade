@@ -8,17 +8,52 @@
 <meta name="theme-color" content="#060910">
 
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="assets/pwa/icon-192.png">
+<link rel="icon" sizes="512x512" href="assets/pwa/icon-512.png">
+<!-- iOS ignores the manifest icons; it reads these. 180 is the modern home-screen size. -->
+<link rel="apple-touch-icon" href="assets/pwa/icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="assets/pwa/icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="assets/pwa/icon-167.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/pwa/icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ChartQuest">
 
+<!-- iOS launch screens. Without these, an installed PWA flashes a white screen
+     on every cold start. Each needs an exact device-pixel media query.
+     Regenerate with: python3 scripts/make_pwa_assets.py -->
+<link rel="apple-touch-startup-image" href="assets/pwa/splash-640x1136.png"   media="(device-width:320px) and (device-height:568px) and (-webkit-device-pixel-ratio:2)">
+<link rel="apple-touch-startup-image" href="assets/pwa/splash-750x1334.png"   media="(device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2)">
+<link rel="apple-touch-startup-image" href="assets/pwa/splash-1170x2532.png"  media="(device-width:390px) and (device-height:844px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="assets/pwa/splash-1179x2556.png"  media="(device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="assets/pwa/splash-828x1792.png"   media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2)">
+<link rel="apple-touch-startup-image" href="assets/pwa/splash-1242x2688.png"  media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="assets/pwa/splash-1284x2778.png"  media="(device-width:428px) and (device-height:926px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="assets/pwa/splash-1290x2796.png"  media="(device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="assets/pwa/splash-1536x2048.png"  media="(device-width:768px) and (device-height:1024px) and (-webkit-device-pixel-ratio:2)">
+<link rel="apple-touch-startup-image" href="assets/pwa/splash-1640x2360.png"  media="(device-width:820px) and (device-height:1180px) and (-webkit-device-pixel-ratio:2)">
+<link rel="apple-touch-startup-image" href="assets/pwa/splash-2048x2732.png"  media="(device-width:1024px) and (device-height:1366px) and (-webkit-device-pixel-ratio:2)">
+
+<!-- Social cards. og:image MUST be an absolute URL — relative paths are rejected by
+     Facebook, Discord, X and iMessage, which is where this launch's traffic comes from.
+     1200x630 is the size every one of them crops to. -->
+<link rel="canonical" href="https://playchartquest.com/">
+<meta property="og:site_name" content="ChartQuest">
 <meta property="og:title" content="ChartQuest — The World's First Trading RPG">
 <meta property="og:description" content="Dive inside real charts as Finn the turtle. Candles are terrain. Setups are puzzles. Bosses teach trading. The chart is the world.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="assets/chartquest-poster.jpg">
+<meta property="og:url" content="https://playchartquest.com/">
+<meta property="og:image" content="https://playchartquest.com/assets/og-cover.jpg">
+<meta property="og:image:secure_url" content="https://playchartquest.com/assets/og-cover.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Finn the turtle faces the eleven Guardians on a rising candlestick chart">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ChartQuest — The World's First Trading RPG">
+<meta name="twitter:description" content="Dive inside real charts as Finn the turtle. Learn to read any market — free, in your browser.">
+<meta name="twitter:image" content="https://playchartquest.com/assets/og-cover.jpg">
 
 <!-- Typography: Inter (body) + Space Grotesk (display).
      NOTE: served from Google Fonts. If this page deploys under the strict CSP in
@@ -338,18 +373,105 @@ html.js .reveal.in{opacity:1;transform:none}
   .foot-grid{grid-template-columns:1fr 1fr}
 }
 @media (max-width:640px){
-  .nav-links{position:fixed;inset:66px 0 auto 0;flex-direction:column;gap:0;background:rgba(6,9,16,.98);border-bottom:1px solid var(--line);padding:8px 0;display:none}
-  .nav-links.open{display:flex}
-  .nav-links a{padding:14px 24px;width:100%;font-size:16px}
-  .nav-links .nav-cta{display:flex;padding:14px 24px;width:100%}
-  .nav-links .nav-cta .btn{width:100%}
-  .nav-burger{display:block}
+  /* ---- Mobile menu: a real sheet, not a display:none pop ----
+     Animates (visibility is delayed out so the slide can finish), dims the page
+     behind a tappable backdrop, locks body scroll, and respects the notch. */
+  .nav-links{
+    position:fixed;left:0;right:0;top:calc(66px + env(safe-area-inset-top,0px));
+    max-height:calc(100dvh - 66px - env(safe-area-inset-top,0px));
+    overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+    display:flex;flex-direction:column;align-items:stretch;gap:0;margin-left:0;
+    background:rgba(6,9,16,.98);border-bottom:1px solid var(--line);
+    padding:8px 0 calc(12px + env(safe-area-inset-bottom,0px));
+    z-index:58;box-shadow:0 24px 48px rgba(0,0,0,.55);
+    opacity:0;visibility:hidden;transform:translateY(-10px);
+    transition:transform .3s cubic-bezier(.2,.8,.2,1),opacity .22s ease,visibility 0s linear .3s}
+  .nav-links.open{opacity:1;visibility:visible;transform:none;transition-delay:0s,0s,0s}
+  .nav-links a{padding:15px 24px;width:100%;font-size:16px;min-height:48px;display:flex;align-items:center}
+  .nav-links a:not(.btn)::after{display:none}          /* the desktop underline reads as a glitch on a sheet */
+  .nav-links .nav-cta{display:flex;padding:12px 24px 6px;width:100%}
+  .nav-links .nav-cta .btn{width:100%;min-height:50px}
+  .nav-burger{display:grid;place-items:center}
   .desktop-cta{display:none}
+  /* burger → X */
+  .nav-burger[aria-expanded="true"] span{background:transparent}
+  .nav-burger[aria-expanded="true"] span::before{top:0;transform:rotate(45deg)}
+  .nav-burger[aria-expanded="true"] span::after{top:0;transform:rotate(-45deg)}
+
   .gud-grid{grid-template-columns:1fr 1fr}
   .foot-grid{grid-template-columns:1fr}
   .sticky-cta{display:flex}
   .worldbg .skyline{height:30vh}
 }
+/* backdrop + scroll lock live outside the query: JS owns them, CSS only paints */
+.nav-backdrop{position:fixed;inset:0;z-index:57;background:rgba(3,5,11,.62);
+  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity .28s ease}
+body.nav-open .nav-backdrop{opacity:1;pointer-events:auto}
+/* position:fixed (not just overflow:hidden) — iOS Safari happily scrolls an
+   overflow:hidden body. JS restores the scroll offset via body.style.top. */
+body.nav-open{position:fixed;left:0;right:0;width:100%;overflow:hidden}
+@media (min-width:641px){.nav-backdrop{display:none}}
+
+/* Touch ergonomics now live at the END of this stylesheet: the markets section
+   below re-declares .mk-chip at equal specificity, and last-one-wins. */
+
+/* ---- First-launch welcome (shown once, ever) ---- */
+.cq-welcome{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:95;
+  display:flex;align-items:center;gap:13px;padding:13px 13px 13px 15px;border-radius:18px;
+  border:1px solid rgba(22,199,132,.32);background:rgba(9,15,24,.96);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  box-shadow:0 16px 40px rgba(0,0,0,.6);
+  transform:translateY(150%);transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.cq-welcome[hidden]{display:none}
+.cq-welcome.show{transform:none}
+/* the sticky Play CTA occupies the identical fixed box — stand it down while the
+   welcome is on screen, or they stack on top of each other */
+body.cq-welcome-on .sticky-cta{transform:translateY(200%)}
+@media (min-width:641px){.cq-welcome{left:auto;right:20px;width:min(420px,92vw)}}
+.cq-welcome img{width:44px;height:44px;border-radius:12px;flex:0 0 auto}
+.cq-welcome .cw-txt{flex:1;min-width:0}
+.cq-welcome .cw-title{font-weight:800;font-size:14.5px;letter-spacing:-.01em}
+.cq-welcome .cw-sub{margin-top:3px;color:var(--ink-dim);font-size:12.5px;line-height:1.45}
+.cq-welcome button{flex:0 0 auto;min-height:44px;padding:0 16px;border:0;border-radius:12px;cursor:pointer;
+  font-weight:800;font-size:14px;color:#032015;background:linear-gradient(180deg,#1ce39a,var(--green-2))}
+
+/* ---- Install sheet ---- */
+.isheet{position:fixed;inset:0;z-index:90;display:grid;place-items:end center;
+  background:rgba(3,5,11,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  opacity:0;transition:opacity .28s ease}
+.isheet[hidden]{display:none}
+.isheet.show{opacity:1}
+.isheet-card{position:relative;width:min(430px,100%);text-align:center;
+  padding:26px 22px calc(22px + env(safe-area-inset-bottom,0px));
+  border-radius:24px 24px 0 0;border:1px solid var(--line-2);border-bottom:0;
+  background:linear-gradient(180deg,#0d1420,#080c14);box-shadow:0 -20px 60px rgba(0,0,0,.6);
+  transform:translateY(14px);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.isheet.show .isheet-card{transform:none}
+@media (min-width:641px){.isheet{place-items:center}.isheet-card{border-radius:24px;border-bottom:1px solid var(--line-2)}}
+.isheet-x{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;border:0;
+  background:transparent;color:var(--ink-faint);font-size:16px;cursor:pointer}
+.isheet-x:hover{color:var(--ink)}
+.isheet-icon{width:74px;height:74px;border-radius:18px;margin:2px auto 14px;display:block;
+  box-shadow:0 10px 26px rgba(0,0,0,.55),0 0 0 1px var(--line-2)}
+.isheet h3{margin:0;font-family:var(--display);font-size:clamp(19px,4.6vw,23px);font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.isheet-sub{margin:10px auto 20px;max-width:34ch;color:var(--ink-dim);font-size:14.5px;line-height:1.5}
+.isteps{list-style:none;margin:0 0 20px;padding:0;text-align:left;display:grid;gap:11px}
+.isteps[hidden]{display:none}
+.isteps li{display:flex;align-items:flex-start;gap:12px}
+.isnum{flex:0 0 auto;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--mono);font-size:12px;font-weight:800;color:#04140d;background:var(--green)}
+.istxt{font-size:14.5px;line-height:1.5;color:var(--ink-dim);padding-top:2px}
+.istxt b{color:var(--ink);font-weight:800}
+.isicon{width:17px;height:17px;vertical-align:-3px;color:var(--gold)}
+.isheet-go{width:100%;min-height:50px}
+
+/* ---- Safe areas: the notch and the home indicator ---- */
+.nav{padding-top:env(safe-area-inset-top,0px)}
+.nav-in{padding-inline:max(0px,env(safe-area-inset-left,0px)) max(0px,env(safe-area-inset-right,0px))}
+.sticky-cta{bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  left:calc(12px + env(safe-area-inset-left,0px));right:calc(12px + env(safe-area-inset-right,0px))}
+.foot{padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))}
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;scroll-behavior:auto!important}
   html.js .reveal{opacity:1;transform:none;transition:none}
@@ -907,6 +1029,39 @@ body.tab-hidden *{animation-play-state:paused!important}
   display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:clamp(14px,2.2vw,26px)}
 .cta-slim .cs-txt{font-size:clamp(16px,2vw,20px);font-weight:700;color:var(--ink-dim)}
 .cta-slim .cs-txt b{color:var(--ink)}
+/* ---- Touch ergonomics ----
+   Everything tappable gets a >=44px target. Where a bigger box would wreck the
+   look (the bridge chevron, the TradingView credit) the VISUAL stays and only the
+   hit area grows via a transparent ::after. */
+@media (hover:none) and (pointer:coarse), (max-width:640px){
+  .mk-chip{min-height:44px;font-size:12.5px;padding:0 16px}
+  .mk-chg{font-size:12px}
+  .hero-trust{font-size:11.5px}
+  .mk-credit{position:relative;padding:14px 0;font-size:11px}
+  .brand{min-height:44px}
+  .foot ul a{display:inline-flex;align-items:center;min-height:44px}
+  #play .center a{display:inline-flex;align-items:center;min-height:44px}
+  .mk-rail{padding-inline:6px}
+  /* The chevron stays a 34px circle; only its hit area grows to 44x44. */
+  .bridge-next{position:relative}
+  .bridge-next::after{content:"";position:absolute;inset:-5px;border-radius:50%}
+}
+
+/* ---- Landscape phone ----
+   The hero's 580px floor is taller than a landscape handset, which pushed the
+   Play button below the fold. Let it shrink to the viewport instead. */
+@media (orientation:landscape) and (max-height:520px){
+  /* the sticky nav sits above the hero in flow, so subtract it or the CTA lands
+     exactly one nav-height below the fold */
+  .hero-cine{height:calc(100dvh - 66px - env(safe-area-inset-top,0px));min-height:290px;
+    padding-bottom:clamp(10px,2.5vh,22px)}
+  /* ~320px of usable height: keep only headline + subhead + the button */
+  .hero-cine .eyebrow,.hero-trust,.hero-scroll{display:none}
+  .hero-cine h1{font-size:clamp(20px,5.2vh,30px);margin-top:0}
+  .hero-cine .sub{font-size:13.5px;max-width:46ch;margin-top:8px}
+  .hero-cine .btn-row{margin-top:12px}
+  .mk-panes{height:clamp(230px,62vh,320px)}
+}
 </style>
 </head>
 <body>
@@ -972,12 +1127,20 @@ body.tab-hidden *{animation-play-state:paused!important}
       <a href="#markets">The markets</a>
       <a href="#what">The world</a>
       <a href="#why">Why ChartQuest</a>
-      <span class="nav-cta"><a class="btn btn-primary" href="play.html">Play Free</a></span>
+      <span class="nav-cta">
+        <button type="button" class="btn btn-ghost js-install" hidden>⬇ Install app</button>
+        <a class="btn btn-primary" href="play.html">Play Free</a>
+      </span>
     </div>
-    <span class="nav-cta desktop-cta" style="margin-left:auto"><a class="btn btn-primary" href="play.html">Play Free</a></span>
-    <button class="nav-burger" id="navBurger" aria-label="Menu" aria-expanded="false"><span></span></button>
+    <span class="nav-cta desktop-cta" style="margin-left:auto">
+      <button type="button" class="btn btn-ghost js-install" hidden>⬇ Install</button>
+      <a class="btn btn-primary" href="play.html">Play Free</a>
+    </span>
+    <button class="nav-burger" id="navBurger" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span></button>
   </div>
 </nav>
+<!-- fades via opacity; pointer-events:none while closed, so no `hidden` attribute -->
+<div class="nav-backdrop" id="navBackdrop"></div>
 
 <!-- DEPTH RAIL — the page is one descent into the chart -->
 <aside class="depthrail" id="depthRail" aria-hidden="true"
@@ -1282,6 +1445,50 @@ body.tab-hidden *{animation-play-state:paused!important}
   <a class="btn btn-primary" href="play.html">▶ Play Free</a>
 </div>
 
+<!-- One-time welcome. Never in a normal browser tab, never during gameplay (this
+     element only exists on the landing page), never twice. -->
+<div class="cq-welcome" id="cqWelcome" role="status" aria-live="polite" hidden>
+  <img src="assets/pwa/icon-192.png" alt="" width="192" height="192">
+  <div class="cw-txt">
+    <div class="cw-title">ChartQuest is on your home screen 🐢</div>
+    <div class="cw-sub">Next time, just tap the icon to continue your adventure.</div>
+  </div>
+  <button type="button" id="cqWelcomeGo">Let's go</button>
+</div>
+
+<!-- ===================== INSTALL SHEET =====================
+     Chromium gets the native prompt. iOS Safari has no beforeinstallprompt and
+     no way to trigger Add-to-Home-Screen from script, so it gets a walkthrough. -->
+<div class="isheet" id="installSheet" role="dialog" aria-modal="true" aria-labelledby="isTitle" hidden>
+  <div class="isheet-card" role="document">
+    <button class="isheet-x" id="isClose" type="button" aria-label="Close">✕</button>
+    <img class="isheet-icon" src="assets/pwa/icon-192.png" alt="" width="192" height="192">
+    <h3 id="isTitle">Put ChartQuest on your&nbsp;home&nbsp;screen</h3>
+    <p class="isheet-sub">It opens full-screen, with no browser bars. Just like a real game.</p>
+
+    <ol class="isteps" id="isStepsIOS">
+      <li>
+        <span class="isnum">1</span>
+        <span class="istxt">Tap the <b>Share</b> button
+          <svg class="isicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 15V3"/><path d="M8 7l4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/>
+          </svg>
+          in Safari's toolbar.</span>
+      </li>
+      <li><span class="isnum">2</span><span class="istxt">Scroll down and tap <b>Add&nbsp;to&nbsp;Home&nbsp;Screen</b>&nbsp;<svg class="isicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></span></li>
+      <li><span class="isnum">3</span><span class="istxt">Tap <b>Add</b>. Finn lands on your home&nbsp;screen.&nbsp;🐢</span></li>
+    </ol>
+
+    <ol class="isteps" id="isStepsAndroid" hidden>
+      <li><span class="isnum">1</span><span class="istxt">Open the <b>⋮</b> menu, top-right.</span></li>
+      <li><span class="isnum">2</span><span class="istxt">Tap <b>Install app</b> or <b>Add to Home screen</b>.</span></li>
+      <li><span class="isnum">3</span><span class="istxt">Confirm — it installs like any app.</span></li>
+    </ol>
+
+    <button class="btn btn-primary isheet-go" id="isGot" type="button">Got it</button>
+  </div>
+</div>
+
 <script>
 /* CHARTQUEST — portal experience. Edit URLs in one place: */
 var CQ = { game:"play.html", discord:"" };
@@ -1289,10 +1496,158 @@ var CQ = { game:"play.html", discord:"" };
   document.documentElement.classList.add('js');
   var yr=document.getElementById('yr'); if(yr) yr.textContent=new Date().getFullYear();
 
-  /* Mobile menu */
-  var burger=document.getElementById('navBurger'), links=document.getElementById('navLinks');
-  if(burger) burger.addEventListener('click',function(){var o=links.classList.toggle('open');burger.setAttribute('aria-expanded',o?'true':'false');});
-  links&&links.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){links.classList.remove('open');burger&&burger.setAttribute('aria-expanded','false');});});
+  /* ── Mobile menu ────────────────────────────────────────────────────────────
+     A sheet, not a display toggle: animates, dims the page, locks body scroll
+     (preserving the scroll position, which `overflow:hidden` alone loses on iOS),
+     closes on Escape / backdrop / link / resize, and returns focus to the burger. */
+  (function(){
+    var burger=document.getElementById('navBurger'),
+        links=document.getElementById('navLinks'),
+        backdrop=document.getElementById('navBackdrop');
+    if(!burger||!links) return;
+    var open=false, scrollY=0;
+
+    function focusables(){return [].filter.call(links.querySelectorAll('a,button'),function(e){return !e.hidden && e.offsetParent!==null;});}
+
+    function setOpen(v){
+      if(v===open) return; open=v;
+      links.classList.toggle('open',v);
+      burger.setAttribute('aria-expanded',v?'true':'false');
+      burger.setAttribute('aria-label',v?'Close menu':'Open menu');
+      if(v){
+        scrollY=window.scrollY;
+        document.body.style.top=(-scrollY)+'px';
+        document.body.classList.add('nav-open');
+        var f=focusables()[0]; if(f) f.focus({preventScroll:true});
+      } else {
+        document.body.classList.remove('nav-open');
+        document.body.style.top='';
+        window.scrollTo(0,scrollY);
+        burger.focus({preventScroll:true});
+      }
+    }
+
+    burger.addEventListener('click',function(e){e.stopPropagation();setOpen(!open);});
+    backdrop&&backdrop.addEventListener('click',function(){setOpen(false);});
+    links.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){setOpen(false);});});
+    document.addEventListener('keydown',function(e){
+      if(!open) return;
+      if(e.key==='Escape'){ e.preventDefault(); setOpen(false); return; }
+      if(e.key==='Tab'){                                   /* keep focus inside the sheet */
+        var f=focusables(); if(!f.length) return;
+        var first=f[0], last=f[f.length-1];
+        if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+        else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+      }
+    });
+    /* rotating to landscape can cross the 640px breakpoint while the sheet is open */
+    var mq=window.matchMedia('(min-width:641px)');
+    (mq.addEventListener?mq.addEventListener.bind(mq,'change'):mq.addListener.bind(mq))(function(ev){ if(ev.matches) setOpen(false); });
+  })();
+
+  /* ── Install to home screen ─────────────────────────────────────────────────
+     Chromium fires beforeinstallprompt and lets us call prompt() from a gesture.
+     iOS Safari does neither — no event, no API — so it gets a walkthrough sheet.
+     The button is hidden unless install is actually possible, and disappears for
+     good once installed (appinstalled, display-mode, or iOS navigator.standalone). */
+  (function(){
+    var deferred=null;
+    var sheet=document.getElementById('installSheet');
+    var btns=[].slice.call(document.querySelectorAll('.js-install'));
+    var iosSteps=document.getElementById('isStepsIOS'), androidSteps=document.getElementById('isStepsAndroid');
+
+    var ua=navigator.userAgent;
+    var isIOS=(/iPad|iPhone|iPod/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1))
+              && !window.MSStream;
+    var isSafari=/^((?!chrome|android|crios|fxios|edgios).)*safari/i.test(ua);
+    function installed(){
+      return window.matchMedia('(display-mode: standalone)').matches
+          || window.matchMedia('(display-mode: fullscreen)').matches
+          || navigator.standalone === true
+          || localStorage.getItem('cq_installed')==='1';
+    }
+    function show(v){ btns.forEach(function(b){ b.hidden=!v; }); }
+
+    /* Chromium: capture the prompt, reveal the button. */
+    window.addEventListener('beforeinstallprompt',function(e){
+      e.preventDefault(); deferred=e; if(!installed()) show(true);
+    });
+    /* No event will ever fire on iOS Safari — and Firefox/other mobile browsers
+       don't fire it either. On any touch device we still show the button and fall
+       back to the walkthrough, so install is never a dead end. On desktop we only
+       show it once Chromium has actually offered us a prompt. */
+    var touch = window.matchMedia('(hover:none) and (pointer:coarse)').matches;
+    if(!installed() && (touch || (isIOS && isSafari))) show(true);
+
+    window.addEventListener('appinstalled',function(){
+      try{localStorage.setItem('cq_installed','1');}catch(e){}
+      deferred=null; show(false); closeSheet();
+    });
+    if(installed()) show(false);
+
+    function openSheet(){
+      if(!sheet) return;
+      if(iosSteps) iosSteps.hidden=!isIOS;
+      if(androidSteps) androidSteps.hidden=isIOS;
+      sheet.hidden=false; void sheet.offsetWidth; sheet.classList.add('show');
+      var x=document.getElementById('isClose'); if(x) x.focus({preventScroll:true});
+    }
+    function closeSheet(){
+      if(!sheet||sheet.hidden) return;
+      sheet.classList.remove('show');
+      setTimeout(function(){ sheet.hidden=true; },300);
+    }
+    window.cqInstall=function(){
+      if(deferred){                       /* native Chromium prompt */
+        deferred.prompt();
+        deferred.userChoice.then(function(c){ if(c && c.outcome==='accepted') show(false); })
+                           .finally(function(){ deferred=null; });
+        return;
+      }
+      openSheet();                        /* iOS + anything without the event */
+    };
+    btns.forEach(function(b){ b.addEventListener('click',window.cqInstall); });
+    ['isClose','isGot'].forEach(function(id){var e=document.getElementById(id); if(e) e.addEventListener('click',closeSheet);});
+    sheet&&sheet.addEventListener('click',function(e){ if(e.target===sheet) closeSheet(); });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeSheet(); });
+
+    /* ── One-time welcome ──────────────────────────────────────────────────────
+       Two different moments can be a user's "just installed":
+         · Chromium fires `appinstalled` while they're still in the browser tab.
+         · iOS fires NOTHING for Add to Home Screen — the first time we ever see
+           that user is when the installed app cold-starts in standalone mode.
+       So we greet on whichever happens first, exactly once, and never again. */
+    var welcome=document.getElementById('cqWelcome'), welcomeGo=document.getElementById('cqWelcomeGo');
+    function seen(){ try{ return localStorage.getItem('cq_welcomed')==='1'; }catch(e){ return true; } }
+    function markSeen(){ try{ localStorage.setItem('cq_welcomed','1'); }catch(e){} }
+    function hideWelcome(){
+      if(!welcome||welcome.hidden) return;
+      welcome.classList.remove('show');
+      document.body.classList.remove('cq-welcome-on');
+      setTimeout(function(){ welcome.hidden=true; },460);
+    }
+    function showWelcome(){
+      if(!welcome||seen()||!welcome.hidden) return;
+      markSeen();                                /* mark on SHOW, not on dismiss — if they
+                                                    close the app first it must not return */
+      welcome.hidden=false; void welcome.offsetWidth;
+      welcome.classList.add('show');
+      document.body.classList.add('cq-welcome-on');   /* stands the sticky CTA down */
+      setTimeout(hideWelcome, 12000);            /* self-dismisses; never nags */
+    }
+    /* `installed()` also consults a localStorage memo, which would let the greeting
+       fire inside a normal browser tab. The cold-start trigger must test the REAL
+       display mode instead. */
+    function standaloneNow(){
+      return window.matchMedia('(display-mode: standalone)').matches
+          || window.matchMedia('(display-mode: fullscreen)').matches
+          || navigator.standalone === true;
+    }
+    if(welcomeGo) welcomeGo.addEventListener('click', hideWelcome);
+    window.addEventListener('appinstalled', showWelcome);
+    /* first cold start of the installed app — the ONLY hook iOS gives us */
+    if(standaloneNow() && !seen()) showWelcome();
+  })();
 
   /* Reveal (robust safety net) */
   (function(){
@@ -1693,10 +2048,8 @@ var CQ = { game:"play.html", discord:"" };
     else a.addEventListener('click',function(e){e.preventDefault();alert("The guild opens soon! 🐢\n\nPaste your Discord invite into CQ.discord (in this page's script) or the button's data-url to activate it.");});
   });
 
-  /* PWA install */
-  var deferred=null;
-  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;});
-  window.cqInstall=function(){if(deferred){deferred.prompt();deferred.userChoice.finally(function(){deferred=null;});}};
+  /* PWA install lives in its own IIFE above — it captures beforeinstallprompt,
+     shows/hides the button, and owns window.cqInstall. Nothing to do here. */
 
   /* Service worker */
   if('serviceWorker' in navigator) window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});

@@ -1597,12 +1597,18 @@
    reload doesn't re-wipe. Cloud auth (sb-*) is untouched. */
 try {
   if (/[?&]fresh(=|&|$)/.test(location.search)) {
-    // A ?fresh link re-tapped from a chat thread must never silently destroy a real
-    // save. Wipe without asking only when there is nothing to lose (clean device) or
-    // when automation is driving (?qa); otherwise make the player confirm.
-    const _hasProgress = !!localStorage.getItem('cq_player_v1');
+    // A ?fresh link re-tapped from a chat thread must never silently destroy a real save.
+    // But "cq_player_v1 exists" is NOT progress — every visitor gets a default {shells:5,
+    // level:1, xp:0} object, so keying on the key's presence would prompt on every single
+    // ?fresh test run and, under automation (confirm() → false), would skip the wipe and
+    // silently make a "fresh" beginner test not fresh. Only EARNED progress prompts.
+    let _real = false;
+    try {
+      const _p = JSON.parse(localStorage.getItem('cq_player_v1') || 'null');
+      _real = !!_p && (Number(_p.level) > 1 || Number(_p.xp) > 0);
+    } catch (e) {}
     const _qa = /[?&]qa(=|&|$)/.test(location.search);
-    if (!_hasProgress || _qa || confirm('Start ChartQuest over? This erases your progress on this device.')) {
+    if (!_real || _qa || confirm('Start ChartQuest over? This erases your progress on this device.')) {
       const _rk = [];
       for (let _i = 0; _i < localStorage.length; _i++) _rk.push(localStorage.key(_i));
       _rk.forEach(k => { if (/^(cq_|shellTrade)/.test(k)) localStorage.removeItem(k); });
@@ -2434,7 +2440,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 264 — RC1.1 telemetry unblock. THE BIG ONE: the ingest + update-progress Edge Functions never had playchartquest.com on their origin allowlist (still Netlify-era), so since the Cloudflare move every telemetry event was 403 CORS-blocked and every cloud save was rejected — the beta would have measured nothing. Allowlist fixed + exact-origin matching (was a spoofable prefix match); queued events on players\' devices drain retroactively on next open. Added page_load (fires pre-auth, so a cold-open bounce is finally visible in the funnel — session_start alone flattered the reach-first-trade rate). ?fresh now confirms before wiping a real save (a re-tapped test link used to nuke a player silently); /play forwards query params (so ?fresh=1 was inert through the wrapper). QA postMessage bridge now requires ?qa=1 AND same-origin. No gameplay/trading/onboarding redesign — stabilization only. FINN_V3 still dormant';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 265 — RC1.1 telemetry unblock. THE BIG ONE: the ingest + update-progress Edge Functions never had playchartquest.com on their origin allowlist (still Netlify-era), so since the Cloudflare move every telemetry event was 403 CORS-blocked and every cloud save was rejected — the beta would have measured nothing. Allowlist fixed + exact-origin matching (was a spoofable prefix match); queued events on players\' devices drain retroactively on next open. Added page_load (fires pre-auth, so a cold-open bounce is finally visible in the funnel — session_start alone flattered the reach-first-trade rate). ?fresh now confirms before wiping a real save (a re-tapped test link used to nuke a player silently); /play forwards query params (so ?fresh=1 was inert through the wrapper). QA postMessage bridge now requires ?qa=1 AND same-origin. No gameplay/trading/onboarding redesign — stabilization only. FINN_V3 still dormant';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -20154,12 +20160,13 @@ function _cqEmitPageLoad() {
   try {
     if (!window.ContentLog || window._cqPageLoadLogged) return;
     window._cqPageLoadLogged = true;
+    // page_load is the ONLY record of a cold-open bouncer (they never reach session_start),
+    // so the device fields must survive a zero-sized/unlaid iframe: screen + dpr are always
+    // real, viewport is best-effort.
     window.ContentLog.emit('page_load', {
       build:      (typeof BUILD_TAG === 'string' ? ((BUILD_TAG.match(/build \d+/) || [''])[0]) : ''),
-      // page_load is the ONLY record we get for a cold-open bouncer (they never reach
-      // session_start), so the device fields have to be real — inside the /play iframe
-      // innerWidth is still 0 at script time, hence the rAF and the screen fallback.
-      viewport:   (innerWidth || 0) + 'x' + (innerHeight || 0),
+      viewport:   (innerWidth || document.documentElement.clientWidth || 0) + 'x' +
+                  (innerHeight || document.documentElement.clientHeight || 0),
       screen:     ((screen && screen.width) || 0) + 'x' + ((screen && screen.height) || 0),
       dpr:        window.devicePixelRatio || 1,
       ua:         (navigator.userAgent || '').slice(0, 180),
@@ -20169,10 +20176,14 @@ function _cqEmitPageLoad() {
   } catch (e) {}
 }
 try {
-  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(_cqEmitPageLoad);
-  else setTimeout(_cqEmitPageLoad, 0);
-  // Backstop: if rAF never fires (background tab), still capture the visit on the way out.
+  // Deliberately NOT requestAnimationFrame: rAF never fires in a hidden/background tab, so
+  // it would silently drop the very bounce this event exists to measure. A short timer fires
+  // either way (throttled, not frozen); pagehide/visibilitychange catch anyone who leaves first.
+  setTimeout(_cqEmitPageLoad, 200);
   window.addEventListener('pagehide', _cqEmitPageLoad);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') _cqEmitPageLoad();
+  });
 } catch (e) { _cqEmitPageLoad(); }
 
 /* ══════════════════════════════════════════════════════════════════════════

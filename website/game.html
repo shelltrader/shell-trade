@@ -27,6 +27,9 @@
 <title>Chart Quest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- build 262: preload the cold-open poster so the intro is never a black screen while the
+     12MB cinematic video loads (a real frame of the Market Maker teaser; see #mmTeaser). -->
+<link rel="preload" as="image" href="mm-poster.jpg" fetchpriority="high">
 <style>
   /* Portrait stage, letterboxed on wide screens. The game + all overlays live
      inside #stage; the transform makes position:fixed overlays resolve to the
@@ -818,7 +821,10 @@
   .imConf { position: absolute; top: -14px; width: 8px; height: 13px; border-radius: 2px; opacity: 0.92; animation-name: imConfFall; animation-timing-function: cubic-bezier(.3,.6,.5,1); animation-iteration-count: 1; animation-fill-mode: forwards; }
   @keyframes imConfFall { 0% { transform: translateY(0) rotate(0); opacity: 0 } 12% { opacity: 1 } 100% { transform: translateY(360px) rotate(460deg); opacity: 0 } }
   /* ── Market Maker intro teaser ── */
-  #mmTeaser { position: absolute; inset: 0; z-index: 45; background: #000; display: none; overflow: hidden; }
+  /* build 262: a real cinematic frame as the base layer so the cold-open is never pure
+     black while the 12MB video loads. The video (opacity 0 → 1) fades in on top of it and
+     lines up with this frame; if the video never loads, this poster stays (graceful). */
+  #mmTeaser { position: absolute; inset: 0; z-index: 45; background: #000 center / cover no-repeat url('mm-poster.jpg'); display: none; overflow: hidden; }
   #mmTeaser.on { display: block; }
   #mmGlow { position: absolute; inset: 0; background: radial-gradient(ellipse 62% 46% at 50% 40%, rgba(124,77,255,0.20), transparent 70%); animation: mmPulse 4s ease-in-out infinite; }
   @keyframes mmPulse { 0%,100% { opacity: .5 } 50% { opacity: 1 } }
@@ -1864,6 +1870,21 @@ try {
       return;
     }
     _bootHandled = true;   // we've left the login flow — block any late session handler
+    // build 262 (beta funnel): one session_start per load — device/viewport/mode/build.
+    // Answers "who played, on what device, guest or account, and where did they stop?"
+    try {
+      if (window.ContentLog && !window._cqSessionLogged) {
+        window._cqSessionLogged = true;
+        window.ContentLog.emit('session_start', {
+          is_guest:   !_supaUser,
+          build:      (typeof BUILD_TAG === 'string' ? ((BUILD_TAG.match(/build \d+/) || [''])[0]) : ''),
+          viewport:   innerWidth + 'x' + innerHeight,
+          dpr:        window.devicePixelRatio || 1,
+          ua:         (navigator.userAgent || '').slice(0, 180),
+          standalone: (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true
+        });
+      }
+    } catch (e) {}
     const overlay = document.getElementById('authOverlay');
     if (overlay) overlay.style.display = 'none';
     const accountBtn = document.getElementById('accountBtn');
@@ -2406,7 +2427,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 261 — REVERT V3 weight-model: Finn movement restored to build 259 exactly (rigid shell must not squash per gait step — canon allows squash only on landing impact). V3 module kept DORMANT as the P1 atlas seam; nothing branches on FINN_V3. Keeps the dt-clamp crash fix (backwards clock diverged the spring integrator)';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 262 — RC1 stabilization (external beta). Guest progress now persists to localStorage (cq_player_v1) so a no-account player keeps shells/level/xp across reloads — cloud stays authoritative when signed in. Cold-open never black-screens: a real cinematic frame (mm-poster.jpg) is the #mmTeaser base while the 12MB video loads. Beta funnel telemetry ON by default (cloud ingest, anon-keyed, Dashboard can disable): session_start + reached_first_trade added alongside the existing trade/boss/level events. No gameplay/trading/onboarding redesign — stabilization only. FINN_V3 still dormant';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -3320,6 +3341,37 @@ const player = {
   xp:     0,
   xpNeeded: 250,  // XP required to reach the next level (harder progression)
 };
+
+/* ---- Guest progress persistence (build 262) ----
+   shells/level/xp are otherwise cloud-only (cloudPushProgress needs a signed-in
+   session), so a GUEST reset to Level 1 + starter shells on every reload — the
+   single biggest first-hour retention leak. Mirror the core player object to
+   localStorage so progress survives a reload with NO account. Precedence: hydrate
+   from local at boot; on sign-in the cloud `profiles` load overwrites it (cloud
+   stays authoritative). ?fresh=1 already wipes every cq_* key above this line, so
+   beginner-test mode starts clean automatically — no extra gating needed. */
+const CQ_PLAYER_KEY = 'cq_player_v1';
+function saveLocalProgress() {
+  try { localStorage.setItem(CQ_PLAYER_KEY, JSON.stringify({
+    shells: player.shells, level: player.level, xp: player.xp, xpNeeded: player.xpNeeded
+  })); } catch (e) {}
+}
+function loadLocalProgress() {
+  try {
+    const raw = localStorage.getItem(CQ_PLAYER_KEY); if (!raw) return;
+    const s = JSON.parse(raw);
+    if (Number.isFinite(s.shells))   player.shells   = s.shells;
+    if (Number.isFinite(s.level))    player.level    = s.level;
+    if (Number.isFinite(s.xp))       player.xp       = s.xp;
+    if (Number.isFinite(s.xpNeeded)) player.xpNeeded = s.xpNeeded;
+  } catch (e) {}
+}
+loadLocalProgress();
+/* Safety net: whatever the player state is when the tab closes/backgrounds, save it.
+   Catches every mutation without hunting each site (pagehide is the reliable mobile
+   "app is closing" signal; visibilitychange:hidden covers tab-switch/home-button). */
+window.addEventListener('pagehide', saveLocalProgress);
+document.addEventListener('visibilitychange', function () { if (document.hidden) saveLocalProgress(); });
 
 /* ---------- Rank ladder: Beginner → Trader ----------
    A named identity that climbs as the player levels up (one tier per level
@@ -6859,6 +6911,18 @@ function openPanel() {
   paused = true;         // popup = the game world freezes underneath
   panelEl.classList.add('open');
   $('backdrop').classList.add('open');
+  // build 262 (beta funnel): first time the trade panel opens = the player reached the core
+  // hook. With trade_win/trade_loss (completed), this brackets Q1 "can beginners reach their
+  // first trade?" — a session_start with no reached_first_trade == lost in the traversal wall.
+  try {
+    if (window.ContentLog && !window._cqFirstTradeLogged) {
+      window._cqFirstTradeLogged = true;
+      window.ContentLog.emit('reached_first_trade', {
+        setup_type: (setupZone && setupZone.type) || 'momentum',
+        level: player.level, shells: player.shells
+      });
+    }
+  } catch (e) {}
 }
 
 /* Shell as an SVG marker — the canonical turtle (green shell, head, goggle),
@@ -12301,6 +12365,7 @@ function addXP(n) {
     }
   }
   window.cloudPushProgress && window.cloudPushProgress(); // sync level/XP/shells to cloud
+  saveLocalProgress();                                    // …and keep the guest's local copy in step
   // ── Content event: level_up (schema #6) ──
   try {
     if (window.ContentLog && player.level > _lvl0) {
@@ -19764,7 +19829,7 @@ return {run:MG_run,REG:REG};
     } catch (e) {}
     post({ type: 'state', data: stateSnap() });
   }
-  function resetProgress() { lockAll(); try { ['cq_lessonProg_v1','cq_maxHour_v1'].forEach(k => localStorage.removeItem(k)); } catch (e) {} post({ type: 'state', data: stateSnap() }); }
+  function resetProgress() { lockAll(); try { ['cq_lessonProg_v1','cq_maxHour_v1','cq_player_v1'].forEach(k => localStorage.removeItem(k)); } catch (e) {} post({ type: 'state', data: stateSnap() }); }
 
   function cmd(c, a) {
     a = a || {};
@@ -19836,7 +19901,10 @@ window.ContentLog = (function () {
   // ── MASTER SWITCH ── content capture is OFF by default; it records ONLY when explicitly turned
   // on from the Dashboard (Content → ON/OFF). When OFF, emit() and attachReplay() save nothing
   // locally and queue nothing to the cloud. Persisted in localStorage so it survives reloads.
-  function logEnabled() { try { return store.getItem('cq_content_enabled') === '1'; } catch (e) { return false; } }
+  // build 262 (beta): content capture is ON by default so all 10 remote testers produce
+  // funnel data through the cloud `ingest` pipeline (anon-keyed → guests capture too).
+  // The Dashboard can still turn it OFF by setting cq_content_enabled = '0'.
+  function logEnabled() { try { return store.getItem('cq_content_enabled') !== '0'; } catch (e) { return false; } }
   function setLogEnabled(on) { try { store.setItem('cq_content_enabled', on ? '1' : '0'); } catch (e) {} }
   function enqueue(table, row) {
     queue.push({ qid: 'q-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7), table: table, row: row, tries: 0 });

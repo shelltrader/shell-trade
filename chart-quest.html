@@ -26,7 +26,7 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Chart Quest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   /* Portrait stage, letterboxed on wide screens. The game + all overlays live
      inside #stage; the transform makes position:fixed overlays resolve to the
@@ -72,6 +72,8 @@
   :root {
     --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    /* Display face for cinematic titles — same one the marketing site uses. */
+    --font-cine: 'Space Grotesk', 'Inter', -apple-system, system-ui, sans-serif;
   }
 
   /* --- SETUP DETECTED banner (Step 6) --- */
@@ -823,16 +825,31 @@
   #mmVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.4s ease; filter: saturate(0.9) contrast(1.06) brightness(0.92); }
   #mmVideo.show { opacity: 0.96; }
   #mmVignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 72% 62% at 50% 42%, transparent 26%, rgba(0,0,0,0.5) 70%, rgba(2,2,8,0.95) 100%); }
-  /* Cinematic motion-graphics dialogue — larger, higher on screen, slow cross-fade. The subtle
-     PURPLE aura is the Market Maker's signature: you know instantly it's him speaking. */
-  #mmDialogue { position: absolute; left: 20px; right: 20px; bottom: 21%; text-align: center; color: #eef1fb; font: 600 21px var(--font-ui); line-height: 1.62; letter-spacing: 0.5px; text-shadow: 0 0 24px rgba(138,92,255,0.30), 0 2px 22px rgba(0,0,0,0.96); opacity: 0; transition: opacity 0.7s ease, transform 0.7s cubic-bezier(.2,.8,.2,1); }
+  /* Cinematic subtitle. It sits in a BOTTOM BAND, under Finn and clear of the Market
+     Maker's face — the scene is theirs, the words only caption it. Small, tracked-out
+     Space Grotesk over a soft local scrim (not a purple halo), so it stays legible on
+     the bright warp frames without shouting. */
+  #mmDialogue {
+    position: absolute; left: 18px; right: 18px; bottom: clamp(58px, 8%, 96px);
+    max-width: 30ch; margin-inline: auto;
+    /* `balance` is ignored on blocks containing forced <br> breaks — `pretty` still
+       pulls a word down so no line ends as a lonely orphan ("path." / "demands."). */
+    text-align: center; text-wrap: pretty;
+    color: #dde4f2;
+    font: 500 clamp(13.5px, 3.9vw, 17px)/1.72 var(--font-cine);
+    letter-spacing: 0.05em;
+    padding: 20px 14px 16px;
+    background: radial-gradient(118% 132% at 50% 60%, rgba(3,4,11,0.72), rgba(3,4,11,0) 74%);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.85), 0 2px 18px rgba(0,0,0,0.9);
+    opacity: 0; transition: opacity 0.7s ease, transform 0.7s cubic-bezier(.2,.8,.2,1);
+  }
   #mmDialogue.show { opacity: 1; }
   /* One emphasized keyword per screen — a warm gold glow (FREEDOM, TEN GUARDIANS, TRADER). */
-  #mmDialogue .mmKey { color: #ffe9b0; font-weight: 800; letter-spacing: 1px; text-shadow: 0 0 18px rgba(255,213,74,0.6), 0 2px 10px #000; }
-  /* When the portal+button are up, lift the dialogue so the GUARDIAN sub clears the button (transform = smooth). */
-  #mmDialogue.portalUp { transform: translateY(-58px); }
-  #mmDialogue .mmName { display: block; margin-top: 16px; font: 900 24px var(--font-ui); letter-spacing: 4px; color: #c9a6ff; text-shadow: 0 0 30px #8a5cff, 0 0 12px #8a5cff, 0 2px 10px #000; animation: mmNameReveal 1.2s cubic-bezier(.2,.8,.2,1) both; }
-  #mmDialogue .mmSub { display: block; margin-top: 10px; font: 800 10.5px var(--font-ui); letter-spacing: 3.5px; color: #ff6b73; text-shadow: 0 0 12px rgba(255,107,115,0.55); animation: mmSubReveal 0.7s 0.55s ease both; }
+  #mmDialogue .mmKey { color: #ffe1a0; font-weight: 700; letter-spacing: 0.11em; text-shadow: 0 0 14px rgba(255,203,74,0.45), 0 1px 3px #000; }
+  /* When the portal+button are up, lift the dialogue so it clears the ENTER button. */
+  #mmDialogue.portalUp { transform: translateY(-84px); }
+  #mmDialogue .mmName { display: block; margin-top: 14px; font: 700 clamp(16px, 4.6vw, 21px) var(--font-cine); letter-spacing: 0.32em; text-indent: 0.32em; color: #cbaaff; text-shadow: 0 0 26px rgba(138,92,255,0.85), 0 0 10px rgba(138,92,255,0.7), 0 2px 8px #000; animation: mmNameReveal 1.2s cubic-bezier(.2,.8,.2,1) both; }
+  #mmDialogue .mmSub { display: block; margin-top: 9px; font: 600 clamp(8.5px, 2.3vw, 10px) var(--font-cine); letter-spacing: 0.34em; text-indent: 0.34em; color: #ff6b73; text-shadow: 0 0 10px rgba(255,107,115,0.5); animation: mmSubReveal 0.7s 0.55s ease both; }
   @keyframes mmNameReveal { 0% { opacity: 0; transform: scale(1.4); filter: blur(7px); } 100% { opacity: 1; transform: scale(1); filter: blur(0); } }
   @keyframes mmSubReveal { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
   #mmSkip { position: absolute; top: 14px; right: 14px; z-index: 3; font: 700 12px var(--font-ui); color: rgba(255,255,255,0.72); background: rgba(8,10,22,0.6); border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
@@ -2389,7 +2406,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 254 — delete the OLD turtle model: cinematic + academy now render the official Finn (run.png); deprecated walk-sheet/body/leg assets + code paths removed; regression gate blocks their return';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 261 — REVERT V3 weight-model: Finn movement restored to build 259 exactly (rigid shell must not squash per gait step — canon allows squash only on landing impact). V3 module kept DORMANT as the P1 atlas seam; nothing branches on FINN_V3. Keeps the dt-clamp crash fix (backwards clock diverged the spring integrator)';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -4354,7 +4371,19 @@ function drawHeroFinn(f) {
   ctx.save();
   ctx.globalAlpha = fade;
   ctx.translate(cx, cyFeet); ctx.scale(pop, pop); ctx.translate(-cx, -cyFeet);
-  try { drawTurtle(camX); } catch (e) {}
+  const heroImg = FINN_SPRITES.hero;
+  if (heroImg && heroImg.naturalWidth) {
+    // build 255 — CANON hero/menu/victory pose (finn_canon.md §1: hero.png), feet-anchored &
+    // centred, with the same gentle happy bob. Gameplay still renders run.png via drawFinnSprite.
+    const hh  = hw * 1.12;
+    const hwd = hh * (heroImg.naturalWidth / heroImg.naturalHeight);
+    const bob = Math.sin(age * 3.0) * (hh * 0.012);
+    ctx.imageSmoothingEnabled = true;
+    try { ctx.imageSmoothingQuality = 'high'; } catch (e) {}
+    ctx.drawImage(heroImg, cx - hwd / 2, cyFeet - hh + bob, hwd, hh);
+  } else {
+    try { drawTurtle(camX); } catch (e) {}   // fallback: shared-turtle render (run.png) — never a blank hero
+  }
   ctx.restore();
   turtle.x = sv.x; turtle.y = sv.y; turtle.w = sv.w; turtle.onGround = sv.onGround; turtle.halt = sv.halt;
   turtle.tucked = sv.tucked; turtle.spinning = sv.spinning; turtle.animT = sv.animT;
@@ -10434,6 +10463,7 @@ function playBossIntroCinematic(level, onArrive) {
 })();
 
 function openBoss(level) {
+  try { FinnLife.lookToward(1, 2.4, 'boss'); } catch (e) {}   // Living Renderer — Finn turns to face the Guardian
   const boss = BOSSES[level]; if (!boss) { closeIntermission(true); return; }
   // GUARD: never open/animate the same boss twice in quick succession (the cause of the
   // "intro animation plays twice"). Legitimate retries happen seconds later, so they pass.
@@ -10975,7 +11005,33 @@ $('slSlider').oninput = refreshPanel;
 $('tpSlider').oninput = refreshPanel;
 $('btnRec').onclick = applyRecommended;
 $('btnClose').onclick = closePanel;
+// ── TES v1.1 · AUTHORED TUTORIAL OUTCOMES (Levels 1–3 confidence phase) ──────────────────────
+// Forbidden Pattern #1: never a random tutorial loss. Every L1–3 outcome is AUTHORED, and the
+// chart is driven to agree with it (tradeDrivenCandle). Level 1 = all clean wins. Level 2's FIRST
+// trade is the designed "First Loss" (TES A3) — a telegraphed, stop-protected loss on a correct
+// read — immediately followed by an authored recovery win. Everything else in L1–3 is a win.
+// (Real, honest variance begins at Guardian 4 — out of this scope.) See CHARTQUEST_TRADING_EXPERIENCE_SYSTEM_v1.1.md.
+function authoredTutorialOutcome() {
+  try {
+    if (session._recoverNextWin) { session._recoverNextWin = false; return 'win'; }   // the authored recovery after the First Loss
+    if (session.level === 2 && localStorage.getItem('cq_firstloss_v') !== '1') {
+      session._l2TradeN = (session._l2TradeN || 0) + 1;
+      // TES A3 — placement VALIDATED in the P0 review: the First Loss lands on the SECOND Level-2
+      // trade, AFTER one winning pullback. So the loss clearly falls on a read the player KNOWS was
+      // right ("even a good read loses"), not on their first unfamiliar pullback ("did I misread
+      // it?"). Trade 1 of L2 = a confidence-building pullback win; trade 2 = the First-Loss lesson.
+      if (session._l2TradeN >= 2) {
+        try { localStorage.setItem('cq_firstloss_v', '1'); } catch (e) {}             // once, ever
+        session._firstLossPending = true;                                             // review/journal show the First-Loss coaching
+        session._recoverNextWin = true;                                               // the very next trade = the authored recovery win
+        return 'loss';
+      }
+    }
+  } catch (e) {}
+  return 'win';   // L1 · L2-after-First-Loss · L3 → authored win
+}
 function commitTrade() {
+  try { FinnLife.lookToward(0.85, 1.4, 'trade'); } catch (e) {}   // Living Renderer — a glance to the chart as the trade opens
   if (!pending || trade) return;
   if (Date.now() < uiTapGuard) return;   // never commit off a tap that just closed an overlay
   const amt = clampAmt();
@@ -11047,13 +11103,13 @@ function commitTrade() {
     else      { trade.tpH = Math.max(trade.entryH - _rd0 * 2, CFG.levelMin + 8); trade.slH = trade.entryH + _rd0 * 1.2; }
     trade.rr = 2;
   } else if (session.level <= 3 && sIdx >= 0) {
-    // ── EARLY GUARDIANS (1–3): FAIR, BEGINNER-FRIENDLY WIN RATE ──────────────────────────────
-    // A player who FOLLOWS the lessons must win ~55-60% of the time — not get punished with an
-    // all-F streak. Because the chart is driven to the decided line (tradeDrivenCandle), the
-    // candles and the outcome ALWAYS AGREE: a win drives price IN the trade's favour to a clean
-    // 2R target (TP at the candle's top); the ~42% loss drives a telegraphed 1R move against —
-    // a real "the market reversed sometimes" lesson, never a surprise green candle on a short.
-    trade._l1Outcome = (Math.random() < 0.58) ? 'win' : 'loss';
+    // ── TES v1.1 CONFIDENCE PHASE (Levels 1–3) — AUTHORED outcomes, never random ──────────────
+    // Forbidden Pattern #1: no random tutorial loss. Level 1 = all clean wins; Level 2's first
+    // trade is the designed First Loss (then a recovery win); the rest are wins. The chart is
+    // driven to agree with whichever outcome is authored — a win → a clean 2R target; the one
+    // First Loss → a telegraphed 1R move against + a stop-out. See authoredTutorialOutcome().
+    trade._l1Outcome = authoredTutorialOutcome();
+    trade._isFirstLoss = !!session._firstLossPending; session._firstLossPending = false;
     if (long) { trade.tpH = Math.min(trade.entryH + _rd0 * 2, CFG.levelMax - 8); trade.slH = trade.entryH - _rd0; }
     else      { trade.tpH = Math.max(trade.entryH - _rd0 * 2, CFG.levelMin + 8); trade.slH = trade.entryH + _rd0; }
     trade.rr = 2;
@@ -11722,8 +11778,9 @@ function onCandleEntered(c) {
     if (hitSL) {
       resolveTrade('loss');
     } else if (session.level <= 3) {
-      // Levels 1–3: outcome is pre-decided (~58% win) and the chart is driven to match.
-      if (trade._l1Outcome === undefined) trade._l1Outcome = Math.random() < 0.58 ? 'win' : 'loss';
+      // TES v1.1 — Levels 1–3 outcome is AUTHORED (authoredTutorialOutcome, set at commit) and the
+      // chart is driven to match. This fallback never invents a random loss (Forbidden #1).
+      if (trade._l1Outcome === undefined) trade._l1Outcome = 'win';
       trade._held = (trade._held || 0) + 1;
       // The trade resolves once FINN PHYSICALLY reaches the line (climbs to TP on a win). The SL
       // is handled by the universal hitSL rule above. A generous candle cap is the only fallback.
@@ -11809,6 +11866,7 @@ function onCandleEntered(c) {
 }
 
 function resolveTrade(result) {
+  try { FinnLife.lookToward(result === 'win' ? 0.6 : -0.3, 1.6, 'trade'); } catch (e) {}   // Living Renderer — glance at the outcome
   // 'manual' closes at the current R-multiple — profit or loss
   const leveragedAmt = trade.riskAmt * (trade.leverage || 1);
   const delta = result === 'win'    ? leveragedAmt * trade.rr
@@ -12031,11 +12089,11 @@ function resolveTrade(result) {
       const _risk = Math.round((trade.riskAmt / Math.max(1, session.startBal || player.shells || 1000)) * 1000) / 10;
       const _rep = window.ContentLog.attachReplay(tradeRecord.replay, { kind: 'trade', dir: trade.dir, result, setup: _setup, grade: _grade });
       if (delta > 0) {
-        window.ContentLog.emit('trade_win', { direction: trade.dir, entry_price: trade.entryPrice, pnl_shells: Math.round(delta), risk_percent: _risk, leverage: _lev, rr: trade.rr, setup_type: _setup, grade: _grade, streak_count: combo.count | 0 },
+        window.ContentLog.emit('trade_win', { direction: trade.dir, entry_price: trade.entryPrice, pnl_shells: Math.round(delta), risk_percent: _risk, leverage: _lev, rr: trade.rr, setup_type: _setup, grade: _grade, streak_count: combo.count | 0, duration_candles: (trade._held || trade._nCand || 0), level: session.level, is_tutorial: session.level <= 3 },
           { concept_demonstrated: 'Closed a ' + _grade + '-grade ' + _setup + ' for +' + Math.round(delta) + ' shells.', grade: _grade }, { replay_ref: _rep });
       } else {
         const stopped = (result === 'loss');
-        window.ContentLog.emit('trade_loss', { direction: trade.dir, entry_price: trade.entryPrice, pnl_shells: Math.round(delta), risk_percent: _risk, leverage: _lev, rr: trade.rr, setup_type: _setup, grade: _grade, loss_reason: stopped ? 'stopped_out' : 'manual_close' },
+        window.ContentLog.emit('trade_loss', { direction: trade.dir, entry_price: trade.entryPrice, pnl_shells: Math.round(delta), risk_percent: _risk, leverage: _lev, rr: trade.rr, setup_type: _setup, grade: _grade, loss_reason: stopped ? 'stopped_out' : 'manual_close', duration_candles: (trade._held || trade._nCand || 0), level: session.level, is_tutorial: session.level <= 3, is_first_loss: !!trade._isFirstLoss },
           { concept_demonstrated: (_grade === 'A' || _grade === 'B') ? 'A solid setup that did not follow through — the stop did its job.' : 'Trade closed at a loss.', is_teachable_mistake: _risk > 3 }, { replay_ref: _rep });
         if (stopped && (_grade === 'A' || _grade === 'B')) {
           window.ContentLog.emit('risk_management_success', { mechanism: 'stop_loss_triggered', capital_saved_shells: Math.round(Math.abs(delta) * 1.5) },
@@ -12050,10 +12108,20 @@ function resolveTrade(result) {
   try {
     if (delta < 0 && !localStorage.getItem('cq_lossmsg_v1')) {
       localStorage.setItem('cq_lossmsg_v1', '1');
-      lessonQ.push(['🌊 EVEN PROS LOSE SOME',
-        '<div style="font-size:13px;line-height:1.7;color:#d4dde8">That one didn’t go your way — and that’s completely normal. ' +
-        '<b style="color:#7fd6ff">No trader wins every time.</b> What matters is that your stop-loss kept the loss small. ' +
-        'The pros simply keep their losses tiny and let their winners run. Shake it off and read the next setup. 🐢</div>']);
+      // TES v1.1 A3 — THE FIRST LOSS is a designed lesson, not a consolation prize. Finn reframes
+      // it instantly: the read was right, the market did the rare thing, and the STOP is the hero.
+      // The player must leave trusting the stop instead of fearing the loss (a recovery win follows).
+      const _fl = (typeof trade !== 'undefined' && trade && trade._isFirstLoss);
+      lessonQ.push([_fl ? '🛡️ YOUR STOP JUST DID ITS JOB' : '🌊 EVEN PROS LOSE SOME',
+        '<div style="font-size:13px;line-height:1.7;color:#d4dde8">' + (_fl
+          ? 'You read that right — and it <i>still</i> lost. That happens to <b>every</b> trader; the market just did the rare thing. ' +
+            'But look how <b style="color:#16c784">small</b> the loss was — that’s your <b style="color:#7fd6ff">stop-loss</b> doing its job. ' +
+            'The best traders aren’t the ones who never lose. They keep every loss tiny and let their winners run. ' +
+            'Now let’s go find the next one. 🐢'
+          : 'That one didn’t go your way — and that’s completely normal. ' +
+            '<b style="color:#7fd6ff">No trader wins every time.</b> What matters is that your stop-loss kept the loss small. ' +
+            'The pros simply keep their losses tiny and let their winners run. Shake it off and read the next setup. 🐢') +
+        '</div>']);
       lessonGap = 0.25;
     }
   } catch (e) {}
@@ -12950,6 +13018,17 @@ const FINN_SPRITES = { ready: false, img: {}, mip: {} };   // build 254: walk/wa
     FINN_SPRITES.img[k] = im;
   });
 })();
+/* build 255 — HERO POSE. hero.png is the canon hero/menu/victory sprite (finn_canon.md §1).
+   Loaded SEPARATELY from the 6 gameplay frames so a hero.png miss never blocks gameplay
+   readiness (FINN_SPRITES.ready stays gated on the 6 frames only). drawHeroFinn uses it when
+   loaded, else falls back to the shared-turtle (run.png) render — no regression, never a blank hero. */
+FINN_SPRITES.hero = null;
+(function loadHeroFinn(){
+  const im = new Image();
+  im.onload  = function(){ FINN_SPRITES.hero = im; };
+  im.onerror = function(){};   // miss → drawHeroFinn falls back to the gameplay render
+  im.src = 'finn/hero.png';
+})();
 // Per-frame draw height in the 46×30 authoring frame (width follows each sprite's own aspect).
 const FINN_H = { run: 31, jump: 32, vboost: 36, shell: 25, land: 25, dazed: 23 };
 // Nozzle-mouth anchor for the live flame, as a fraction of the WALK-SHEET tile (tiles are
@@ -12983,8 +13062,133 @@ function finnLiveFlame(nx, ny, p) {
 // DAZED — founder rule: the dazed art appears ONLY after Finn falls off a LARGE candle.
 let finnDazedT = 0, _finnDazeCd = 0, _finnFallTop = null;
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   FINN — LIVING RENDERER V2 (build 257). A LAYERED LIFE system composed ON TOP
+   of the official run.png sprite so players stop seeing a PNG and start seeing a
+   character. RENDER-ONLY: no physics, hitbox, movement, collision, camera, or
+   sprite-swap is touched — every layer is a transform, an overlay, or a particle
+   (Rule #1: reuse the art). It expresses the Behavior Bible beats (Read · Peek ·
+   Shell-Check · Settle) through a NON-REPEATING Idle Scheduler (Rule #3), all
+   subtle (Rule #4). Eye rects were measured from run.png's pixels.
+   Layers: 3 Blink · 4 Gaze · 5-6 Head/Peek · 7 Breath · 8-9 Jetpack/Flame ·
+   10 Exhaust · 11 Idle Scheduler · 12 Environmental hooks.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const FinnLife = (function () {
+  // Eye rects as fractions of run.png (verified from pixels: near + far eye).
+  const EYE_SETS = {   // eye rects per sprite (fractions), each measured from the PNG's pixels
+    run:    [{ cx: 0.800, cy: 0.312, rw: 0.061, rh: 0.108 }, { cx: 0.947, cy: 0.316, rw: 0.035, rh: 0.090 }],
+    jump:   [{ cx: 0.764, cy: 0.256, rw: 0.068, rh: 0.096 }, { cx: 0.932, cy: 0.247, rw: 0.033, rh: 0.081 }],
+    vboost: [{ cx: 0.749, cy: 0.150, rw: 0.057, rh: 0.066 }, { cx: 0.922, cy: 0.150, rw: 0.039, rh: 0.057 }]
+  };
+  const LID_TOP = '#9ebe24', LID_BOT = '#88a921', CREASE = 'rgba(60,78,16,0.55)';  // sampled face-green
+  const REDUCE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  let last = 0;
+  const S = {
+    blinkActive: false, phase: 0, kind: 0, left: 1, nextAt: 2.0, closure: 0,   // L3 blink
+    lx: 0, ly: 0, tlx: 0, tly: 0, tilt: 0, ttilt: 0,                            // L4-6 gaze/head
+    shellT: 0, shell: 0,                                                        // L5 shell-check
+    breath: 0,                                                                  // L7 breath
+    beh: 'idle', nextBeh: 1.2,                                                  // L11 scheduler
+    flameP: 0, flameNext: 3,                                                    // L8-9 flame pulse
+    ex: []                                                                      // L10 exhaust pool
+  };
+  for (let i = 0; i < 8; i++) S.ex.push({ on: false, x: 0, y: 0, vx: 0, vy: 0, t: 0, life: 1, r: 1 });
+  const rnd = (a, b) => a + Math.random() * (b - a);
+
+  // ── L11 · Idle Behaviour Scheduler — weighted, non-repeating, jittered gaps ──
+  function schedule(now) {
+    if (now < S.nextBeh) return;
+    const opts = ['read', 'glance', 'peek', 'shellcheck', 'glance', 'settle', 'read'];
+    let b; do { b = opts[(Math.random() * opts.length) | 0]; } while (b === S.beh && Math.random() < 0.7);
+    S.beh = b; let dur;
+    if (b === 'read')          { S.tlx = rnd(0.55, 1.0); S.tly = rnd(-0.05, 0.25); S.ttilt = rnd(-0.01, 0.02); dur = rnd(1.3, 2.3); }
+    else if (b === 'glance')   { S.tlx = rnd(-0.6, 1.0); S.tly = rnd(-0.5, 0.35);  S.ttilt = rnd(-0.03, 0.03); dur = rnd(0.5, 1.1); }
+    else if (b === 'peek')     { S.tlx = rnd(0.6, 1.0);  S.tly = -0.55;            S.ttilt = rnd(0.02, 0.05); dur = rnd(1.0, 1.7); }
+    else if (b === 'shellcheck') { S.shellT = 1;         S.ttilt = 0;                                        dur = 0.75; }
+    else /* settle */          { S.tlx = 0; S.tly = 0;   S.ttilt = 0;                                        dur = rnd(0.9, 1.8); }
+    S.nextBeh = now + dur + rnd(0.2, 1.0);
+  }
+
+  // ── L3 · Blink — randomized interval, occasional double, rare long ──
+  function stepBlink(dt, now) {
+    if (!S.blinkActive && now >= S.nextAt) {
+      S.blinkActive = true; S.phase = 0;
+      const r = Math.random(); S.kind = r < 0.14 ? 1 : r < 0.20 ? 2 : 0;   // 14% double · 6% long
+      S.left = S.kind === 1 ? 2 : 1;
+    }
+    if (S.blinkActive) {
+      const hd = S.kind === 2 ? 0.17 : 0.075;
+      S.phase += dt / hd;
+      if (S.phase >= 2) { S.left--; if (S.left > 0) S.phase = 0; else { S.blinkActive = false; S.nextAt = now + rnd(1.7, 4.2); } }
+    }
+    S.closure = S.blinkActive ? (S.phase < 1 ? S.phase : 2 - S.phase) : 0;
+  }
+
+  // ── L10 · Exhaust particles ──
+  function stepExhaust(dt) {
+    if (REDUCE) return;
+    for (const p of S.ex) { if (!p.on) continue; p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 8 * dt; if (p.t >= p.life) p.on = false; }
+    if (Math.random() < dt * 3.0) { const p = S.ex.find(q => !q.on); if (p) { p.on = true; p.t = 0; p.life = rnd(0.5, 1.1); p.x = 0; p.y = 0; p.vx = rnd(-9, -3); p.vy = rnd(-2, 3); p.r = rnd(0.6, 1.3); } }
+  }
+
+  // ── main step (physics-free, once per frame) ──
+  function step(now) {
+    const t = now / 1000; let dt = last ? Math.max(0, Math.min(0.05, t - last)) : 0.016; last = t;   // never negative (backwards clock)
+    stepBlink(dt, t); schedule(t);
+    S.lx += (S.tlx - S.lx) * Math.min(1, dt * 4);
+    S.ly += (S.tly - S.ly) * Math.min(1, dt * 4);
+    S.tilt += (S.ttilt - S.tilt) * Math.min(1, dt * 3);
+    if (S.shellT > 0) { S.shellT = Math.max(0, S.shellT - dt / 0.75); S.shell = Math.sin((1 - S.shellT) * Math.PI); } else S.shell = 0;
+    S.breath = (Math.sin(t * 1.7) + Math.sin(t * 0.9 + 1.3)) * 0.5;   // detuned → never perfectly periodic
+    if (t >= S.flameNext) { S.flameP = 0.5; S.flameNext = t + rnd(2.5, 6); }
+    S.flameP = Math.max(0, S.flameP - dt * 1.6);
+    stepExhaust(dt);
+  }
+
+  // ── L3 draw · eyelids sweep down over the eyes (grounded run frame only) ──
+  function drawEyelids(ctx, ox, oy, dw, dh, key, closureOverride) {
+    const cl = (closureOverride != null) ? closureOverride : S.closure;   // V3 supplies its own blink
+    if (cl <= 0.001) return;
+    const set = EYE_SETS[key]; if (!set) return;   // only states with measured eyes (run/jump/vboost)
+    const c = Math.min(1, cl);
+    for (const e of set) {
+      const ex = ox + e.cx * dw, ey = oy + e.cy * dh, rw = e.rw * dw, rh = e.rh * dh;
+      ctx.save();
+      ctx.beginPath(); ctx.ellipse(ex, ey, rw * 1.06, rh * 1.06, 0, 0, Math.PI * 2); ctx.clip();
+      const top = ey - rh, lidH = 2 * rh * c;
+      const g = ctx.createLinearGradient(0, top, 0, top + lidH);
+      g.addColorStop(0, LID_TOP); g.addColorStop(1, LID_BOT);
+      ctx.fillStyle = g; ctx.fillRect(ex - rw * 1.1, top, rw * 2.2, lidH);
+      ctx.strokeStyle = CREASE; ctx.lineWidth = Math.max(0.4, rh * 0.10);
+      ctx.beginPath(); ctx.moveTo(ex - rw, top + lidH); ctx.lineTo(ex + rw, top + lidH); ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // ── L10 draw · exhaust embers at the nozzle ──
+  function drawExhaust(ctx, nx, ny) {
+    if (REDUCE) return;
+    for (const p of S.ex) { if (!p.on) continue; const a = (1 - p.t / p.life) * 0.5; ctx.globalAlpha = a; ctx.fillStyle = a > 0.3 ? '#ffcf7a' : '#ff9f43'; ctx.beginPath(); ctx.arc(nx + p.x, ny + p.y, p.r, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  }
+
+  return {
+    step, drawEyelids, drawExhaust,
+    get breathX() { return 0.006 + S.breath * 0.004; },
+    get breathY() { return 0.010 + S.breath * 0.007; },
+    get leanRot() { return S.lx * 0.018 + S.tilt; },
+    get leanX() { return S.lx * 0.9; },
+    get leanY() { return S.ly * 0.5 - S.shell * 1.7; },
+    get tuck() { return S.shell; },
+    get flamePulse() { return S.flameP * 0.5; },
+    // L12 — environmental hook: bias the gaze toward a target (−1 behind … +1 ahead)
+    lookToward(dir, hold) { S.tlx = Math.max(-1, Math.min(1, dir)); S.beh = 'glance'; S.nextBeh = (performance.now() / 1000) + (hold || 1.0); }
+  };
+})();
+
 function drawFinnSprite(cameraX) {
   const I = FINN_SPRITES.img;
+  FinnLife.step(performance.now());   // Living Renderer V2 — advance life layers (physics-free)
   const w = 46, h = 30;
   const s = turtle.w / w;
   const sx = turtle.x - cameraX;
@@ -13006,9 +13210,9 @@ function drawFinnSprite(cameraX) {
   // is one continuous motion, no pop. (The old idle "vibrate" was the anti-stuck teleport fixed in
   // build 242 — NOT this leg cycle — so it's safe, and smooth, to bring back.)
   const _gait = 0.42 + 0.58 * Math.min(1, (turtle._moveEMA || 0) / 0.5);   // 0.42 idle-march → 1.0 running
-  const bob = grounded ? Math.sin(turtle.animT * 9) * 1.7 * _gait : 0;      // Bible §2 — step bounce (scaled by _gait)
   const idle = turtle.onGround && !moving && !turtle.tucked && !turtle.spinning;
-  const breath = idle ? Math.sin(turtle.animT * 1.8) * 0.55 : 0;           // Bible §1 — a faint slow underlay now that the march bob carries idle's vertical life
+  const bob = grounded ? Math.sin(turtle.animT * 9) * 1.7 * _gait : 0;      // Bible §2 — step bounce (scaled by _gait)
+  const breath = idle ? Math.sin(turtle.animT * 1.8) * 0.55 : 0;           // Bible §1 — a faint slow underlay
   // Live-flame power (render-only): full trail while moving/airborne, pilot flicker at a stop.
   const _fms = performance.now();
   const _fdt = _finnFlameMs ? Math.min(0.05, (_fms - _finnFlameMs) / 1000) : 0.016;
@@ -13092,6 +13296,7 @@ function drawFinnSprite(cameraX) {
     // build 254 — the walk-sheet "paddling" dash frames were DELETED with the asset; the wick-fling
     // dash now draws the one-piece run.png frame with the live flame trailing (same art as grounded).
     ctx.drawImage(src, -dw / 2, -dh / 2, dw, dh);
+    FinnLife.drawEyelids(ctx, -dw / 2, -dh / 2, dw, dh, key);              // L3 — blink also on jump/boost/dash
     if (key === 'run') finnLiveFlame(-dw / 2 + dw * FINN_NOZZLE.x, -dh / 2 + dh * FINN_NOZZLE.y, 1.15);
   } else {
     // Grounded — ONE jetpack frame animated by continuous transforms (founder note: the old
@@ -13101,6 +13306,10 @@ function drawFinnSprite(cameraX) {
       const landC = turtle.landT > 0 ? Math.sin((turtle.landT / 0.14) * Math.PI) : 0;
       ctx.scale(1 + landC * 0.08, 1 - landC * 0.12);
     }
+    // REVERTED (build 261): the V3 deformation weight-model is OUT. Finn's shell is rigid ceramic
+    // (Character Bible §1.5) and canon permits squash ONLY on landing impact (≤10%), never on every
+    // gait step — per-step whole-body squash made him read as rubber/jello. Weight on a shelled
+    // character must come from ARTICULATION, not deformation. See FINN_MODULAR_ATLAS_SPEC.md.
     if (key === 'run') {
       // Bible §2 as pure transforms: gait rock + in-phase micro-squash — buttery at any fps.
       // Build 243: amplitude follows _gait (gentle idle march → full run bounce), so the rock/squash
@@ -13112,14 +13321,11 @@ function drawFinnSprite(cameraX) {
       ctx.scale(1 + g * 0.010 * amp, 1 - g * 0.014 * amp);
     }
     if (key === 'run' && idle && finnDazedT <= 0) {
-      // Bible §1 CURIOUS PEEK — every ~11s Finn leans in for a look (whole-sprite gesture,
-      // never dissecting the art), with a double-blink woven in below.
-      const pc = turtle.animT % 11;
-      if (pc > 9.0 && pc < 10.4) {
-        const k = pc < 9.35 ? (pc - 9.0) / 0.35 : pc > 10.05 ? (10.4 - pc) / 0.35 : 1;
-        ctx.rotate(0.055 * k);
-        ctx.translate(1.2 * k, -0.4 * k);
-      }
+      // LIVING RENDERER V2 — the Idle Scheduler's gaze-lean, head tilt, shell-check &
+      // breath, feet-anchored & render-only (supersedes the old fixed-cadence peek).
+      ctx.rotate(FinnLife.leanRot);
+      ctx.translate(FinnLife.leanX, FinnLife.leanY);
+      ctx.scale(1 + FinnLife.tuck * 0.05 + FinnLife.breathX, 1 - FinnLife.tuck * 0.13 + FinnLife.breathY);
     }
     if (rot) ctx.rotate(rot);
     // STATIC-LEG WALK (build 250 — founder: the new-art Finn looks best with legs that DON'T swing).
@@ -13128,7 +13334,12 @@ function drawFinnSprite(cameraX) {
     // grounded state — legs are baked into the sprite, so they stay put). The gentle body-rock/squash
     // applied above still gives the walk life; only the legs no longer animate. Live jetpack flame kept.
     ctx.drawImage(src, -dw / 2, -dh, dw, dh);
-    if (key === 'run') finnLiveFlame(-dw / 2 + dw * FINN_NOZZLE.x, -dh + dh * FINN_NOZZLE.y, _finnFlameP);
+    if (key === 'run') {
+      FinnLife.drawEyelids(ctx, -dw / 2, -dh, dw, dh, 'run');             // L3 — real blink over the eyes
+      const _nx = -dw / 2 + dw * FINN_NOZZLE.x, _ny = -dh + dh * FINN_NOZZLE.y;
+      FinnLife.drawExhaust(ctx, _nx, _ny);                                 // L10 — tiny exhaust embers
+      finnLiveFlame(_nx, _ny, _finnFlameP + FinnLife.flamePulse);          // L8-9 — flame + idle pulse
+    }
   }
   ctx.restore();
 }
@@ -14706,7 +14917,7 @@ const SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-ser
 // this level. It does NOT cycle (a changing line is distracting); it only swaps when the
 // level advances. Never a future concept.
 const PERSIST_LESSON = {
-  1:  '🟩 GREEN = UP   ·   🟥 RED = DOWN   ·   STRONG CLOSE = MOMENTUM',
+  1:  '🟩▲ GREEN = UP   ·   🟥▼ RED = DOWN   ·   STRONG CLOSE = MOMENTUM',
   2:  '🛡 SUPPORT = BUYERS DEFEND   ·   ⛔ RESISTANCE = SELLERS DEFEND',
   3:  '⚡ BREAK of a key level → momentum keeps going',
   4:  '🟪 ORDER BLOCK = a zone price returns to and reacts',
@@ -14728,7 +14939,7 @@ function persistLessonLine(lvl) {
         if (taught['candle_close'])  return '⚡ STRONG CLOSE = MOMENTUM continues';
       }
     } catch (e) {}
-    return '🟩 GREEN = UP   ·   🟥 RED = DOWN';
+    return '🟩▲ GREEN = UP   ·   🟥▼ RED = DOWN';
   }
   return PERSIST_LESSON[Math.min(10, Math.max(1, lvl))] || PERSIST_LESSON[1];
 }
@@ -18203,15 +18414,17 @@ function frame(now) {
     drawIntroRunOverlay(dt);
   }
 
-  // BUILD TAG — drawn LAST (over the HUD) at top-left so a playtest can always confirm WHICH build
-  // loaded. Bump BUILD_TAG whenever the served code changes.
+  // BUILD TAG — QA ONLY (Phase-1 polish: never show players an internal build string).
+  // Beta friends load ?fresh=1 and see NOTHING here; QA (?qa=1 / ?build=1) still confirms the build.
   try {
-    ctx.save();
-    ctx.font = 'bold 10px ' + MONO;
-    const _bw = ctx.measureText(BUILD_TAG).width + 12;
-    ctx.fillStyle = 'rgba(6,10,18,0.78)'; ctx.fillRect(6, 6, _bw, 16);
-    ctx.fillStyle = '#7fd6ff'; ctx.textAlign = 'left'; ctx.fillText(BUILD_TAG, 12, 17);
-    ctx.restore();
+    if (/[?&](qa|build)=1/.test(location.search)) {
+      ctx.save();
+      ctx.font = 'bold 10px ' + MONO;
+      const _bw = ctx.measureText(BUILD_TAG).width + 12;
+      ctx.fillStyle = 'rgba(6,10,18,0.78)'; ctx.fillRect(6, 6, _bw, 16);
+      ctx.fillStyle = '#7fd6ff'; ctx.textAlign = 'left'; ctx.fillText(BUILD_TAG, 12, 17);
+      ctx.restore();
+    }
   } catch (e) {}
 
   requestAnimationFrame(frame);

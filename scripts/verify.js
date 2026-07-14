@@ -188,6 +188,24 @@ function run() {
       }
     }
   }
+
+  // 11 — Trading Experience System (TES) guardrails. Locks in CHARTQUEST_TRADING_EXPERIENCE_SYSTEM.md
+  // so future edits cannot silently undo the min tutorial duration or the curriculum teaching order.
+  {
+    const mMin = s.match(/MIN_TRADE_CANDLES\s*=\s*(\d+)/);
+    const minCandles = mMin ? parseInt(mMin[1], 10) : 0;
+    const mUnlock = s.match(/SETUP_UNLOCK\s*=\s*\{([^}]*)\}/);
+    const unlock = mUnlock ? mUnlock[1] : '';
+    const order = /momentum\s*:\s*1/.test(unlock) && /pullback\s*:\s*2/.test(unlock) && /bos\s*:\s*3/.test(unlock);
+    // TES v1.1 Forbidden #1: no random tutorial loss. The L1–3 outcome must be AUTHORED
+    // (authoredTutorialOutcome) and the old 0.58 coin-flip must stay deleted.
+    const authored = /function authoredTutorialOutcome\s*\(/.test(s);
+    const coinFlips = count(s, /Math\.random\(\)\s*<\s*0\.58/g);
+    const ok = minCandles >= 24 && order && authored && coinFlips === 0;
+    add('11', 'TES: min duration + curriculum order + authored tutorial outcomes', ok ? 'PASS' : 'FAIL',
+      ok ? `MIN_TRADE_CANDLES=${minCandles} (≥24) · SETUP_UNLOCK order intact · outcomes AUTHORED (no 0.58 coin-flip)`
+         : `MIN_TRADE_CANDLES=${minCandles} (≥24?), order=${order}, authoredFn=${authored}, coinFlips=${coinFlips} (must be 0) — see TES v1.1`);
+  }
 }
 
 // 3b — optional real headless boot (only if puppeteer is installed)

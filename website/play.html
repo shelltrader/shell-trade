@@ -100,9 +100,12 @@
 <script src="assets/site.js" defer></script>
 <script>
   var CQ_GAME = (window.CHARTQUEST_CONFIG && window.CHARTQUEST_CONFIG.gameUrl) || 'game.html';
+  // Forward the query string into the iframe — without this, /play?fresh=1 (and ?guest,
+  // ?dev, ?qa) were silently inert, so a "fresh" beginner test was never actually fresh.
+  var CQ_QS = location.search || '';
   var gframe = document.getElementById('cqGame'), loader = document.getElementById('cqLoader');
-  document.getElementById('cqOpenTab').href = CQ_GAME;
-  gframe.src = CQ_GAME;
+  document.getElementById('cqOpenTab').href = CQ_GAME + CQ_QS;
+  gframe.src = CQ_GAME + CQ_QS;
   gframe.addEventListener('load', function(){ setTimeout(function(){ loader.classList.add('hide'); }, 500); });
   // safety: hide loader after 9s no matter what, and offer the new-tab escape after 5s
   setTimeout(function(){ document.getElementById('cqOpenTab').style.display='inline'; }, 5000);

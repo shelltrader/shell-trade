@@ -20150,19 +20150,30 @@ window.ContentLog = (function () {
    the reach-first-trade rate look artificially healthy. page_load fires for every
    visitor at boot, giving the funnel an honest denominator:
      page_load → session_start → reached_first_trade → trade_win / trade_loss    */
-try {
-  if (window.ContentLog && !window._cqPageLoadLogged) {
+function _cqEmitPageLoad() {
+  try {
+    if (!window.ContentLog || window._cqPageLoadLogged) return;
     window._cqPageLoadLogged = true;
     window.ContentLog.emit('page_load', {
       build:      (typeof BUILD_TAG === 'string' ? ((BUILD_TAG.match(/build \d+/) || [''])[0]) : ''),
-      viewport:   innerWidth + 'x' + innerHeight,
+      // page_load is the ONLY record we get for a cold-open bouncer (they never reach
+      // session_start), so the device fields have to be real — inside the /play iframe
+      // innerWidth is still 0 at script time, hence the rAF and the screen fallback.
+      viewport:   (innerWidth || 0) + 'x' + (innerHeight || 0),
+      screen:     ((screen && screen.width) || 0) + 'x' + ((screen && screen.height) || 0),
       dpr:        window.devicePixelRatio || 1,
       ua:         (navigator.userAgent || '').slice(0, 180),
       standalone: (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true,
       referrer:   (document.referrer || '').slice(0, 120),
     });
-  }
-} catch (e) {}
+  } catch (e) {}
+}
+try {
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(_cqEmitPageLoad);
+  else setTimeout(_cqEmitPageLoad, 0);
+  // Backstop: if rAF never fires (background tab), still capture the visit on the way out.
+  window.addEventListener('pagehide', _cqEmitPageLoad);
+} catch (e) { _cqEmitPageLoad(); }
 
 /* ══════════════════════════════════════════════════════════════════════════
    CONTENT DIRECTOR — first AI agent (rules-based now, AI-swappable interface)

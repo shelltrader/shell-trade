@@ -2447,7 +2447,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 267 — beta feel pass (P0): first-win screen-punch (shake 0.6 + shell downpour) + live-trade felt-stakes vignette (red dip → green run) + glowing live P&L. Presentation-only: NO trade logic/outcomes/movement/architecture change. Boss-0 verified taught-aligned. Prior: RC1.1 telemetry unblock + returning-guest fix. Guest button no longer lies ("saves on this device", was "progress won\'t save"), and a returning guest with local progress drops straight back into the game instead of hitting a Sign In wall on Day 2 (Sign In stays on the 👤 button). Approved protected-flow (auth→cinematic→play) change. THE BIG ONE: the ingest + update-progress Edge Functions never had playchartquest.com on their origin allowlist (still Netlify-era), so since the Cloudflare move every telemetry event was 403 CORS-blocked and every cloud save was rejected — the beta would have measured nothing. Allowlist fixed + exact-origin matching (was a spoofable prefix match); queued events on players\' devices drain retroactively on next open. Added page_load (fires pre-auth, so a cold-open bounce is finally visible in the funnel — session_start alone flattered the reach-first-trade rate). ?fresh now confirms before wiping a real save (a re-tapped test link used to nuke a player silently); /play forwards query params (so ?fresh=1 was inert through the wrapper). QA postMessage bridge now requires ?qa=1 AND same-origin. No gameplay/trading/onboarding redesign — stabilization only. FINN_V3 still dormant';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 268 — PHASE 3A: Educational Candle Library (the visual language of trading). Every authored educational candle rewritten to canonical archetypes per CHARTQUEST_EDUCATIONAL_CANDLE_LIBRARY_2026-07-16.md, under the ratified Visual Market Constitution: all 33 LessonChart scenes + all 10 CONCEPT_PRACTICE tap-charts + IM fallback diagrams. No more flat/sliver directional candles (Type-A floor honoured), no candle over the 55%-frame cap, focal/relational laws enforced (momentum 2.8x drift, confirmation closes VISIBLY above the last high, H&S head 2.4x shoulders), level lines now touch their candles EXACTLY (support/resistance/trendline/neckline/ChoCh), the first lesson is twin mirrored green/red giants, and the doji finally renders NEUTRAL (new data-gated doji:true branch in LessonChart — a tie never wears a directional tint; quiz-doji gold retired). DATA + conformance only: NO trade logic, NO outcomes, NO gameplay terrain, NO boss content, NO lesson order, NO architecture change. Prior (267): beta feel pass + telemetry allowlist unblock. FINN_V3 still dormant';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -6012,9 +6012,12 @@ function imOpenLesson(key){
 }
 function imCloseLesson(){ var o=$('imLov'); if(o) o.classList.remove('on'); if(imLC){try{imLC.stop();}catch(e){}imLC=null;} }
 
-/* ── accurate market-structure diagrams ── */
-const IM_UP=[{o:30,c:42},{o:42,c:55},{o:55,c:48},{o:48,c:43},{o:43,c:60},{o:60,c:69},{o:69,c:77}];
-const IM_DN=[{o:80,c:67},{o:67,c:74},{o:74,c:57},{o:57,c:63},{o:63,c:49},{o:49,c:66}];
+/* ── accurate market-structure diagrams ──
+   PHASE 3A (Educational Candle Library, 2026-07-16): fallback-only surface (LessonChart owns the
+   live lesson diagrams) but kept constitution-conformant — pullback bodies raised off the
+   accidental-doji floor, and the BOS/ChoCh breaks now clear their levels visibly. */
+const IM_UP=[{o:30,c:44},{o:44,c:56},{o:56,c:47},{o:47,c:38},{o:38,c:62},{o:62,c:71},{o:71,c:80}];
+const IM_DN=[{o:80,c:67},{o:67,c:74},{o:74,c:57},{o:57,c:63},{o:63,c:49},{o:49,c:69}];
 function imWk(c){c.hi=Math.max(c.o,c.c)+3;c.lo=Math.min(c.o,c.c)-3;return c;}
 function imDashed(x,x1,y1,x2,y2,col){x.strokeStyle=col;x.lineWidth=1.3;x.setLineDash([5,4]);x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();x.setLineDash([]);}
 function imLbl(x,t,px,py,col,al){x.fillStyle=col;x.font='700 9px -apple-system,sans-serif';x.textAlign=al||'left';x.fillText(t,px,py);}
@@ -6031,25 +6034,28 @@ function imDrawAnatomy(x,W,H){
 }
 // ── unique per-lesson illustrations (accurate to each concept) ──
 function _imYmap(top,bot,lo,hi){return function(v){return top+(1-(v-lo)/(hi-lo))*(bot-top);};}
-function _imCdl(x,cx,o,c,h,l,Y,cw){var up=c>=o,col=up?'#16c784':'#ea3943';
+function _imCdl(x,cx,o,c,h,l,Y,cw,colOverride){var up=c>=o,col=colOverride||(up?'#16c784':'#ea3943');   /* PHASE 3A: optional neutral override so a doji never renders directional */
   x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(cx,Y(h));x.lineTo(cx,Y(l));x.stroke();
   var bt=Y(Math.max(o,c)),bb=Y(Math.min(o,c));x.fillStyle=col;x.fillRect(cx-cw/2,bt,cw,Math.max(2,bb-bt));}
 function imDrawDoji(x,W,H){
   var top=40,bot=H-30,Y=_imYmap(top,bot,8,96);
-  // a NORMAL candle (clear body) beside two real DOJIS (tiny body, long wicks = indecision)
+  // a NORMAL candle (clear body) beside two real DOJIS (tiny body, long wicks = indecision).
+  // PHASE 3A: dojis render NEUTRAL #b8c0cc (never a directional green/red tint) and the labels
+  // lose reserved gold/blue (Constitution Readability Law 5 + reserved portal colours).
   _imCdl(x,W*0.22,28,64,72,22,Y,22);
-  _imCdl(x,W*0.52,52,55,86,20,Y,22);
-  _imCdl(x,W*0.80,50,52,80,24,Y,22);
+  _imCdl(x,W*0.52,52,55,86,20,Y,22,'#b8c0cc');
+  _imCdl(x,W*0.80,50,52,80,24,Y,22,'#b8c0cc');
   x.fillStyle='#7d8aa0';x.font='700 9px -apple-system,sans-serif';x.textAlign='center';
   x.fillText('NORMAL',W*0.22,bot+16);x.fillText('DOJI',W*0.52,bot+16);x.fillText('DOJI',W*0.80,bot+16);
-  imLbl(x,'tiny body',W*0.52+16,Y(54),'#ffd60a','left');
-  imLbl(x,'long wicks',W*0.80+14,Y(76),'#4cc3ff','left');
+  imLbl(x,'tiny body',W*0.52+16,Y(54),'#b8c0cc','left');
+  imLbl(x,'long wicks',W*0.80+14,Y(76),'#7d8aa0','left');
 }
 function imDrawWaitClose(x,W,H){
   var top=40,bot=H-30,Y=_imYmap(top,bot,8,96),lvl=66;
   imDashed(x,16,Y(lvl),W-16,Y(lvl),'#7d8aa0');imLbl(x,'LEVEL',18,Y(lvl)-6,'#7d8aa0','left');
-  // TRAP: a red candle whose WICK pierces above the level but CLOSES back below
-  _imCdl(x,W*0.34,62,52,86,46,Y,26);
+  // TRAP: a red candle whose WICK pierces above the level but CLOSES back below.
+  // PHASE 3A: trap body raised 10→14u (was a hard-fail flat directional) and the spike lengthened.
+  _imCdl(x,W*0.34,64,50,92,46,Y,26);
   // REAL: a green candle whose BODY closes above the level
   _imCdl(x,W*0.70,56,82,88,52,Y,26);
   x.fillStyle='#7d8aa0';x.font='700 9px -apple-system,sans-serif';x.textAlign='center';
@@ -6068,15 +6074,20 @@ function imDrawSR(x,W,H){
   var top=34,bot=H-28,Y=_imYmap(top,bot,6,98);
   var sup=24,res=80; imDashed(x,16,Y(res),W-16,Y(res),'#ea3943');imLbl(x,'RESISTANCE',18,Y(res)-6,'#ea3943','left');
   imDashed(x,16,Y(sup),W-16,Y(sup),'#16c784');imLbl(x,'SUPPORT',18,Y(sup)+12,'#16c784','left');
-  // price bounces between the two bands: down off resistance, up off support
-  var seq=[[40,72,78,36],[74,52,80,46],[54,30,58,24],[30,58,62,26],[58,78,82,52],[78,56,82,50],[54,30,58,25]];
-  var cw=Math.min(16,(W-40)/seq.length*0.5);
+  // price bounces between the two bands: down off resistance, up off support.
+  // PHASE 3A: highs capped AT the 80 ceiling (two candles used to poke 2u ABOVE the "ceiling",
+  // visibly breaking the lesson) and lows sit ON the 24 floor; candles widened toward Type A.
+  var seq=[[40,72,78,36],[74,52,80,46],[54,30,58,24],[30,58,62,26],[58,78,80,52],[78,56,80,50],[54,30,58,24]];
+  var cw=Math.min(32,(W-40)/seq.length*0.8);
   seq.forEach(function(c,i){var cx=24+i/(seq.length-1)*(W-48);_imCdl(x,cx,c[0],c[1],c[2],c[3],Y,cw);});
 }
 function imDrawTrendline(x,W,H){
   var top=34,bot=H-30,Y=_imYmap(top,bot,4,96);
-  var seq=[[16,30,34,12],[30,24,36,20],[26,46,50,22],[44,40,50,34],[40,60,64,36],[58,54,62,48],[54,78,82,50]];
-  var cw=Math.min(15,(W-44)/seq.length*0.5);
+  /* PHASE 3A: pullback lows now land EXACTLY on the drawn line (touch indices 0/3/5 → lows
+     12/30/42, line slope 6/step) and no low ever crosses it; red rests are real 14-16u bodies
+     (were 4-6u accidental dojis in a strict A-B-A-B alternation). */
+  var seq=[[16,34,38,12],[34,48,52,30],[48,30,52,28],[30,46,48,30],[46,62,66,44],[62,48,64,42],[48,76,80,48]];
+  var cw=Math.min(24,(W-44)/seq.length*0.7);
   seq.forEach(function(c,i){var cx=24+i/(seq.length-1)*(W-48);_imCdl(x,cx,c[0],c[1],c[2],c[3],Y,cw);});
   var t=[0,3,5],pts=t.map(function(i){return {x:24+i/(seq.length-1)*(W-48),y:Y(seq[i][3])};});
   var slope=(pts[2].y-pts[0].y)/(pts[2].x-pts[0].x);
@@ -16360,8 +16371,11 @@ function drawQuizCandle(cx, topY, cw, ch, card) {
   ctx.moveTo(cx, bodyTop + bodyH); ctx.lineTo(cx, lowY);
   ctx.stroke();
 
-  const fillCol = isDoji ? '#ffd60a' : isGreen ? COLOR.greenBody : COLOR.redBody;
-  const bdrCol  = isDoji ? '#b89600' : isGreen ? '#0d9460' : '#b52a30';
+  /* PHASE 3A — doji was GOLD #ffd60a (reserved boss/portal; the Constitution explicitly retires
+     the gold quiz doji). A doji is a tie: neutral #b8c0cc body, #7a8494 edge. Branch is currently
+     unreachable (no doji quiz card authored) — fixed before anyone authors one. */
+  const fillCol = isDoji ? '#b8c0cc' : isGreen ? COLOR.greenBody : COLOR.redBody;
+  const bdrCol  = isDoji ? '#7a8494' : isGreen ? '#0d9460' : '#b52a30';
   ctx.fillStyle = fillCol;
   rr(cx - cw / 2, bodyTop, cw, bodyH, 5); ctx.fill();
   ctx.strokeStyle = bdrCol; ctx.lineWidth = 2.5;
@@ -19183,115 +19197,198 @@ const MG_CONCEPTS={
    swing-high + BOS close, support/resistance line, liquidity sweep / fakeout). Prices are 0..100; auto-framed.
    Copy is 10-year-old level (HARD RULE). ════════ */
 const LessonChart=(function(){
-  const C={green:'#16c784',greenEdge:'#0c9c69',greenWick:'#1fd790',red:'#ea3943',redEdge:'#c0212c',redWick:'#ff5663',grid:'rgba(255,255,255,0.05)',sub:'#8b97a8',purp:'#a855f7',gold:'#ffd60a',blue:'#4cc3ff',shell:'#36d9e0',orange:'#ff9f1c'};
+  /* PHASE 3A — dojiBody/Edge/Wick are the Constitution's neutral doji colours (#b8c0cc/#7a8494/
+     #c9d1d9): a doji is a TIE and must never wear a directional green/red tint (Readability Law 5).
+     Used only by candles authored with doji:true. */
+  const C={green:'#16c784',greenEdge:'#0c9c69',greenWick:'#1fd790',red:'#ea3943',redEdge:'#c0212c',redWick:'#ff5663',dojiBody:'#b8c0cc',dojiEdge:'#7a8494',dojiWick:'#c9d1d9',grid:'rgba(255,255,255,0.05)',sub:'#8b97a8',purp:'#a855f7',gold:'#ffd60a',blue:'#4cc3ff',shell:'#36d9e0',orange:'#ff9f1c'};
   const FT='-apple-system,system-ui,sans-serif';
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,easeOut=t=>1-Math.pow(1-clamp(t,0,1),3);
   const SCENES={
+    /* PHASE 3A (Educational Candle Library, 2026-07-16) — structure scenes rebuilt on canonical
+       archetypes: every directional body ≥ the Type-A floor, level lines touch their candles
+       EXACTLY, and the concept candle is the focal read. Cites CHARTQUEST_VISUAL_MARKET_CONSTITUTION. */
     liquidity:{caption:'See the matching highs? Lots of traders hide a <b>stop loss</b> just above them. Price spikes up to grab those — a <b>liquidity sweep</b> — then drops back down.',
-      candles:[{o:42,h:50,l:40,c:48},{o:48,h:71,l:46,c:55},{o:55,h:64,l:52,c:62},{o:62,h:70,l:57,c:58},{o:58,h:63,l:54,c:61},{o:61,h:71,l:55,c:56},{o:56,h:60,l:52,c:59},{o:59,h:88,l:50,c:52,sweep:true}],
-      anns:[{type:'eqHighs',y:70.5,from:1,to:6,at:1.7,color:C.purp,label:'EQUAL HIGHS · stop losses sit above'},{type:'shell',candle:7,at:2.4,label:'LIQUIDITY'},{type:'sweepFlag',candle:7,at:3.5}]},
+      candles:[{o:42,h:50,l:40,c:50},{o:50,h:71,l:48,c:66},{o:66,h:68,l:52,c:54},{o:54,h:71,l:52,c:65},{o:65,h:68,l:51,c:53},{o:53,h:71,l:51,c:64},{o:64,h:66,l:50,c:52},{o:52,h:88,l:42,c:44,sweep:true}],
+      anns:[{type:'eqHighs',y:71,from:1,to:6,at:1.7,color:C.purp,label:'EQUAL HIGHS · stop losses sit above'},{type:'shell',candle:7,at:2.4,label:'LIQUIDITY'},{type:'sweepFlag',candle:7,at:3.5}]},
+    // PHASE 3A — floor touched EXACTLY at 31 three times, and never pierced (old c3 low 30 leaked
+    // under the line — the "floor" visibly broke, contradicting the lesson).
     support:{caption:'See the <b>floor</b>? Buyers keep stepping in here, so price bounces back <b>UP</b>. That floor is called <b>support</b>.',
-      candles:[{o:60,h:62,l:54,c:56},{o:56,h:58,l:46,c:48},{o:48,h:50,l:31,c:36},{o:36,h:42,l:30,c:40},{o:40,h:44,l:31,c:34},{o:34,h:48,l:32,c:46},{o:46,h:56,l:44,c:54},{o:54,h:64,l:52,c:62}],
+      candles:[{o:60,h:62,l:52,c:54},{o:54,h:56,l:44,c:46},{o:46,h:48,l:31,c:34},{o:34,h:42,l:32,c:40},{o:40,h:42,l:31,c:33},{o:33,h:46,l:31,c:44},{o:44,h:54,l:42,c:52},{o:52,h:64,l:50,c:62}],
       anns:[{type:'hline',y:31,at:1.7,color:C.green,label:'SUPPORT · buyers step in'}]},
+    // PHASE 3A — three consecutive wicks tag EXACTLY 70 (a crisp rejection cluster), then sellers
+    // visibly win with three real red candles.
     resistance:{caption:'See the <b>ceiling</b>? Sellers keep stepping in here, so price drops back <b>DOWN</b>. That ceiling is called <b>resistance</b>.',
-      candles:[{o:40,h:44,l:38,c:43},{o:43,h:55,l:42,c:52},{o:52,h:69,l:50,c:60},{o:60,h:70,l:58,c:64},{o:64,h:70,l:56,c:58},{o:58,h:62,l:48,c:50},{o:50,h:54,l:40,c:42},{o:42,h:46,l:34,c:36}],
+      candles:[{o:38,h:46,l:36,c:45},{o:45,h:56,l:43,c:55},{o:55,h:70,l:53,c:63},{o:63,h:70,l:55,c:56},{o:56,h:70,l:54,c:63},{o:63,h:65,l:52,c:54},{o:54,h:56,l:42,c:44},{o:44,h:47,l:34,c:36}],
       anns:[{type:'hline',y:70,at:1.7,color:C.red,label:'RESISTANCE · sellers step in'}]},
+    // PHASE 3A — every red rest is a real 8u step (old HL-tagged candles were 4-6u near-dojis);
+    // pushes vary 16/18/20 so the stairs read as stairs, not wallpaper. Ann indices unchanged.
     uptrend:{caption:'An <b>uptrend</b> makes <b>higher highs</b> and <b>higher lows</b> — like stairs going up. Trade with it (look for buys).',
-      candles:[{o:26,h:36,l:24,c:34},{o:34,h:38,l:28,c:30},{o:30,h:48,l:28,c:46},{o:46,h:50,l:39,c:41},{o:41,h:60,l:39,c:58},{o:58,h:62,l:51,c:53},{o:53,h:74,l:51,c:72},{o:72,h:80,l:67,c:78}],
+      candles:[{o:27,h:37,l:25,c:35},{o:35,h:37,l:26,c:27},{o:27,h:45,l:26,c:43},{o:43,h:45,l:34,c:35},{o:35,h:55,l:34,c:53},{o:53,h:55,l:44,c:45},{o:45,h:68,l:44,c:65},{o:65,h:76,l:63,c:73}],
       anns:[{type:'hl',candle:1,at:1.6,label:'HL'},{type:'hh',candle:2,at:2.0,label:'HH'},{type:'hl',candle:3,at:2.4,label:'HL'},{type:'hh',candle:4,at:2.8,label:'HH'},{type:'hl',candle:5,at:3.2,label:'HL'},{type:'hh',candle:6,at:3.6,label:'HH'}]},
+    // PHASE 3A — green bounce candles get real 8u bodies so each LH is a visible failed rally;
+    // red pushes 16/18/21 dominate. LL tags gold→sub (gold is reserved boss/portal). Indices unchanged.
     downtrend:{caption:'A <b>downtrend</b> makes <b>lower highs</b> and <b>lower lows</b> — like stairs going down. Trade with it (look for sells).',
-      candles:[{o:72,h:78,l:64,c:66},{o:66,h:72,l:60,c:62},{o:62,h:66,l:50,c:52},{o:52,h:60,l:50,c:58},{o:58,h:60,l:42,c:44},{o:44,h:52,l:42,c:50},{o:50,h:52,l:30,c:32},{o:32,h:38,l:24,c:28}],
-      anns:[{type:'tag',candle:1,side:'up',color:C.red,at:1.8,label:'LH'},{type:'tag',candle:2,side:'down',color:C.gold,at:2.2,label:'LL'},{type:'tag',candle:3,side:'up',color:C.red,at:2.6,label:'LH'},{type:'tag',candle:6,side:'down',color:C.gold,at:3.0,label:'LL'}]},
+      candles:[{o:73,h:75,l:63,c:65},{o:65,h:74,l:63,c:73},{o:73,h:74,l:55,c:57},{o:57,h:66,l:55,c:65},{o:65,h:66,l:45,c:47},{o:47,h:56,l:45,c:55},{o:55,h:56,l:32,c:34},{o:34,h:37,l:24,c:26}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.red,at:1.8,label:'LH'},{type:'tag',candle:2,side:'down',color:C.sub,at:2.2,label:'LL'},{type:'tag',candle:3,side:'up',color:C.red,at:2.6,label:'LH'},{type:'tag',candle:6,side:'down',color:C.sub,at:3.0,label:'LL'}]},
+    // PHASE 3A — the sweep candle is now RED with a 3x-body wick spiking 12 above the line and
+    // closing below every recent low: poke, fail, punish — in one candle.
     sfp:{caption:'A <b>Swing Failure</b> pokes just above the last high to grab stop losses, then <b>closes back below</b>. The breakout failed — price often reverses.',
-      candles:[{o:40,h:46,l:38,c:44},{o:44,h:62,l:42,c:58},{o:58,h:60,l:48,c:50},{o:50,h:56,l:46,c:54},{o:54,h:58,l:50,c:52},{o:52,h:74,l:50,c:55,sweep:true}],
+      candles:[{o:39,h:46,l:37,c:45},{o:45,h:62,l:43,c:59},{o:59,h:61,l:48,c:50},{o:50,h:57,l:47,c:56},{o:56,h:59,l:49,c:50},{o:50,h:74,l:41,c:42,sweep:true}],
       anns:[{type:'hline',y:62,at:1.4,color:C.sub,label:'last swing high'},{type:'sweepFlag',candle:5,at:3.0,color:C.red,text:'SFP → swept the high, closed back'}]},
+    // PHASE 3A — both shoulders peak at EXACTLY 46, the head at 60 (2.4x above the neckline vs the
+    // shoulders' 10), every valley low sits ON the 36 neckline until the final close punches
+    // through to 28. The silhouette is now unmistakable at five paces.
     head_shoulders:{caption:'<b>Head &amp; Shoulders</b>: two smaller peaks (shoulders) beside one big peak (head). When price breaks the <b>neckline</b>, the uptrend often flips down.',
-      candles:[{o:22,h:28,l:20,c:26},{o:26,h:44,l:24,c:42},{o:42,h:44,l:34,c:36},{o:36,h:58,l:34,c:56},{o:56,h:58,l:36,c:38},{o:38,h:46,l:36,c:44},{o:44,h:48,l:34,c:36},{o:36,h:40,l:26,c:28}],
+      candles:[{o:23,h:30,l:21,c:29},{o:29,h:46,l:27,c:44},{o:44,h:45,l:36,c:38},{o:38,h:60,l:37,c:58},{o:58,h:59,l:36,c:38},{o:38,h:46,l:36,c:44},{o:44,h:46,l:36,c:38},{o:38,h:39,l:26,c:28}],
       anns:[{type:'tag',candle:1,side:'up',color:C.blue,at:1.8,label:'SHOULDER'},{type:'tag',candle:3,side:'up',color:C.blue,at:2.3,label:'HEAD'},{type:'tag',candle:6,side:'up',color:C.blue,at:2.8,label:'SHOULDER'},{type:'hline',y:36,at:3.2,color:C.red,label:'neckline'}]},
+    // PHASE 3A — bodies lifted off the floor line; equal lows at 38 unchanged. LOW tags gold→sub
+    // (gold is reserved boss/portal).
     double_bottom:{caption:'A <b>double bottom</b> is a <b>W</b> shape — price hits the same floor twice and can’t break it. Buyers step in, and it often turns up.',
-      candles:[{o:56,h:58,l:50,c:52},{o:52,h:54,l:38,c:40},{o:40,h:50,l:38,c:48},{o:48,h:54,l:46,c:52},{o:52,h:54,l:38,c:42},{o:42,h:56,l:40,c:54},{o:54,h:64,l:52,c:62}],
-      anns:[{type:'hline',y:38,at:1.6,color:C.green,label:'double bottom'},{type:'tag',candle:1,side:'down',color:C.gold,at:2.4,label:'LOW 1'},{type:'tag',candle:4,side:'down',color:C.gold,at:3.0,label:'LOW 2'}]},
+      candles:[{o:56,h:58,l:50,c:51},{o:51,h:53,l:38,c:40},{o:40,h:50,l:38,c:48},{o:48,h:54,l:46,c:53},{o:53,h:55,l:38,c:42},{o:42,h:56,l:40,c:54},{o:54,h:64,l:52,c:62}],
+      anns:[{type:'hline',y:38,at:1.6,color:C.green,label:'double bottom'},{type:'tag',candle:1,side:'down',color:C.sub,at:2.4,label:'LOW 1'},{type:'tag',candle:4,side:'down',color:C.sub,at:3.0,label:'LOW 2'}]},
+    // PHASE 3A — the higher low sits EXACTLY on the 42 line (kissed twice, never pierced) and the
+    // break candle is a 16u red closing 10 BELOW it — the flip is unmistakable (old break: 2u).
     choch:{caption:'A <b>Change of Character</b> is the first warning a trend may flip. In an uptrend, price <b>closes below the last higher low</b> — buyers just lost control. No breaks either way? That\'s a <b>RANGE</b> — price just drifting sideways.',
-      candles:[{o:30,h:38,l:28,c:36},{o:36,h:48,l:34,c:46},{o:46,h:50,l:40,c:42},{o:42,h:58,l:40,c:56},{o:56,h:60,l:46,c:48},{o:48,h:52,l:36,c:40}],
+      candles:[{o:30,h:38,l:28,c:36},{o:36,h:50,l:34,c:48},{o:48,h:49,l:42,c:43},{o:43,h:58,l:42,c:56},{o:56,h:60,l:47,c:48},{o:48,h:50,l:30,c:32}],
       anns:[{type:'hline',y:42,at:2.0,color:C.sub,label:'last higher low'},{type:'sweepFlag',candle:5,at:3.0,color:C.red,text:'ChoCh → closed below it'}]},
+    // PHASE 3A — a clean three-act story on the SAME VWAP line: holds above it, FLIPs clearly
+    // below, slap-back wick kisses it and gets rejected. All bodies legible.
     vwap:{caption:'<b>VWAP</b> is the day’s average price. When price <b>flips</b> from above to below it, then <b>slaps</b> back into it and gets rejected, sellers are in control.',
-      candles:[{o:36,h:42,l:34,c:40},{o:40,h:50,l:38,c:48},{o:48,h:54,l:43,c:44},{o:44,h:50,l:40,c:42},{o:42,h:46,l:34,c:36},{o:36,h:44,l:35,c:41},{o:41,h:43,l:28,c:30}],
+      candles:[{o:39,h:45,l:37,c:44},{o:44,h:52,l:42,c:50},{o:50,h:52,l:43,c:44},{o:44,h:45,l:38,c:39},{o:39,h:42,l:31,c:32},{o:32,h:41,l:31,c:39},{o:39,h:40,l:26,c:27}],
       anns:[{type:'line',c1:0,p1:37,c2:6,p2:41,color:C.blue,dash:true,at:1.4,label:'VWAP'},{type:'tag',candle:4,side:'down',color:C.red,at:2.6,label:'FLIP ↓'},{type:'tag',candle:5,side:'up',color:C.red,at:3.2,label:'SLAP ✗'}]},
+    // PHASE 3A — the zone is re-anchored to the actual order-block candle's range (31–40; the old
+    // zone floated at 42–52), the impulse respects the frame cap, and the retest visibly dips INTO
+    // the box before bouncing. Retest tag gold→sub (gold is reserved boss/portal).
     ob:{caption:'An <b>order block</b> is the last red candle before a big move up. Price often comes <b>back to it</b> and bounces — a good spot to buy.',
-      candles:[{o:48,h:54,l:46,c:52},{o:52,h:54,l:42,c:44},{o:44,h:64,l:42,c:62},{o:62,h:68,l:58,c:66},{o:66,h:68,l:52,c:54},{o:54,h:58,l:44,c:48},{o:48,h:66,l:46,c:64}],
-      anns:[{type:'zone',from:1,to:6,y1:42,y2:52,color:C.purp,at:1.6,label:'ORDER BLOCK'},{type:'tag',candle:5,side:'down',color:C.gold,at:2.8,label:'retest'},{type:'tag',candle:6,side:'up',color:C.green,at:3.3,label:'bounce ↑'}]},
+      candles:[{o:33,h:40,l:30,c:38},{o:38,h:40,l:31,c:33},{o:33,h:49,l:32,c:47},{o:47,h:56,l:45,c:54},{o:54,h:56,l:43,c:45},{o:45,h:47,l:33,c:36},{o:36,h:50,l:34,c:48}],
+      anns:[{type:'zone',from:1,to:6,y1:31,y2:40,color:C.purp,at:1.6,label:'ORDER BLOCK'},{type:'tag',candle:5,side:'down',color:C.sub,at:2.8,label:'retest'},{type:'tag',candle:6,side:'up',color:C.green,at:3.3,label:'bounce ↑'}]},
+    // PHASE 3A — the pullback lows now land EXACTLY on the drawn line (c2@33, c4@41, c6@49) and no
+    // low ever crosses it (the old scene had lows poking 3-4u BELOW the "bounce" line — the picture
+    // contradicted the caption). Bounce tag gold→green (it marks a buy-side bounce).
     trendline:{caption:'A <b>trendline</b> joins the rising lows. Price keeps <b>bouncing up off it</b> — until it finally breaks, which warns the trend may be ending.',
-      candles:[{o:30,h:36,l:28,c:34},{o:34,h:44,l:32,c:42},{o:42,h:46,l:34,c:36},{o:36,h:50,l:34,c:48},{o:48,h:54,l:42,c:44},{o:44,h:60,l:42,c:58},{o:58,h:64,l:50,c:52},{o:52,h:68,l:50,c:66}],
-      anns:[{type:'line',c1:2,p1:33,c2:6,p2:49,color:C.gold,extend:true,at:1.6,label:'TRENDLINE'},{type:'tag',candle:4,side:'down',color:C.gold,at:2.8,label:'bounce'}]},
+      candles:[{o:29,h:38,l:28,c:36},{o:36,h:44,l:32,c:44},{o:44,h:46,l:33,c:37},{o:37,h:54,l:37,c:52},{o:52,h:54,l:41,c:45},{o:45,h:61,l:45,c:60},{o:60,h:61,l:49,c:53},{o:53,h:71,l:53,c:69}],
+      anns:[{type:'line',c1:2,p1:33,c2:6,p2:49,color:C.gold,extend:true,at:1.6,label:'TRENDLINE'},{type:'tag',candle:4,side:'down',color:C.green,at:2.8,label:'bounce'}]},
+    // PHASE 3A — dips are honest 10-12u red candles (clearly visible) while green pushes run
+    // 16-23u: you SEE a real dip, and you SEE the trend swallow it. Ann indices unchanged.
     htf:{caption:'The <b>higher timeframe</b> is the big picture. Small red dips don’t change it. Always trade <b>with</b> the bigger trend, not against it.',
-      candles:[{o:24,h:34,l:22,c:32},{o:32,h:46,l:30,c:44},{o:44,h:50,l:38,c:40},{o:40,h:62,l:38,c:60},{o:60,h:70,l:56,c:66},{o:66,h:72,l:58,c:60},{o:60,h:84,l:58,c:80}],
+      candles:[{o:24,h:36,l:22,c:34},{o:34,h:52,l:32,c:50},{o:50,h:52,l:38,c:40},{o:40,h:61,l:38,c:59},{o:59,h:70,l:57,c:69},{o:69,h:71,l:57,c:59},{o:59,h:84,l:56,c:82}],
       anns:[{type:'line',c1:0,p1:26,c2:6,p2:78,color:C.green,at:1.6,label:'BIG TREND ↑'},{type:'tag',candle:2,side:'down',color:C.sub,at:2.8,label:'just a dip'},{type:'tag',candle:5,side:'down',color:C.sub,at:3.3,label:'just a dip'}]},
+    // PHASE 3A — the break already read well (closes 8 above the swing line, 3x median body);
+    // the pre-break pause is now a real 8u red (was a 2u near-doji) and the opener is legible.
     bos:{caption:'A candle <b>closes above the swing high</b> — that’s a <b>Break of Structure</b>. The up-move is confirmed.',
-      candles:[{o:36,h:44,l:32,c:42},{o:42,h:66,l:40,c:50},{o:50,h:56,l:38,c:40},{o:40,h:50,l:36,c:47},{o:47,h:58,l:44,c:54},{o:54,h:63,l:50,c:52},{o:52,h:80,l:50,c:76,bos:true}],
+      candles:[{o:36,h:45,l:30,c:44},{o:44,h:66,l:42,c:52},{o:52,h:56,l:38,c:40},{o:40,h:50,l:37,c:48},{o:48,h:58,l:46,c:57},{o:57,h:60,l:47,c:49},{o:49,h:78,l:47,c:74,bos:true}],
       anns:[{type:'swingHigh',y:66,at:1.6,label:'SWING HIGH'},{type:'bosFlag',candle:6,at:3.0,label:'BOS · closes above'}]},
+    // PHASE 3A — the level at 64 is established by two exact wick-touches with real rejections
+    // between; the fake spikes 20 above on a 4.5x-body wick and closes at 40, below every recent
+    // low — the trap is unmissable (old scene: five sliver bodies and a modest poke).
     fake:{caption:'A <b>fake breakout</b> pokes ABOVE the line but <b>closes back below</b> it — a trap. Always wait for the close.',
-      candles:[{o:44,h:50,l:42,c:48},{o:48,h:64,l:46,c:55},{o:55,h:63,l:52,c:60},{o:60,h:64,l:54,c:57},{o:57,h:62,l:53,c:59},{o:59,h:84,l:55,c:56,sweep:true}],
+      candles:[{o:44,h:52,l:42,c:51},{o:51,h:64,l:49,c:60},{o:60,h:62,l:48,c:50},{o:50,h:64,l:48,c:57},{o:57,h:60,l:46,c:48},{o:48,h:84,l:38,c:40,sweep:true}],
       anns:[{type:'hline',y:64,at:1.6,color:C.sub,label:'the level'},{type:'sweepFlag',candle:5,at:3.2,fake:true}]},
-    // SHOT 4 — taller, cleaner bodies (fuller vertical range so they're not squished) with clearly
-    // visible wicks, since this is the wick/candle lesson. Up/down variety keeps it realistic.
+    // PHASE 3A (Educational Candle Library, 2026-07-16) — TWIN MIRRORED GIANTS: candle 0 is a big
+    // green move, candle 1 the SAME span flipped red. The only difference is colour — which IS the
+    // lesson. Three modest context candles follow. Old data buried the labelled RED example at 6u
+    // (an accidental doji) under an unlabelled 34u green rocket. Cites VISUAL_MARKET_CONSTITUTION.
     candle:{caption:'Each candle is one chunk of time.<br><b>Green</b> = it closed <b>UP</b> (buyers won).<br><b>Red</b> = it closed <b>DOWN</b> (sellers won).<br>The thin lines are <b>wicks</b> — how far price reached.',
-      candles:[{o:24,h:40,l:20,c:34},{o:34,h:40,l:26,c:28},{o:28,h:54,l:26,c:50},{o:50,h:58,l:40,c:44},{o:44,h:84,l:40,c:78}],
+      candles:[{o:30,h:56,l:24,c:48},{o:48,h:56,l:24,c:30},{o:30,h:42,l:20,c:38},{o:38,h:44,l:27,c:29},{o:29,h:46,l:27,c:42}],
       anns:[{type:'tag',candle:0,side:'up',color:C.green,at:1.8,label:'GREEN = UP'},{type:'tag',candle:1,side:'down',color:C.red,at:2.5,label:'RED = DOWN'}]},
+    // PHASE 3A — the doji now has a TRUE zero body (o==c, doji:true renders it neutral, never a
+    // lying red "sellers won" tint) and a huge near-symmetric 18/16 cross of wicks. Tag was gold
+    // (reserved boss/portal — Constitution Readability Law 5: DOJI label neutral, never gold).
     doji:{caption:'A <b>doji</b> has almost no body — it opens and closes at nearly the same price. That’s a <b>tie</b> between buyers and sellers, and the trend often turns next.',
-      candles:[{o:30,h:40,l:28,c:38},{o:38,h:50,l:36,c:48},{o:48,h:60,l:46,c:58},{o:58,h:74,l:44,c:57}],
-      anns:[{type:'tag',candle:3,side:'up',color:C.gold,at:2.2,label:'DOJI · a tie'}]},
+      candles:[{o:26,h:38,l:24,c:36},{o:36,h:52,l:34,c:50},{o:50,h:62,l:48,c:60},{o:60,h:78,l:44,c:60,doji:true}],
+      anns:[{type:'tag',candle:3,side:'up',color:C.sub,at:2.2,label:'DOJI · a tie'}]},
+    // PHASE 3A — 7→6 candles: one giant green dominates the up-leg and one giant red dominates the
+    // down-leg (focal 2.5x median; old scene was seven identical 10u candles — the labels pointed
+    // at candles indistinguishable from their neighbours). Anns renumbered 1 and 4.
     longshort:{caption:'<b>Long</b> = you bet price goes <b>UP</b>. <b>Short</b> = you bet it goes <b>DOWN</b>. You can win in both directions.',
-      candles:[{o:30,h:38,l:28,c:36},{o:36,h:48,l:34,c:46},{o:46,h:58,l:44,c:56},{o:56,h:66,l:54,c:62},{o:62,h:64,l:50,c:52},{o:52,h:55,l:40,c:42},{o:42,h:46,l:30,c:32}],
-      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.8,label:'LONG ↑ wins'},{type:'tag',candle:5,side:'down',color:C.red,at:2.8,label:'SHORT ↓ wins'}]},
+      candles:[{o:32,h:42,l:30,c:40},{o:40,h:64,l:38,c:61},{o:61,h:72,l:59,c:69},{o:69,h:71,l:58,c:60},{o:60,h:62,l:36,c:38},{o:38,h:41,l:28,c:30}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.8,label:'LONG ↑ wins'},{type:'tag',candle:4,side:'down',color:C.red,at:2.8,label:'SHORT ↓ wins'}]},
     // SHOTS 16/17 — Long and Short must be TWO DIFFERENT, unmistakable charts (they used to share
-    // one). LONG = a long obvious green climb (with tiny red pullbacks for realism). You buy low, win high.
+    // one). LONG = a long obvious green climb. PHASE 3A: the old "tiny red pullbacks" were 2u
+    // slivers (accidental dojis) — rests are now real readable red candles, every step ≥ the
+    // Type-A floor, and the climb still dominates. Ann indices unchanged (1, 7).
     long:{caption:'<b>Long</b> = you bet price goes <b>UP</b>.<br>You buy low and win as it climbs — ride the green.',
-      candles:[{o:26,h:34,l:24,c:32},{o:32,h:44,l:30,c:42},{o:42,h:46,l:38,c:40},{o:40,h:54,l:38,c:52},{o:52,h:64,l:50,c:62},{o:62,h:74,l:60,c:72},{o:72,h:78,l:66,c:70},{o:70,h:86,l:68,c:84}],
+      candles:[{o:26,h:42,l:24,c:40},{o:40,h:58,l:38,c:56},{o:56,h:58,l:41,c:43},{o:43,h:62,l:41,c:60},{o:60,h:78,l:58,c:76},{o:76,h:78,l:61,c:63},{o:63,h:83,l:61,c:81},{o:81,h:97,l:79,c:95}],
       anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.6,label:'BUY LOW ↑'},{type:'tag',candle:7,side:'up',color:C.green,at:2.7,label:'LONG WINS ↑'}]},
-    // SHORT = a few green candles, then sellers take over with a run of red — an obvious drop. You win as it falls.
+    // SHORT = a few green candles, then sellers take over with a run of red — an obvious drop. You
+    // win as it falls. PHASE 3A: 8→7 candles, red takeover candles now BIGGER than the green climb
+    // (dominance is the concept); old data had the SHORT-WINS candle as one of the two smallest on
+    // screen. Anns renumbered 2, 3, 6.
     short:{caption:'<b>Short</b> = you bet price goes <b>DOWN</b>.<br>A few green, then sellers take over — you win as it drops.',
-      candles:[{o:40,h:50,l:38,c:48},{o:48,h:58,l:46,c:56},{o:56,h:64,l:54,c:62},{o:62,h:64,l:50,c:52},{o:52,h:54,l:40,c:42},{o:42,h:44,l:32,c:34},{o:34,h:36,l:24,c:26},{o:26,h:30,l:18,c:20}],
-      anns:[{type:'tag',candle:2,side:'up',color:C.sub,at:1.3,label:'top'},{type:'tag',candle:4,side:'down',color:C.red,at:2.1,label:'SELLERS TAKE OVER'},{type:'tag',candle:7,side:'down',color:C.red,at:3.0,label:'SHORT WINS ↓'}]},
-    // SHOT 1 — more candles + clearer teaching: mark where the candle OPENS and where it CLOSES so a
-    // 10-year-old sees that the CLOSE (not the wick spike) is what counts. Cleaned up, obvious in ~10s.
+      candles:[{o:36,h:52,l:34,c:50},{o:50,h:66,l:48,c:64},{o:64,h:80,l:62,c:78},{o:78,h:80,l:58,c:60},{o:60,h:62,l:42,c:44},{o:44,h:46,l:26,c:28},{o:28,h:30,l:12,c:14}],
+      anns:[{type:'tag',candle:2,side:'up',color:C.sub,at:1.3,label:'top'},{type:'tag',candle:3,side:'down',color:C.red,at:2.1,label:'SELLERS TAKE OVER'},{type:'tag',candle:6,side:'down',color:C.red,at:3.0,label:'SHORT WINS ↓'}]},
+    // SHOT 1 — mark where the candle OPENS and where it CLOSES so a 10-year-old sees that the
+    // CLOSE (not the wick spike) is what counts. PHASE 3A: 5→3 candles (focus sub-mode) — the old
+    // lead-in was four sliver bodies; now two clean steps, then the spike candle whose upper wick
+    // is 2.3x its body (wick-lesson law ≥2x). Anns: OPEN y58, sweepFlag candle 2, CLOSE y70.
     wait_close:{caption:'A candle jumps around while it forms.<br><b>Only the CLOSE</b> tells you who won — not the spike.<br>See where it <b>opened</b> and where it <b>closed</b> — wait for the close before you act.',
-      candles:[{o:34,h:40,l:32,c:38},{o:38,h:44,l:34,c:36},{o:36,h:46,l:34,c:44},{o:44,h:50,l:42,c:47},{o:47,h:78,l:45,c:60,sweep:true}],
-      anns:[{type:'hline',y:47,at:1.4,color:C.sub,label:'OPEN — where it started'},{type:'sweepFlag',candle:4,at:2.4,color:C.gold,text:'spiked UP…'},{type:'hline',y:60,at:3.2,color:C.green,label:'CLOSE ✓ this is what counts'}]},
+      candles:[{o:34,h:48,l:32,c:46},{o:46,h:62,l:44,c:60},{o:60,h:98,l:58,c:72,sweep:true}],
+      anns:[{type:'hline',y:60,at:1.4,color:C.sub,label:'OPEN — where it started'},{type:'sweepFlag',candle:2,at:2.4,color:C.red,text:'spiked UP…'},{type:'hline',y:72,at:3.2,color:C.green,label:'CLOSE ✓ this is what counts'}]},
+    // PHASE 3A — honest 1:2 story geometry: entry 45, stop 30 (the dip low 32 NEVER touches it),
+    // target 78 reached by a real run. Every body ≥ the floor (old dip candle was a sliver).
     trade_win:{caption:'You bought after the pullback. Price dipped toward your <b>stop</b> but never hit it — then ran up to your <b>target</b>. Win!',
-      candles:[{o:40,h:48,l:38,c:46},{o:46,h:56,l:44,c:54},{o:54,h:56,l:46,c:50},{o:50,h:52,l:43,c:45},{o:45,h:54,l:43,c:52},{o:52,h:64,l:50,c:62},{o:62,h:72,l:60,c:70}],
-      anns:[{type:'hline',y:50,at:1.4,color:C.gold,label:'ENTRY'},{type:'hline',y:38,at:1.9,color:C.red,label:'STOP — your shield'},{type:'hline',y:70,at:2.4,color:C.green,label:'TARGET ✓'},{type:'tag',candle:3,side:'down',color:C.sub,at:3.2,label:'dipped, HELD'}]},
+      candles:[{o:34,h:46,l:32,c:44},{o:44,h:56,l:42,c:54},{o:54,h:56,l:43,c:45},{o:45,h:47,l:32,c:36},{o:36,h:52,l:34,c:50},{o:50,h:68,l:48,c:66},{o:66,h:80,l:64,c:78}],
+      anns:[{type:'hline',y:45,at:1.4,color:C.gold,label:'ENTRY'},{type:'hline',y:30,at:1.9,color:C.red,label:'STOP — your shield'},{type:'hline',y:78,at:2.4,color:C.green,label:'TARGET ✓'},{type:'tag',candle:3,side:'down',color:C.sub,at:3.2,label:'dipped, HELD'}]},
+    // PHASE 3A — 5→4 candles, varied real bodies (old scene was four identical 4u drizzle candles);
+    // rise to entry 62, two honest red steps down, stop 40 hit cleanly. Tag renumbered 4→3.
     trade_loss:{caption:'Price went the other way and hit your <b>stop</b>. You only lost what you bet — the stop kept it small. Smart, not a mistake.',
-      candles:[{o:60,h:62,l:54,c:56},{o:56,h:60,l:50,c:52},{o:52,h:58,l:50,c:56},{o:56,h:58,l:46,c:48},{o:48,h:49,l:43,c:44}],
-      anns:[{type:'hline',y:56,at:1.4,color:C.gold,label:'ENTRY'},{type:'hline',y:44,at:1.9,color:C.red,label:'STOP — loss capped'},{type:'hline',y:72,at:2.4,color:C.sub,label:'TARGET (missed)'},{type:'tag',candle:4,side:'down',color:C.red,at:3.2,label:'stop did its job'}]},
+      candles:[{o:38,h:54,l:36,c:52},{o:52,h:64,l:50,c:62},{o:62,h:64,l:49,c:51},{o:51,h:53,l:38,c:40}],
+      anns:[{type:'hline',y:62,at:1.4,color:C.gold,label:'ENTRY'},{type:'hline',y:40,at:1.9,color:C.red,label:'STOP — loss capped'},{type:'hline',y:86,at:2.4,color:C.sub,label:'TARGET (missed)'},{type:'tag',candle:3,side:'down',color:C.red,at:3.2,label:'stop did its job'}]},
+    // PHASE 3A — the exit tag now sits ON the stop-hit candle (2), and two extra falling candles
+    // AFTER the exit teach the payoff: "it kept falling — you were SAFE" (new sub tag on 4).
     sl:{caption:'A <b>stop loss</b> is your safety net. If price goes the wrong way and touches it, you exit right away — so one bad trade stays small.',
-      candles:[{o:54,h:60,l:52,c:58},{o:58,h:60,l:48,c:50},{o:50,h:53,l:44,c:46},{o:46,h:48,l:40,c:42},{o:42,h:44,l:38,c:40}],
-      anns:[{type:'hline',y:58,at:1.5,color:C.gold,label:'ENTRY'},{type:'hline',y:40,at:2.0,color:C.red,label:'STOP LOSS'},{type:'tag',candle:4,side:'down',color:C.red,at:3.0,label:'exit — stay small'}]},
+      candles:[{o:40,h:56,l:38,c:54},{o:54,h:56,l:41,c:43},{o:43,h:45,l:32,c:34},{o:34,h:36,l:20,c:22},{o:22,h:24,l:12,c:14}],
+      anns:[{type:'hline',y:54,at:1.5,color:C.gold,label:'ENTRY'},{type:'hline',y:36,at:2.0,color:C.red,label:'STOP LOSS'},{type:'tag',candle:2,side:'down',color:C.red,at:3.0,label:'exit — stay small'},{type:'tag',candle:4,side:'down',color:C.sub,at:3.6,label:'it kept falling — you were SAFE'}]},
+    // PHASE 3A — a real rest candle mid-climb (varied rhythm, no wallpaper) and the final candle
+    // punches through the raised target. Ann indices unchanged (4).
     tp:{caption:'A <b>take profit</b> is your goal price. When price reaches it, the trade closes and your win is locked in.',
-      candles:[{o:42,h:48,l:40,c:46},{o:46,h:54,l:44,c:52},{o:52,h:58,l:50,c:56},{o:56,h:66,l:54,c:64},{o:64,h:72,l:62,c:70}],
-      anns:[{type:'hline',y:46,at:1.5,color:C.gold,label:'ENTRY'},{type:'hline',y:70,at:2.0,color:C.green,label:'TAKE PROFIT ✓'},{type:'tag',candle:4,side:'up',color:C.green,at:3.0,label:'locked in'}]},
+      candles:[{o:34,h:48,l:32,c:46},{o:46,h:60,l:44,c:58},{o:58,h:60,l:47,c:49},{o:49,h:66,l:47,c:64},{o:64,h:78,l:62,c:76}],
+      anns:[{type:'hline',y:46,at:1.5,color:C.gold,label:'ENTRY'},{type:'hline',y:74,at:2.0,color:C.green,label:'TAKE PROFIT ✓'},{type:'tag',candle:4,side:'up',color:C.green,at:3.0,label:'locked in'}]},
+    // PHASE 3A — zones re-anchored INSIDE the candle range (the old risk-zone bottom at 42 stayed
+    // on-canvas only by luck of the 8% padding: zone y-values are not part of auto-fit). Risk
+    // 44→50 (6) vs reward 50→62 (12) stays an honest visual 1:2.
     rr:{caption:'<b>Risk : reward</b> compares what you could lose to what you could win. Risk a little to make a lot — aim for at least <b>2×</b> your risk.',
-      candles:[{o:46,h:52,l:44,c:50},{o:50,h:56,l:48,c:54},{o:54,h:62,l:52,c:60},{o:60,h:70,l:58,c:68}],
-      anns:[{type:'zone',from:0,to:3,y1:42,y2:50,color:C.red,at:1.6,label:'1R RISK'},{type:'zone',from:0,to:3,y1:50,y2:66,color:C.green,at:2.2,label:'2R REWARD'},{type:'hline',y:50,at:1.3,color:C.gold,label:'ENTRY'}]},
+      candles:[{o:46,h:54,l:44,c:52},{o:52,h:60,l:50,c:58},{o:58,h:70,l:56,c:68},{o:68,h:76,l:66,c:74}],
+      anns:[{type:'zone',from:0,to:3,y1:44,y2:50,color:C.red,at:1.6,label:'1R RISK'},{type:'zone',from:0,to:3,y1:50,y2:62,color:C.green,at:2.2,label:'2R REWARD'},{type:'hline',y:50,at:1.3,color:C.gold,label:'ENTRY'}]},
+    // PHASE 3A — old scene was four identical 4u candles (A-B-A-B wallpaper). Bodies now GROW
+    // 9→10→12→13 so the picture itself amplifies; tag orange→red (orange is reserved boss/portal,
+    // and red carries the "powerful but risky" warning honestly).
     leverage:{caption:'<b>Leverage</b> makes your wins AND losses bigger. A small price move turns into a big result — powerful, but risky.',
-      candles:[{o:44,h:50,l:42,c:48},{o:48,h:54,l:46,c:52},{o:52,h:58,l:50,c:56},{o:56,h:62,l:54,c:60}],
-      anns:[{type:'tag',candle:0,side:'down',color:C.sub,at:1.8,label:'small move'},{type:'tag',candle:3,side:'up',color:C.orange,at:2.6,label:'× LEVERAGE = BIG result'}]},
+      candles:[{o:44,h:54,l:42,c:53},{o:53,h:64,l:51,c:63},{o:63,h:76,l:61,c:75},{o:75,h:90,l:73,c:88}],
+      anns:[{type:'tag',candle:0,side:'down',color:C.sub,at:1.8,label:'small move'},{type:'tag',candle:3,side:'up',color:C.red,at:2.6,label:'× LEVERAGE = BIG result'}]},
+    // PHASE 3A — pole 18u (2.25x the flag bodies, relational law ≥1.5x); flag candles are readable
+    // 8u rest-candles coiling in a tight box instead of 2-4u slivers. Ann indices unchanged.
     bullflag:{caption:'A <b>bull flag</b>: a strong push up (the pole), a short rest that drifts down a little (the flag), then price <b>pops higher</b> again.',
-      candles:[{o:30,h:34,l:28,c:32},{o:32,h:52,l:30,c:50},{o:50,h:53,l:45,c:47},{o:47,h:49,l:43,c:45},{o:45,h:62,l:43,c:60},{o:60,h:70,l:58,c:68}],
+      candles:[{o:27,h:35,l:25,c:35},{o:35,h:55,l:33,c:53},{o:53,h:55,l:43,c:45},{o:45,h:54,l:43,c:53},{o:53,h:69,l:51,c:67},{o:67,h:75,l:65,c:75}],
       anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.6,label:'POLE'},{type:'tag',candle:3,side:'down',color:C.sub,at:2.4,label:'flag (rest)'},{type:'tag',candle:5,side:'up',color:C.green,at:3.0,label:'GO ↑'}]},
+    // PHASE 3A — exact mirror of the bullflag fix: 18u pole down, readable 8u flag candles
+    // drifting up, breakdown closes clearly below the pole low. Ann indices unchanged.
     bearflag:{caption:'A <b>bear flag</b>: a strong push down (the pole), a short rest that drifts up a little (the flag), then price <b>drops lower</b> again.',
-      candles:[{o:70,h:72,l:66,c:68},{o:68,h:70,l:50,c:52},{o:52,h:57,l:50,c:55},{o:55,h:59,l:53,c:57},{o:57,h:59,l:40,c:42},{o:42,h:44,l:32,c:34}],
+      candles:[{o:73,h:75,l:65,c:65},{o:65,h:67,l:45,c:47},{o:47,h:57,l:45,c:55},{o:55,h:57,l:46,c:47},{o:47,h:49,l:31,c:33},{o:33,h:35,l:25,c:25}],
       anns:[{type:'tag',candle:1,side:'down',color:C.red,at:1.6,label:'POLE'},{type:'tag',candle:3,side:'up',color:C.sub,at:2.4,label:'flag (rest)'},{type:'tag',candle:5,side:'down',color:C.red,at:3.0,label:'GO ↓'}]},
+    // PHASE 3A — both clues now genuinely hold AND meet: the support floor (33) is touched exactly
+    // twice, and the trendline is refit through the actual later lows (c2@36, c3@39, c5@45 — the
+    // old line floated past lows that pierced it).
     confluence:{caption:'<b>Confluence</b> is when several clues point the same way — the trend, a level, and a setup all agree. More clues = a stronger trade.',
-      candles:[{o:34,h:40,l:32,c:38},{o:38,h:44,l:33,c:35},{o:35,h:48,l:33,c:46},{o:46,h:50,l:40,c:42},{o:42,h:56,l:40,c:54},{o:54,h:62,l:50,c:60}],
-      anns:[{type:'hline',y:33,at:1.6,color:C.green,label:'SUPPORT held'},{type:'line',c1:1,p1:34,c2:5,p2:50,color:C.gold,extend:true,at:2.2,label:'TRENDLINE'},{type:'tag',candle:5,side:'up',color:C.blue,at:3.0,label:'clues agree ✓'}]},
+      candles:[{o:41,h:43,l:33,c:35},{o:35,h:45,l:33,c:44},{o:44,h:46,l:36,c:39},{o:39,h:52,l:39,c:50},{o:50,h:52,l:43,c:45},{o:45,h:60,l:45,c:58}],
+      anns:[{type:'hline',y:33,at:1.6,color:C.green,label:'SUPPORT held'},{type:'line',c1:2,p1:36,c2:5,p2:45,color:C.gold,extend:true,at:2.2,label:'TRENDLINE'},{type:'tag',candle:5,side:'up',color:C.blue,at:3.0,label:'clues agree ✓'}]},
+    // PHASE 3A — the drift candles are now real small candles (6-8u, legible but clearly small)
+    // instead of 1-2u accidental dojis, and the focal body sits AT the 55%-of-frame cap instead of
+    // 81% over it — still 2.8x the drift (relational law ≥1.5x). Ann index unchanged (4).
     momentum:{caption:'A few small candles, then one <b>big strong green</b> candle shoots up.<br>That power move is <b>momentum</b>.<br>Buyers just took control — the move is starting.',
-      candles:[{o:33,h:38,l:32,c:37},{o:37,h:39,l:32,c:34},{o:34,h:43,l:33,c:41},{o:41,h:43,l:36,c:38},{o:38,h:86,l:37,c:82}],
+      candles:[{o:34,h:41,l:31,c:40},{o:40,h:42,l:31,c:33},{o:33,h:36,l:26,c:27},{o:27,h:39,l:25,c:35},{o:35,h:57,l:33,c:53}],
       anns:[{type:'tag',candle:4,side:'up',color:C.green,at:1.8,label:'MOMENTUM ↑'}]},
+    // PHASE 3A — opener is a real 12u candle (was a 2u sliver), the push respects the 55% frame cap
+    // (was 80%), and both rest candles are readable 10u reds at ≤⅓ of the push (pullback law ≤0.5x).
+    // Tags gold→sub: gold is reserved boss/portal. Ann indices unchanged (1, 2, 3).
     pullback:{caption:'First a <b>big green push</b> up.<br>Then price takes a short rest and drifts back down a little.<br>That’s a <b>pullback</b> — not a crash.<br><b>Don’t chase it — wait.</b>',
-      candles:[{o:34,h:38,l:32,c:36},{o:36,h:72,l:34,c:68},{o:68,h:70,l:60,c:62},{o:62,h:65,l:56,c:58}],
-      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.6,label:'BIG PUSH ↑'},{type:'tag',candle:2,side:'down',color:C.gold,at:2.4,label:'PULLBACK ↓'},{type:'tag',candle:3,side:'down',color:C.gold,at:2.9,label:'↓'}]},
+      candles:[{o:26,h:40,l:24,c:38},{o:38,h:72,l:36,c:68},{o:68,h:70,l:56,c:58},{o:58,h:60,l:46,c:48}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.6,label:'BIG PUSH ↑'},{type:'tag',candle:2,side:'down',color:C.sub,at:2.4,label:'PULLBACK ↓'},{type:'tag',candle:3,side:'down',color:C.sub,at:2.9,label:'↓'}]},
+    // PHASE 3A — every candle legible (opener 14u, was 2u; rests 12u, were 6/4u) and the
+    // confirmation candle CLOSES 10 units above the momentum high 66 — the break, which is the
+    // entire concept, is now visible from across the room. Ann indices unchanged (1, 2, 4).
     confirmation:{caption:'After the <b>pullback</b>, a strong green candle <b>closes back up</b> above the last high.<br>That’s your <b>confirmation</b>.<br>Now the setup is real — this is where you enter.',
-      candles:[{o:34,h:38,l:32,c:36},{o:36,h:70,l:34,c:66},{o:66,h:68,l:58,c:60},{o:60,h:63,l:54,c:56},{o:56,h:88,l:54,c:84}],
+      candles:[{o:24,h:40,l:20,c:38},{o:38,h:66,l:36,c:62},{o:62,h:64,l:48,c:50},{o:50,h:52,l:36,c:38},{o:38,h:80,l:36,c:76}],
       anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.4,label:'MOMENTUM ↑'},{type:'tag',candle:2,side:'down',color:C.red,at:2.0,label:'PULLBACK ↓'},{type:'tag',candle:4,side:'up',color:C.green,at:2.8,label:'CONFIRMATION ✓ enter here'}]}   /* SHOT 10 (CQ-0023) — pullback labelled in RED, pointing at the red candles */
   };
   function mount(canvas,key){
@@ -19320,13 +19417,13 @@ const LessonChart=(function(){
     for(let g=0;g<=4;g++){const gy=yTop+g/4*(yBot-yTop);ctx.beginPath();ctx.moveTo(x0-8,gy);ctx.lineTo(x1+8,gy);ctx.stroke();}
     for(let i=0;i<n;i++){
       const appear=i*printStep,p=easeOut((t-appear)/printStep); if(p<=0) continue;
-      const c=cs[i],up=c.c>=c.o,x=cx(i),col=up?C.green:C.red,edge=up?C.greenEdge:C.redEdge,wcol=up?C.greenWick:C.redWick;
+      const c=cs[i],up=c.c>=c.o,x=cx(i),col=c.doji?C.dojiBody:(up?C.green:C.red),edge=c.doji?C.dojiEdge:(up?C.greenEdge:C.redEdge),wcol=c.doji?C.dojiWick:(up?C.greenWick:C.redWick);   /* PHASE 3A: authored doji renders neutral, never directional */
       const bodyTopV=Math.max(c.o,c.c),bodyBotV=Math.min(c.o,c.c),curTop=lerp(c.o,bodyTopV,p),curBot=lerp(c.o,bodyBotV,p);
       const wp=c.sweep?easeOut((t-appear-printStep*0.5)/(printStep*1.4)):p,curHi=lerp(bodyTopV,c.h,wp),curLo=lerp(bodyBotV,c.l,p);
       ctx.strokeStyle=wcol; ctx.lineWidth=c.sweep?3:1.6; ctx.beginPath(); ctx.moveTo(x,Y(curHi)); ctx.lineTo(x,Y(curLo)); ctx.stroke();
       const bt=Y(curTop),bb=Y(curBot); ctx.fillStyle=col; ctx.fillRect(x-bw/2,bt,bw,Math.max(2,bb-bt));
       ctx.strokeStyle=edge; ctx.lineWidth=1; ctx.strokeRect(x-bw/2+.5,bt+.5,bw-1,Math.max(2,bb-bt)-1);
-      ctx.fillStyle=up?'rgba(93,237,181,.5)':'rgba(255,120,130,.45)'; ctx.fillRect(x-bw/2+1,bt+1,Math.max(1.5,bw*.16),Math.max(1,(bb-bt)*.9));
+      if(!c.doji){ ctx.fillStyle=up?'rgba(93,237,181,.5)':'rgba(255,120,130,.45)'; ctx.fillRect(x-bw/2+1,bt+1,Math.max(1.5,bw*.16),Math.max(1,(bb-bt)*.9)); }   /* PHASE 3A: no directional sheen on a doji */
       c._x=x; c._hiY=Y(c.h); c._loY=Y(c.l); c._bt=bt; c._bb=bb;
     }
     for(const a of (scene.anns||[])){
@@ -19355,47 +19452,51 @@ const LessonChart=(function(){
    movement freezes, the chart zooms out, and they TAP the momentum / pullback / confirmation
    candle. 3–10s, never blocks, always returns to the world. Reuses no live-trade state. */
 const CONCEPT_PRACTICE = {
+  /* PHASE 3A (Educational Candle Library, 2026-07-16) — practice charts rebuilt on canonical
+     archetypes: every tap TARGET is visually unmistakable, every distractor is a real readable
+     candle (no more 2px sliver bodies), and no distractor also satisfies the prompt. NOTE this
+     renderer pads 12% per side, so authored bodies need more margin than LessonChart scenes. */
   greenred:{ label:'BUYERS WON', prompt:'Tap a GREEN candle (buyers won)', hint:'green = closed UP = buyers won',
     ok:'✓ Yes! Green means buyers won — it closed UP.', answer:[1,3,4],
-    candles:[{o:60,h:64,l:50,c:52},{o:52,h:74,l:50,c:70},{o:70,h:72,l:58,c:60},{o:60,h:84,l:58,c:80},{o:80,h:92,l:78,c:90}] },
+    candles:[{o:58,h:60,l:42,c:44},{o:44,h:70,l:42,c:68},{o:68,h:70,l:50,c:52},{o:52,h:80,l:50,c:78},{o:78,h:100,l:76,c:98}] },
   momentum:{ label:'MOMENTUM', prompt:'Tap the MOMENTUM candle', hint:'the one BIG, strong green push',
     ok:'✓ Yes! That big strong candle is MOMENTUM.', answer:[3],
-    candles:[{o:40,h:44,l:38,c:42},{o:42,h:45,l:39,c:41},{o:41,h:46,l:39,c:44},{o:44,h:84,l:42,c:80},{o:80,h:84,l:76,c:82},{o:82,h:86,l:78,c:83}] },
+    candles:[{o:32,h:45,l:30,c:43},{o:43,h:45,l:29,c:31},{o:31,h:44,l:29,c:42},{o:42,h:82,l:40,c:78}] },
   pullback:{ label:'PULLBACK', prompt:'Tap the PULLBACK candle', hint:'the small rest right after the big push',
     ok:'✓ Right! That little dip is the PULLBACK — a short rest.', answer:[2],
-    candles:[{o:34,h:38,l:32,c:36},{o:36,h:74,l:34,c:70},{o:70,h:73,l:60,c:62},{o:62,h:84,l:60,c:82},{o:82,h:86,l:78,c:84}] },
+    candles:[{o:30,h:44,l:28,c:42},{o:42,h:78,l:40,c:74},{o:74,h:76,l:60,c:62},{o:62,h:92,l:60,c:88}] },
   confirmation:{ label:'CONFIRMATION', prompt:'Tap the CONFIRMATION candle', hint:'the strong green candle that closes back UP after the rest',
     ok:'✓ Nice! That close-back-up is your CONFIRMATION to enter.', answer:[3],
-    candles:[{o:34,h:38,l:32,c:36},{o:36,h:70,l:34,c:66},{o:66,h:69,l:58,c:60},{o:60,h:90,l:58,c:86},{o:86,h:90,l:82,c:88}] },
+    candles:[{o:28,h:44,l:26,c:42},{o:42,h:68,l:40,c:64},{o:64,h:66,l:48,c:50},{o:50,h:94,l:48,c:90}] },
   /* TPAT AUDIT (approved, Enabler 1) — required practice reps for the L2/L3 concepts, in the same
      tap-the-candle format the L1 practices use. Auto-opened after each concept card (see
      LESSON_PRACTICE in block 1). Plus 'brokencandle': the intro's candle-anatomy rep that makes
      the Gambler's 'error' round a tested-after-taught skill. */
   trend:{ label:'HIGHER HIGH', prompt:'Tap a candle that pushes to a HIGHER HIGH', hint:'up-stairs: each big step tops the last one',
     ok:'✓ Yes! Higher highs + higher lows = an UPTREND.', answer:[2,4],
-    candles:[{o:20,h:34,l:16,c:30},{o:30,h:32,l:24,c:26},{o:26,h:48,l:24,c:44},{o:44,h:46,l:38,c:40},{o:40,h:64,l:38,c:60}] },
+    candles:[{o:24,h:40,l:22,c:38},{o:38,h:40,l:24,c:26},{o:26,h:58,l:24,c:54},{o:54,h:56,l:40,c:42},{o:42,h:76,l:40,c:72}] },
   sr:{ label:'SUPPORT', prompt:'Tap a candle that BOUNCED off the floor', hint:'the same low level keeps holding — that floor is SUPPORT',
     ok:'✓ Right! That floor is SUPPORT — buyers keep stepping in there.', answer:[1,3],
-    candles:[{o:50,h:54,l:30,c:34},{o:34,h:46,l:29,c:44},{o:44,h:48,l:36,c:38},{o:38,h:44,l:30,c:42},{o:42,h:58,l:40,c:54}] },
+    candles:[{o:62,h:64,l:40,c:46},{o:46,h:66,l:36,c:64},{o:64,h:66,l:44,c:48},{o:48,h:72,l:36,c:68},{o:68,h:84,l:66,c:80}] },
   /* Sprint 2 — resistance gets its own rep (it only shared support's before): two wicks tag the
      same ceiling and get pushed back DOWN. Opens chained per the CHAIN LAW. */
   resistance:{ label:'RESISTANCE', prompt:'Tap a candle the CEILING pushed back DOWN', hint:'the same high level keeps rejecting price — that ceiling is RESISTANCE',
     ok:'✓ Right! That ceiling is RESISTANCE — sellers keep stepping in there.', answer:[1,3],
-    candles:[{o:36,h:48,l:32,c:44},{o:44,h:70,l:40,c:42},{o:42,h:52,l:38,c:48},{o:48,h:69,l:42,c:44},{o:44,h:50,l:36,c:40}] },
+    candles:[{o:36,h:58,l:34,c:56},{o:56,h:80,l:42,c:44},{o:44,h:64,l:42,c:60},{o:60,h:80,l:46,c:48},{o:48,h:50,l:32,c:34}] },
   bos:{ label:'BOS', prompt:'Tap the candle whose CLOSE first breaks above the old high', hint:'a close past the old top = Break of Structure',
     ok:'✓ BOS! A CLOSE above the old high — the up-move just proved itself.', answer:[3],
-    candles:[{o:30,h:44,l:28,c:40},{o:40,h:46,l:34,c:36},{o:36,h:45,l:32,c:42},{o:42,h:60,l:40,c:56},{o:56,h:62,l:52,c:58}] },
+    candles:[{o:30,h:52,l:28,c:48},{o:48,h:50,l:36,c:38},{o:38,h:50,l:36,c:48},{o:48,h:78,l:46,c:74}] },
   choch:{ label:'ChoCh', prompt:'Tap the FIRST candle that closes BELOW the last higher low', hint:'the up-stairs just broke a step — the trend may be flipping',
     ok:'✓ ChoCh! The first break against the trend — watch for a flip.', answer:[3],
-    candles:[{o:30,h:42,l:28,c:40},{o:40,h:50,l:36,c:46},{o:46,h:56,l:44,c:52},{o:52,h:54,l:41,c:43},{o:43,h:45,l:30,c:33}] },
+    candles:[{o:34,h:52,l:32,c:48},{o:48,h:66,l:44,c:62},{o:62,h:74,l:60,c:72},{o:72,h:74,l:48,c:50},{o:50,h:52,l:36,c:40}] },
   /* CQ-0025 — the lie is the FLOATING candle (open ≠ previous close), the one corruption that is
-     always VISIBLE: body-vs-wick lies render as ordinary wickless bars (the wick draws behind /
-     gets extended over the body), so they were unfindable except by luck. Four candles form a
-     connected staircase; the liar levitates 16 units above it, disconnected on both sides —
-     matching the Gambler's reworked 'error' round exactly. */
+     always VISIBLE. PHASE 3A: the old floater had only 6 units of air (and a neighbour's high rose
+     INTO its band — it barely floated at all). Now a falling staircase of real red candles with a
+     green liar hovering 26+ units of clear air above its neighbours — unmissable in 5 seconds.
+     Matches the Gambler's reworked 'error' round exactly. */
   brokencandle:{ label:'THE LIE', prompt:'One candle is telling a LIE — tap the one that FLOATS!', hint:'every candle must START exactly where the last one STOPPED',
     ok:'✓ You caught the lie! A real candle always opens where the last one closed — that one floats.', answer:[2],
-    candles:[{o:30,h:44,l:26,c:40},{o:40,h:52,l:36,c:46},{o:62,h:74,l:58,c:70},{o:46,h:56,l:42,c:52},{o:52,h:60,l:48,c:56}] },
+    candles:[{o:74,h:76,l:50,c:52},{o:52,h:54,l:35,c:37},{o:82,h:100,l:80,c:100},{o:37,h:39,l:18,c:20}] },
 };
 let conceptPracticeActive = false;
 function openConceptPractice(key, onDone){

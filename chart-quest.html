@@ -2447,7 +2447,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 269 — PHASE 3B: Golden Path visual unification — the LIVE trade now speaks the lesson language. The guided setup is library-true (confirmation ALWAYS closes ≥28u above the momentum high — was failing ~2% + 100% near world bounds + clearing invisibly ~18%; momentum ≥2.5x pullback; pullbacks tighten; no spin-pole/shell on setup candles saying "rejected" while the lesson says "buyers took control"). Ticket mini+full charts: lesson-grammar bodies (0.72-slot, radius-0, edge+sheen — were the only flat un-edged candles in the game), direction-tinted wicks, doji-neutral tie branch, ENTRY/STOP/TARGET taught line-grammar ON the decision surface tracking the sliders live, direction follows the player\'s actual pick, BOS speaks the break candle\'s colour. Recap/replay: same grammar + FIXED a real crash (tradeReplaySVG referenced out-of-scope O — journal replays with OB/BOS lead-ins threw), width formula no longer goes negative past 37 candles, sweep trap-wick now survives into the journal (additive snapshot field), broken-level lines neutral, world ENTRY line finally GOLD (walkthrough said "the gold line" over a grey line). First-win + flash-quiz candles: radius-0 + edge + sheen recipe. VISUAL ONLY: all deltas inside existing envelopes; NO outcomes, NO probabilities, NO entry/SL/TP semantics, NO lesson order, NO architecture. Prior (268): Educational Candle Library';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 270 — PHASE 3B founder-playthrough fix: the first-trade walkthrough copy is now SIDE-AWARE (on a SHORT it said "you bought / price falls to the stop / climbs to the target" while the stop sat ABOVE and the target BELOW — three strings mis-teaching ~half of first trades; found live in the uninterrupted founder playthrough). Copy only, no logic. Prior (269) — PHASE 3B: Golden Path visual unification — the LIVE trade now speaks the lesson language. The guided setup is library-true (confirmation ALWAYS closes ≥28u above the momentum high — was failing ~2% + 100% near world bounds + clearing invisibly ~18%; momentum ≥2.5x pullback; pullbacks tighten; no spin-pole/shell on setup candles saying "rejected" while the lesson says "buyers took control"). Ticket mini+full charts: lesson-grammar bodies (0.72-slot, radius-0, edge+sheen — were the only flat un-edged candles in the game), direction-tinted wicks, doji-neutral tie branch, ENTRY/STOP/TARGET taught line-grammar ON the decision surface tracking the sliders live, direction follows the player\'s actual pick, BOS speaks the break candle\'s colour. Recap/replay: same grammar + FIXED a real crash (tradeReplaySVG referenced out-of-scope O — journal replays with OB/BOS lead-ins threw), width formula no longer goes negative past 37 candles, sweep trap-wick now survives into the journal (additive snapshot field), broken-level lines neutral, world ENTRY line finally GOLD (walkthrough said "the gold line" over a grey line). First-win + flash-quiz candles: radius-0 + edge + sheen recipe. VISUAL ONLY: all deltas inside existing envelopes; NO outcomes, NO probabilities, NO entry/SL/TP semantics, NO lesson order, NO architecture. Prior (268): Educational Candle Library';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -15071,15 +15071,22 @@ function drawFirstTradeGuide() {
     // SHOT 4 (CQ-0022) — no leading emoji in the title. A canvas center-aligned string that starts
     // with an emoji + variation selector measures wrong on iOS Safari, shoving the visible header
     // off-centre. Plain text centres cleanly above the body (colour + tag already carry the meaning).
+    /* PHASE 3B (build 270, founder-playthrough finding) — the walkthrough copy was written for a
+       LONG only: on a SHORT first trade it said "you bought / price falls to the stop / price
+       climbs to the target" while the stop sat ABOVE and the target BELOW — three side-unaware
+       strings actively mis-teaching ~half of first trades. Copy is now side-aware. */
     { h: trade.entryH, col: '#ffd60a', tag: 'YOUR ENTRY',
       title: 'You’re in — your first trade!',
-      body: 'You bought here — the yellow line is your entry price.' },
+      body: (trade.dir === 'short' ? 'You bet price goes DOWN here — the yellow line is your entry price.'
+                                   : 'You bet price goes UP here — the yellow line is your entry price.') },
     { h: trade.slH, col: '#ea3943', tag: 'STOP LOSS',
       title: 'Your safety net',
-      body: 'If price falls to this red line you exit automatically — your loss stays small.' },
+      body: (trade.dir === 'short' ? 'If price climbs to this red line you exit automatically — your loss stays small.'
+                                   : 'If price falls to this red line you exit automatically — your loss stays small.') },
     { h: trade.tpH, col: '#16c784', tag: 'TAKE PROFIT',
       title: 'Your goal',
-      body: 'If price climbs to this green line, you WIN.' },
+      body: (trade.dir === 'short' ? 'If price falls to this green line, you WIN.'
+                                   : 'If price climbs to this green line, you WIN.') },
   ];
   const s = steps[Math.min(g.step, 2)];
   ctx.save();

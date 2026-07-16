@@ -2447,7 +2447,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 268 — PHASE 3A: Educational Candle Library (the visual language of trading). Every authored educational candle rewritten to canonical archetypes per CHARTQUEST_EDUCATIONAL_CANDLE_LIBRARY_2026-07-16.md, under the ratified Visual Market Constitution: all 33 LessonChart scenes + all 10 CONCEPT_PRACTICE tap-charts + IM fallback diagrams. No more flat/sliver directional candles (Type-A floor honoured), no candle over the 55%-frame cap, focal/relational laws enforced (momentum 2.8x drift, confirmation closes VISIBLY above the last high, H&S head 2.4x shoulders), level lines now touch their candles EXACTLY (support/resistance/trendline/neckline/ChoCh), the first lesson is twin mirrored green/red giants, and the doji finally renders NEUTRAL (new data-gated doji:true branch in LessonChart — a tie never wears a directional tint; quiz-doji gold retired). DATA + conformance only: NO trade logic, NO outcomes, NO gameplay terrain, NO boss content, NO lesson order, NO architecture change. Prior (267): beta feel pass + telemetry allowlist unblock. FINN_V3 still dormant';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 269 — PHASE 3B: Golden Path visual unification — the LIVE trade now speaks the lesson language. The guided setup is library-true (confirmation ALWAYS closes ≥28u above the momentum high — was failing ~2% + 100% near world bounds + clearing invisibly ~18%; momentum ≥2.5x pullback; pullbacks tighten; no spin-pole/shell on setup candles saying "rejected" while the lesson says "buyers took control"). Ticket mini+full charts: lesson-grammar bodies (0.72-slot, radius-0, edge+sheen — were the only flat un-edged candles in the game), direction-tinted wicks, doji-neutral tie branch, ENTRY/STOP/TARGET taught line-grammar ON the decision surface tracking the sliders live, direction follows the player\'s actual pick, BOS speaks the break candle\'s colour. Recap/replay: same grammar + FIXED a real crash (tradeReplaySVG referenced out-of-scope O — journal replays with OB/BOS lead-ins threw), width formula no longer goes negative past 37 candles, sweep trap-wick now survives into the journal (additive snapshot field), broken-level lines neutral, world ENTRY line finally GOLD (walkthrough said "the gold line" over a grey line). First-win + flash-quiz candles: radius-0 + edge + sheen recipe. VISUAL ONLY: all deltas inside existing envelopes; NO outcomes, NO probabilities, NO entry/SL/TP semantics, NO lesson order, NO architecture. Prior (268): Educational Candle Library';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -2897,11 +2897,19 @@ function pickSetupDir() {
 function setupFlowCandle() {
   const s = setupSeq, dir = s.dir, prev = market.level;
   let delta, role;
+  /* PHASE 3B (build 269) — the live setup must SPEAK THE LESSON'S LANGUAGE (Educational Candle
+     Library): momentum ≥ 2.5× the pullback (M1), pullbacks TIGHTEN (pb2 < pb1), and the
+     confirmation CLOSES VISIBLY ABOVE the momentum high (C1 — the taught relationship). Before
+     this fix the confirm failed to clear the high in ~1.8% of setups (and 100% in the world-clamp
+     regime near the ceiling/floor), cleared invisibly (<20u) in ~18%, and momentum/pb1 fell below
+     2.5× in ~8%. All caps/floors below stay INSIDE the existing delta envelopes (confirm ∈
+     [115,170], terrain step ≤ 240) — direction, entry/SL/TP semantics and outcomes untouched. */
   if (s.step === 0)      { delta = dir *  rand(170, 240); role = 'momentum'; }   // the impulse — clearly the biggest body
   // Two pullback candles of DIFFERENT depths (pb1 deeper, pb2 tighter) so the counter-move never
   // reads as two uniform blocks — a natural tightening pullback into the confirmation.
-  else if (s.step <= 2)  { delta = -dir * (s.step === 1 ? rand(48, 80) : rand(26, 52)); role = 'pullback'; }
-  else                   { delta = dir *  rand(115, 170); role = 'confirm';  }   // decisive close in the original direction
+  else if (s.step === 1) { delta = -dir * Math.min(rand(48, 80), (s.momBody || 240) / 2.5); role = 'pullback'; }   // M1: impulse stays ≥2.5× pb1
+  else if (s.step === 2) { delta = -dir * Math.min(rand(34, 52), (s.pb1 || 48) - 6); role = 'pullback'; }          // tightens: pb2 < pb1, never a sliver
+  else                   { delta = dir *  Math.max(rand(115, 170), (s.pbTotal || 0) + 28); role = 'confirm'; }     // C1: closes ≥28u ABOVE the momentum high (max floor 160 ≤ 170)
   let nl = prev + delta;
   // Keep a pullback from ever erasing the momentum candle's origin (so the setup stays "valid").
   if (role === 'pullback') {
@@ -2911,8 +2919,15 @@ function setupFlowCandle() {
     nl = dir > 0 ? Math.max(nl, floorH) : Math.min(nl, floorH);
   }
   if (s.step === 0) s.momStart = prev;                  // remember where the impulse began
+  // PHASE 3B — role-aware ceiling/floor margin: the MOMENTUM candle leaves ≥54u of world headroom
+  // so the confirmation always has room to close visibly beyond it. Without this, a setup fired
+  // near the wall clamped momentum and confirm to the SAME level (C1 broken 100% in that regime).
+  if (role === 'momentum') nl = dir > 0 ? Math.min(nl, CFG.levelMax - 54) : Math.max(nl, CFG.levelMin + 54);
   nl = Math.max(CFG.levelMin + 20, Math.min(CFG.levelMax - 20, nl));
   const realDelta = nl - prev;
+  if (role === 'momentum') s.momBody = Math.abs(realDelta);                    // realized impulse (post-clamp)
+  if (role === 'pullback') { s.pbTotal = (s.pbTotal || 0) + Math.abs(realDelta);
+                             if (s.step === 1) s.pb1 = Math.abs(realDelta); }  // realized depths drive the C1/M1 floors
   market.level = nl;
   market.trendDir = realDelta >= 0 ? 1 : -1;
   market.price *= 1 + (realDelta / CFG.pxPerPct) / 100;
@@ -3210,7 +3225,11 @@ function decorateCandleWicks(c, prevClose) {
   // wick capped BELOW spinMinWick so it can never be twirled — so normal platforming stays natural.
   const _body = c.h - prevClose;                 // + = green (closed up)
   const _bigGreen = _body > 55;                  // a clearly big green push
-  if (!live && _bigGreen && Math.random() < 0.4) {
+  // PHASE 3B — setup (flow) candles are EXEMPT from the spin-pole/shell: the guided momentum
+  // candle used to sprout a 42-62u rejection pole 40% of the time, and 71% of those poles were
+  // TALLER than the confirmation's clearance — the wick said "rejected" while the lesson said
+  // "buyers took control". Flow candles keep the ordinary clean/short-wick texture grammar.
+  if (!live && !c.flow && _bigGreen && Math.random() < 0.4) {
     c.wick = Math.round(CFG.spinMinWick * rand(1.6, 2.4));
     c._spinShell = true;
     return;
@@ -7002,6 +7021,21 @@ function setupChartSVG(endIdx) {
     lo = Math.min(lo, Math.min(c.open, c.h) - Math.min(c.wick2 || 0, bRng * 0.4 + 1));
     hi = Math.max(hi, Math.max(c.open, c.h) + Math.min(c.wick  || 0, bRng * 0.4 + 1));
   }
+  /* PHASE 3B — the taught ENTRY/STOP/TARGET line grammar appears ON the ticket chart (non-predict
+     mode), so the decision surface shows the same picture as the sl/tp/rr lessons. Include the
+     levels in the framing pass so no line lands off-canvas. */
+  const _pl = (typeof pending !== 'undefined' && pending) ? pending : null;
+  const _predictGate = (typeof conceptTier === 'function') ? conceptTier('trend') < 1 : false;
+  let _lines = [];
+  if (!_predictGate && _pl && _pl.entry != null && _pl.slDist != null && _pl.tpDist != null) {
+    const _up = _pl.dir !== 'short';
+    _lines = [
+      { h: _pl.entry,                                     col: '#ffd60a', lbl: 'ENTRY'  },
+      { h: _pl.entry + (_up ? -_pl.slDist : _pl.slDist),  col: '#ea3943', lbl: 'STOP'   },
+      { h: _pl.entry + (_up ?  _pl.tpDist : -_pl.tpDist), col: '#16c784', lbl: 'TARGET' },
+    ];
+    for (const l of _lines) { lo = Math.min(lo, l.h); hi = Math.max(hi, l.h); }
+  }
   // Beginner layout — answer three questions at a glance:
   //   THIS JUST HAPPENED (the signal candle) · YOU ARE HERE (now) · WHAT NEXT?
   // Candles live on the LEFT; a dashed NOW line splits off reserved EMPTY
@@ -7012,7 +7046,10 @@ function setupChartSVG(endIdx) {
   const nowX = candleR + 3;            // the NOW divider, just past the last candle
   const Y = (lvl) => chartTop + (1 - (lvl - lo) / Math.max(1, hi - lo)) * (chartBot - chartTop);
   const xw = (candleR - 6) / cs.length;
-  const sDir = setupZone ? setupZone.dir : 'long';
+  /* PHASE 3B — direction follows the player's LIVE pick (pending.dir), not the setup's initial
+     suggestion: at L2+ the player can toggle sides, and the ticket must never assert a
+     prediction they did not make. */
+  const sDir = (_pl && _pl.dir) ? _pl.dir : (setupZone ? setupZone.dir : 'long');
   const up = sDir === 'long';
   const arrowCol = up ? '#16c784' : '#ea3943';
   // SPRINT 1/4 — at Level 1 the chart must ask, not answer. In predict mode the
@@ -7038,32 +7075,66 @@ function setupChartSVG(endIdx) {
       lvl = isLong ? Math.max(lvl, ext) : Math.min(lvl, ext);
     }
     s += '<line x1="6" y1="' + Y(lvl) + '" x2="' + candleR + '" y2="' + Y(lvl) +
-         '" stroke="#7d8aa0" stroke-width="1" stroke-dasharray="5 4"/>';
-    s += '<text x="8" y="' + (Y(lvl) + (isLong ? -4 : 11)) +
-         '" fill="#7d8aa0" font-size="8" font-family="monospace">structure ' +
-         (isLong ? 'high' : 'low') + ' — broken</text>';
+         '" stroke="#8b97a8" stroke-width="1" stroke-dasharray="5 4"/>';
+    /* PHASE 3B — lesson pill treatment (dark chip + bold text) instead of bare 8px grey text */
+    const _slbl = 'structure ' + (isLong ? 'high' : 'low') + ' — broken';
+    const _sy = Y(lvl) + (isLong ? -5 : 10);
+    s += '<rect x="6" y="' + (_sy - 7) + '" width="' + (_slbl.length * 5.4 + 6) + '" height="10" fill="rgba(6,10,18,.82)"/>';
+    s += '<text x="9" y="' + (_sy + 1) + '" fill="#8b97a8" font-size="9" font-weight="bold" font-family="monospace">' + _slbl + '</text>';
   }
 
-  let lastTop = chartBot;
+  /* PHASE 3B — the ticket candles now speak the LESSON grammar (Educational Candle Library):
+     slot-derived 0.72 body width (was xw-4 ≈ 81%), 1px darker definition edge + 16%-width sheen
+     strip (was flat fills — the only edge-less chart in the game), direction-TINTED wicks
+     matching the build-268 lessons (was neutral grey — a third wick language), a doji-neutral
+     tie branch (a near-tie never wears a lying directional tint), and wick draws clamped to the
+     frame so a sweep pole can't spike into the label strip. Rendering only — data untouched. */
+  let lastTop = chartBot, lastBx = 6, lastBw = 8, lastWTop = chartBot, lastWBot = chartBot;
+  const tieBand = (hi - lo) * 0.015;
   for (let i = 0; i < cs.length; i++) {
     const c = cs[i];
-    const bx = 6 + i * xw + 2, bw2 = xw - 4;
+    const bw2 = Math.min(48, xw * 0.72), bx = 6 + i * xw + (xw - bw2) / 2;
     const yO = Y(c.open), yC = Y(c.h);
     const top = Math.min(yO, yC), bh = Math.max(3, Math.abs(yO - yC));
-    const col = c.color === 'green' ? '#16c784' : '#ea3943';
+    const isTie = Math.abs(c.open - c.h) < tieBand;
+    const col   = isTie ? '#b8c0cc' : (c.color === 'green' ? '#16c784' : '#ea3943');
+    const edge  = isTie ? '#7a8494' : (c.color === 'green' ? '#0c9c69' : '#c0212c');
+    const wcol  = isTie ? '#c9d1d9' : (c.color === 'green' ? '#1fd790' : '#ff5663');
     const cxm = bx + bw2 / 2;
-    if (i === cs.length - 1) lastTop = top;
-    if (c.wick > 1)  s += '<line x1="' + cxm + '" y1="' + top + '" x2="' + cxm + '" y2="' + Y(Math.max(c.open, c.h) + c.wick) + '" stroke="' + (c.sweep ? '#ff7a45' : '#8b98a8') + '" stroke-width="1.5"/>';
-    if (c.wick2 > 1) s += '<line x1="' + cxm + '" y1="' + (top + bh) + '" x2="' + cxm + '" y2="' + Y(Math.min(c.open, c.h) - c.wick2) + '" stroke="#8b98a8" stroke-width="1.5"/>';
-    s += '<rect x="' + bx + '" y="' + top + '" width="' + bw2 + '" height="' + bh + '" fill="' + col + '"/>';
+    const wTopY = Math.max(chartTop - 2, Y(Math.max(c.open, c.h) + (c.wick  || 0)));
+    const wBotY = Math.min(chartBot + 2, Y(Math.min(c.open, c.h) - (c.wick2 || 0)));
+    if (i === cs.length - 1) { lastTop = top; lastBx = bx; lastBw = bw2; lastWTop = wTopY; lastWBot = wBotY; }
+    if (c.wick > 1)  s += '<line x1="' + cxm + '" y1="' + top + '" x2="' + cxm + '" y2="' + wTopY + '" stroke="' + (c.sweep ? '#ff7a45' : wcol) + '" stroke-width="1.6"/>';
+    if (c.wick2 > 1) s += '<line x1="' + cxm + '" y1="' + (top + bh) + '" x2="' + cxm + '" y2="' + wBotY + '" stroke="' + wcol + '" stroke-width="1.6"/>';
+    s += '<rect x="' + bx + '" y="' + top + '" width="' + bw2 + '" height="' + bh + '" fill="' + col + '" stroke="' + edge + '" stroke-width="1"/>';
+    if (!isTie && bh > 4) s += '<rect x="' + (bx + 1) + '" y="' + (top + 1) + '" width="' + Math.max(1.5, bw2 * 0.16).toFixed(1) + '" height="' + Math.max(1, (bh - 2) * 0.9).toFixed(1) + '" fill="' + (c.color === 'green' ? 'rgba(93,237,181,.5)' : 'rgba(255,120,130,.45)') + '"/>';
     if (c.ob && conceptTier('ob') >= 1) {
       s += '<rect x="' + (bx - 2) + '" y="' + (top - 3) + '" width="' + (bw2 + 4) + '" height="' + (bh + 6) +
            '" fill="rgba(168,85,247,0.22)" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="3 2"/>';
-      s += '<text x="' + cxm + '" y="' + Math.max(20, top - 5) + '" fill="#d8b4fe" font-size="7.5" font-weight="bold" font-family="monospace" text-anchor="middle">▼ ORDER BLOCK</text>';
+      s += '<text x="' + cxm + '" y="' + Math.max(20, top - 5) + '" fill="#d8b4fe" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">▼ ORDER BLOCK</text>';
     }
     if (c.bos && conceptTier('bos') >= 1) {
-      s += '<text x="' + cxm + '" y="' + Math.max(20, top - 5) + '" fill="#c9b3ff" font-size="7.5" font-weight="bold" font-family="monospace" text-anchor="middle">BOS ▲</text>';
+      /* PHASE 3B — BOS speaks the break candle's direction colour (lesson grammar), not lavender
+         (which the lessons reserve for ORDER BLOCK — an active mis-association). */
+      s += '<text x="' + cxm + '" y="' + Math.max(20, top - 5) + '" fill="' + (c.color === 'green' ? '#16c784' : '#ea3943') + '" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">BOS ' + (c.color === 'green' ? '▲' : '▼') + '</text>';
     }
+  }
+
+  /* PHASE 3B — taught line grammar ON the decision surface: ENTRY gold / STOP red / TARGET green,
+     dashed with the lesson pill chips (drawn after candles so the pills stay legible). */
+  for (const l of _lines) {
+    const ly = Y(l.h);
+    s += '<line x1="6" y1="' + ly + '" x2="' + candleR + '" y2="' + ly + '" stroke="' + l.col + '" stroke-width="1" stroke-dasharray="5 4" opacity="0.9"/>';
+    s += '<rect x="6" y="' + (ly - 5) + '" width="' + (l.lbl.length * 5.4 + 6) + '" height="10" fill="rgba(6,10,18,.82)"/>';
+    s += '<text x="9" y="' + (ly + 2.5) + '" fill="' + l.col + '" font-size="7.5" font-weight="bold" font-family="monospace">' + l.lbl + '</text>';
+  }
+
+  /* PHASE 3B — predict mode gets the same focal marker the full-screen chart uses (gold
+     ask-don't-answer box on the decisive candle), so the mini decision surface also POINTS. */
+  if (predict && cs.length) {
+    s += '<rect x="' + (lastBx - 2) + '" y="' + (Math.min(lastWTop, lastTop) - 2) + '" width="' + (lastBw + 4) +
+         '" height="' + (Math.max(lastWBot, lastTop + 3) - Math.min(lastWTop, lastTop) + 4) +
+         '" fill="none" stroke="#ffd60a" stroke-width="1.5" rx="3" stroke-dasharray="4 3"/>';
   }
 
   // ── NOW divider ──
@@ -7162,7 +7233,9 @@ function setupChartSVGFull(endIdx) {
   const Y = (lvl) => chartTop + (1 - (lvl - lo) / range) * chartH;
 
   const sType = setupZone ? (setupZone.type || 'momentum') : 'momentum';
-  const sDir  = setupZone ? setupZone.dir  : 'long';
+  /* PHASE 3B — direction follows the player's LIVE pick (pending.dir) so the full-screen banner
+     never asserts a side the player didn't choose (L2+ toggle). */
+  const sDir  = (typeof pending !== 'undefined' && pending && pending.dir) ? pending.dir : (setupZone ? setupZone.dir : 'long');
   const isLong = sDir === 'long';
 
   // PACING: title named in the player's current vocabulary (each type is gated to
@@ -7290,30 +7363,41 @@ function setupChartSVGFull(endIdx) {
   }
 
   // ── Candles ───────────────────────────────────────────────────────────────
+  /* PHASE 3B — lesson grammar: 0.72-of-slot bodies (was xw-5), radius-0 (was rx=1), 1px darker
+     definition edge + 16%-width sheen strip (was flat fills), direction-TINTED wicks matching the
+     build-268 lessons (was neutral grey), doji-neutral tie branch, wick draws clamped to frame. */
+  const _tieBandF = (hi - lo) * 0.015;
   for (let i = 0; i < nC; i++) {
     const c  = cs[i];
-    const bx = chartX + i * xw + 3;
-    const bw2 = xw - 5;                          /* SHOT 11 — wider bodies so candles read solid, not thin/stretched */
+    const bw2 = Math.min(48, xw * 0.72);
+    const bx = chartX + i * xw + (xw - bw2) / 2;
     const yO  = Y(c.open), yC = Y(c.h);
     const top = Math.min(yO, yC);
-    const bh  = Math.max(4, Math.abs(yO - yC));
-    const col = c.color === 'green' ? '#16c784' : '#ea3943';
+    const bh  = Math.max(6, Math.abs(yO - yC));
+    const isTie = Math.abs(c.open - c.h) < _tieBandF;
+    const col   = isTie ? '#b8c0cc' : (c.color === 'green' ? '#16c784' : '#ea3943');
+    const edge  = isTie ? '#7a8494' : (c.color === 'green' ? '#0c9c69' : '#c0212c');
+    const wcol  = isTie ? '#c9d1d9' : (c.color === 'green' ? '#1fd790' : '#ff5663');
     const cxm = bx + bw2 / 2;
 
-    // Wicks
+    // Wicks (direction-tinted; clamped so a sweep pole never spikes into the title strip)
     if (c.wick > 1)
       s += '<line x1="' + cxm + '" y1="' + (top).toFixed(1) + '" x2="' + cxm
-         + '" y2="' + Y(Math.max(c.open, c.h) + c.wick).toFixed(1)
-         + '" stroke="' + (c.sweep ? '#ff7a45' : '#8b98a8') + '" stroke-width="2.5"/>';
+         + '" y2="' + Math.max(chartTop - 4, Y(Math.max(c.open, c.h) + c.wick)).toFixed(1)
+         + '" stroke="' + (c.sweep ? '#ff7a45' : wcol) + '" stroke-width="2"/>';
     if (c.wick2 > 1)
       s += '<line x1="' + cxm + '" y1="' + (top + bh).toFixed(1) + '" x2="' + cxm
-         + '" y2="' + Y(Math.min(c.open, c.h) - c.wick2).toFixed(1)
-         + '" stroke="#8b98a8" stroke-width="2.5"/>';
+         + '" y2="' + Math.min(chartBot + 4, Y(Math.min(c.open, c.h) - c.wick2)).toFixed(1)
+         + '" stroke="' + wcol + '" stroke-width="2"/>';
 
-    // Body
+    // Body — sharp, edged, sheened (the lesson silhouette)
     s += '<rect x="' + bx.toFixed(1) + '" y="' + top.toFixed(1)
        + '" width="' + bw2.toFixed(1) + '" height="' + bh.toFixed(1)
-       + '" fill="' + col + '" rx="1"/>';
+       + '" fill="' + col + '" stroke="' + edge + '" stroke-width="1"/>';
+    if (!isTie && bh > 6)
+      s += '<rect x="' + (bx + 1).toFixed(1) + '" y="' + (top + 1).toFixed(1)
+         + '" width="' + Math.max(1.5, bw2 * 0.16).toFixed(1) + '" height="' + ((bh - 2) * 0.9).toFixed(1)
+         + '" fill="' + (c.color === 'green' ? 'rgba(93,237,181,.5)' : 'rgba(255,120,130,.45)') + '"/>';
 
     // ── ORDER BLOCK highlight + label (only once OB is taught, Level 4) ──────
     if (c.ob && conceptTier('ob') >= 1) {
@@ -7333,19 +7417,23 @@ function setupChartSVGFull(endIdx) {
     }
 
     // ── BOS highlight + label (only once structure is taught, Level 3) ──────
+    /* PHASE 3B — BOS speaks the break candle's DIRECTION colour (lesson grammar: the bosFlag is
+       green on a bullish break), not cyan — cyan/blue is the trade-portal family. */
     if (c.bos && conceptTier('bos') >= 1) {
+      const bosCol = c.color === 'green' ? '#16c784' : '#ea3943';
+      const bosBg  = c.color === 'green' ? 'rgba(22,199,132,0.16)' : 'rgba(234,57,67,0.16)';
       s += '<rect x="' + (bx - 3) + '" y="' + (top - 4) + '" width="' + (bw2 + 6)
-         + '" height="' + (bh + 8) + '" fill="rgba(76,195,255,0.18)" stroke="#4cc3ff"'
+         + '" height="' + (bh + 8) + '" fill="' + bosBg + '" stroke="' + bosCol + '"'
          + ' stroke-width="2" rx="2"/>';
       // For BOS, label + arrow can go below (there may be room below the candle)
       const belowY = top + bh + 6;
       const lblY2  = Math.min(chartBot - 20, belowY + 30);
       if (lblY2 - belowY > 4)
         s += '<line x1="' + cxm + '" y1="' + belowY + '" x2="' + cxm + '" y2="' + (lblY2 - 16)
-           + '" stroke="#4cc3ff" stroke-width="1.5"/>';
+           + '" stroke="' + bosCol + '" stroke-width="1.5"/>';
       s += '<rect x="' + (cxm - 60) + '" y="' + (lblY2 - 13) + '" width="120" height="17"'
-         + ' fill="rgba(76,195,255,0.2)" rx="3"/>';
-      s += '<text x="' + cxm + '" y="' + lblY2 + '" fill="#a5f3ff" font-size="10"'
+         + ' fill="' + bosBg + '" rx="3"/>';
+      s += '<text x="' + cxm + '" y="' + lblY2 + '" fill="' + bosCol + '" font-size="10"'
          + ' font-weight="bold" font-family="monospace" text-anchor="middle">' + (conceptTier('ob') >= 1 ? '② ' : '') + 'BREAK OF STRUCTURE</text>';
     }
 
@@ -7369,8 +7457,9 @@ function setupChartSVGFull(endIdx) {
 
   // ── NOW line · reserved FUTURE guess zone · YOU ARE HERE · signal candle · Shell ──
   const lastC  = cs[nC - 1];
-  const lastBx = chartX + (nC - 1) * xw + 5;
-  const lastBw = xw - 10;
+  /* PHASE 3B — highlight box recentered on the 0.72-slot body (was the old xw-10 math) */
+  const lastBw = Math.min(48, xw * 0.72) + 6;
+  const lastBx = chartX + (nC - 1) * xw + (xw - lastBw) / 2;
   const lastCx = lastBx + lastBw / 2;
   const lastTop = Math.min(Y(lastC.open), Y(lastC.h));
   const lastBot = Math.max(Y(lastC.open), Y(lastC.h));
@@ -7763,8 +7852,11 @@ function tradeChartSVGFull(t, opts) {
       if (isFinite(lvl)) {
         const sy = Y(lvl);
         const rayCol = isChoch ? '#ff9f43' : '#4cc3ff';
+        /* PHASE 3B — the broken-LEVEL line is NEUTRAL (lesson grammar: choch/bos scenes draw the
+           level as a grey dashed hline); the concept colour lives on the pill + candle box only.
+           Also un-collides ChoCh-orange from the VWAP curve when both are on one recap. */
         s += '<line x1="' + chartX + '" y1="' + sy + '" x2="' + (chartX + chartW) + '" y2="' + sy
-           + '" stroke="' + rayCol + '" stroke-width="1.6" stroke-dasharray="7 4" opacity="0.85"/>';
+           + '" stroke="#8b97a8" stroke-width="1.6" stroke-dasharray="7 4" opacity="0.85"/>';
         const lbl = isChoch
           ? (bull ? 'CHANGE OF CHARACTER — FLIP UP ↑' : 'CHANGE OF CHARACTER — FLIP DOWN ↓')
           : (bull ? 'STRUCTURE HIGH — BROKEN ↑' : 'STRUCTURE LOW — BROKEN ↓');
@@ -7794,16 +7886,23 @@ function tradeChartSVGFull(t, opts) {
   });
 
   // Candles
+  /* PHASE 3B — recap speaks the lesson grammar: 0.72-of-slot bodies (the old xw-10 went NEGATIVE
+     past 37 candles — wick-only ghosts), radius-0 + darker edge (was flat rx=1), direction-tinted
+     wicks sized clamp(bw*0.05, 1.6, 3) (was uniform grey), sweep wicks keep the taught trap-orange. */
   for (let i = 0; i < nC; i++) {
     const c   = cs[i];
-    const bx  = chartX + i * xw + 5, bw2 = xw - 10;
+    const bw2 = Math.max(2, Math.min(46, Math.round(xw * 0.72)));
+    const bx  = chartX + i * xw + (xw - bw2) / 2;
     const yO  = Y(c.open), yC = Y(c.h);
     const top = Math.min(yO, yC), bh = Math.max(3, Math.abs(yO - yC));
     const col = c.color === 'green' ? '#16c784' : '#ea3943';
+    const edge = c.color === 'green' ? '#0c9c69' : '#c0212c';
+    const wcol = c.color === 'green' ? '#1fd790' : '#ff5663';
+    const ww = Math.max(1.6, Math.min(3, bw2 * 0.05)).toFixed(1);
     const cxm = bx + bw2 / 2;
-    if (c.wick  > 1) s += '<line x1="' + cxm + '" y1="' + top + '" x2="' + cxm + '" y2="' + Y(Math.max(c.open,c.h)+c.wick) + '" stroke="#8b98a8" stroke-width="2"/>';
-    if (c.wick2 > 1) s += '<line x1="' + cxm + '" y1="' + (top+bh) + '" x2="' + cxm + '" y2="' + Y(Math.min(c.open,c.h)-c.wick2) + '" stroke="#8b98a8" stroke-width="2"/>';
-    s += '<rect x="' + bx + '" y="' + top + '" width="' + bw2 + '" height="' + bh + '" fill="' + col + '" rx="1"/>';
+    if (c.wick  > 1) s += '<line x1="' + cxm + '" y1="' + top + '" x2="' + cxm + '" y2="' + Y(Math.max(c.open,c.h)+c.wick) + '" stroke="' + (c.sweep ? '#ff7a45' : wcol) + '" stroke-width="' + ww + '"/>';
+    if (c.wick2 > 1) s += '<line x1="' + cxm + '" y1="' + (top+bh) + '" x2="' + cxm + '" y2="' + Y(Math.min(c.open,c.h)-c.wick2) + '" stroke="' + wcol + '" stroke-width="' + ww + '"/>';
+    s += '<rect x="' + bx + '" y="' + top + '" width="' + bw2 + '" height="' + bh + '" fill="' + col + '"' + (bw2 >= 6 && bh >= 3 ? ' stroke="' + edge + '" stroke-width="1"' : '') + '/>';
     // OB annotation
     if (c.ob && O.ob && conceptTier('ob') >= 1) {
       s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (bw2+4) + '" height="' + (bh+6)
@@ -7814,12 +7913,13 @@ function tradeChartSVGFull(t, opts) {
            + '" stroke="#d8b4fe" stroke-width="1.5" marker-end="url(#tr_arrDn)"/>';
       s += '<text x="' + cxm + '" y="' + Math.max(chartTop+14, arrowTipOB-26) + '" fill="#d8b4fe" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ORDER BLOCK</text>';
     }
-    // BOS / ChoCh annotation — ChoCh (reversal) is orange, BOS (continuation) blue
+    // BOS / ChoCh annotation — ChoCh (reversal) keeps orange; BOS speaks the break candle's
+    // DIRECTION colour (PHASE 3B — lesson grammar; cyan is the trade-portal family)
     if (c.bos && O.structure) {
       const ch = c.choch;
-      const bc = ch ? '#ff9f43' : '#4cc3ff';
+      const bc = ch ? '#ff9f43' : (c.color === 'green' ? '#16c784' : '#ea3943');
       s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (bw2+4) + '" height="' + (bh+6)
-         + '" fill="' + (ch ? 'rgba(255,159,67,0.16)' : 'rgba(76,195,255,0.15)') + '" stroke="' + bc + '" stroke-width="1.5" rx="2"/>';
+         + '" fill="' + (ch ? 'rgba(255,159,67,0.16)' : (c.color === 'green' ? 'rgba(22,199,132,0.15)' : 'rgba(234,57,67,0.15)')) + '" stroke="' + bc + '" stroke-width="1.5" rx="2"/>';
       s += '<text x="' + cxm + '" y="' + Math.max(chartTop+14, top-8) + '" fill="' + bc + '" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">' + (ch ? 'ChoCh 🔄' : 'BOS ⚡') + '</text>';
     }
     // Turtle on last candle
@@ -7998,7 +8098,7 @@ function tradeReplaySVG(entry, n) {
   const VW = 390, VH = 560, chartX = 10, chartW = VW - 20, chartTop = 64, chartBot = 522, chartH = chartBot - chartTop;
   const xw = chartW / total;
   const Y = (v) => chartTop + (1 - (v - lo) / range) * chartH;
-  const cw = Math.max(2, xw - (xw > 6 ? 4 : 1)), off = xw > 6 ? 2 : 0.5;
+  const cw = Math.max(2, Math.min(46, Math.round(xw * 0.72))), off = (xw - Math.max(2, Math.min(46, Math.round(xw * 0.72)))) / 2;   /* PHASE 3B — 0.72-of-slot bodies (lesson grammar), centered */
 
   let s = '<svg viewBox="0 0 ' + VW + ' ' + VH + '" xmlns="http://www.w3.org/2000/svg">';
   s += '<rect width="' + VW + '" height="' + VH + '" fill="#080c12"/>';
@@ -8030,16 +8130,23 @@ function tradeReplaySVG(entry, n) {
   if (vp) s += '<path d="' + vp + '" fill="none" stroke="#ff9f43" stroke-width="2" opacity="0.8"/>';
 
   // Candles (fixed x positions so they never shift as more reveal)
+  /* PHASE 3B — same lesson grammar as the recap (edge, tinted wicks, radius-0, trap-orange sweep).
+     Also FIXES a crash: this scope referenced O.ob/O.structure, but O only exists inside
+     tradeChartSVGFull — any replay whose lead-in contained an OB/BOS candle threw ReferenceError.
+     The journal's legend toggles (reviewOpts) are the correct source here. */
   for (let i = 0; i < nShown; i++) {
     const c = cs[i], bx = chartX + i * xw + off;
     const yO = Y(c.open), yC = Y(c.h), top = Math.min(yO, yC), bh = Math.max(2, Math.abs(yO - yC));
     const col = c.color === 'green' ? '#16c784' : '#ea3943', cxm = bx + cw/2;
-    if (c.wick  > 1) s += '<line x1="' + cxm + '" y1="' + top + '" x2="' + cxm + '" y2="' + Y(Math.max(c.open,c.h)+c.wick) + '" stroke="#8b98a8" stroke-width="1.5"/>';
-    if (c.wick2 > 1) s += '<line x1="' + cxm + '" y1="' + (top+bh) + '" x2="' + cxm + '" y2="' + Y(Math.min(c.open,c.h)-c.wick2) + '" stroke="#8b98a8" stroke-width="1.5"/>';
-    s += '<rect x="' + bx + '" y="' + top + '" width="' + cw + '" height="' + bh + '" fill="' + col + '" rx="1"/>';
+    const edge = c.color === 'green' ? '#0c9c69' : '#c0212c';
+    const wcol = c.color === 'green' ? '#1fd790' : '#ff5663';
+    const ww = Math.max(1.6, Math.min(3, cw * 0.05)).toFixed(1);
+    if (c.wick  > 1) s += '<line x1="' + cxm + '" y1="' + top + '" x2="' + cxm + '" y2="' + Y(Math.max(c.open,c.h)+c.wick) + '" stroke="' + (c.sweep ? '#ff7a45' : wcol) + '" stroke-width="' + ww + '"/>';
+    if (c.wick2 > 1) s += '<line x1="' + cxm + '" y1="' + (top+bh) + '" x2="' + cxm + '" y2="' + Y(Math.min(c.open,c.h)-c.wick2) + '" stroke="' + wcol + '" stroke-width="' + ww + '"/>';
+    s += '<rect x="' + bx + '" y="' + top + '" width="' + cw + '" height="' + bh + '" fill="' + col + '"' + (cw >= 6 && bh >= 3 ? ' stroke="' + edge + '" stroke-width="1"' : '') + '/>';
     if (i <= entryIdx) {
-      if (c.ob && O.ob && conceptTier('ob') >= 1) s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (cw+4) + '" height="' + (bh+6) + '" fill="rgba(168,85,247,0.18)" stroke="#a855f7" stroke-width="1.2" stroke-dasharray="3 2" rx="2"/>';
-      if (c.bos && O.structure && conceptTier('bos') >= 1) { const bc = c.choch ? '#ff9f43' : '#4cc3ff'; s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (cw+4) + '" height="' + (bh+6) + '" fill="' + (c.choch?'rgba(255,159,67,0.14)':'rgba(76,195,255,0.13)') + '" stroke="' + bc + '" stroke-width="1.2" rx="2"/>'; }
+      if (c.ob && reviewOpts.ob && conceptTier('ob') >= 1) s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (cw+4) + '" height="' + (bh+6) + '" fill="rgba(168,85,247,0.18)" stroke="#a855f7" stroke-width="1.2" stroke-dasharray="3 2" rx="2"/>';
+      if (c.bos && reviewOpts.structure && conceptTier('bos') >= 1) { const bc = c.choch ? '#ff9f43' : (c.color === 'green' ? '#16c784' : '#ea3943'); s += '<rect x="' + (bx-2) + '" y="' + (top-3) + '" width="' + (cw+4) + '" height="' + (bh+6) + '" fill="' + (c.choch?'rgba(255,159,67,0.14)':(c.color==='green'?'rgba(22,199,132,0.14)':'rgba(234,57,67,0.14)')) + '" stroke="' + bc + '" stroke-width="1.2" rx="2"/>'; }
     }
   }
   // Turtle on the latest revealed candle
@@ -10957,6 +11064,10 @@ function refreshPanel() {
   $('tpLbl').textContent = '+' + fmtPrice(pending.tpDist * ppp);
   const rr = pending.tpDist / Math.max(1, pending.slDist);
   $('rrVal').textContent = rr.toFixed(1) + ' : 1';
+  /* PHASE 3B — the ticket chart's ENTRY/STOP/TARGET lines + prediction arrow track the sliders
+     and the side toggle live (the chart used to render once at openPanel, so it could assert a
+     direction the player didn't pick and never showed the taught line grammar). Render-only. */
+  try { if (typeof lastSetupIdx === 'number' && lastSetupIdx >= 0 && lastSetupIdx < candles.length) $('tpChart').innerHTML = setupChartSVG(lastSetupIdx); } catch (e) {}
   const win = fmt(clampAmt() * rr);
   // ── Pre-trade reasoning panel ──
   // PACING: "Confluence" (stacking many signals + a graded score) is a Level-10 concept.
@@ -11159,7 +11270,7 @@ function commitTrade() {
     // uniformly — many thin candles — like the "gold standard" one.
     trade.setupSnap = candles.slice(Math.max(0, sIdx - 23), sIdx + 1).map(c => ({
       open: c.open, h: c.h, wick: c.wick, wick2: c.wick2, color: c.color,
-      ob: !!c.ob, bos: !!c.bos, choch: !!c.choch, vwap: c.vwap || 0 }));
+      ob: !!c.ob, bos: !!c.bos, choch: !!c.choch, sweep: !!c.sweep, vwap: c.vwap || 0 }));   /* PHASE 3B — carry the sweep flag so the taught trap-orange wick survives into the recap/journal (additive field; old records simply render neutral) */
   }
   // ── Guardian 1: keep the stop-loss AND the win VISUALLY HONEST ──────────────
   // At Level 1 we bias toward wins (a beginner mustn't be punished for following the
@@ -12059,7 +12170,7 @@ function resolveTrade(result) {
     const cx = turtle.x + turtle.w / 2;
     const snapIdx = candles.findIndex(c => cx >= c.x && cx < c.x + c.w);
     const snap = snapIdx >= 0 ? candles.slice(Math.max(0, snapIdx - 8), snapIdx + 3) : [];
-    candleSnap = snap.map(c => ({ open: c.open, h: c.h, wick: c.wick, wick2: c.wick2, color: c.color, ob: !!c.ob, bos: !!c.bos, choch: !!c.choch, vwap: c.vwap || 0 }));
+    candleSnap = snap.map(c => ({ open: c.open, h: c.h, wick: c.wick, wick2: c.wick2, color: c.color, ob: !!c.ob, bos: !!c.bos, choch: !!c.choch, sweep: !!c.sweep, vwap: c.vwap || 0 }));   /* PHASE 3B — sweep flag (see setupSnap) */
   }
   // Replay "film": the setup candles (entry context) + every candle that played
   // out after entry, with the index of the entry candle. Trimmed to keep storage sane.
@@ -12946,7 +13057,7 @@ function drawCandle(c, cameraX) {
   // candles (momentum + 2 pullbacks + confirm), highlight ONLY the CONFIRM candle (the one you act
   // on) with a single circle + label. The momentum/pullback teaching now lives in the LessonCharts.
   if (c.flow === 'confirm' && session.level <= 3 && setupFlow && c.id >= setupFlow.momId && glassesUnlocked()) {
-    const col  = (c.color === 'green' ? '#19d27c' : '#ff5a64');
+    const col  = (c.color === 'green' ? '#16c784' : '#ea3943');   /* PHASE 3B — canonical bull/bear (was near-miss #19d27c/#ff5a64: two slightly different green pens) */
     const lab  = 'SETUP';
     const cyB = (top + bot) / 2;
     const rx = bw / 2 + 7, ry = Math.max(15, bodyH / 2 + 10);
@@ -14792,7 +14903,7 @@ function render(cameraX) {
     const _sy = hh => _pvy + ((groundY - hh - camY) - _pvy) * camZoom;   // world-level → screen-y
     const levels = [
       { h: trade.tpH,    color: COLOR.greenBody, name: 'TAKE PROFIT' },
-      { h: trade.entryH, color: '#b6c0cd',       name: 'ENTRY' },
+      { h: trade.entryH, color: '#ffd60a',       name: 'ENTRY' },   /* PHASE 3B — ENTRY is GOLD everywhere (lessons, ticket, review, minimap); was grey while the walkthrough said "the gold line" */
       { h: trade.slH,    color: COLOR.redBody,   name: 'STOP LOSS' },
     ].map(l => ({ ...l, y: _sy(l.h) }))
      .filter(l => l.y > 18 && l.y < groundY - 2)
@@ -16365,21 +16476,26 @@ function drawQuizCandle(cx, topY, cw, ch, card) {
   const highY   = pxOf(Math.max(card.o, card.c) + (card.up || 0));
   const lowY    = pxOf(Math.min(card.o, card.c) - (card.lo || 0));
 
-  ctx.strokeStyle = '#8b98a8'; ctx.lineWidth = 3;
+  /* PHASE 3B — the first candle the player ever answers a question about now speaks the exact
+     lesson dialect seen one minute earlier: direction-TINTED wick (was 3px neutral grey),
+     radius-0 body (was rounded 5), canonical edge tokens (was off-token #0d9460/#b52a30), plus
+     the 16%-width sheen strip. PHASE 3A note kept: doji renders neutral, never gold. */
+  ctx.strokeStyle = isDoji ? '#c9d1d9' : isGreen ? '#1fd790' : '#ff5663'; ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(cx, highY); ctx.lineTo(cx, bodyTop);
   ctx.moveTo(cx, bodyTop + bodyH); ctx.lineTo(cx, lowY);
   ctx.stroke();
 
-  /* PHASE 3A — doji was GOLD #ffd60a (reserved boss/portal; the Constitution explicitly retires
-     the gold quiz doji). A doji is a tie: neutral #b8c0cc body, #7a8494 edge. Branch is currently
-     unreachable (no doji quiz card authored) — fixed before anyone authors one. */
   const fillCol = isDoji ? '#b8c0cc' : isGreen ? COLOR.greenBody : COLOR.redBody;
-  const bdrCol  = isDoji ? '#7a8494' : isGreen ? '#0d9460' : '#b52a30';
+  const bdrCol  = isDoji ? '#7a8494' : isGreen ? '#0c9c69' : '#c0212c';
   ctx.fillStyle = fillCol;
-  rr(cx - cw / 2, bodyTop, cw, bodyH, 5); ctx.fill();
-  ctx.strokeStyle = bdrCol; ctx.lineWidth = 2.5;
-  rr(cx - cw / 2, bodyTop, cw, bodyH, 5); ctx.stroke();
+  ctx.fillRect(cx - cw / 2, bodyTop, cw, bodyH);
+  ctx.strokeStyle = bdrCol; ctx.lineWidth = 1.5;
+  ctx.strokeRect(cx - cw / 2 + .5, bodyTop + .5, cw - 1, bodyH - 1);
+  if (!isDoji) {
+    ctx.fillStyle = isGreen ? 'rgba(93,237,181,.5)' : 'rgba(255,120,130,.45)';
+    ctx.fillRect(cx - cw / 2 + 1, bodyTop + 1, Math.max(1.5, cw * .16), Math.max(1, (bodyH - 2) * .9));
+  }
 
   // OPEN / CLOSE markers — so the player can SEE the close is higher (green) or lower (red)
   // than the open, instead of taking "closed higher than it opened" on faith. A short arrow
@@ -16490,7 +16606,7 @@ function drawFlashQuiz() {
   ctx.fillText(card.q, cx, H * 0.60);
 
   const btnH = 52, btnW = W - 48, btnX = 24;
-  const BCOLS = ['#16c784', '#ea3943', '#ffd60a'];
+  const BCOLS = ['#16c784', '#ea3943', '#4cc3ff'];   /* PHASE 3B — third answer-button was reserved GOLD (latent: no 3-option card authored yet); blue = the neutral third-option tag colour */
   for (let i = 0; i < card.opts.length; i++) {
     const btnY = H * 0.67 + i * (btnH + 10);
     ctx.fillStyle = BCOLS[i % BCOLS.length];
@@ -16576,10 +16692,14 @@ function drawPredictionBet() {
     }
     const bodyTop = Math.min(openPx, finalPx);
     const bodyH   = Math.max(Math.abs(finalPx - openPx), 6);
+    /* PHASE 3B — the FIRST-WIN candle closes in the exact lesson dialect: radius-0 (was rounded
+       5), canonical edge tokens, 16%-width sheen strip. Same recipe as drawQuizCandle. */
     ctx.fillStyle = isGreen ? COLOR.greenBody : COLOR.redBody;
-    rr(candleX - bodyW / 2, bodyTop, bodyW, bodyH, 5); ctx.fill();
-    ctx.strokeStyle = isGreen ? '#0d9460' : '#b52a30'; ctx.lineWidth = 2;
-    rr(candleX - bodyW / 2, bodyTop, bodyW, bodyH, 5); ctx.stroke();
+    ctx.fillRect(candleX - bodyW / 2, bodyTop, bodyW, bodyH);
+    ctx.strokeStyle = isGreen ? '#0c9c69' : '#c0212c'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(candleX - bodyW / 2 + .5, bodyTop + .5, bodyW - 1, bodyH - 1);
+    ctx.fillStyle = isGreen ? 'rgba(93,237,181,.5)' : 'rgba(255,120,130,.45)';
+    ctx.fillRect(candleX - bodyW / 2 + 1, bodyTop + 1, Math.max(1.5, bodyW * .16), Math.max(1, (bodyH - 2) * .9));
   } else {
     // Still forming: price line
     const lCol = isGreen ? '#16c784' : '#ea3943';

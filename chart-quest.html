@@ -2447,7 +2447,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 270 — PHASE 3B founder-playthrough fix: the first-trade walkthrough copy is now SIDE-AWARE (on a SHORT it said "you bought / price falls to the stop / climbs to the target" while the stop sat ABOVE and the target BELOW — three strings mis-teaching ~half of first trades; found live in the uninterrupted founder playthrough). Copy only, no logic. Prior (269) — PHASE 3B: Golden Path visual unification — the LIVE trade now speaks the lesson language. The guided setup is library-true (confirmation ALWAYS closes ≥28u above the momentum high — was failing ~2% + 100% near world bounds + clearing invisibly ~18%; momentum ≥2.5x pullback; pullbacks tighten; no spin-pole/shell on setup candles saying "rejected" while the lesson says "buyers took control"). Ticket mini+full charts: lesson-grammar bodies (0.72-slot, radius-0, edge+sheen — were the only flat un-edged candles in the game), direction-tinted wicks, doji-neutral tie branch, ENTRY/STOP/TARGET taught line-grammar ON the decision surface tracking the sliders live, direction follows the player\'s actual pick, BOS speaks the break candle\'s colour. Recap/replay: same grammar + FIXED a real crash (tradeReplaySVG referenced out-of-scope O — journal replays with OB/BOS lead-ins threw), width formula no longer goes negative past 37 candles, sweep trap-wick now survives into the journal (additive snapshot field), broken-level lines neutral, world ENTRY line finally GOLD (walkthrough said "the gold line" over a grey line). First-win + flash-quiz candles: radius-0 + edge + sheen recipe. VISUAL ONLY: all deltas inside existing envelopes; NO outcomes, NO probabilities, NO entry/SL/TP semantics, NO lesson order, NO architecture. Prior (268): Educational Candle Library';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 271 — P0 progression fix: post-Guardian-1 resume no longer replays the intro. cq_played (boot\'s only first-timer-vs-returning flag) was written ONLY at the victory-card CLAIM (introComplete), but "Guardian beaten" (cq_bosses_v1) is written the instant the Gambler falls — so killing the app on the victory card left boss=beaten + cq_played=unset, and the next boot replayed the whole intro (endless guided trades; the Gambler wouldn\'t reopen). Fix: boot backfills cq_played when any Guardian is already beaten (HEALS existing stuck saves on next load), and bossWin sets cq_played the instant the Gambler falls (closes the window at the source). Additive, save-write-timing only — NO key renamed/removed, NO roster/order/difficulty/lesson change. Deeper session.level-persistence fix intentionally deferred (schema change, needs sign-off). Prior (270) — PHASE 3B founder-playthrough fix: the first-trade walkthrough copy is now SIDE-AWARE (on a SHORT it said "you bought / price falls to the stop / climbs to the target" while the stop sat ABOVE and the target BELOW — three strings mis-teaching ~half of first trades; found live in the uninterrupted founder playthrough). Copy only, no logic. Prior (269) — PHASE 3B: Golden Path visual unification — the LIVE trade now speaks the lesson language. The guided setup is library-true (confirmation ALWAYS closes ≥28u above the momentum high — was failing ~2% + 100% near world bounds + clearing invisibly ~18%; momentum ≥2.5x pullback; pullbacks tighten; no spin-pole/shell on setup candles saying "rejected" while the lesson says "buyers took control"). Ticket mini+full charts: lesson-grammar bodies (0.72-slot, radius-0, edge+sheen — were the only flat un-edged candles in the game), direction-tinted wicks, doji-neutral tie branch, ENTRY/STOP/TARGET taught line-grammar ON the decision surface tracking the sliders live, direction follows the player\'s actual pick, BOS speaks the break candle\'s colour. Recap/replay: same grammar + FIXED a real crash (tradeReplaySVG referenced out-of-scope O — journal replays with OB/BOS lead-ins threw), width formula no longer goes negative past 37 candles, sweep trap-wick now survives into the journal (additive snapshot field), broken-level lines neutral, world ENTRY line finally GOLD (walkthrough said "the gold line" over a grey line). First-win + flash-quiz candles: radius-0 + edge + sheen recipe. VISUAL ONLY: all deltas inside existing envelopes; NO outcomes, NO probabilities, NO entry/SL/TP semantics, NO lesson order, NO architecture. Prior (268): Educational Candle Library';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -3544,6 +3544,20 @@ const leverage = {
     { mult: 5,  coins: 300, label: '5× LEVERAGE' },
   ],
 };
+
+/* PHASE 3B+ (build 271) — HEAL the post-Guardian-1 resume bug. cq_played (the ONLY flag boot uses
+   to tell a first-timer from a returning player) is written just once, inside introComplete(),
+   which fires only when CLAIM/PASS is tapped on the boss victory card. But cq_bosses_v1 ("Guardian
+   beaten") is written the instant the Gambler falls (bossWin). Kill the app on the victory card →
+   boss recorded beaten, cq_played still unset → next boot misreads the player as NEW and replays
+   the whole intro (endless guided trades; the Gambler won't reopen because it's already recorded
+   beaten). Beating any Guardian means the player has played — so backfill cq_played BEFORE the
+   three first-timer flags below (and the auth-branch reads at resolveAuth/_handleSession) are
+   evaluated. ?fresh=1 wipes cq_bosses_v1 with the rest, so beginner-mode testing is unaffected. */
+(function healPlayedFlag() { try {
+  var _beaten = JSON.parse(localStorage.getItem('cq_bosses_v1') || '[]');
+  if (Array.isArray(_beaten) && _beaten.length && !localStorage.getItem('cq_played')) localStorage.setItem('cq_played', '1');
+} catch (e) {} })();
 
 /* ---- Candle Academy: greeting card (first play only, tap or wait to dismiss) ---- */
 const candleAcademy = {
@@ -10306,6 +10320,7 @@ function bossWin() {
   // FIX B — remember whether this Guardian had EVER fallen before (gates once-ever cinematics)
   bfState._firstEverKill = !bossClearedEver(bfState.level);
   const b = bfState.boss; bossesDone.add(bfState.level); bossesEverBeaten.add(bfState.level); saveBossesEver(); bfState.won = true;
+  if (bfState.level === 0) { try { localStorage.setItem('cq_played', '1'); } catch (e) {} }   // PHASE 3B+ (271) — the intro is durably DONE the moment the Gambler falls; a reload before CLAIM must never replay it (cq_played was previously written only at introComplete/CLAIM)
   try { window.__qaReport && window.__qaReport({ kind: 'boss', level: bfState.level, name: b.name, outcome: 'win' }); } catch (e) {}
   // ── Content event: boss_defeated (schema #5 — highest-signal moment) ──
   try {

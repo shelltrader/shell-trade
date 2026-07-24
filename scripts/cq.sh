@@ -1,14 +1,15 @@
 #!/bin/bash
 # ChartQuest dev helper — automates the per-change loop so steps aren't missed.
-# Usage:  scripts/cq.sh <check | verify | mirror | site | tag | ship | serve [port] | qr [port]>
+# Usage:  scripts/cq.sh <check | verify | mirror | site | tag | ship | serve [port] | qr [port] | desktop-qr [port]>
 #   check   syntax-check the inline game <script> (node --check)
 #   verify  run the full regression gate (scripts/verify.js) — prints PASS/FAIL
 #   mirror  copy chart-quest.html -> index.html (the deployed mirror) + verify identical
 #   site    refresh website/game.html + assets so the marketing site shows the latest build
 #   tag     print the current BUILD_TAG
-#   ship    mirror + verify + site + tag  (run before every commit; STOPS on a gate FAIL)
+#   ship    mirror + verify + site + tag + desktop-qr  (run before every commit; STOPS on a gate FAIL)
 #   serve   start the no-cache LAN preview server (default port 8795)
 #   qr      print a scannable LAN QR to the beginner-mode URL (?fresh=1)
+#   desktop-qr  refresh ~/Desktop/ChartQuest-Test-QR.svg (labelled with the build + LAN URL); auto-runs on ship
 # For an approved protected-system change, run: CQ_ALLOW_PROTECTED=1 scripts/cq.sh ship
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -47,15 +48,20 @@ case "${1:-}" in
     if [ -n "$SRC" ] && [ "$SRC" = "$SITE" ]; then echo "✓ website embed synced → $SITE (+ finn, bosses, logo, cinematic)"; else echo "✗ site: build-tag mismatch (source='$SRC' site='$SITE')"; exit 1; fi
     ;;
   ship)
-    "$0" mirror && node scripts/verify.js && "$0" site && echo -n "build tag: " && "$0" tag
+    "$0" mirror && node scripts/verify.js && "$0" site && echo -n "build tag: " && "$0" tag && "$0" desktop-qr
+    ;;
+  desktop-qr)
+    # Refresh the always-current test QR on the Desktop (labelled with the build + LAN URL).
+    # Never fails the ship: the helper exits 0 even if qrencode is missing.
+    python3 scripts/desktop_qr.py "${2:-8795}" || true
     ;;
   serve)
     python3 scripts/serve_nocache.py "${2:-8795}"
     ;;
   qr)
     IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo 127.0.0.1)"
-    P="${2:-8795}"; URL="http://$IP:$P/chart-quest.html?fresh=1"
-    echo "SCAN (beginner mode): $URL"; echo
+    P="${2:-8795}"; URL="http://$IP:$P/chart-quest.html?fresh=1&mute=1"
+    echo "SCAN (beginner mode, muted): $URL"; echo
     command -v qrencode >/dev/null 2>&1 && qrencode -t ANSIUTF8 "$URL" || echo "(brew install qrencode for the QR)"
     ;;
   *)

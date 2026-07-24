@@ -29,6 +29,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    with socketserver.TCPServer(("0.0.0.0", PORT), NoCacheHandler) as httpd:
+    # ThreadingHTTPServer, NOT the single-threaded TCPServer: a phone browser opens several parallel and
+    # keep-alive connections, and a single-threaded server blocks on the first one and HANGS ("not loading"
+    # even though the port is listening). Threading serves each connection independently. allow_reuse_address
+    # lets a restart re-bind the port immediately instead of failing with "Address already in use".
+    http.server.ThreadingHTTPServer.allow_reuse_address = True
+    with http.server.ThreadingHTTPServer(("0.0.0.0", PORT), NoCacheHandler) as httpd:
         print(f"ChartQuest preview → http://127.0.0.1:{PORT}/chart-quest.html?fresh=1  (LAN on :{PORT})")
         httpd.serve_forever()

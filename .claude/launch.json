@@ -7,6 +7,19 @@
       "runtimeArgs": ["scripts/serve_nocache.py"],
       "port": 8795,
       "autoPort": true
+    },
+    {
+      "name": "chartquest-verify",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["scripts/serve_nocache.py", "8798"],
+      "port": 8798
+    },
+    {
+      "name": "chartquest-preview",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["scripts/serve_nocache.py", "8802"],
+      "port": 8802,
+      "autoPort": false
     }
   ]
 }

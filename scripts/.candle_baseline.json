@@ -1,0 +1,16 @@
+{
+  "note": "Candle-language divergence baseline — the gate FAILS if any count rises above these. Lower them only by migrating a renderer onto the single owner (window.CQ / COLOR). Re-baseline with --update after an intentional convergence.",
+  "counts": {
+    "inline_bull_body": 179,
+    "inline_bear_body": 102,
+    "fork_mg_edge_green": 1,
+    "fork_mg_edge_red": 1,
+    "fork_box_green": 6,
+    "fork_box_red": 3,
+    "fork_card_edge": 3,
+    "retired_wick_green": 7,
+    "retired_wick_red": 7,
+    "rounded_candle": 4,
+    "retired_minbody15": 1
+  }
+}

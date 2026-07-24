@@ -201,10 +201,49 @@ function run() {
     // (authoredTutorialOutcome) and the old 0.58 coin-flip must stay deleted.
     const authored = /function authoredTutorialOutcome\s*\(/.test(s);
     const coinFlips = count(s, /Math\.random\(\)\s*<\s*0\.58/g);
-    const ok = minCandles >= 24 && order && authored && coinFlips === 0;
-    add('11', 'TES: min duration + curriculum order + authored tutorial outcomes', ok ? 'PASS' : 'FAIL',
-      ok ? `MIN_TRADE_CANDLES=${minCandles} (≥24) · SETUP_UNLOCK order intact · outcomes AUTHORED (no 0.58 coin-flip)`
-         : `MIN_TRADE_CANDLES=${minCandles} (≥24?), order=${order}, authoredFn=${authored}, coinFlips=${coinFlips} (must be 0) — see TES v1.1`);
+    // build 282 — L1-3 FAST-LOSS GUARD (the "first trade lost in 2 candles" regression, hit repeatedly).
+    // Two vulnerable patterns must NEVER return: (a) the universal stop-out firing UNGUARDED
+    // (`if (hitSL) { resolveTrade('loss')`), and (b) nextCandle DRIVING only when the outcome is already
+    // set (`trade && trade._l1Outcome) return tradeDrivenCandle`). Either lets an unauthored L1-3 candle
+    // touch the stop for an INSTANT, unearned loss that bypasses MIN_TRADE_CANDLES. This check FAILS the
+    // ship if a future edit reintroduces either — so a beginner can never again lose a first trade fast.
+    const unguardedStopOut   = /if\s*\(\s*hitSL\s*\)\s*\{\s*resolveTrade\(\s*['"]loss['"]\s*\)/.test(s);
+    const driveOnlyIfOutcome = /trade\s*&&\s*trade\._l1Outcome\s*\)\s*return\s+tradeDrivenCandle/.test(s);
+    const fastLossGuarded = !unguardedStopOut && !driveOnlyIfOutcome;
+    const ok = minCandles >= 24 && order && authored && coinFlips === 0 && fastLossGuarded;
+    add('11', 'TES: min duration + curriculum order + authored outcomes + L1-3 fast-loss guard', ok ? 'PASS' : 'FAIL',
+      ok ? `MIN_TRADE_CANDLES=${minCandles} (≥24) · SETUP_UNLOCK order intact · outcomes AUTHORED (no 0.58 coin-flip) · L1-3 fast-loss GUARDED`
+         : `MIN_TRADE_CANDLES=${minCandles} (≥24?), order=${order}, authoredFn=${authored}, coinFlips=${coinFlips}, fastLossGuarded=${fastLossGuarded} (unguardedStopOut=${unguardedStopOut}, driveOnlyIfOutcome=${driveOnlyIfOutcome}) — see TES v1.1 / build 282`);
+  }
+
+  // 12 — CANDLE-LANGUAGE GATE (build 287). The enforcement wire the Visual Market Constitution promised
+  // (VMC:94) but never had — the reason the "every path invents its own candle language" disease survived
+  // ~20 playtests. Ratchets candle-language divergence (inline palette hexes bypassing COLOR, per-renderer
+  // forks, retired wick tints, rounded candles, minBody=15): FAILS if any count rises above the committed
+  // baseline (scripts/.candle_baseline.json). New divergence can never be added again; convergence lowers it.
+  {
+    try {
+      const gate = require(path.join(__dirname, 'candle_language_gate.js')).check();
+      const status = gate.firstRun ? 'WARN' : (gate.ok ? 'PASS' : 'FAIL');
+      add('12', 'Candle-language divergence gate (no NEW inline palette / forks / rounded candles vs baseline)', status, gate.detail);
+    } catch (e) {
+      add('12', 'Candle-language divergence gate', 'WARN', 'gate not runnable: ' + String(e).slice(0, 90));
+    }
+  }
+
+  // 13 — window.CQ OWNER-INTEGRITY GATE (build 287 · Phase 2A). #12 stops NEW divergence being ADDED;
+  // #13 stops the single behavioural owner (window.CQ) from being DELETED, BYPASSED (COLOR re-forking
+  // its own hexes), or DRIFTING from the ratified Constitution A.6 spine — the three ways a 61st
+  // competing owner sneaks back in and re-opens the root cause. This makes the engine's EXISTENCE and
+  // its agreement with the ratified doc a build invariant (VMC:94, now real for the spine).
+  {
+    try {
+      const g = require(path.join(__dirname, 'cq_owner_gate.js')).check();
+      add('13', 'window.CQ owner integrity (owner published · COLOR derives from CQ · spine matches A.6)',
+        g.ok ? 'PASS' : 'FAIL', g.detail);
+    } catch (e) {
+      add('13', 'window.CQ owner integrity', 'WARN', 'gate not runnable: ' + String(e).slice(0, 90));
+    }
   }
 }
 

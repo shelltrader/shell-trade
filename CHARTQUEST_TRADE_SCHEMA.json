@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chartquest.dev/schema/trade/0.1.0",
+  "title": "ChartQuest Authored Trade-Experience Object",
+  "description": "THE single source of truth for the shape of an authored TRADE EXPERIENCE (the felt journey of one open trade). Companion to CHARTQUEST_TRADE_EXPERIENCE_CONSTITUTION.md (TEC). This schema owns the FEELING and the AGENCY of a trade; it REFERENCES trade truth/outcome (docs/canon/trading_canon.md), candle geometry (CHARTQUEST_VISUAL_MARKET_CONSTITUTION.md), lesson placement (CHARTQUEST_LESSON_SCHEMA.json), and the confidence journey (CHARTQUEST_TRADING_EXPERIENCE_SYSTEM_v1.1.md). Version 0.1.0 — PROPOSED, pending founder ratification of ADR-TX-1. Not canon until ratified.",
+  "type": "object",
+  "$comment": "FROZEN INTENT (see TEC): (T1) A trade authors FEELING and POSITION, never OUTCOME or ODDS. There is deliberately NO probability/winRate/quality-to-outcome field in this schema; quality is a firewalled read owned by trading_canon Rule 21 and MUST NOT appear here (guards N2/TMNE-10). (T2) The authored result is REFERENCED from the lesson's apply.honestOutcome (win|loss|scratch), owned by trading_canon — never re-decided here. (T3) Every trade instantiates exactly ONE curveTemplate (EC-LAW-1). (T4) Every phase in phaseBudget is present and non-zero (EP-LAW-1); EP-4 (the Scare) dwell >= 0.25 except curveTemplate=comfortable_winner which may be shallow but never zero (EP-LAW-2). (T5) tier=GATED templates/agency are inert until the Trading-V2 kill-chain clears (N1/EC-LAW-3); shipping one as NOW is a violation. (T6) validationRules are TX-* ids resolved in TEC Part XI — the sole trade-experience registry.",
+  "required": [
+    "tradeId", "schemaVersion", "status", "owner", "lessonRef", "guardian",
+    "curveTemplate", "intendedFeeling", "phaseBudget", "agencyBeats",
+    "outcomeRef", "witness", "juice", "validationRules"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "tradeId": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "Unique trade-experience id, snake_case." },
+    "schemaVersion": { "type": "string", "const": "0.1.0", "description": "The version of THIS schema the object conforms to." },
+    "status": { "type": "string", "enum": ["draft", "in_review", "validated", "production", "deprecated", "retired"], "description": "Lifecycle state (mirrors the Trade contract in CHARTQUEST_AUTHORING_PIPELINE.md and the lesson state machine)." },
+    "owner": { "type": "string", "description": "Accountable author/role." },
+    "lastReviewed": { "type": "string", "format": "date" },
+
+    "lessonRef": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "The lessonId this trade applies (CHARTQUEST_LESSON_SCHEMA.json). The trade's learningObjective and taught concepts are OWNED there and referenced here — never re-owned (TA1)." },
+    "guardian": { "type": "integer", "minimum": 0, "maximum": 10, "description": "Placement, REFERENCED from the lesson (D1): 0 = The Gambler; 1..9 = Guardians; 10 = Market Maker. Never authored independently of the lesson." },
+    "realismTier": { "type": "integer", "minimum": 1, "maximum": 3, "description": "TES A5 Realism Transition tier (1 Authored / 2 Hybrid / 3 Authentic). REFERENCED, not owned. Controls which agency tier is legal." },
+
+    "curveTemplate": {
+      "type": "string",
+      "enum": [
+        "comfortable_winner", "scary_winner", "discipline_winner", "patient_winner",
+        "trend_continuation", "false_breakout", "second_chance",
+        "painful_loss", "variance_loss", "greedy_loss"
+      ],
+      "description": "The ONE Emotional Curve Template this trade instantiates (EC-1..EC-10, TEC Part VII). Exactly one (EC-LAW-1/T3). New values are added only by ADR."
+    },
+    "intendedFeeling": { "type": "string", "description": "One sentence, the target emotion authored FIRST (core principle, PL-1). E.g. 'held through fear and was right.'" },
+
+    "phaseBudget": {
+      "type": "object",
+      "description": "Dwell allocation across the six intra-trade phases (EP-1..EP-6, TEC Part III), as fractions of the trade's candle budget. Every phase present and > 0 (EP-LAW-1). This is what makes 'trade length' a choreographed beat-budget, not a raw candle count (TEC Part VII challenge to the 15-20-candle premise). The absolute candle count is REFERENCED from trading_canon §9 duration tiers, not set here.",
+      "required": ["exposure", "confirmation", "wobble", "scare", "turn", "verdict"],
+      "additionalProperties": false,
+      "properties": {
+        "exposure":     { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "EP-1. Entry ceremony beat (freeze+zoom); risk visible before hope (Commandment 5)." },
+        "confirmation": { "type": "number", "minimum": 0.10, "maximum": 1.0, "description": "EP-2. Budding confidence (>= ~0.15 recommended)." },
+        "wobble":       { "type": "number", "minimum": 0.05, "maximum": 1.0, "description": "EP-3. Doubt/uncertainty (>= ~0.10 recommended)." },
+        "scare":        { "type": "number", "minimum": 0.05, "maximum": 1.0, "description": "EP-4. The sacred drawdown (Commandment 7). >= 0.25 for all templates except comfortable_winner (shallow, never zero) — enforced by TX-06/TX-07 (T4)." },
+        "turn":         { "type": "number", "minimum": 0.10, "maximum": 1.0, "description": "EP-5. Hope -> resolution." },
+        "verdict":      { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "EP-6. Outcome delivery beat, then hands to Review (trading_canon §7)." }
+      }
+    },
+
+    "agencyBeats": {
+      "type": "array",
+      "description": "The in-trade decisions available to the player (TEC Part V). Non-Intro trades expose >= 1 (TX-11). Each beat MUST change the player's realized result — no theater (AG-LAW-1/TX-12). A beat's concept MUST be taught() before it is offered (AG-LAW-2/TX-09).",
+      "items": {
+        "type": "object",
+        "required": ["beat", "tier", "conceptRef", "changesRealizedResult", "onChoice"],
+        "additionalProperties": false,
+        "properties": {
+          "beat": { "type": "string", "enum": ["hold_through_scare", "bank_early", "hold_to_target", "honor_the_stop", "skip_the_setup", "stop_to_breakeven"], "description": "The decision offered." },
+          "tier": { "type": "string", "enum": ["NOW", "GATED"], "description": "NOW = authored/expressive (realized result along the authored path; ships staging-only, outcome byte-unchanged). GATED = consequential (needs the author-first honest-outcome engine; inert until the kill-chain clears — T5/N1)." },
+          "phase": { "type": "string", "enum": ["EP-1", "EP-2", "EP-3", "EP-4", "EP-5", "EP-6"], "description": "Where in the journey the decision surfaces (the Scare, EP-4, is the canonical seat of hold-vs-exit)." },
+          "conceptRef": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "The taught() conceptKey this decision relies on. Must be taught at guardian <= this.guardian (never test the untaught; trading_canon Rule 20)." },
+          "changesRealizedResult": { "type": "boolean", "const": true, "description": "A choice that changes nothing is Agency Theater and is forbidden (TMNE-6/TX-12). Must be true." },
+          "onChoice": { "type": "string", "description": "Plain-words: what each choice does to the player's realized P&L along the AUTHORED path (never to the path itself). E.g. 'hold -> full authored target; exit -> book current P&L; both are honest and never scolded.'" }
+        }
+      }
+    },
+
+    "outcomeRef": {
+      "type": "object",
+      "description": "REFERENCE to the authored honest outcome, OWNED by trading_canon (Rule 3/5) and the lesson's apply.honestOutcome. This schema never decides win/loss and never carries odds (T1/T2).",
+      "required": ["source", "honestOutcome"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "type": "string", "description": "Pointer to the owning authored scenario (e.g. the lesson apply.tradeScenarioRef)." },
+        "honestOutcome": { "type": "string", "enum": ["win", "loss", "scratch"], "description": "MIRRORS the trading_canon-owned authored result. Present here only so the emotional template can be validated against it; it is a copy-by-reference, and trading_canon governs on any conflict." },
+        "causeOnReplay": { "type": "string", "description": "For losses: the on-chart candle/level where the read failed, named on the replay (Commandment 8; trading_canon §7). Forbids the Gaslit Loss (TMNE-11)." }
+      }
+    },
+
+    "witness": {
+      "type": "object",
+      "description": "Companion (Finn) emotional delivery per phase (Witness Law, TX-02). Every phase emotion computed for the companion MUST be rendered, not discarded (fixes shellEmotion :12824). HOW Finn emotes is owned by the Finn Canonical Character System (no arms, no eyebrows); this only requires THAT he reacts at the Scare and the Verdict.",
+      "required": ["scareReaction", "verdictReaction"],
+      "additionalProperties": false,
+      "properties": {
+        "scareReaction": { "type": "string", "description": "EP-4: the visible fear beat (posture/expression/sweat). Non-run.png surface." },
+        "verdictReaction": { "type": "string", "description": "EP-6: the visible outcome beat (vindication or honest disappointment)." },
+        "nonAudioChannel": { "type": "boolean", "const": true, "description": "The reaction survives mute (TX-04). Must be true." }
+      }
+    },
+
+    "juice": {
+      "type": "object",
+      "description": "Feedback delivery on resolution (Witness & Juice Contract, TEC Part IV). Intensities per channel. THE PARITY LAW (TX-01): win intensity >= the symmetric loss intensity on EVERY channel — a cross-field assertion the TX-01 validator enforces (JSON Schema alone cannot compare the two objects). Intensity scales with what was EARNED, not P&L (TX-03).",
+      "required": ["win", "loss"],
+      "additionalProperties": false,
+      "properties": {
+        "win":  { "$ref": "#/$defs/juiceChannels", "description": "Amplified on dismissLesson (celebrate() :12146) — AFTER the learning card (B10 sequencing LOCKED: amplify, never re-order)." },
+        "loss": { "$ref": "#/$defs/juiceChannels", "description": "The symmetric loss feedback the win must meet or exceed." }
+      }
+    },
+
+    "validationRules": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^TX-[0-9]{2}$" },
+      "minItems": 1,
+      "description": "TX-* ids that gate this trade, resolved in TEC Part XI (the sole trade-experience registry, T6). Composes with — never restates — VR-*/V-*/TES Forbidden ids."
+    },
+    "notes": { "type": "string", "description": "Author notes; never carries a rule or a number that another document owns." }
+  },
+
+  "$defs": {
+    "juiceChannels": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Per-channel feedback intensities, 0..1. Every channel that carries meaning has a non-colour, non-audio redundancy (TX-04); colour/audio are reinforcement only.",
+      "properties": {
+        "shake":    { "type": "number", "minimum": 0, "maximum": 1 },
+        "flash":    { "type": "number", "minimum": 0, "maximum": 1 },
+        "particles":{ "type": "integer", "minimum": 0 },
+        "sound":    { "type": "string" },
+        "haptic":   { "type": "number", "minimum": 0, "maximum": 1 },
+        "durationSec": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

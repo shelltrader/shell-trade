@@ -268,6 +268,7 @@
 
 <nav class="tabs">
   <button class="tab-btn active" data-tab="stats">📊 Statistics</button>
+  <button class="tab-btn" data-tab="growth">📈 Growth Backlog</button>
   <button class="tab-btn" data-tab="issues">🛠 Issues</button>
   <button class="tab-btn" data-tab="updates">📦 Updates</button>
   <button class="tab-btn" data-tab="content">🎬 Content</button>
@@ -329,6 +330,85 @@
       <span class="meta">Newest first · plain-language, no need to replay the game to know what changed</span>
     </div>
     <div id="updatesList"></div>
+  </section>
+
+  <!-- ============ GROWTH BACKLOG ============ -->
+  <section class="panel" id="panel-growth">
+    <div class="section-head">
+      <h2>📈 Growth Backlog</h2>
+      <span class="meta">Permanent optimization backlog · mission = % of visitors who reach Boss 3 · source: CHARTQUEST_GROWTH_AUDIT_2026-07-10.md</span>
+    </div>
+
+    <style>
+      /* scoped to the growth panel */
+      #panel-growth .gb-scores{display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:18px;}
+      @media(max-width:1000px){#panel-growth .gb-scores{grid-template-columns:repeat(2,1fr);}}
+      #panel-growth .gb-note{background:#0f1622; border:1px dashed #2a3a52; border-radius:10px; padding:13px 16px; font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:18px;}
+      #panel-growth .gb-note b{color:var(--text);}
+      #panel-growth .gb-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:12px;}
+      #panel-growth table.gb{width:100%; border-collapse:collapse; font-size:11.5px; min-width:920px;}
+      #panel-growth table.gb th{position:sticky; top:0; background:var(--panel-2); color:#cfe0f2; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.4px; padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap;}
+      #panel-growth table.gb td{padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.05); color:var(--text); vertical-align:top; line-height:1.4;}
+      #panel-growth table.gb tr:hover td{background:rgba(120,160,200,.05);}
+      #panel-growth table.gb td.imp{font-weight:700; color:#fff;}
+      #panel-growth .pri{font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:5px; letter-spacing:.4px;}
+      #panel-growth .pri.p1{background:#2a1717; color:#ff8f8f;}
+      #panel-growth .pri.p2{background:#241f12; color:var(--amber);}
+      #panel-growth .pri.p3{background:#12202f; color:#7fa8cf;}
+      #panel-growth .pill{font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; padding:2px 8px; border-radius:20px; white-space:nowrap; display:inline-block;}
+      #panel-growth .pill.done{background:#11271a; color:var(--green);}
+      #panel-growth .pill.ready{background:#122436; color:var(--blue);}
+      #panel-growth .pill.approval{background:#241f12; color:var(--amber);}
+      #panel-growth .pill.eng{background:#1c1730; color:#b794f6;}
+      #panel-growth .pill.data{background:#241f12; color:var(--amber);}
+      #panel-growth .pill.backlog{background:#1a2230; color:var(--muted);}
+      #panel-growth .roi{font-weight:700;}
+      #panel-growth .roi.hi{color:var(--green);} #panel-growth .roi.md{color:var(--amber);} #panel-growth .roi.lo{color:var(--muted);}
+    </style>
+
+    <div class="gb-scores">
+      <div class="stat-card"><div class="label">Boss-3 Readiness</div><div class="value amber">6.5<span style="font-size:14px;color:var(--muted)">/10</span></div><div class="note">Craft is A-tier; the quest & funnel are the gap.</div></div>
+      <div class="stat-card"><div class="label">First Impression</div><div class="value green">8.0<span style="font-size:14px;color:var(--muted)">/10</span></div><div class="note">Scroll-stopping cinematic hero.</div></div>
+      <div class="stat-card"><div class="label">Curiosity</div><div class="value amber">6.0<span style="font-size:14px;color:var(--muted)">/10</span></div><div class="note">Best mysteries left untapped.</div></div>
+      <div class="stat-card"><div class="label">Boss Showcase</div><div class="value" style="color:#ff8f8f">4.0<span style="font-size:14px;color:var(--muted)">/10</span></div><div class="note">Removed in V5 — biggest miss.</div></div>
+      <div class="stat-card"><div class="label">Send 10k paid today?</div><div class="value" style="color:#ff8f8f;font-size:20px">NOT YET</div><div class="note">Pilot 500-1k after fixes #2/#3/#5 + telemetry.</div></div>
+    </div>
+
+    <div class="gb-note">
+      <b>How to read this:</b> mission is <b>Boss-3 reach, not revenue</b>. ROI = impact × confidence ÷ effort, mission-weighted. <b>Priority</b> is strategic (P1 = do first). The landing page's craft is not the risk — the <b>untold 3-free-boss quest</b> and the <b>unverified in-game funnel</b> are. Update <b>Status / Owner / Done</b> as items ship; keep this list as the permanent backlog.
+    </div>
+
+    <div class="gb-wrap">
+      <table class="gb">
+        <thead>
+          <tr>
+            <th>#</th><th>Pri</th><th>Improvement</th><th>Type</th><th>Exp. ROI</th><th>Conf.</th><th>Est. time</th><th>Status</th><th>Owner</th><th>Done</th><th>Shot</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td><span class="pri p1">P1</span></td><td class="imp">CTA → "Play the First 3 Bosses Free" + microcopy</td><td>Copy</td><td class="roi hi">High</td><td>80%</td><td>0.5h</td><td><span class="pill approval">Approval</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>2</td><td><span class="pri p1">P1</span></td><td class="imp">Add "the quest / 3 free Guardians" band near top</td><td>Structural</td><td class="roi hi">High</td><td>80%</td><td>3h</td><td><span class="pill approval">Approval</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>3</td><td><span class="pri p1">P1</span></td><td class="imp">Reintroduce "First Three Guardians" showcase (skill-per-boss)</td><td>Structural</td><td class="roi hi">High</td><td>80%</td><td>5h</td><td><span class="pill approval">Approval</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>4</td><td><span class="pri p1">P1</span></td><td class="imp">Place the built-but-unused Trading Journal reward teaser</td><td>Structural</td><td class="roi hi">High</td><td>80%</td><td>1h</td><td><span class="pill approval">Approval</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>5</td><td><span class="pri p1">P1</span></td><td class="imp">Fix "Watch Trailer" (wire real clip OR relabel "See it live")</td><td>Defect</td><td class="roi hi">High</td><td>95%</td><td>0.5-2h</td><td><span class="pill ready">Ready</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>6</td><td><span class="pri p1">P1</span></td><td class="imp">First-viewport trust strip: "free · no card · play in browser"</td><td>Copy</td><td class="roi hi">High</td><td>80%</td><td>1h</td><td><span class="pill ready">Ready</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>7</td><td><span class="pri p2">P2</span></td><td class="imp">Optimize hero LCP image → WebP/AVIF (834KB → ~300KB)</td><td>Perf</td><td class="roi md">Med</td><td>95%</td><td>1h</td><td><span class="pill ready">Ready</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>8</td><td><span class="pri p2">P2</span></td><td class="imp">Self-host / non-block Google Fonts</td><td>Perf</td><td class="roi md">Med</td><td>80%</td><td>1h</td><td><span class="pill ready">Ready</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>9</td><td><span class="pri p2">P2</span></td><td class="imp">Gate account creation to AFTER Boss 0 first-win (in-game)</td><td>Funnel</td><td class="roi hi">High</td><td>60%</td><td>in-game</td><td><span class="pill eng">Needs eng</span></td><td>Eng</td><td>—</td><td>—</td></tr>
+          <tr><td>10</td><td><span class="pri p2">P2</span></td><td class="imp">Move comparison table higher (differentiate earlier)</td><td>Layout</td><td class="roi md">Med</td><td>80%</td><td>0.5h</td><td><span class="pill ready">Ready</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>11</td><td><span class="pri p2">P2</span></td><td class="imp">Honest social proof (live count / beta framing — never faked)</td><td>Trust</td><td class="roi hi">High</td><td>60%</td><td>2h</td><td><span class="pill data">Needs data</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>12</td><td><span class="pri p2">P2</span></td><td class="imp">"What you'll actually learn" credibility hook</td><td>Copy</td><td class="roi md">Med</td><td>80%</td><td>1h</td><td><span class="pill ready">Ready</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>13</td><td><span class="pri p2">P2</span></td><td class="imp">Lazy-mount TradingView on scroll (CLS/LCP)</td><td>Perf</td><td class="roi md">Med</td><td>80%</td><td>1h</td><td><span class="pill ready">Ready</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>14</td><td><span class="pri p3">P3</span></td><td class="imp">Fix stale "Shell" → "Finn" in play.html loader</td><td>Defect</td><td class="roi md">Med</td><td>95%</td><td>5m</td><td><span class="pill done">✅ Done</span></td><td>Claude</td><td>2026-07-10</td><td>—</td></tr>
+          <tr><td>15</td><td><span class="pri p2">P2</span></td><td class="imp">UTM-driven headline/CTA variants for paid message-match</td><td>Growth infra</td><td class="roi hi">High</td><td>60%</td><td>4h</td><td><span class="pill backlog">Backlog</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>16</td><td><span class="pri p3">P3</span></td><td class="imp">Compress logo/finn PNGs (346KB / 312KB)</td><td>Perf</td><td class="roi lo">Low</td><td>95%</td><td>0.5h</td><td><span class="pill ready">Ready</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>17</td><td><span class="pri p3">P3</span></td><td class="imp">Clarify player-facing progression (rank/level preview)</td><td>Emotional</td><td class="roi md">Med</td><td>60%</td><td>2h</td><td><span class="pill backlog">Backlog</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>18</td><td><span class="pri p3">P3</span></td><td class="imp">Sticky-bar CTA A/B ("Play Free" vs milestone)</td><td>Experiment</td><td class="roi md">Med</td><td>60%</td><td>1h</td><td><span class="pill backlog">Backlog</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>19</td><td><span class="pri p3">P3</span></td><td class="imp">OG/Twitter card art tuned per ad angle</td><td>Ads</td><td class="roi lo">Low</td><td>80%</td><td>1h</td><td><span class="pill backlog">Backlog</span></td><td>Founder</td><td>—</td><td>—</td></tr>
+          <tr><td>20</td><td><span class="pri p1">P1</span></td><td class="imp">Instrument funnel events all the way to Boss 3</td><td>Measurement</td><td class="roi hi">High</td><td>60%</td><td>4h</td><td><span class="pill eng">Needs eng</span></td><td>Eng</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <!-- ============ CONTENT (V2 placeholder) ============ -->

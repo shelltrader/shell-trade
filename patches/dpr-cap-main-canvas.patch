@@ -1,0 +1,16 @@
+--- a/chart-quest.html
++++ b/chart-quest.html
+@@ -2415,7 +2415,12 @@
+    letterbox bars. MAX_ASPECT is the widest width:height the play area may take. */
+ const MAX_ASPECT = 0.58; // ~ taller than 16:9 phones, so those fill fully
+ function resize() {
+-  const dpr = window.devicePixelRatio || 1;
++  // Cap the backing store at 2x. A 3x phone otherwise rasterises 2.25x more pixels
++  // every frame for no visible gain; every OTHER canvas in this file already caps at 2.
++  // Safe: canvas.width/height are never read anywhere, there is no getImageData/
++  // toDataURL, pointer mapping is in CSS px (e.clientX - stageX), and setTransform(dpr)
++  // keeps every draw call in CSS px. Render-only; zero gameplay/coordinate change.
++  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+   const availW = window.innerWidth, availH = window.innerHeight;
+   // Portrait play area: cap the width so it never exceeds MAX_ASPECT
+   H = availH;

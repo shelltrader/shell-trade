@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chartquest.dev/schema/lesson/1.0.0",
+  "title": "ChartQuest Canonical Lesson Object",
+  "description": "THE single source of truth for the shape of every ChartQuest lesson. No document, code path, or authoring tool may define lesson structure anywhere else. Every other spec references fields FROM this file by name; none re-declare them. Frozen decisions are annotated inline. Version 1.0.0, ratified 2026-07-15.",
+  "type": "object",
+  "$comment": "FROZEN DECISIONS (see CHARTQUEST_CANONICAL_OBJECT_REGISTRY.md §Decisions): (D1) `guardian` is the ONE authored placement field; `hour` and `unlockLevel` are ALIASES equal to `guardian`, never separately authored or separately derived. (D2) The knowledge gate is `taught(conceptKey)`; the argument is a lesson's `primaryConcept`, never a lessonId. (D3) `primaryConcept` and every conceptKey is a short snake_case key matching the live code (e.g. bos, choch, vwap, risk_reward, what_is_sl) — NOT a long form. (D4) A lesson teaches exactly ONE `primaryConcept`. (D5) Concept identity and concept->masteryCategory are owned by the Pattern/Concept catalogue; a lesson only REFERENCES a conceptKey. (D6) `validationRules` are ids that resolve in CHARTQUEST_VALIDATION_CONTRACTS.md — the sole VR registry.",
+  "required": [
+    "lessonId", "schemaVersion", "status", "owner", "primaryConcept", "title",
+    "learningObjective", "masteryCategory", "guardian", "difficultyTier",
+    "prerequisites", "learn", "practice", "apply", "test", "assessment"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "lessonId": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "Unique lesson id, snake_case. Namespace distinct from conceptKey. For single-concept lessons it commonly equals primaryConcept but is a separate identifier." },
+    "uuid": { "type": "string", "format": "uuid", "description": "Stable machine id, assigned once at Draft, never reused." },
+    "schemaVersion": { "type": "string", "const": "1.0.0", "description": "The version of THIS schema the lesson conforms to." },
+    "status": { "type": "string", "enum": ["draft", "in_review", "validated", "production", "deprecated", "retired"], "description": "Lifecycle state (see lesson state machine in CHARTQUEST_AUTHORING_PIPELINE.md)." },
+    "owner": { "type": "string", "description": "Accountable author/role." },
+    "lastReviewed": { "type": "string", "format": "date" },
+
+    "primaryConcept": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "The ONE concept this lesson teaches (D4). A conceptKey from the concept catalogue. This is the key `taught()` gates on (D2)." },
+    "title": { "type": "string", "description": "Player-facing name, worded for a 10-year-old." },
+    "learningObjective": { "type": "string", "description": "One sentence: what the player can DO after this lesson." },
+    "masteryCategory": { "type": "string", "enum": ["Trend", "Structure", "Liquidity", "OrderBlocks", "RiskMgmt", "TradeMgmt", "MultiTF"], "description": "One of the 7 live mastery categories (code: MASTERY_CATS). REFERENCED from the concept catalogue, not re-owned (D5)." },
+    "guardian": { "type": "integer", "minimum": 0, "maximum": 10, "description": "The single authored placement (D1). 0 = The Gambler (intro/teaching boss); 1..9 = Guardians; 10 = Market Maker (finale). `hour` and `unlockLevel` equal this value and are never stored separately." },
+    "difficultyTier": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "estCompletionSec": { "type": "integer", "minimum": 0 },
+
+    "prerequisites": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }, "description": "Incoming conceptKeys that MUST be taught at a guardian <= this.guardian (validated by VR-ORDER; never test/require the untaught)." },
+    "unlocks": { "type": "array", "items": { "type": "string" }, "description": "Outgoing conceptKeys this lesson makes available (graph edges)." },
+    "reinforces": { "type": "array", "items": { "type": "string" }, "description": "Previously-taught conceptKeys this lesson practices again." },
+
+    "learn": {
+      "type": "object", "description": "The TEACH beat: an animated LessonChart. Concise, grade-5, <=3s read, always on a chart.",
+      "required": ["patternRef", "lessonChartScene", "text"], "additionalProperties": false,
+      "properties": {
+        "patternRef": { "type": "string", "description": "Pattern Library id (Phase 2). The visual is governed by the Visual Market Constitution." },
+        "lessonChartScene": { "type": "string", "description": "LessonChart scene key (code: SCENES)." },
+        "text": { "type": "string", "description": "10-year-old wording. Understand-by-looking before reading." }
+      }
+    },
+    "practice": {
+      "type": "object", "description": "The PRACTICE beat: the concept appears hands-on in the trades before the boss.",
+      "required": ["minTrades", "setups"], "additionalProperties": false,
+      "properties": {
+        "minTrades": { "type": "integer", "minimum": 3, "description": ">=3 trades per level before the boss (design law; VR-GATE)." },
+        "setups": { "type": "array", "items": { "type": "string" }, "description": "Authored setup ids the practice trades use." }
+      }
+    },
+    "apply": {
+      "type": "object", "description": "The APPLY beat: bind the concept to an authored trade scenario (regime -> evidence -> HONEST outcome, per CHARTQUEST_TRADING_EXPERIENCE_SYSTEM_v1.1.md). This is the trading-feel fulcrum; it is first-class, not optional.",
+      "required": ["tradeScenarioRef", "regime", "honestOutcome"], "additionalProperties": false,
+      "properties": {
+        "tradeScenarioRef": { "type": "string" },
+        "regime": { "type": "string", "description": "The authored market regime the concept is applied in." },
+        "evidence": { "type": "array", "items": { "type": "string" }, "description": "The readable clues that justify the decision." },
+        "honestOutcome": { "type": "string", "enum": ["win", "loss", "scratch"], "description": "The pre-authored, honest result (never coin-flip; per Trading canon)." }
+      }
+    },
+    "test": {
+      "type": "object", "description": "The TEST beat: a boss mini-game round. The boss is the final exam, never first contact.",
+      "required": ["bossRoundId", "mgId", "guardian"], "additionalProperties": false,
+      "properties": {
+        "bossRoundId": { "type": "string" },
+        "mgId": { "type": "string", "description": "Mini-game id (code: MG registry)." },
+        "guardian": { "type": "integer", "minimum": 0, "maximum": 10, "description": "The Guardian that tests this concept. MUST satisfy guardian >= this lesson's guardian and >= every prerequisite's guardian (VR-TAUGHT-BEFORE-TEST)." }
+      }
+    },
+
+    "assessment": {
+      "type": "object", "description": "The checkable question. Distractors carry rationale + remediation so misconceptions are handled, not ignored.",
+      "required": ["question", "choices", "correct"], "additionalProperties": false,
+      "properties": {
+        "question": { "type": "string" },
+        "choices": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
+        "correct": { "type": "integer", "minimum": 0 },
+        "why": { "type": "string", "description": "Why the correct answer is correct, 10-yr wording." }
+      }
+    },
+    "misconceptions": {
+      "type": "array", "description": "Named wrong beliefs this concept commonly triggers, each with its distractor and remediation. A lesson with a known misconception that has no entry here FAILS VR-MISCONCEPTION.",
+      "items": {
+        "type": "object", "required": ["belief", "whyWrong"], "additionalProperties": false,
+        "properties": {
+          "belief": { "type": "string", "description": "The wrong thing a 10-year-old is likely to think." },
+          "distractor": { "type": "string", "description": "The answer choice that would catch it." },
+          "whyWrong": { "type": "string" },
+          "remediationConceptKey": { "type": "string", "description": "The conceptKey to send the player back to." }
+        }
+      }
+    },
+    "beat": {
+      "type": "object", "description": "The emotional/narrative beat — first-class because trade-FEEL is the retention fulcrum (beta audits). Worded for a 10-year-old.",
+      "required": ["hook", "stakes", "payoff"], "additionalProperties": false,
+      "properties": {
+        "hook": { "type": "string" },
+        "stakes": { "type": "string" },
+        "guardianVoice": { "type": "string", "description": "How the Guardian frames the concept in-character." },
+        "tensionArc": { "type": "string" },
+        "payoff": { "type": "string" }
+      }
+    },
+
+    "requiredPatterns": { "type": "array", "items": { "type": "string" }, "description": "Pattern Library ids the lesson composes (Phase 2)." },
+    "requiredCandleVocabulary": { "type": "array", "items": { "type": "string" }, "description": "Candle terms that must already be taught (e.g. body, wick, close, doji)." },
+    "requiredTerrain": { "type": "array", "items": { "type": "string" }, "description": "Terrain piece ids (candles-as-terrain, per the Visual Market Constitution)." },
+
+    "replay": { "type": "object", "additionalProperties": true, "description": "Replay component: what the post-trade replay shows. Rendered by the Replay Engine; visuals obey the Visual Market Constitution." },
+    "notebook": { "type": "object", "additionalProperties": true, "description": "Notebook component: entryId + pages the lesson writes to the player's notebook." },
+    "journal": { "type": "object", "additionalProperties": true, "description": "Journal component: the trade-review entry this lesson's trades produce." },
+    "analyticsEvents": { "type": "array", "items": { "type": "string" }, "description": "Content-event names the lesson must emit (code: Block-4 event engine)." },
+
+    "learningOutcomes": { "type": "array", "items": { "type": "string" } },
+    "successConditions": { "type": "array", "items": { "type": "string" } },
+    "failureConditions": { "type": "array", "items": { "type": "string" } },
+
+    "validationRules": { "type": "array", "items": { "type": "string", "pattern": "^VR-[A-Z-]+$" }, "description": "VR ids that must PASS before ship. They resolve in CHARTQUEST_VALIDATION_CONTRACTS.md — the sole registry (D6)." },
+    "approvalStatus": { "type": "string", "enum": ["unapproved", "objective_approved", "impl_approved", "production_approved"] },
+    "breakingChanges": { "type": "array", "items": { "type": "string" } },
+    "migrationNotes": { "type": "string" },
+    "retirementRules": { "type": "string" },
+    "futureDependencies": { "type": "array", "items": { "type": "string" } }
+  }
+}

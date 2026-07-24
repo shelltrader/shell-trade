@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chartquest.dev/schema/pattern/1.0.0",
+  "title": "ChartQuest Canonical Pattern Object",
+  "description": "THE single source of truth for the shape of every ChartQuest pattern. A pattern is a reusable, first-class educational building block: an authored candle sequence that teaches ONE named concept, functions as walkable terrain, and hosts a trade setup. No document, code path, or tool may define pattern structure anywhere else. This schema EXTENDS the ratified architecture — it never duplicates it: geometry/readability rules are owned by the Visual Market Constitution, trade truth by the Trading canon, lesson sequencing by the Curriculum Engine. Version 1.0.0, ratified 2026-07-15.",
+  "type": "object",
+  "$comment": "FROZEN DECISIONS (see CHARTQUEST_PATTERN_DECISION_RECORDS.md): (P1) This schema is the sole definition of pattern structure. (P2) Patterns REFERENCE the Visual Market Constitution for ALL candle geometry/readability; `requiredVisualRules` points to it and validation delegates to its chart validators — a pattern never restates a pixel rule. (P3) The Pattern Library owns the Concept Catalogue: concept identity and concept->masteryCategory (Curriculum decision D5). `primaryConcept`/`supportingConcepts` are conceptKeys the catalogue defines; masteryCategory is DERIVED from the catalogue, never stored on the pattern. (P4) A pattern anchors exactly ONE `primaryConcept`; many patterns may share a concept. (P5) OWNERSHIP — patterns own market structure, visual educational intent, trade-opportunity PLACEMENT (visual), traversal geometry, emotional beat, concept identity; lessons own learning sequence, flow, notebook, replay sequence, trade scripting. No overlap. (P6) Trade OUTCOME/probability/causality is owned by trading_canon.md + Trading Experience System; a pattern says only WHERE the decisive candle sits and HOW CLEARLY it reads. (P7) Validation delegates: visual->Visual Market Constitution validators, educational/sequence->Curriculum VR-*, pattern-structural->this suite's PR-* (CHARTQUEST_PATTERN_VALIDATION_CONTRACTS.md). (P8) The Lesson->Pattern link is Lesson.learn.patternRef / Lesson.requiredPatterns[] -> Pattern.patternId; patterns declare lesson COMPATIBILITY (allowed/forbidden) but never hard-couple to a concrete lessonId.",
+  "required": [
+    "patternId", "schemaVersion", "status", "owner",
+    "primaryConcept", "educationalPurpose", "difficultyTier",
+    "marketStructure", "patternFamily", "chartTypes",
+    "requiredVisualRules", "requiredEmotionalBeat",
+    "expectedPlayerObservation", "expectedBeginnerMistake",
+    "tradeOpportunities", "validationRules"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "patternId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "Stable kebab-case id (matches the Constitution's 'Pattern ID'). This is the id a Lesson's patternRef points to." },
+    "uuid": { "type": "string", "format": "uuid", "description": "Stable machine id, assigned once at Draft, never reused." },
+    "version": { "type": "string", "description": "Content version, e.g. '1.0'. Simple; no SemVer ceremony (Curriculum D8)." },
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "status": { "type": "string", "enum": ["draft", "in_review", "validated", "approved", "production", "deprecated", "retired"], "description": "Lifecycle state (see the pattern state machine in CHARTQUEST_PATTERN_OBJECT_MODEL.md). A pattern reaches 'approved' only when every applicable validator PASSes; only 'approved'+ patterns may be referenced by a production lesson." },
+    "owner": { "type": "string" },
+    "lastReviewed": { "type": "string", "format": "date" },
+
+    "primaryConcept": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "The ONE concept this pattern anchors (P4). A conceptKey from the Concept Catalogue (owned here, P3), matching the live short snake_case keys (bos, choch, support_resist, pullback, momentum, …)." },
+    "supportingConcepts": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }, "description": "Secondary conceptKeys the pattern reinforces (may be assumed only if taught earlier; enforced by the Curriculum teach-order DAG, VR-ORDER)." },
+    "educationalPurpose": { "type": "string", "description": "One sentence, 10-year-old wording: what the player should feel or understand. Names the same concept as primaryConcept (the Constitution's 'Purpose' field)." },
+    "difficultyTier": { "type": "integer", "minimum": 1, "maximum": 5, "description": "How hard the pattern is to read/traverse. Expressed via chart type, density, rhythm, and exaggeration-gain — NEVER by dropping below the Constitution's readability floor." },
+
+    "marketStructure": { "type": "string", "enum": ["impulse", "pullback", "breakout", "range", "reversal", "consolidation", "continuation", "sweep"], "description": "The pattern's structural shape — what the market is DOING. The five gold-standard reference patterns are impulse / pullback / breakout / range / reversal." },
+    "patternFamily": { "type": "string", "enum": ["momentum", "continuation", "breakout", "range", "reversal", "liquidity"], "description": "Taxonomy grouping for library indexing and lesson selection." },
+    "patternCategory": { "type": "string", "description": "Optional finer sub-taxonomy within a family (e.g. 'bullish-impulse')." },
+    "chartTypes": { "type": "array", "minItems": 1, "items": { "type": "string", "enum": ["A", "B", "C"] }, "description": "Which Visual Market Constitution chart type(s) this pattern renders as (A illustration / B terrain / C exam). Each rendered instance is exactly ONE type and is validated as that type; a pattern may transition A->B->C across a level." },
+
+    "requiredCandleVocabulary": { "type": "array", "items": { "type": "string" }, "description": "Candle terms the reader must already know (body, wick, close, doji, …). Assumed-taught, enforced by VR-ORDER." },
+    "requiredTerrainCharacteristics": {
+      "type": "object", "description": "The candles-as-terrain surface the pattern OWNS (traversal geometry). Values are pattern intent; the numeric floors they must satisfy live in the Visual Market Constitution (referenced, not restated).",
+      "additionalProperties": false,
+      "properties": {
+        "targetVisibleCount": { "type": "integer", "description": "Authored on-screen candle count; with the Constitution's slot rule this determines bodyW." },
+        "rhythmProfile": { "type": "string", "description": "Human summary of the traversal rhythm (e.g. 'one long impulse run then a rest step')." },
+        "verticalityIntent": { "type": "string" }
+      }
+    },
+    "requiredVisualRules": {
+      "type": "object", "description": "REFERENCE to the Visual Market Constitution (P2) — the pattern does not restate geometry. Declares which type/floors apply so validators can be run.",
+      "required": ["authority", "chartType", "exaggerationGain"], "additionalProperties": false,
+      "properties": {
+        "authority": { "type": "string", "const": "CHARTQUEST_VISUAL_MARKET_CONSTITUTION.md#appendix-a-standards-table" },
+        "chartType": { "type": "string", "enum": ["A", "B", "C"], "description": "The type of THIS rendered instance (selects BW band, density, readability floor)." },
+        "exaggerationGain": { "type": "number", "minimum": 0, "maximum": 1, "description": "Position on the Constitution's exaggeration-gain ramp (1.0 = Type-A illustration, 0.0 = realistic Type-C)." },
+        "playtestRecordRef": { "type": "string", "description": "Link to the required >=5-child, >=90%, >=1-CVD Human Playtest Gate result (Constitution). Required to ship." }
+      }
+    },
+    "requiredEmotionalBeat": {
+      "type": "object", "description": "The emotional/narrative beat the pattern OWNS (P5). 10-year-old wording. A Lesson may frame it, but the beat originates with the pattern.",
+      "required": ["hook", "stakes", "payoff"], "additionalProperties": false,
+      "properties": {
+        "hook": { "type": "string" }, "stakes": { "type": "string" }, "payoff": { "type": "string" }
+      }
+    },
+
+    "expectedPlayerObservation": { "type": "string", "description": "What a player SHOULD notice by looking (understand-by-looking, per the Constitution). 10-yr wording." },
+    "expectedBeginnerMistake": { "type": "string", "description": "The wrong read a beginner is likely to make — feeds the lesson's misconception handling (Lesson.misconceptions)." },
+    "teachingNotes": { "type": "string", "description": "Author-to-author guidance; never player-facing." },
+
+    "allowedLessons": { "type": "array", "items": { "type": "string" }, "description": "Lesson COMPATIBILITY (P8): lessonIds (or ['any']) this pattern may serve. Compatibility only — the lesson decides actual usage." },
+    "forbiddenLessons": { "type": "array", "items": { "type": "string" }, "description": "Lessons this pattern must never serve (e.g. a Type-C exam-only pattern forbidden from a first LEARN)." },
+    "allowedTradeTypes": { "type": "array", "items": { "type": "string", "enum": ["long", "short", "none"] }, "description": "Which trade directions the setup visually supports. Outcome/causality NOT decided here (P6)." },
+    "forbiddenTradeTypes": { "type": "array", "items": { "type": "string", "enum": ["long", "short", "none"] } },
+
+    "tradeOpportunities": {
+      "type": "array", "description": "WHERE the decisive setup sits and HOW CLEARLY it reads — visual layer only (P6). Placement must let a level reach >=3 trades before its boss (VR-GATE). Outcome/probability owned by trading_canon.md.",
+      "items": {
+        "type": "object", "required": ["decisiveCandle", "direction", "readsAs"], "additionalProperties": false,
+        "properties": {
+          "decisiveCandle": { "type": "string", "description": "Which candle in the sequence is the decision point (e.g. 'the breakout close', index or label)." },
+          "direction": { "type": "string", "enum": ["long", "short", "none"] },
+          "readsAs": { "type": "string", "description": "The visual evidence a 10-year-old reads (e.g. 'strong close past the high')." },
+          "tradeTruthRef": { "type": "string", "description": "Pointer to the trading_canon/TES scenario that owns the actual outcome — never an outcome value here." }
+        }
+      }
+    },
+
+    "replayCompatibility": { "type": "boolean", "description": "May this pattern be shown in the post-trade replay? The replay SEQUENCE is owned by the Lesson (P5); this only declares suitability." },
+    "notebookCompatibility": { "type": "boolean", "description": "May this pattern seed a notebook entry? Notebook content owned by the Lesson." },
+    "journalCompatibility": { "type": "boolean", "description": "May trades on this pattern produce a journal entry?" },
+    "analyticsEvents": { "type": "array", "items": { "type": "string" }, "description": "Content-event names a rendered instance emits (Block-4 event engine)." },
+
+    "validationRules": { "type": "array", "items": { "type": "string", "pattern": "^(PR|VR|V)-[A-Z0-9-]+$" }, "description": "Ids that must PASS before the pattern enters the library (P7). PR-* resolve in CHARTQUEST_PATTERN_VALIDATION_CONTRACTS.md; VR-* in the Curriculum's CHARTQUEST_VALIDATION_CONTRACTS.md; V-* (chart validators) in the Visual Market Constitution. No rule is re-defined here." },
+    "dependencies": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }, "description": "Prerequisite patternIds (e.g. a 'breakout' pattern depends on a 'range' pattern existing). Must form a DAG (PR-DAG)." },
+    "breakingChanges": { "type": "array", "items": { "type": "string" } },
+    "migrationNotes": { "type": "string" },
+    "retirementRules": { "type": "string" }
+  }
+}

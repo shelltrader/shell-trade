@@ -19,6 +19,7 @@ struct BatchImportView: View {
     @State private var dropTargeted = false
     @State private var statusMessage: String?
     @State private var errorMessage: String?
+    @State private var enlargedItemID: String?
 
     private let maxItems = 30
     private let imageExts: Set<String> = ["png", "jpg", "jpeg", "heic", "heif", "gif", "tiff", "tif", "bmp", "webp"]
@@ -49,6 +50,28 @@ struct BatchImportView: View {
                 batchSeq = (try? env.reviewRepo.nextSequence()) ?? Int(Date().timeIntervalSince1970)
                 batchID = env.fileStore.cqID(batchSeq)
             }
+        }
+        .overlay { enlargedOverlay }
+    }
+
+    // MARK: Enlarged preview (record while it's open)
+
+    /// Full-window blow-up of one screenshot with its own Record button and caption
+    /// field. The recorder lives on this parent view, so recording keeps running the
+    /// whole time the photo is enlarged — you can talk through the big image.
+    @ViewBuilder private var enlargedOverlay: some View {
+        if let id = enlargedItemID, let idx = items.firstIndex(where: { $0.id == id }) {
+            BatchEnlargedView(
+                caption: $items[idx].caption,
+                index: idx + 1,
+                total: items.count,
+                image: env.fileStore.image(at: items[idx].imageRelPath),
+                isRecording: recordingItemID == id,
+                isTranscribing: transcribingItemID == id,
+                elapsed: recorder.elapsed,
+                onRecord: { toggleRecording(id) },
+                onClose: { enlargedItemID = nil })
+            .transition(.opacity)
         }
     }
 
@@ -103,6 +126,7 @@ struct BatchImportView: View {
                             isTranscribing: transcribingItemID == item.id,
                             elapsed: recorder.elapsed,
                             onRecord: { toggleRecording(item.id) },
+                            onEnlarge: { enlargedItemID = item.id },
                             onRemove: { remove(item.id) })
                     }
                 }
@@ -255,6 +279,7 @@ private struct BatchRowView: View {
     let isTranscribing: Bool
     let elapsed: TimeInterval
     let onRecord: () -> Void
+    let onEnlarge: () -> Void
     let onRemove: () -> Void
 
     var body: some View {
@@ -270,6 +295,15 @@ private struct BatchRowView: View {
                 .frame(width: 150, height: 110)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.line))
+                .overlay(alignment: .bottomTrailing) {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.white, Color.black.opacity(0.6))
+                        .padding(5)
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 8))
+                .onTapGesture { onEnlarge() }
+                .help("Click to enlarge — you can record a voice note while it’s open")
                 Text("\(index)")
                     .font(.system(size: 11, weight: .bold))
                     .padding(.horizontal, 6).padding(.vertical, 2)
@@ -303,5 +337,91 @@ private struct BatchRowView: View {
         .padding(10)
         .background(RoundedRectangle(cornerRadius: 10).fill(Theme.surface))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.line))
+    }
+}
+
+// MARK: - Enlarged preview
+
+/// A big, fit-to-window view of one screenshot with the Record button right there.
+/// Because the `AudioRecorder` lives on `BatchImportView`, recording started (or kept
+/// running) from here continues while the photo is enlarged — the whole point: look
+/// at the big image and talk about exactly what you're pointing at.
+private struct BatchEnlargedView: View {
+    @Binding var caption: String
+    let index: Int
+    let total: Int
+    let image: NSImage?
+    let isRecording: Bool
+    let isTranscribing: Bool
+    let elapsed: TimeInterval
+    let onRecord: () -> Void
+    let onClose: () -> Void
+
+    var body: some View {
+        ZStack {
+            // Tap the dimmed backdrop to close. Recording is unaffected by closing.
+            Color.black.opacity(0.9).ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { onClose() }
+
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Screenshot \(index) of \(total)")
+                        .font(.headline).foregroundStyle(.white)
+                    if isRecording {
+                        HStack(spacing: 6) {
+                            Circle().fill(.red).frame(width: 9, height: 9)
+                            Text(String(format: "Recording %.0fs", elapsed))
+                                .font(.caption).monospacedDigit().foregroundStyle(.white)
+                        }
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(Capsule().fill(Color.red.opacity(0.25)))
+                    }
+                    Spacer()
+                    Button { onClose() } label: {
+                        Label("Done", systemImage: "xmark.circle.fill")
+                    }
+                    .buttonStyle(.bordered).tint(.white)
+                    .keyboardShortcut(.cancelAction)
+                }
+
+                // The big image — fills available space, keeps aspect ratio.
+                Group {
+                    if let image {
+                        Image(nsImage: image).resizable().aspectRatio(contentMode: .fit)
+                    } else {
+                        RoundedRectangle(cornerRadius: 12).fill(Theme.surfaceHi)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.line))
+
+                // Record controls + caption, so you can talk (or type) about this exact shot.
+                HStack(spacing: 12) {
+                    Button(action: onRecord) {
+                        HStack {
+                            Image(systemName: isRecording ? "stop.circle.fill" : "mic.circle.fill")
+                            Text(isRecording ? String(format: "Stop (%.0fs)", elapsed) : "Record note")
+                        }
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                    }
+                    .buttonStyle(.borderedProminent).tint(isRecording ? .red : Theme.accent2)
+                    if isTranscribing {
+                        ProgressView().controlSize(.small)
+                        Text("Transcribing…").font(.caption).foregroundStyle(.white.opacity(0.85))
+                    }
+                    Spacer()
+                }
+
+                TextEditor(text: $caption)
+                    .frame(height: 64).font(.system(size: 13)).padding(6)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(Theme.surfaceHi))
+                    .scrollContentBackground(.hidden)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.line))
+                    .foregroundStyle(Theme.ink)
+            }
+            .padding(20)
+        }
     }
 }

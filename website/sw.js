@@ -7,7 +7,7 @@
  * the browser handle HTML navigation (and its redirects) natively avoids that
  * entire class of bug for /play, /bosses, /courses, etc.
  */
-const CACHE = 'chartquest-site-v6';
+const CACHE = 'chartquest-site-v7';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',

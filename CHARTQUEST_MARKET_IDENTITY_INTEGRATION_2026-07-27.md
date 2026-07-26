@@ -1,6 +1,6 @@
 # Market Identity System — production integration report
 
-**Build:** 304 · **Branch:** `feature/home-market-ceremony` (off `c0e819a` = build 298)
+**Build:** 305 · **Branch:** `feature/home-market-ceremony` (off `c0e819a` = build 298)
 **Date:** 2026-07-27 · **Status:** implemented + adversarially verified, gate green (14 pass / 0 fail), **not merged, not deployed**
 **Test:** `http://192.168.1.34:8178/chart-quest.html?hmc` — `?hmc` opens the ceremony directly
 
@@ -203,8 +203,23 @@ Five claims **HELD** under attack — including the two that matter most:
 | Minor | Legacy bare-number cache entries were **discarded, not migrated** — a returning offline player jumped to a build-time constant (**a regression I introduced**) | Adopted + stamped on read |
 | Minor | Staleness was one-sided (a fast device clock stayed "fresh" forever); a rejected quote **poisoned `inflight` permanently**; `reanchor` used coercing `isFinite`, guarded `market.price` asymmetrically, and committed the base before scaling candles; `applyHomeMarketSkin` **bypassed the mid-trade guard**; a busy skip stamped the TTL and suppressed retries for 5 min; `fmtPriceStep` dropped thousands separators; the HTF axis printed duplicate rungs | All fixed |
 
+A final spec-compliance pass found three more, now fixed:
+
+| Severity | Defect | Fix |
+|---|---|---|
+| **Major** | The still-reachable **"Change Chart" picker advertised LOCKED "premium" markets** (BNB/DOGE/XRP at "Level 5 · 5,000 shells") **and per-market VOLATILITY / DIFFICULTY ratings** — violating *"all markets unlocked, no premium markets"*, and now simply **false**, since all terrain is identical | Change Chart opens the ceremony (the canonical 8-market roster); legacy picker kept only as a fallback |
+| **Major** | The **Cloudflare CSP was never versioned in the repo** — only `netlify.toml` was fixed, but the game deploys on Cloudflare Pages, which ignores it | Added a real `_headers` file, with a note that any new outbound host must land in both, same commit |
+| Minor | `status()` hit `localStorage` **every frame** for any market without an in-session quote (permanently true for the equities); a migrated legacy price could be presented as fresh for a full day | Memoised (**120 calls → 1 read**); migrated stamps are back-dated to a few minutes' life |
+
+**The gate that protects all of this was itself weak** and is now hardened: check #14's regex matched
+only a bare identifier, so `MARKET_DATA = (x ? y : z)` and every in-place mutation
+(`MARKET_DATA.push(…)`) passed unseen — on a shared array object, a mutation would corrupt the
+canonical replay for *every* market. Both bypasses were injected and confirmed to FAIL the gate, then
+reverted.
+
 Re-verified after fixing: SOL 7 gridlines / 7 labels agreeing, DOGE 3/3, all 8 picker logos present,
-`_reanchor` declines during a live trade and applies after it.
+`_reanchor` declines during a live trade and applies after it, Change Chart shows 8 unlocked markets
+with no locked cards.
 
 ---
 

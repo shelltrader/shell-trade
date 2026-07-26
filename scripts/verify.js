@@ -258,20 +258,27 @@ function run() {
   // ones rendered a permanent $100 chart).
   {
     try {
-      const assigns = [...s.matchAll(/MARKET_DATA\s*=\s*([A-Za-z_$][\w$]*)/g)].map(m => m[1]);
-      const bad = assigns.filter(v => v !== 'TRAINING_REPLAY');
+      // Capture the WHOLE right-hand side, not just a bare identifier: `MARKET_DATA = (live ? out
+      // : TRAINING_REPLAY)` and `MARKET_DATA = [...rows]` produced no match at all under the old
+      // pattern, so per-market terrain could be reintroduced with the gate still reporting PASS.
+      const assigns = [...s.matchAll(/MARKET_DATA\s*=\s*([^;\n]+)/g)].map(m => m[1].trim());
+      const bad = assigns.filter(v => v.replace(/;.*$/, '').trim() !== 'TRAINING_REPLAY');
+      // MARKET_DATA and TRAINING_REPLAY are the SAME array object, so an in-place mutation would
+      // corrupt the canonical replay for every market without ever being an assignment.
+      const mutated = [...s.matchAll(/MARKET_DATA\s*(?:\[[^\]]*\]\s*=|\.(push|pop|shift|unshift|splice|sort|reverse|fill|copyWithin)\s*\(|\.length\s*=)/g)].map(m => m[0]);
       const mp = s.match(/const MarketPrice = \(\(\) => \{[\s\S]*?\n\}\)\(\);/);
       const leaks = mp ? (mp[0].match(/MARKET_DATA|prePopulateHTF/g) || []) : [];
       const roster = [...(s.match(/const HOME_MARKETS = \[[\s\S]*?\];/) || [''])[0]
         .matchAll(/key:\s*'([A-Z]+)'/g)].map(m => m[1]);
       const anchors = (s.match(/const FALLBACK_PRICE = \{[\s\S]*?\};/) || [''])[0];
       const missing = roster.filter(k => !new RegExp('\\b' + k + '\\s*:').test(anchors));
-      const ok = assigns.length > 0 && bad.length === 0 && !!mp && leaks.length === 0 &&
-                 roster.length > 0 && missing.length === 0;
+      const ok = assigns.length > 0 && bad.length === 0 && mutated.length === 0 && !!mp &&
+                 leaks.length === 0 && roster.length > 0 && missing.length === 0;
       add('14', 'Market identity (shared terrain · price layer display-only · every market anchored)',
         ok ? 'PASS' : 'FAIL',
         ok ? `${assigns.length} MARKET_DATA assignment(s), all TRAINING_REPLAY; MarketPrice touches neither MARKET_DATA nor prePopulateHTF; ${roster.length}/${roster.length} markets anchored`
-           : [bad.length ? `MARKET_DATA assigned from: ${[...new Set(bad)].join(', ')} (must be TRAINING_REPLAY — terrain would differ per market)` : '',
+           : [bad.length ? `MARKET_DATA assigned from: ${[...new Set(bad)].join(' | ')} (must be TRAINING_REPLAY — terrain would differ per market)` : '',
+              mutated.length ? `MARKET_DATA mutated in place: ${[...new Set(mutated)].join(' | ')} — this corrupts the shared replay for every market` : '',
               !mp ? 'MarketPrice module not found' : '',
               leaks.length ? `MarketPrice references ${[...new Set(leaks)].join(', ')} — the price layer must never touch candle data` : '',
               missing.length ? `markets with no price anchor: ${missing.join(', ')} (these render a $100 chart)` : ''

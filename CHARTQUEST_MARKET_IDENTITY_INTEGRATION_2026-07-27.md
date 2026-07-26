@@ -1,7 +1,7 @@
 # Market Identity System — production integration report
 
-**Build:** 301 · **Branch:** `feature/home-market-ceremony` (off `c0e819a` = build 298)
-**Date:** 2026-07-27 · **Status:** implemented, gate green (14 pass / 0 fail), **not merged, not deployed**
+**Build:** 304 · **Branch:** `feature/home-market-ceremony` (off `c0e819a` = build 298)
+**Date:** 2026-07-27 · **Status:** implemented + adversarially verified, gate green (14 pass / 0 fail), **not merged, not deployed**
 **Test:** `http://192.168.1.34:8178/chart-quest.html?hmc` — `?hmc` opens the ceremony directly
 
 ---
@@ -178,6 +178,36 @@ safe, but it remains a second door onto market selection.
 
 ---
 
+## 7b. Adversarial verification (8 independent agents, each trying to BREAK one safety claim)
+
+Five claims **HELD** under attack — including the two that matter most:
+
+- *"Terrain is market-independent"* — HOLDS. Exactly two `MARKET_DATA` assignments, both
+  `TRAINING_REPLAY`; the old Binance write is gone; no in-place mutation anywhere.
+- *"The price layer cannot reach gameplay"* — HOLDS. Every write traced to its transitive readers;
+  no generator, collision test, resolver, setup detector, lesson or boss consumes a dollar.
+- *"`_reanchor` cannot produce NaN/Infinity/drift"* — HOLDS (numerically simulated).
+- *"Async prices cannot corrupt a trade"* — HOLDS, and for a stronger reason than the guard: dollars
+  are downstream of heights, so even reanchoring every frame of a live trade changes no outcome.
+- *"The cache is backward compatible"* — HOLDS after the migration fix below.
+
+**Three claims were BROKEN, and the defects were real.** All are now fixed:
+
+| Severity | Defect | Fix |
+|---|---|---|
+| **Blocker** | **Production CSP blocked `api.coinbase.com`** — the primary provider. On the deployed site every market would have silently fallen back to an anchor **while the HUD claimed "live"**. Invisible locally: the dev server sends no CSP. | Added to `netlify.toml` + the Cloudflare doc |
+| **Major** | **The price ladder was only half fixed.** Gridlines and gutter labels are two blocks that must agree; build 301 fixed only the labels. Measured on Solana — the market the build tag advertises — **2 gridlines vs 7 labels**; Dogecoin, **0 gridlines** | One shared `priceLadderStep()` used by both |
+| **Major** | `coinIconSVG` still returned `''` for the five new markets → the account panel's Change-Chart picker drew **five empty circles** | Same initial-letter default as the HUD |
+| **Major** | A **wrong-symbol provider reply** was accepted on magnitude alone and cached 24h | Validate `data.base` / `symbol`; band tightened 25× → 6× |
+| **Major** | `MarketPrice.status()` was **dead code** — the "labelled anchor" promise had no label on screen, and the spec's *live price display* was missing | Wired under the HUD badge: pulsing dot = live/cached, hollow ring = anchor |
+| Minor | Legacy bare-number cache entries were **discarded, not migrated** — a returning offline player jumped to a build-time constant (**a regression I introduced**) | Adopted + stamped on read |
+| Minor | Staleness was one-sided (a fast device clock stayed "fresh" forever); a rejected quote **poisoned `inflight` permanently**; `reanchor` used coercing `isFinite`, guarded `market.price` asymmetrically, and committed the base before scaling candles; `applyHomeMarketSkin` **bypassed the mid-trade guard**; a busy skip stamped the TTL and suppressed retries for 5 min; `fmtPriceStep` dropped thousands separators; the HTF axis printed duplicate rungs | All fixed |
+
+Re-verified after fixing: SOL 7 gridlines / 7 labels agreeing, DOGE 3/3, all 8 picker logos present,
+`_reanchor` declines during a live trade and applies after it.
+
+---
+
 ## 8. Remaining risks
 
 1. **Four of eight markets are not truly live.** Apple, Tesla, NVIDIA and S&P 500 show a labelled
@@ -204,6 +234,9 @@ safe, but it remains a second door onto market selection.
 ## 9. Recommendation
 
 ### READY FOR BETA — with one scope statement
+
+*(Recommendation unchanged after adversarial verification: the blocker and all majors it found are
+fixed and re-verified. It did not find any defect in the two core safety properties.)*
 
 Objectively:
 

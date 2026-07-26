@@ -23,10 +23,13 @@
     # Content Security Policy
     # - default-src 'self'          → block all unlisted origins by default
     # - script-src  jsdelivr CDN    → only the Supabase SDK allowed from CDN
-    # - connect-src supabase + binance → only these two external APIs
+    # - connect-src supabase + coinbase + binance → only these external APIs.
+    #   Coinbase is the PRIMARY live-price source (CORS-open, keyless, US-reachable);
+    #   Binance is the fallback and is geo-blocked in the US. Omitting Coinbase silently
+    #   kills live pricing on the deployed site while the HUD still claims it is live.
     # - img-src data:               → canvas toDataURL() needs data: URIs
     # - frame-ancestors 'none'      → belt-and-suspenders clickjack protection
-    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.binance.com; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 # Redirect HTTP → HTTPS (Netlify handles this by default, but explicit is safer)
 [[redirects]]

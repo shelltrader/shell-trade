@@ -1,5 +1,5 @@
 // Bump this version on every deploy so iOS/clients drop the old cache.
-const CACHE = 'chart-quest-v307';   /* bump per release (ReleaseChecklist §B) so returning users never get a stale build */
+const CACHE = 'chart-quest-v309';   /* bump per release (ReleaseChecklist §B) so returning users never get a stale build */
 const ASSETS = ['/', '/index.html', '/icon-192.png', '/icon-512.png', '/manifest.json'];
 
 self.addEventListener('install', e => {

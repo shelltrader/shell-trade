@@ -56,7 +56,7 @@ Cloudflare Pages **ignores `netlify.toml`**; it reads a `_headers` file in the o
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.binance.com; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
 ```
 
 ## 6. Redirects → Cloudflare `_redirects`
@@ -84,7 +84,9 @@ Add a real `404.html` to the output (there isn't one today; the redirect target 
 - [ ] `finn/`, `bosses/`, top-level media all 200 (check Network tab — no 404s).
 - [ ] `_headers` present → CSP/HSTS/X-Frame-Options verified on a response.
 - [ ] Supabase auth works from the Cloudflare domain (add the domain to Supabase **Auth → URL Configuration**).
-- [ ] `connect-src` CSP allows `*.supabase.co` + `api.binance.com` (already in the policy above).
+- [ ] `connect-src` CSP allows `*.supabase.co` + `api.coinbase.com` + `api.binance.com` (already in the
+      policy above). **Coinbase is the primary live-price source** — omit it and every market silently
+      falls back to its build-time anchor while the HUD still reports the price as live.
 - [ ] Save/load works; a signed-in session persists.
 - [ ] Run [ReleaseChecklist.md](ReleaseChecklist.md) against the preview URL.
 - [ ] Keep Netlify live as the rollback until the above is green.

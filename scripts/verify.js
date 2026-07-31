@@ -279,6 +279,48 @@ function run() {
       add('15', 'Lesson-label gate', 'WARN', 'gate not runnable: ' + String(e).slice(0, 90));
     }
   }
+
+  // 16 — MARKET IDENTITY GATE (merged from feature/home-market-ceremony; renumbered 14->16). A Home Market is an IDENTITY, not a
+  // difficulty setting: it may change the price ANCHOR, the colour and the label, and nothing else.
+  // Two ways that guarantee has already been broken in this codebase, both silent:
+  //   (a) MARKET_DATA was seeded per-ticker (own seed + volatility scale), so a Solana player got
+  //       1.55x a Bitcoin player's volatility on Level 4+ — a different game taught as the same one.
+  //   (b) the live fetch assigned `MARKET_DATA = out`, letting real Binance candles become terrain,
+  //       which also broke "educational charts are authored + deterministic".
+  // This asserts every MARKET_DATA assignment is the one shared replay, that the live-price layer
+  // never names MARKET_DATA, and that every shipped market has a display price anchor (the missing
+  // ones rendered a permanent $100 chart).
+  {
+    try {
+      // Capture the WHOLE right-hand side, not just a bare identifier: `MARKET_DATA = (live ? out
+      // : TRAINING_REPLAY)` and `MARKET_DATA = [...rows]` produced no match at all under the old
+      // pattern, so per-market terrain could be reintroduced with the gate still reporting PASS.
+      const assigns = [...s.matchAll(/MARKET_DATA\s*=\s*([^;\n]+)/g)].map(m => m[1].trim());
+      const bad = assigns.filter(v => v.replace(/;.*$/, '').trim() !== 'TRAINING_REPLAY');
+      // MARKET_DATA and TRAINING_REPLAY are the SAME array object, so an in-place mutation would
+      // corrupt the canonical replay for every market without ever being an assignment.
+      const mutated = [...s.matchAll(/MARKET_DATA\s*(?:\[[^\]]*\]\s*=|\.(push|pop|shift|unshift|splice|sort|reverse|fill|copyWithin)\s*\(|\.length\s*=)/g)].map(m => m[0]);
+      const mp = s.match(/const MarketPrice = \(\(\) => \{[\s\S]*?\n\}\)\(\);/);
+      const leaks = mp ? (mp[0].match(/MARKET_DATA|prePopulateHTF/g) || []) : [];
+      const roster = [...(s.match(/const HOME_MARKETS = \[[\s\S]*?\];/) || [''])[0]
+        .matchAll(/key:\s*'([A-Z]+)'/g)].map(m => m[1]);
+      const anchors = (s.match(/const FALLBACK_PRICE = \{[\s\S]*?\};/) || [''])[0];
+      const missing = roster.filter(k => !new RegExp('\\b' + k + '\\s*:').test(anchors));
+      const ok = assigns.length > 0 && bad.length === 0 && mutated.length === 0 && !!mp &&
+                 leaks.length === 0 && roster.length > 0 && missing.length === 0;
+      add('16', 'Market identity (shared terrain · price layer display-only · every market anchored)',
+        ok ? 'PASS' : 'FAIL',
+        ok ? `${assigns.length} MARKET_DATA assignment(s), all TRAINING_REPLAY; MarketPrice touches neither MARKET_DATA nor prePopulateHTF; ${roster.length}/${roster.length} markets anchored`
+           : [bad.length ? `MARKET_DATA assigned from: ${[...new Set(bad)].join(' | ')} (must be TRAINING_REPLAY — terrain would differ per market)` : '',
+              mutated.length ? `MARKET_DATA mutated in place: ${[...new Set(mutated)].join(' | ')} — this corrupts the shared replay for every market` : '',
+              !mp ? 'MarketPrice module not found' : '',
+              leaks.length ? `MarketPrice references ${[...new Set(leaks)].join(', ')} — the price layer must never touch candle data` : '',
+              missing.length ? `markets with no price anchor: ${missing.join(', ')} (these render a $100 chart)` : ''
+             ].filter(Boolean).join(' · '));
+    } catch (e) {
+      add('16', 'Market identity gate', 'WARN', 'gate not runnable: ' + String(e).slice(0, 90));
+    }
+  }
 }
 
 // 3b — optional real headless boot (only if puppeteer is installed)

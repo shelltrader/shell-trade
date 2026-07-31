@@ -1,0 +1,24 @@
+# Chart Quest — security headers for CLOUDFLARE PAGES
+# ---------------------------------------------------------------------------
+# WHY THIS FILE EXISTS
+# netlify.toml carries these headers for the Netlify deploy, but the game is
+# served from Cloudflare Pages, which ignores netlify.toml entirely and reads
+# this file instead. Until now the Cloudflare policy lived only in a doc
+# (docs/operations/CloudflareDeployment.md) — i.e. it was NOT versioned with the
+# code, so a change to the allowlist could ship without the deploy following.
+#
+# That is not hypothetical here. The Market Identity System fetches live prices
+# from api.coinbase.com; if connect-src omits it, every market silently falls
+# back to its build-time anchor WHILE THE HUD STILL SAYS "live". The failure is
+# invisible locally, because the dev server sends no CSP at all.
+#
+# RULE: any new outbound host must be added HERE and in netlify.toml in the same
+# commit. Keep the two policies identical.
+# ---------------------------------------------------------------------------
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'

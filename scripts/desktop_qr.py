@@ -17,12 +17,17 @@ import base64, os, re, subprocess, sys, tempfile
 
 PORT = "8795"
 OUT  = os.path.expanduser("~/Desktop/ChartQuest-Test-QR.svg")
+# Query string the QR encodes. Overridable with --query so a feature branch can point the
+# card at its own entry flag (e.g. "fresh=1&hmc&mute=1") without editing shared tooling.
+QUERY = "fresh=1&mute=1"
 
 args = sys.argv[1:]
 i = 0
 while i < len(args):
     if args[i] == "--out" and i + 1 < len(args):
         OUT = os.path.expanduser(args[i + 1]); i += 2
+    elif args[i] == "--query" and i + 1 < len(args):
+        QUERY = args[i + 1].lstrip("?"); i += 2
     elif args[i].isdigit():
         PORT = args[i]; i += 1
     else:
@@ -45,8 +50,11 @@ def lan_ip():
 
 def build_tag():
     try:
+        # Read the WHOLE file, not a 200KB head window. BUILD_TAG sat at offset ~201,286 as of
+        # build 306, so the window silently stopped finding it and every card printed "build ?" —
+        # exactly the label that exists to prove which build you are about to scan.
         with open(os.path.join(ROOT, "chart-quest.html"), "r", encoding="utf-8") as f:
-            head = f.read(200000)
+            head = f.read()
         m = re.search(r"BUILD_TAG\s*=\s*'build (\d+)", head)
         if m:
             return "build " + m.group(1)
@@ -79,7 +87,7 @@ def _have(cmd):
 
 def main():
     ip = lan_ip()
-    url = f"http://{ip}:{PORT}/chart-quest.html?fresh=1&mute=1"
+    url = f"http://{ip}:{PORT}/chart-quest.html?{QUERY}"
     tag = build_tag()
     png = qr_png_datauri(url)
     if png is None:

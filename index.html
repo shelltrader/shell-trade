@@ -2927,7 +2927,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 321 — THE MERGE: main + feature/home-market-ceremony, one lineage again. BUILD NUMBERING WAS THE REAL PROBLEM. The build number is a single global counter in ONE file, but THREE working copies were each incrementing it from the same fork point (298) at the same time -- main reached 306, the ceremony branch reached 320, and neither was newer than the other: they were parallel forks wearing sequential-looking numbers. That is why the desktop QR said 302, one agent said 305/306 and another said 311/320. All of it is now ONE history and this is the only number. Merged in from the ceremony branch: the Home Market identity system, the boss FLINCH cinematics (renumbered -- that branch forked before build 300 renumbered the roster, so its Gambler was level 0 and is level 1 here), the new boss intro/defeat/Finn-Journal clips, and the box/trade audit fixes. Kept from main: the interactive Journal quest, the lesson-label solver, and playtest fixes 1-8. Where both agents had independently fixed the SAME thing, the merge took the union rather than a side: the box smash now uses the branch more-forgiving dive predicate AND main visible refusal feedback; the broken-candle rep uses the branch event-ledger deferral (so it stops stealing the third trade moment) AND main portal gate (so it is earned like every other lesson). The redundant DOM journal overlay stays DELETED. verify.js keeps all three gates -- collectible law, lesson labels, and market identity.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 322 — FIX 10: THE GUARDIAN ROARS. The flinch clips are encoded with NO AUDIO TRACK on purpose (that is what exempts them from mobile autoplay blocking), so the Gambler was taking four cinematic hits in near-silence with only a thin hit stab over them. There are no audio assets in this game, so the roar is SYNTHESISED: two detuned saws swept downward through a soft-clip waveshaper (a falling pitch is what the ear hears as a throat; the detune makes them beat against each other, which is the roughness of a real animal voice), a closing lowpass so it stays chesty rather than fizzy, band-passed noise for the breath rasping through it, a slow LFO on pitch so it never sits perfectly still, and a sub thump underneath so it lands in the chest on a phone speaker. It ESCALATES: each successive flinch is lower, longer and angrier, so four hits build instead of repeating. The impact stab lands FIRST and the roar answers it ~90ms later -- the hit, then the reaction to the hit; fired together they just sound like one muddy noise. Routed through fx() like every other SFX, so it shares the stings bus (never ducked) and obeys the mute flag -- a mute=1 QA run stays silent.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -13308,7 +13308,17 @@ function playBossFlinch(level, n, onDone) {
      ours to make. Duck the music under the clip so the impact reads, and hit a sting on the frame
      the Gambler takes it — escalating across the four so the fight builds instead of repeating. */
   try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(0.25, 0.15); } catch (e) {}
-  try { if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting(n >= 4 ? 'bigwin' : 'hit'); } catch (e) {}
+  /* FOUNDER (build 322) — "add appropriate boss sounds; when they flinch, just make them do a scary
+     roar." The Guardian was taking four cinematic hits in total silence apart from a thin 'hit'
+     stab, because the clips carry no audio track. He now ROARS, and the roar deepens and lengthens
+     with each flinch so the fight builds (see GameMusic.roar).
+     ORDER MATTERS: the impact stab lands FIRST and the roar answers it ~90ms later — the hit, then
+     the reaction to the hit. Firing them together just sounds like one muddy noise.
+     The 4th keeps 'bigwin' because that flinch is the one before he falls. */
+  try {
+    if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting(n >= 4 ? 'bigwin' : 'hit');
+    if (typeof GameMusic !== 'undefined' && GameMusic.roar) setTimeout(function () { try { GameMusic.roar(n); } catch (e) {} }, 90);
+  } catch (e) {}
   vid.setAttribute('src', src);
   try { vid.loop = false; vid.muted = true; vid.playsInline = true; vid.setAttribute('playsinline',''); vid.load(); } catch (e) {}
   const pr = vid.play();
@@ -23144,6 +23154,90 @@ const GameMusic = (() => {
       if (i > 0.45) noiseBurst(s.t, 0.06 + 0.05 * i, 300, 0.02 + 0.03 * i, s.bus);
     },
   };
+  /* ══ BOSS ROAR (build 322 · founder: "when they flinch, just make them do a scary roar") ═══════
+     The flinch clips are encoded with NO AUDIO TRACK on purpose — that is what exempts them from
+     mobile autoplay blocking — so the Guardian was taking four cinematic hits in total silence with
+     only a thin 'hit' stab over them. The sound has to be ours to make.
+
+     There are no audio assets in this game; everything is synthesised. A roar that reads as a
+     CREATURE rather than a synth needs four things layered, and all four are here:
+       1. GROWL     — two detuned saws swept DOWNWARD (a falling pitch is what the ear hears as a
+                      throat). Detuning them a few Hz apart makes them beat against each other,
+                      which is the roughness of a real animal voice.
+       2. SATURATION— a waveshaper. Clean oscillators sound like a keyboard; clipping them adds the
+                      upper harmonics that read as strain and volume.
+       3. RASP      — band-passed noise on top, the breath moving through it.
+       4. WOBBLE    — an LFO on the pitch. Perfectly steady = machine; a little instability = alive.
+
+     It ESCALATES across the fight: each successive flinch is lower, longer and angrier, so four
+     hits build instead of repeating. Routed through fx() like every other SFX, so it shares the
+     stings' bus (never ducked by duckTo) and obeys `muted` — a ?mute=1 QA run stays silent. */
+  let _shaper = null;
+  function saturator(a, amount) {
+    if (_shaper) return _shaper;
+    const n = 1024, curve = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curve[i] = ((1 + amount) * x) / (1 + amount * Math.abs(x));   // soft clip — warm, not fizzy
+    }
+    _shaper = a.createWaveShaper();
+    _shaper.curve = curve;
+    _shaper.oversample = '4x';
+    return _shaper;
+  }
+  function roar(tier) {
+    const s = fx(); if (!s) return;                       // null when muted — nothing is scheduled
+    const a = s.a, t = s.t;
+    const i   = Math.max(0, Math.min(3, (tier || 1) - 1));  // 0..3 across the four flinches
+    const dur = 0.85 + 0.22 * i;                            // each roar longer than the last
+    const f0  = 132 - 16 * i;                               // …and lower: angrier, bigger animal
+    const f1  = f0 * 0.42;                                  // the downward throat sweep
+    const vol = 0.16 + 0.035 * i;
+
+    /* shaped bus: growl → saturation → lowpass (chesty, not fizzy) → TRIM → out
+       The trim is not optional. A soft-clipper is a big gain stage: measured offline, the growl
+       alone came back at 0.987 peak — and the sub thump and two rasp layers are still to be summed
+       on top, plus the impact stab sharing this bus. Without makeup-gain reduction the whole thing
+       clips into digital fizz, which is the opposite of frightening. 0.34 leaves real headroom. */
+    const shaped = a.createGain(); shaped.gain.value = 1;
+    const lp = a.createBiquadFilter(); lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(1900 + 300 * i, t);
+    lp.frequency.exponentialRampToValueAtTime(520, t + dur);   // closes as the breath runs out
+    const trim = a.createGain(); trim.gain.value = 0.34;
+    shaped.connect(saturator(a, 6 + 3 * i)).connect(lp).connect(trim).connect(s.bus);
+
+    // 1+2. the growl: two detuned saws, swept down, beating against each other
+    const env = a.createGain();
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(vol, t + 0.07);            // fast attack — it is a HIT
+    env.gain.setValueAtTime(vol, t + dur * 0.55);                    // hold: the sustain of a shout
+    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    env.connect(shaped);
+
+    // 4. wobble — a slow LFO on pitch so it never sits perfectly still
+    const lfo = a.createOscillator(), lfoAmt = a.createGain();
+    lfo.type = 'sine'; lfo.frequency.value = 5.5 + 1.5 * i;
+    lfoAmt.gain.value = 4 + 2 * i;
+    lfo.connect(lfoAmt);
+
+    [0, 4.5].forEach(function (detune, k) {
+      const o = a.createOscillator();
+      o.type = k === 0 ? 'sawtooth' : 'square';
+      o.frequency.setValueAtTime(f0 + detune, t);
+      o.frequency.exponentialRampToValueAtTime(Math.max(20, f1 + detune), t + dur);
+      lfoAmt.connect(o.frequency);                                   // the wobble rides the sweep
+      o.connect(env); o.start(t); o.stop(t + dur + 0.05);
+    });
+    lfo.start(t); lfo.stop(t + dur + 0.05);
+
+    // a sub thump underneath so it lands in the chest on a phone speaker
+    sweep('sine', f0 * 0.55, f0 * 0.28, t, dur * 0.7, 0.10 + 0.02 * i, s.bus);
+
+    // 3. rasp — breath through the throat, opening then closing with the roar
+    noiseBurst(t + 0.02, dur * 0.55, 850 + 150 * i, 0.030 + 0.010 * i, s.bus);
+    noiseBurst(t + dur * 0.42, dur * 0.42, 430, 0.022 + 0.008 * i, s.bus);
+  }
+
   // PHASE 3 — MUSIC DUCK ("the silence before an important decision"): ramp the whole music BED down to
   // a fraction of the current track's volume. Stings + move SFX route through their OWN bus to destination
   // (see the sting/fx bus above), so the win/loss CONFIRM is NEVER ducked — only the bed steps back
@@ -23159,7 +23253,7 @@ const GameMusic = (() => {
     master.gain.cancelScheduledValues(a.currentTime);
     master.gain.linearRampToValueAtTime(base * level, a.currentTime + (ramp || 0.5));
   }
-  return { unlock, setMuted, play, boss, stop, sting, duckTo, isOn: () => started, move };
+  return { unlock, setMuted, play, boss, stop, sting, roar, duckTo, isOn: () => started, move };
 })();
 
 /* ════════ BOSS ARENA (animated background per boss) ════════ */

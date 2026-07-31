@@ -1,0 +1,629 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LessonChart visual audit</title>
+<style>
+ body{margin:0;background:#05070c;font:14px -apple-system,system-ui,sans-serif;color:#e6edf6}
+ h1{font-size:15px;padding:14px 16px 4px;margin:0;letter-spacing:.4px}
+ .sub{padding:0 16px 12px;color:#7d8aa0;font-size:12px}
+ .grid{display:flex;flex-wrap:wrap;gap:14px;padding:0 16px 40px}
+ .card{width:342px;background:#0a0e17;border:1px solid #1c2737;border-radius:12px;overflow:hidden}
+ .key{font:800 10px/1 -apple-system,sans-serif;letter-spacing:1.2px;color:#4cc3ff;padding:9px 12px 0}
+ canvas{display:block;width:342px;height:208px}
+ .cap{padding:6px 12px 11px;font-size:12px;line-height:1.45;color:#c8d6e6}
+ .cap b{color:#fff}
+</style></head><body>
+<h1>LESSONCHART — EVERY SCENE, MOBILE WIDTH (342&times;208)</h1>
+<div class="sub">Rendered from chart-quest.html. Labels must never touch a candle, never clip, never rely on colour alone.</div>
+<div class="grid" id="g"></div>
+<script>
+const LessonChart=(function(){
+  /* PHASE 3A — dojiBody/Edge/Wick are the Constitution's neutral doji colours (#b8c0cc/#7a8494/
+     #c9d1d9): a doji is a TIE and must never wear a directional green/red tint (Readability Law 5).
+     Used only by candles authored with doji:true. */
+  const C={green:'#16c784',greenEdge:'#0c9c69',greenWick:'#1fd790',red:'#ea3943',redEdge:'#c0212c',redWick:'#ff5663',dojiBody:'#b8c0cc',dojiEdge:'#7a8494',dojiWick:'#c9d1d9',grid:'rgba(255,255,255,0.05)',sub:'#8b97a8',purp:'#a855f7',gold:'#ffd60a',blue:'#4cc3ff',shell:'#36d9e0',orange:'#ff9f1c'};
+  const FT='-apple-system,system-ui,sans-serif';
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,easeOut=t=>1-Math.pow(1-clamp(t,0,1),3);
+  const SCENES={
+    /* PHASE 3A (Educational Candle Library, 2026-07-16) — structure scenes rebuilt on canonical
+       archetypes: every directional body ≥ the Type-A floor, level lines touch their candles
+       EXACTLY, and the concept candle is the focal read. Cites CHARTQUEST_VISUAL_MARKET_CONSTITUTION. */
+    liquidity:{caption:'See the matching highs? Lots of traders hide a <b>stop loss</b> just above them. Price spikes up to grab those — a <b>liquidity sweep</b> — then drops back down.',
+      candles:[{o:42,h:50,l:42,c:50},{o:50,h:71,l:50,c:66},{o:66,h:66,l:54,c:54},{o:54,h:71,l:54,c:65},{o:65,h:65,l:53,c:53},{o:53,h:71,l:53,c:64},{o:64,h:64,l:52,c:52},{o:52,h:88,l:44,c:44,sweep:true}],
+      anns:[{type:'eqHighs',y:71,from:1,to:6,at:1.7,color:C.purp,label:'EQUAL HIGHS · stop losses sit above'},{type:'shell',candle:7,at:2.4,label:'LIQUIDITY'},{type:'sweepFlag',candle:7,at:3.5}]},
+    // PHASE 3A — floor touched EXACTLY at 31 three times, and never pierced (old c3 low 30 leaked
+    // under the line — the "floor" visibly broke, contradicting the lesson).
+    support:{caption:'See the <b>floor</b>? Buyers keep stepping in here, so price bounces back <b>UP</b>. That floor is called <b>support</b>.',
+      candles:[{o:60,h:60,l:54,c:54},{o:54,h:54,l:46,c:46},{o:46,h:46,l:34,c:34},{o:34,h:40,l:34,c:40},{o:40,h:40,l:33,c:33},{o:33,h:44,l:33,c:44},{o:44,h:52,l:44,c:52},{o:52,h:62,l:52,c:62}],
+      anns:[{type:'hline',y:31,at:1.7,color:C.green,label:'SUPPORT · buyers step in'}]},
+    // PHASE 3A — three consecutive wicks tag EXACTLY 70 (a crisp rejection cluster), then sellers
+    // visibly win with three real red candles.
+    resistance:{caption:'See the <b>ceiling</b>? Sellers keep stepping in here, so price drops back <b>DOWN</b>. That ceiling is called <b>resistance</b>.',
+      candles:[{o:38,h:45,l:38,c:45},{o:45,h:55,l:45,c:55},{o:55,h:70,l:55,c:63},{o:63,h:70,l:56,c:56},{o:56,h:70,l:56,c:63},{o:63,h:63,l:54,c:54},{o:54,h:54,l:44,c:44},{o:44,h:44,l:36,c:36}],
+      anns:[{type:'hline',y:70,at:1.7,color:C.red,label:'RESISTANCE · sellers step in'}]},
+    // PHASE 3A — every red rest is a real 8u step (old HL-tagged candles were 4-6u near-dojis);
+    // pushes vary 16/18/20 so the stairs read as stairs, not wallpaper. Ann indices unchanged.
+    uptrend:{caption:'An <b>uptrend</b> makes <b>higher highs</b> and <b>higher lows</b> — like stairs going up. Trade with it (look for buys).',
+      candles:[{o:27,h:35,l:27,c:35},{o:35,h:35,l:27,c:27},{o:27,h:43,l:27,c:43},{o:43,h:43,l:35,c:35},{o:35,h:53,l:35,c:53},{o:53,h:53,l:45,c:45},{o:45,h:65,l:45,c:65},{o:65,h:73,l:65,c:73}],
+      anns:[{type:'hl',candle:1,at:1.6,label:'HL'},{type:'hh',candle:2,at:2.0,label:'HH'},{type:'hl',candle:3,at:2.4,label:'HL'},{type:'hh',candle:4,at:2.8,label:'HH'},{type:'hl',candle:5,at:3.2,label:'HL'},{type:'hh',candle:6,at:3.6,label:'HH'}]},
+    // PHASE 3A — green bounce candles get real 8u bodies so each LH is a visible failed rally;
+    // red pushes 16/18/21 dominate. LL tags gold→sub (gold is reserved boss/portal). Indices unchanged.
+    downtrend:{caption:'A <b>downtrend</b> makes <b>lower highs</b> and <b>lower lows</b> — like stairs going down. Trade with it (look for sells).',
+      candles:[{o:73,h:73,l:65,c:65},{o:65,h:73,l:65,c:73},{o:73,h:73,l:57,c:57},{o:57,h:65,l:57,c:65},{o:65,h:65,l:47,c:47},{o:47,h:55,l:47,c:55},{o:55,h:55,l:34,c:34},{o:34,h:34,l:26,c:26}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.red,at:1.8,label:'LH'},{type:'tag',candle:2,side:'down',color:C.sub,at:2.2,label:'LL'},{type:'tag',candle:3,side:'up',color:C.red,at:2.6,label:'LH'},{type:'tag',candle:6,side:'down',color:C.sub,at:3.0,label:'LL'}]},
+    // PHASE 3A — the sweep candle is now RED with a 3x-body wick spiking 12 above the line and
+    // closing below every recent low: poke, fail, punish — in one candle.
+    sfp:{caption:'A <b>Swing Failure</b> pokes just above the last high to grab stop losses, then <b>closes back below</b>. The breakout failed — price often reverses.',
+      candles:[{o:39,h:45,l:39,c:45},{o:45,h:59,l:45,c:59},{o:59,h:59,l:50,c:50},{o:50,h:56,l:50,c:56},{o:56,h:56,l:50,c:50},{o:50,h:74,l:42,c:42,sweep:true}],
+      anns:[{type:'hline',y:62,at:1.4,color:C.sub,label:'last swing high'},{type:'sweepFlag',candle:5,at:3.0,color:C.red,text:'SFP → swept the high, closed back'}]},
+    // PHASE 3A — both shoulders peak at EXACTLY 46, the head at 60 (2.4x above the neckline vs the
+    // shoulders' 10), every valley low sits ON the 36 neckline until the final close punches
+    // through to 28. The silhouette is now unmistakable at five paces.
+    head_shoulders:{caption:'<b>Head &amp; Shoulders</b>: two smaller peaks (shoulders) beside one big peak (head). When price breaks the <b>neckline</b>, the uptrend often flips down.',
+      candles:[{o:23,h:29,l:23,c:29},{o:29,h:44,l:29,c:44},{o:44,h:44,l:38,c:38},{o:38,h:58,l:38,c:58},{o:58,h:58,l:38,c:38},{o:38,h:44,l:38,c:44},{o:44,h:44,l:38,c:38},{o:38,h:38,l:28,c:28}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.blue,at:1.8,label:'SHOULDER'},{type:'tag',candle:3,side:'up',color:C.blue,at:2.3,label:'HEAD'},{type:'tag',candle:6,side:'up',color:C.blue,at:2.8,label:'SHOULDER'},{type:'hline',y:36,at:3.2,color:C.red,label:'neckline'}]},
+    // PHASE 3A — bodies lifted off the floor line; equal lows at 38 unchanged. LOW tags gold→sub
+    // (gold is reserved boss/portal).
+    double_bottom:{caption:'A <b>double bottom</b> is a <b>W</b> shape — price hits the same floor twice and can’t break it. Buyers step in, and it often turns up.',
+      candles:[{o:56,h:56,l:51,c:51},{o:51,h:51,l:40,c:40},{o:40,h:48,l:40,c:48},{o:48,h:53,l:48,c:53},{o:53,h:53,l:38,c:42},{o:42,h:54,l:42,c:54},{o:54,h:62,l:54,c:62}],
+      anns:[{type:'hline',y:38,at:1.6,color:C.green,label:'double bottom'},{type:'tag',candle:1,side:'down',color:C.sub,at:2.4,label:'LOW 1'},{type:'tag',candle:4,side:'down',color:C.sub,at:3.0,label:'LOW 2'}]},
+    // PHASE 3A — the higher low sits EXACTLY on the 42 line (kissed twice, never pierced) and the
+    // break candle is a 16u red closing 10 BELOW it — the flip is unmistakable (old break: 2u).
+    choch:{caption:'A <b>Change of Character</b> is the first warning a trend may flip. In an uptrend, price <b>closes below the last higher low</b> — buyers just lost control. No breaks either way? That\'s a <b>RANGE</b> — price just drifting sideways.',
+      candles:[{o:30,h:36,l:30,c:36},{o:36,h:48,l:36,c:48},{o:48,h:48,l:43,c:43},{o:43,h:56,l:43,c:56},{o:56,h:60,l:48,c:48},{o:48,h:48,l:32,c:32}],
+      anns:[{type:'hline',y:42,at:2.0,color:C.sub,label:'last higher low'},{type:'sweepFlag',candle:5,at:3.0,color:C.red,text:'ChoCh → closed below it'}]},
+    // PHASE 3A — a clean three-act story on the SAME VWAP line: holds above it, FLIPs clearly
+    // below, slap-back wick kisses it and gets rejected. All bodies legible.
+    vwap:{caption:'<b>VWAP</b> is the day’s average price. When price <b>flips</b> from above to below it, then <b>slaps</b> back into it and gets rejected, sellers are in control.',
+      candles:[{o:39,h:44,l:39,c:44},{o:44,h:50,l:44,c:50},{o:50,h:50,l:44,c:44},{o:44,h:44,l:39,c:39},{o:39,h:39,l:32,c:32},{o:32,h:39,l:32,c:39},{o:39,h:39,l:27,c:27}],
+      anns:[{type:'line',c1:0,p1:37,c2:6,p2:41,color:C.blue,dash:true,at:1.4,label:'VWAP'},{type:'tag',candle:4,side:'down',color:C.red,at:2.6,label:'FLIP ↓'},{type:'tag',candle:5,side:'up',color:C.red,at:3.2,label:'SLAP ✗'}]},
+    // PHASE 3A — the zone is re-anchored to the actual order-block candle's range (31–40; the old
+    // zone floated at 42–52), the impulse respects the frame cap, and the retest visibly dips INTO
+    // the box before bouncing. Retest tag gold→sub (gold is reserved boss/portal).
+    ob:{caption:'An <b>order block</b> is the last red candle before a big move up. Price often comes <b>back to it</b> and bounces — a good spot to buy.',
+      candles:[{o:33,h:38,l:33,c:38},{o:38,h:38,l:33,c:33},{o:33,h:47,l:33,c:47},{o:47,h:54,l:47,c:54},{o:54,h:54,l:45,c:45},{o:45,h:45,l:36,c:36},{o:36,h:48,l:36,c:48}],
+      anns:[{type:'zone',from:1,to:6,y1:31,y2:40,color:C.purp,at:1.6,label:'ORDER BLOCK'},{type:'tag',candle:5,side:'down',color:C.sub,at:2.8,label:'retest'},{type:'tag',candle:6,side:'up',color:C.green,at:3.3,label:'bounce ↑'}]},
+    // PHASE 3A — the pullback lows now land EXACTLY on the drawn line (c2@33, c4@41, c6@49) and no
+    // low ever crosses it (the old scene had lows poking 3-4u BELOW the "bounce" line — the picture
+    // contradicted the caption). Bounce tag gold→green (it marks a buy-side bounce).
+    trendline:{caption:'A <b>trendline</b> joins the rising lows. Price keeps <b>bouncing up off it</b> — until it finally breaks, which warns the trend may be ending.',
+      candles:[{o:29,h:36,l:29,c:36},{o:36,h:44,l:32,c:44},{o:44,h:44,l:33,c:37},{o:37,h:52,l:37,c:52},{o:52,h:52,l:41,c:45},{o:45,h:60,l:45,c:60},{o:60,h:60,l:49,c:53},{o:53,h:69,l:53,c:69}],
+      anns:[{type:'line',c1:2,p1:33,c2:6,p2:49,color:C.gold,extend:true,at:1.6,label:'TRENDLINE'},{type:'tag',candle:4,side:'down',color:C.green,at:2.8,label:'bounce'}]},
+    // PHASE 3A — dips are honest 10-12u red candles (clearly visible) while green pushes run
+    // 16-23u: you SEE a real dip, and you SEE the trend swallow it. Ann indices unchanged.
+    htf:{caption:'The <b>higher timeframe</b> is the big picture. Small red dips don’t change it. Always trade <b>with</b> the bigger trend, not against it.',
+      candles:[{o:24,h:34,l:24,c:34},{o:34,h:50,l:34,c:50},{o:50,h:50,l:40,c:40},{o:40,h:59,l:40,c:59},{o:59,h:69,l:59,c:69},{o:69,h:69,l:59,c:59},{o:59,h:82,l:59,c:82}],
+      anns:[{type:'line',c1:0,p1:26,c2:6,p2:78,color:C.green,at:1.6,label:'BIG TREND ↑'},{type:'tag',candle:2,side:'down',color:C.sub,at:2.8,label:'just a dip'},{type:'tag',candle:5,side:'down',color:C.sub,at:3.3,label:'just a dip'}]},
+    // PHASE 3A — the break already read well (closes 8 above the swing line, 3x median body);
+    // the pre-break pause is now a real 8u red (was a 2u near-doji) and the opener is legible.
+    bos:{caption:'A candle <b>closes above the swing high</b> — that’s a <b>Break of Structure</b>. The up-move is confirmed.',
+      candles:[{o:36,h:44,l:30,c:44},{o:44,h:66,l:44,c:52},{o:52,h:56,l:40,c:40},{o:40,h:48,l:40,c:48},{o:48,h:57,l:48,c:57},{o:57,h:57,l:49,c:49},{o:49,h:78,l:49,c:74,bos:true}],
+      anns:[{type:'swingHigh',y:66,at:1.6,label:'SWING HIGH'},{type:'bosFlag',candle:6,at:3.0,label:'BOS · closes above'}]},
+    // PHASE 3A — the level at 64 is established by two exact wick-touches with real rejections
+    // between; the fake spikes 20 above on a 4.5x-body wick and closes at 40, below every recent
+    // low — the trap is unmissable (old scene: five sliver bodies and a modest poke).
+    fake:{caption:'A <b>fake breakout</b> pokes ABOVE the line but <b>closes back below</b> it — a trap. Always wait for the close.',
+      candles:[{o:44,h:51,l:44,c:51},{o:51,h:64,l:51,c:60},{o:60,h:60,l:50,c:50},{o:50,h:64,l:50,c:57},{o:57,h:57,l:48,c:48},{o:48,h:84,l:40,c:40,sweep:true}],
+      anns:[{type:'hline',y:64,at:1.6,color:C.sub,label:'the level'},{type:'sweepFlag',candle:5,at:3.2,fake:true}]},
+    // PHASE 3A (Educational Candle Library, 2026-07-16) — TWIN MIRRORED GIANTS: candle 0 is a big
+    // green move, candle 1 the SAME span flipped red. The only difference is colour — which IS the
+    // lesson. Three modest context candles follow. Old data buried the labelled RED example at 6u
+    // (an accidental doji) under an unlabelled 34u green rocket. Cites VISUAL_MARKET_CONSTITUTION.
+    candle:{caption:'Every candle is <b>alive</b> — a tiny fight.<br><b>Green</b> = buyers won, it closed <b>UP</b>.<br><b>Red</b> = sellers won, it closed <b>DOWN</b>.<br>The fat middle is <b>the fight</b>. The thin <b>wick</b> is how far price tried to go — before it got <b>pushed back</b>.',
+      /* T-001 (FOUNDER REJECTION #1) — re-authored to the Candle Bible. The shipped scene taught
+         "the fat middle is the fight" on candles whose wicks ran 67–125% of their own bodies
+         (bodies 8–18 under 6–10 wicks) — i.e. it illustrated a healthy bullish candle with a
+         spinning top. Now: T1 context step → G1 STRONG BULLISH (body 30, wicks ≤3) → P1 rest →
+         R1 STRONG BEARISH → W1 long-upper-wick, which is the archetype the Bible assigns to wick
+         lessons and the ONLY candle here that carries a wick at all.
+         FOUNDER 2026-07-23 (2nd pass): "they still look like spinning tops... they all have little tiny
+         wicks. Remove all the little tiny wicks, there's no point in having those. Make them a bit bigger
+         and a bit more exaggerated." So the four teaching candles are now true MARUBOZU — h === max(o,c)
+         and l === min(o,c), i.e. no wick whatsoever — and the heroes are 38 units, the top of the Bible's
+         G1/R1 band. A wick now appears exactly once in this scene, on the candle whose whole job is the
+         wick. Connectivity holds (each open === the previous close). */
+      candles:[{o:26,h:40,l:26,c:40},{o:40,h:78,l:40,c:78},{o:78,h:78,l:68,c:68},{o:68,h:68,l:30,c:30},{o:30,h:62,l:30,c:38}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.8,label:'GREEN = UP'},{type:'tag',candle:3,side:'down',color:C.red,at:2.5,label:'RED = DOWN'},{type:'tag',candle:4,side:'up',color:C.sub,at:3.2,label:'wick · tried & lost'}]},
+    // PHASE 3A — the doji now has a TRUE zero body (o==c, doji:true renders it neutral, never a
+    // lying red "sellers won" tint) and a huge near-symmetric 18/16 cross of wicks. Tag was gold
+    // (reserved boss/portal — Constitution Readability Law 5: DOJI label neutral, never gold).
+    doji:{caption:'A <b>doji</b> has almost no body — it opens and closes at nearly the same price. That’s a <b>tie</b> between buyers and sellers, and the trend often turns next.',
+      candles:[{o:26,h:36,l:26,c:36},{o:36,h:50,l:36,c:50},{o:50,h:60,l:50,c:60},{o:60,h:78,l:44,c:60,doji:true}],
+      anns:[{type:'tag',candle:3,side:'up',color:C.sub,at:2.2,label:'DOJI · a tie'}]},
+    // PHASE 3A — 7→6 candles: one giant green dominates the up-leg and one giant red dominates the
+    // down-leg (focal 2.5x median; old scene was seven identical 10u candles — the labels pointed
+    // at candles indistinguishable from their neighbours). Anns renumbered 1 and 4.
+    longshort:{caption:'<b>Long</b> = you bet price goes <b>UP</b>. <b>Short</b> = you bet it goes <b>DOWN</b>. You can win in both directions.',
+      candles:[{o:32,h:40,l:32,c:40},{o:40,h:61,l:40,c:61},{o:61,h:69,l:61,c:69},{o:69,h:69,l:60,c:60},{o:60,h:60,l:38,c:38},{o:38,h:38,l:30,c:30}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.8,label:'LONG ↑ wins'},{type:'tag',candle:4,side:'down',color:C.red,at:2.8,label:'SHORT ↓ wins'}]},
+    // SHOTS 16/17 — Long and Short must be TWO DIFFERENT, unmistakable charts (they used to share
+    // one). LONG = a long obvious green climb. PHASE 3A: the old "tiny red pullbacks" were 2u
+    // slivers (accidental dojis) — rests are now real readable red candles, every step ≥ the
+    // Type-A floor, and the climb still dominates. Ann indices unchanged (1, 7).
+    long:{caption:'<b>Long</b> = you bet price goes <b>UP</b>.<br>You buy low and win as it climbs — ride the green.',
+      candles:[{o:26,h:40,l:26,c:40},{o:40,h:56,l:40,c:56},{o:56,h:56,l:43,c:43},{o:43,h:60,l:43,c:60},{o:60,h:76,l:60,c:76},{o:76,h:76,l:63,c:63},{o:63,h:81,l:63,c:81},{o:81,h:95,l:81,c:95}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.6,label:'BUY LOW ↑'},{type:'tag',candle:7,side:'up',color:C.green,at:2.7,label:'LONG WINS ↑'}]},
+    // SHORT = a few green candles, then sellers take over with a run of red — an obvious drop. You
+    // win as it falls. PHASE 3A: 8→7 candles, red takeover candles now BIGGER than the green climb
+    // (dominance is the concept); old data had the SHORT-WINS candle as one of the two smallest on
+    // screen. Anns renumbered 2, 3, 6.
+    short:{caption:'<b>Short</b> = you bet price goes <b>DOWN</b>.<br>A few green, then sellers take over — you win as it drops.',
+      candles:[{o:36,h:50,l:36,c:50},{o:50,h:64,l:50,c:64},{o:64,h:78,l:64,c:78},{o:78,h:78,l:60,c:60},{o:60,h:60,l:44,c:44},{o:44,h:44,l:28,c:28},{o:28,h:28,l:14,c:14}],
+      anns:[{type:'tag',candle:2,side:'up',color:C.sub,at:1.3,label:'top'},{type:'tag',candle:3,side:'down',color:C.red,at:2.1,label:'SELLERS TAKE OVER'},{type:'tag',candle:6,side:'down',color:C.red,at:3.0,label:'SHORT WINS ↓'}]},
+    // SHOT 1 — mark where the candle OPENS and where it CLOSES so a 10-year-old sees that the
+    // CLOSE (not the wick spike) is what counts. PHASE 3A: 5→3 candles (focus sub-mode) — the old
+    // lead-in was four sliver bodies; now two clean steps, then the spike candle whose upper wick
+    // is 2.3x its body (wick-lesson law ≥2x). Anns: OPEN y58, sweepFlag candle 2, CLOSE y70.
+    wait_close:{caption:'A candle jumps around while it forms.<br><b>Only the CLOSE</b> tells you who won — not the spike.<br>See where it <b>opened</b> and where it <b>closed</b> — wait for the close before you act.',
+      candles:[{o:34,h:46,l:34,c:46},{o:46,h:60,l:46,c:60},{o:60,h:98,l:60,c:72,sweep:true}],
+      anns:[{type:'hline',y:60,at:1.4,color:C.sub,label:'OPEN — where it started'},{type:'sweepFlag',candle:2,at:2.4,color:C.red,text:'spiked UP…'},{type:'hline',y:72,at:3.2,color:C.green,label:'CLOSE ✓ this is what counts'}]},
+    // PHASE 3A — honest 1:2 story geometry: entry 45, stop 30 (the dip low 32 NEVER touches it),
+    // target 78 reached by a real run. Every body ≥ the floor (old dip candle was a sliver).
+    trade_win:{caption:'You bought after the pullback. Price dipped toward your <b>stop</b> but never hit it — then ran up to your <b>target</b>. Win!',
+      candles:[{o:34,h:44,l:34,c:44},{o:44,h:54,l:44,c:54},{o:54,h:54,l:45,c:45},{o:45,h:45,l:32,c:36},{o:36,h:50,l:36,c:50},{o:50,h:66,l:50,c:66},{o:66,h:78,l:66,c:78}],
+      anns:[{type:'hline',y:45,at:1.4,color:C.gold,label:'ENTRY'},{type:'hline',y:30,at:1.9,color:C.red,label:'STOP — your shield'},{type:'hline',y:78,at:2.4,color:C.green,label:'TARGET ✓'},{type:'tag',candle:3,side:'down',color:C.sub,at:3.2,label:'dipped, HELD'}]},
+    // PHASE 3A — 5→4 candles, varied real bodies (old scene was four identical 4u drizzle candles);
+    // rise to entry 62, two honest red steps down, stop 40 hit cleanly. Tag renumbered 4→3.
+    trade_loss:{caption:'Price went the other way and hit your <b>stop</b>. You only lost what you bet — the stop kept it small. Smart, not a mistake.',
+      candles:[{o:38,h:52,l:38,c:52},{o:52,h:62,l:52,c:62},{o:62,h:62,l:51,c:51},{o:51,h:51,l:40,c:40}],
+      anns:[{type:'hline',y:62,at:1.4,color:C.gold,label:'ENTRY'},{type:'hline',y:40,at:1.9,color:C.red,label:'STOP — loss capped'},{type:'hline',y:86,at:2.4,color:C.sub,label:'TARGET (missed)'},{type:'tag',candle:3,side:'down',color:C.red,at:3.2,label:'stop did its job'}]},
+    // PHASE 3A — the exit tag now sits ON the stop-hit candle (2), and two extra falling candles
+    // AFTER the exit teach the payoff: "it kept falling — you were SAFE" (new sub tag on 4).
+    sl:{caption:'A <b>stop loss</b> is your safety net. If price goes the wrong way and touches it, you exit right away — so one bad trade stays small.',
+      candles:[{o:40,h:54,l:40,c:54},{o:54,h:54,l:43,c:43},{o:43,h:43,l:34,c:34},{o:34,h:34,l:22,c:22},{o:22,h:22,l:14,c:14}],
+      anns:[{type:'hline',y:54,at:1.5,color:C.gold,label:'ENTRY'},{type:'hline',y:36,at:2.0,color:C.red,label:'STOP LOSS'},{type:'tag',candle:2,side:'down',color:C.red,at:3.0,label:'exit — stay small'},{type:'tag',candle:4,side:'down',color:C.sub,at:3.6,label:'it kept falling — you were SAFE'}]},
+    // PHASE 3A — a real rest candle mid-climb (varied rhythm, no wallpaper) and the final candle
+    // punches through the raised target. Ann indices unchanged (4).
+    tp:{caption:'A <b>take profit</b> is your goal price. When price reaches it, the trade closes and your win is locked in.',
+      candles:[{o:34,h:46,l:34,c:46},{o:46,h:58,l:46,c:58},{o:58,h:58,l:49,c:49},{o:49,h:64,l:49,c:64},{o:64,h:76,l:64,c:76}],
+      anns:[{type:'hline',y:46,at:1.5,color:C.gold,label:'ENTRY'},{type:'hline',y:74,at:2.0,color:C.green,label:'TAKE PROFIT ✓'},{type:'tag',candle:4,side:'up',color:C.green,at:3.0,label:'locked in'}]},
+    // PHASE 3A — zones re-anchored INSIDE the candle range (the old risk-zone bottom at 42 stayed
+    // on-canvas only by luck of the 8% padding: zone y-values are not part of auto-fit). Risk
+    // 44→50 (6) vs reward 50→62 (12) stays an honest visual 1:2.
+    rr:{caption:'<b>Risk : reward</b> compares what you could lose to what you could win. Risk a little to make a lot — aim for at least <b>2×</b> your risk.',
+      candles:[{o:46,h:52,l:46,c:52},{o:52,h:58,l:52,c:58},{o:58,h:68,l:58,c:68},{o:68,h:74,l:68,c:74}],
+      anns:[{type:'zone',from:0,to:3,y1:44,y2:50,color:C.red,at:1.6,label:'1R RISK'},{type:'zone',from:0,to:3,y1:50,y2:62,color:C.green,at:2.2,label:'2R REWARD'},{type:'hline',y:50,at:1.3,color:C.gold,label:'ENTRY'}]},
+    // PHASE 3A — old scene was four identical 4u candles (A-B-A-B wallpaper). Bodies now GROW
+    // 9→10→12→13 so the picture itself amplifies; tag orange→red (orange is reserved boss/portal,
+    // and red carries the "powerful but risky" warning honestly).
+    leverage:{caption:'<b>Leverage</b> makes your wins AND losses bigger. A small price move turns into a big result — powerful, but risky.',
+      candles:[{o:44,h:53,l:44,c:53},{o:53,h:63,l:53,c:63},{o:63,h:75,l:63,c:75},{o:75,h:88,l:75,c:88}],
+      anns:[{type:'tag',candle:0,side:'down',color:C.sub,at:1.8,label:'small move'},{type:'tag',candle:3,side:'up',color:C.red,at:2.6,label:'× LEVERAGE = BIG result'}]},
+    // PHASE 3A — pole 18u (2.25x the flag bodies, relational law ≥1.5x); flag candles are readable
+    // 8u rest-candles coiling in a tight box instead of 2-4u slivers. Ann indices unchanged.
+    bullflag:{caption:'A <b>bull flag</b>: a strong push up (the pole), a short rest that drifts down a little (the flag), then price <b>pops higher</b> again.',
+      candles:[{o:27,h:35,l:27,c:35},{o:35,h:53,l:35,c:53},{o:53,h:53,l:45,c:45},{o:45,h:53,l:45,c:53},{o:53,h:67,l:53,c:67},{o:67,h:75,l:67,c:75}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.6,label:'POLE'},{type:'tag',candle:3,side:'down',color:C.sub,at:2.4,label:'flag (rest)'},{type:'tag',candle:5,side:'up',color:C.green,at:3.0,label:'GO ↑'}]},
+    // PHASE 3A — exact mirror of the bullflag fix: 18u pole down, readable 8u flag candles
+    // drifting up, breakdown closes clearly below the pole low. Ann indices unchanged.
+    bearflag:{caption:'A <b>bear flag</b>: a strong push down (the pole), a short rest that drifts up a little (the flag), then price <b>drops lower</b> again.',
+      candles:[{o:73,h:73,l:65,c:65},{o:65,h:65,l:47,c:47},{o:47,h:55,l:47,c:55},{o:55,h:55,l:47,c:47},{o:47,h:47,l:33,c:33},{o:33,h:33,l:25,c:25}],
+      anns:[{type:'tag',candle:1,side:'down',color:C.red,at:1.6,label:'POLE'},{type:'tag',candle:3,side:'up',color:C.sub,at:2.4,label:'flag (rest)'},{type:'tag',candle:5,side:'down',color:C.red,at:3.0,label:'GO ↓'}]},
+    // PHASE 3A — both clues now genuinely hold AND meet: the support floor (33) is touched exactly
+    // twice, and the trendline is refit through the actual later lows (c2@36, c3@39, c5@45 — the
+    // old line floated past lows that pierced it).
+    confluence:{caption:'<b>Confluence</b> is when several clues point the same way — the trend, a level, and a setup all agree. More clues = a stronger trade.',
+      candles:[{o:41,h:41,l:35,c:35},{o:35,h:44,l:35,c:44},{o:44,h:44,l:39,c:39},{o:39,h:50,l:39,c:50},{o:50,h:50,l:45,c:45},{o:45,h:58,l:45,c:58}],
+      anns:[{type:'hline',y:33,at:1.6,color:C.green,label:'SUPPORT held'},{type:'line',c1:2,p1:36,c2:5,p2:45,color:C.gold,extend:true,at:2.2,label:'TRENDLINE'},{type:'tag',candle:5,side:'up',color:C.blue,at:3.0,label:'clues agree ✓'}]},
+    // PHASE 3A — the drift candles are now real small candles (6-8u, legible but clearly small)
+    // instead of 1-2u accidental dojis, and the focal body sits AT the 55%-of-frame cap instead of
+    // 81% over it — still 2.8x the drift (relational law ≥1.5x). Ann index unchanged (4).
+    momentum:{caption:'A few small candles, then one <b>big strong green</b> candle shoots up.<br>That power move is <b>momentum</b>.<br>Buyers just took control — the move is starting.',
+      candles:[{o:34,h:40,l:34,c:40},{o:40,h:40,l:33,c:33},{o:33,h:33,l:27,c:27},{o:27,h:39,l:27,c:35},{o:35,h:57,l:35,c:53}],
+      anns:[{type:'tag',candle:4,side:'up',color:C.green,at:1.8,label:'MOMENTUM ↑'}]},
+    // PHASE 3A — opener is a real 12u candle (was a 2u sliver), the push respects the 55% frame cap
+    // (was 80%), and both rest candles are readable 10u reds at ≤⅓ of the push (pullback law ≤0.5x).
+    // Tags gold→sub: gold is reserved boss/portal. Ann indices unchanged (1, 2, 3).
+    pullback:{caption:'First a <b>big green push</b> up.<br>Then price takes a short rest and drifts back down a little.<br>That’s a <b>pullback</b> — not a crash.<br><b>Don’t chase it — wait.</b>',
+      candles:[{o:26,h:38,l:26,c:38},{o:38,h:72,l:38,c:68},{o:68,h:68,l:58,c:58},{o:58,h:58,l:48,c:48}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.6,label:'BIG PUSH ↑'},{type:'tag',candle:2,side:'down',color:C.sub,at:2.4,label:'PULLBACK ↓'},{type:'tag',candle:3,side:'down',color:C.sub,at:2.9,label:'↓'}]},
+    // PHASE 3A — every candle legible (opener 14u, was 2u; rests 12u, were 6/4u) and the
+    // confirmation candle CLOSES 10 units above the momentum high 66 — the break, which is the
+    // entire concept, is now visible from across the room. Ann indices unchanged (1, 2, 4).
+    confirmation:{caption:'After the <b>pullback</b>, a strong green candle <b>closes back up</b> above the last high.<br>That’s your <b>confirmation</b>.<br>Now the setup is real — this is where you enter.',
+      candles:[{o:24,h:38,l:20,c:38},{o:38,h:66,l:38,c:62},{o:62,h:62,l:50,c:50},{o:50,h:50,l:38,c:38},{o:38,h:80,l:38,c:76}],
+      anns:[{type:'tag',candle:1,side:'up',color:C.green,at:1.4,label:'MOMENTUM ↑'},{type:'tag',candle:2,side:'down',color:C.red,at:2.0,label:'PULLBACK ↓'},{type:'tag',candle:4,side:'up',color:C.green,at:2.8,label:'CONFIRMATION ✓ enter here'}]}   /* SHOT 10 (CQ-0023) — pullback labelled in RED, pointing at the red candles */
+  };
+  function mount(canvas,key){
+    const scene=SCENES[key]; if(!scene) return null;
+    const ctx=canvas.getContext('2d'); let raf=0,t0=performance.now(),dpr=1,alive=true,froz=null;
+    function size(){dpr=Math.min(devicePixelRatio||1,2);const r=canvas.getBoundingClientRect();canvas.width=Math.max(2,Math.round(r.width*dpr));canvas.height=Math.max(2,Math.round(r.height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);}
+    function loop(){ if(!alive||!canvas.isConnected){alive=false;return;}
+      const r=canvas.getBoundingClientRect();           // re-measure each frame → robust to initial 0-size + rotation
+      if(r.width>0&&(Math.abs(r.width*dpr-canvas.width)>2||Math.abs(r.height*dpr-canvas.height)>2)) size();
+      try{ draw(ctx,canvas,dpr,scene,froz!=null?froz:(performance.now()-t0)/1000); }catch(e){} raf=requestAnimationFrame(loop); }
+    size(); loop();
+    /* freeze(sec) pins the scene clock so a screenshot is deterministic — the rAF loop keeps
+       running (so resize still re-solves), it just stops advancing time. Test aid only. */
+    /* redraw() re-measures and paints ONE frame synchronously. Test aid: rAF is throttled while a
+       tab/pane is hidden, so a harness that changes the canvas size and waits for the loop can sit
+       there measuring the OLD layout and reporting a pass it never earned. */
+    const redraw=()=>{ size(); try{ draw(ctx,canvas,dpr,scene,froz!=null?froz:(performance.now()-t0)/1000); }catch(e){} };
+    return { replay(){t0=performance.now();froz=null;}, freeze(sec){froz=sec;}, redraw, stop(){alive=false;try{cancelAnimationFrame(raf);}catch(e){}}, resize:size };
+  }
+  /* ══ ANNOTATION LAYOUT ENGINE — Lesson Visual Polish (2026-07-30) ═══════════════════════════
+     BEFORE: every label was drawn at a FIXED pixel offset from its candle — unmeasured and
+     collision-blind. A wide tag ("SELLERS TAKE OVER") ran straight through the next three
+     candles; sweepFlag text ran clean off the canvas; bosFlag measured its own width in
+     whatever font happened to be current and landed ~100px away from the candle it labelled;
+     and red/green text sat on red/green bodies where it simply vanished.
+     AFTER: each label is a MEASURED PLATE positioned by a solver that treats the candles and
+     the already-placed labels as obstacles, prefers the chart's dead space, always stays on
+     canvas, and connects home with a leader line that stops at the plate's EDGE — never
+     through the text. Text is always WHITE on a near-opaque plate; the concept colour moves to
+     the accent bar, the plate border and the leader, so a label stays legible over anything and
+     never carries its meaning by colour alone (Accessibility Law, TES v1.1).
+     Layout is solved ONCE per canvas size and cached, so labels never jitter mid-animation. */
+  /* ══ SOFT SCRIM — the chosen label style (founder pick, 2026-07-30) ═══════════════════
+     No box, no border, no coloured bar: a soft dark wash behind haloed white text, with a
+     coloured ARROW running from the words to the thing they name. Beat a bordered plate (too
+     heavy) and pure type (floats on dense scenes). Two non-negotiables survive from the plate:
+     the text stays legible over ANY candle, and the concept colour never lives in the text alone.
+     Type scale is responsive — a phone gets bigger labels, not smaller ones. */
+  let PL={h:21,padX:11,gap:14,r:9};
+  let LFS=[13,12];                       // [focal, secondary] px — set per draw from canvas width
+  const ca=(h,a)=>{const n=parseInt(h.slice(1),16);return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';};
+  function _rr(x,X,Yy,W,H,R){x.beginPath();if(x.roundRect)x.roundRect(X,Yy,W,H,R);else x.rect(X,Yy,W,H);}   /* CQ-LABEL-CHROME — annotation plates only; candle bodies stay radius-0 (VMC law) */
+  function lFont(x,tier){x.font='800 '+(tier===1?LFS[0]:LFS[1])+'px '+FT;}
+  /* Long labels WRAP rather than shrink. Two short lines read faster on a phone than one long
+     one AND they fit where a single line cannot (below ~300px the longest labels could not be
+     placed at all). Break on the label's own separator when it has one — most were authored as
+     "TERM · explanation", which is already exactly the right break. */
+  function lLines(x,text,tier,maxW){
+    lFont(x,tier);
+    if(x.measureText(text).width<=maxW) return [text];
+    const seps=[' · ',' → ',' — '];
+    for(let i=0;i<seps.length;i++){const at=text.indexOf(seps[i]);
+      if(at>0) return [text.slice(0,at),text.slice(at+seps[i].length)];}
+    const wds=text.split(' '); if(wds.length<2) return [text];
+    let bi=1,bd=1e9;
+    for(let i=1;i<wds.length;i++){
+      const d=Math.abs(wds.slice(0,i).join(' ').length-wds.slice(i).join(' ').length);
+      if(d<bd){bd=d;bi=i;}}
+    return [wds.slice(0,bi).join(' '),wds.slice(bi).join(' ')];
+  }
+  function lLead(tier){return Math.round((tier===1?LFS[0]:LFS[1])*1.18);}
+  function lSize(x,text,tier,maxW){
+    const lines=lLines(x,text,tier,maxW); lFont(x,tier);
+    let w=0; for(let i=0;i<lines.length;i++) w=Math.max(w,x.measureText(lines[i]).width);
+    return {lines:lines,w:Math.ceil(w)+PL.padX*2,h:PL.h+(lines.length-1)*lLead(tier)};
+  }
+  /* Dark halo so pure-type styles stay readable over a candle without any box around them. */
+  function haloText(x,text,tx,ty,tier){
+    lFont(x,tier);x.textAlign='left';x.textBaseline='middle';
+    x.save();x.lineJoin='round';x.miterLimit=2;
+    x.strokeStyle='rgba(3,6,12,0.94)';x.lineWidth=4;x.strokeText(text,tx,ty);
+    x.strokeStyle='rgba(3,6,12,0.80)';x.lineWidth=2.2;x.strokeText(text,tx,ty);
+    x.restore();
+    x.fillStyle='#fff';x.fillText(text,tx,ty);x.textBaseline='alphabetic';
+  }
+  function hitR(a,b,p){return !(a.x+a.w+p<=b.x||b.x+b.w+p<=a.x||a.y+a.h+p<=b.y||b.y+b.h+p<=a.y);}
+  function fitR(r,B){return r.x>=B.x0&&r.x+r.w<=B.x1&&r.y>=B.y0&&r.y+r.h<=B.y1;}
+  /* Walk outward from the anchor (straight away first, then sideways into dead space) and take
+     the cheapest position that touches neither a candle nor an already-placed label. */
+  const CLR=4;   // minimum clear gap a label keeps from any candle — "never touches" (criterion 1)
+  const olap=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*
+                    Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));
+  /* LAST RESORT. When nothing is clear, choose the position that COVERS THE LEAST — words over
+     words weighted worst, then candles. The old fallback dumped the label at the frame edge
+     without looking, which is exactly how the only surviving overlaps got through at 260px. */
+  function leastBad(w,h,ax,ay,dir,ob,placed,B){
+    let best=null,bs=1e18;
+    for(let di=0;di<2;di++){ const d=di?-dir:dir;
+      for(let dy=PL.gap;dy<=190;dy+=5) for(let k=0;k<=26;k++){
+        const offs=k?[-k*7,k*7]:[0];
+        for(let q=0;q<offs.length;q++){
+          const r={x:clamp(ax+offs[q]-w/2,B.x0,B.x1-w),y:clamp(d<0?ay-dy-h:ay+dy,B.y0,B.y1-h),w:w,h:h};
+          let sc=dy*0.15+di*40;
+          for(let z=0;z<placed.length;z++) sc+=olap(r,placed[z])*3;
+          for(let z=0;z<ob.length;z++)     sc+=olap(r,ob[z]);
+          if(sc<bs){bs=sc;best=r;}
+        }
+      }
+    }
+    return best||{x:clamp(ax-w/2,B.x0,B.x1-w),y:dir<0?B.y0:B.y1-h,w:w,h:h};
+  }
+  function solve(w,h,ax,ay,dir,ob,placed,B,soft){
+    const run=(obs,d)=>{
+      let best=null,bc=1e9;
+      for(let dy=PL.gap;dy<=170;dy+=4){
+        if(dy>=bc) break;
+        for(let k=0;k<=22;k++){
+          const offs=k?[-k*8,k*8]:[0];
+          for(let q=0;q<offs.length;q++){
+            const cost=dy+Math.abs(offs[q])*0.85; if(cost>=bc) continue;
+            const r={x:ax+offs[q]-w/2,y:d<0?ay-dy-h:ay+dy,w:w,h:h};
+            if(!fitR(r,B)) continue;
+            let bad=false;
+            for(let z=0;z<obs.length&&!bad;z++)   if(hitR(r,obs[z],CLR)) bad=true;
+            for(let z=0;z<placed.length&&!bad;z++) if(hitR(r,placed[z],6)) bad=true;
+            if(bad) continue;
+            best=r;bc=cost;
+          }
+        }
+      }
+      return best;
+    };
+    const withSoft=soft&&soft.length?ob.concat(soft):null;
+    // preferred side clear of everything → preferred side → the other side. null = nothing clean.
+    return (withSoft&&run(withSoft,dir))||run(ob,dir)||
+           (withSoft&&run(withSoft,-dir))||run(ob,-dir)||null;
+  }
+  function solveLine(w,h,ly,ob,placed,B,soft){
+    const run=obs=>{
+      const test=r=>{
+        if(!fitR(r,B)) return false;
+        for(let q=0;q<obs.length;q++)  if(hitR(r,obs[q],3)) return false;
+        for(let q=0;q<placed.length;q++) if(hitR(r,placed[q],5)) return false;
+        return true;};
+      const y0=clamp(ly-h/2,B.y0,B.y1-h);
+      // 1) ride the line — first clear span, scanning left→right (chart-book convention)
+      for(let x=B.x0;x<=B.x1-w;x+=6){const r={x:x,y:y0,w:w,h:h};if(test(r)) return r;}
+      // 2) the line is covered end to end — step off it, nearest offset first, full-width scan
+      for(let d=14;d<=140;d+=5) for(let sg=-1;sg<=1;sg+=2){
+        const y=clamp(y0+sg*d,B.y0,B.y1-h);
+        for(let x=B.x0;x<=B.x1-w;x+=6){const r={x:x,y:y,w:w,h:h};if(test(r)) return r;}
+      }
+      return null;
+    };
+    const withSoft=soft&&soft.length?ob.concat(soft):null;
+    return (withSoft&&run(withSoft))||run(ob)||null;
+  }
+  function plate(x,r,lines,accent,tier,alpha){
+    x.save();x.globalAlpha=alpha;
+    x.fillStyle='rgba(5,9,16,0.72)';_rr(x,r.x,r.y,r.w,r.h,PL.r);x.fill();
+    const lh=lLead(tier),y0=r.y+r.h/2-(lines.length-1)*lh/2+0.5;
+    for(let i=0;i<lines.length;i++) haloText(x,lines[i],r.x+PL.padX,y0+i*lh,tier);
+    x.restore();
+  }
+
+
+  /* Leader: a dot on the candle → a thin line to the NEAREST plate edge. Never crosses the text. */
+  /* The connector is an ARROW, not a hairline: a short shaft leaving the label's edge and a
+     solid head landing ON the candle/level it describes. A beginner must never have to guess
+     which candle a word is about — criterion 4 of the founder's audit brief. */
+  function leader(x,ax,ay,r,accent,alpha,noHead){
+    const mx=r.x+r.w/2,my=r.y+r.h/2; let sx,sy;
+    if(ay>r.y-2&&ay<r.y+r.h+2){ sx=(ax<mx)?r.x-1:r.x+r.w+1; sy=my; }
+    else { sx=clamp(ax,r.x+10,r.x+r.w-10); sy=(ay<my)?r.y-1:r.y+r.h+1; }
+    const dx=ax-sx,dy=ay-sy,len=Math.hypot(dx,dy); if(len<5) return;
+    const ux=dx/len,uy=dy/len,HD=7;
+    const hx=ax-ux*2,hy=ay-uy*2;                       // tip just off the target, never inside it
+    x.save();x.globalAlpha=alpha;x.lineCap='round';
+    x.strokeStyle=ca(accent,0.92);x.lineWidth=1.7;
+    x.beginPath();x.moveTo(sx,sy);x.lineTo(hx-ux*HD*0.85,hy-uy*HD*0.85);x.stroke();
+    if(!noHead){
+      const a=Math.atan2(uy,ux);
+      x.fillStyle=accent;x.beginPath();x.moveTo(hx,hy);
+      x.lineTo(hx-HD*Math.cos(a-0.44),hy-HD*Math.sin(a-0.44));
+      x.lineTo(hx-HD*Math.cos(a+0.44),hy-HD*Math.sin(a+0.44));
+      x.closePath();x.fill();
+    }
+    x.restore();
+  }
+
+  /* Solve every label for this scene at this canvas size. Uses FINAL candle geometry (not the
+     animated in-progress geometry) so a label never moves once the chart has printed. */
+  function buildLayout(x,scene,G){
+    const cs=G.cs,anns=scene.anns||[],ob=[],placed=[],out=[],soft=[];
+    for(let i=0;i<cs.length;i++){const c=cs[i],ax=G.cx(i);ob.push({x:ax-G.bw/2-1,y:G.Y(c.h),w:G.bw+2,h:Math.max(3,G.Y(c.l)-G.Y(c.h))});}
+    /* SOFT obstacles — chart furniture a label should sit clear of when it can, but which must
+       never strand a label at the frame edge if it can't (criterion 2: "or other objects").
+       Zone rectangles (order block, risk/reward bands) and the shell's +5 reward float. */
+    for(let k=0;k<anns.length;k++){const a=anns[k];
+      if(a.type==='zone'){
+        const xa=G.cx(a.from)-G.bw*0.6,xb=G.cx(a.to)+G.bw*0.6;
+        const yt=G.Y(Math.max(a.y1,a.y2)),yb=G.Y(Math.min(a.y1,a.y2));
+        soft.push({x:xa,y:yt,w:xb-xa,h:Math.max(3,yb-yt),zone:k});
+      } else if(a.type==='shell'&&cs[a.candle]){
+        const ax=G.cx(a.candle),sy=G.Y(cs[a.candle].h)-13;
+        soft.push({x:ax-22,y:sy-46,w:44,h:34});      // where "+5" rises
+      }}
+    const B={x0:7,x1:G.Wc-7,y0:7,y1:G.Hc-7};   // never let a plate sit flush against the frame
+    // wrap once a label would eat most of the frame — keeps every lesson scannable at a glance
+    const MAXW=Math.min((B.x1-B.x0)-PL.padX*2-4,(B.x1-B.x0)*0.60);
+    /* GRACEFUL DEGRADATION. On a 320px phone the real lesson canvas is only ~283px wide and the
+       candles fill nearly all of it, so a single-shot placement had nowhere to go and fell back
+       to a blind frame-edge dump. Instead, step down: place at the natural size, else force a
+       wrap, else drop a type tier, and only then accept the least-covering position. Every rung
+       is still measured and collision-tested — the ladder never gives up on the reader. */
+    const RUNGS=[[0,1],[1,0.58],[1,0.44]];
+    function place(text,tier,ax,ay,dir,onLine,ly,softList){
+      for(let k=0;k<RUNGS.length;k++){
+        const t=tier+RUNGS[k][0]>2?2:tier+RUNGS[k][0], z=lSize(x,text,t,MAXW*RUNGS[k][1]);
+        const r=onLine?solveLine(z.w,z.h,ly,ob,placed,B,softList)
+                      :solve(z.w,z.h,ax,ay,dir,ob,placed,B,softList);
+        if(r) return {r:r,lines:z.lines,tier:t};
+      }
+      const z=lSize(x,text,2,MAXW*0.44);
+      return {r:leastBad(z.w,z.h,onLine?clamp(z.w/2+B.x0,B.x0,B.x1):ax,onLine?ly:ay,
+                         onLine?-1:dir,ob,placed,B),lines:z.lines,tier:2};
+    }
+    for(let i=0;i<anns.length;i++){
+      const a=anns[i],o={},c=(a.candle!=null)?cs[a.candle]:null,ax=(a.candle!=null)?G.cx(a.candle):0;
+      if(a.type==='tag'||a.type==='hh'||a.type==='hl'){
+        const up=(a.type==='hh')||(a.type!=='hl'&&a.side!=='down');
+        o.col=(a.type==='hh'||a.type==='hl')?C.green:(a.color||C.blue);
+        o.tier=(a.type==='hl')?2:((o.col===C.green||o.col===C.red)?1:2);
+        o.text=a.label;o.ax=ax;o.ay=up?G.Y(c.h):G.Y(c.l);
+        const P=place(o.text,o.tier,ax,o.ay,up?-1:1,false,0,soft);o.lines=P.lines;o.tier=P.tier;o.r=P.r;
+      } else if(a.type==='sweepFlag'){
+        o.text=a.text||(a.fake?'FAKEOUT → closed back below':'SWEPT → rejected');
+        o.col=a.color||C.red;o.tier=1;o.ax=ax;o.ay=G.Y(c.l);
+        const P=place(o.text,1,ax,o.ay,1,false,0,soft);o.lines=P.lines;o.tier=P.tier;o.r=P.r;
+      } else if(a.type==='bosFlag'){
+        o.text=a.label;o.col=C.green;o.tier=1;o.ax=ax;o.ay=G.Y(Math.max(c.o,c.c));
+        const P=place(o.text,1,ax,o.ay,-1,false,0,soft);o.lines=P.lines;o.tier=P.tier;o.r=P.r;
+      } else if(a.type==='shell'){
+        o.sx=ax;o.sy=G.Y(c.h)-13;ob.push({x:ax-15,y:o.sy-15,w:30,h:30});
+        o.text=a.label;o.col=C.shell;o.tier=1;o.ax=ax;o.ay=o.sy-13;
+        const P=place(o.text,1,ax,o.ay,-1,false,0,soft);o.lines=P.lines;o.tier=P.tier;o.r=P.r;
+      } else if(a.type==='hline'||a.type==='swingHigh'||a.type==='eqHighs'){
+        o.col=(a.type==='swingHigh')?C.sub:a.color;o.tier=2;o.text=a.label;o.ly=G.Y(a.y);
+        const P=place(o.text,2,0,0,-1,true,o.ly,soft.filter(q=>q.zone!==i));o.lines=P.lines;o.tier=P.tier;o.r=P.r;
+      } else if(a.type==='zone'&&a.label){
+        o.col=a.color;o.tier=2;o.text=a.label;o.ly=G.Y(Math.max(a.y1,a.y2));
+        const P=place(o.text,2,0,0,-1,true,o.ly,soft.filter(q=>q.zone!==i));o.lines=P.lines;o.tier=P.tier;o.r=P.r;
+      } else if(a.type==='line'&&a.label){
+        o.col=a.color;o.tier=2;o.text=a.label;o.ax=G.cx(a.c1);o.ay=G.Y(a.p1);
+        const P=place(o.text,2,o.ax,o.ay,-1,false,0,soft);o.lines=P.lines;o.tier=P.tier;o.r=P.r;
+      }
+      if(o.r) placed.push(o.r);
+      out.push(o);
+    }
+    scene._ob=ob; scene._B=B;   // exposed so scripts/lesson_label_gate.js can assert no overlaps
+    return out;
+  }
+  function draw(ctx,cv,dpr,scene,rawT){
+    const Wc=cv.width/dpr,Hc=cv.height/dpr;
+    /* MOBILE-FIRST TYPE — most players are on a phone, so a narrow canvas gets the LARGER
+       relative label, never a shrunken one. Only a genuinely tiny canvas steps down. */
+    LFS = Wc<292 ? [12,11] : (Wc<430 ? [13,12] : [13.5,12.5]);
+    PL.h = Math.round(LFS[0]+8);
+    /* Reserve sky/floor for the labels rather than letting them land on the candles — the brief:
+       "use the empty space, let the diagram breathe". Only pay for the margin a scene needs. */
+    const _an=scene.anns||[];
+    const _up=_an.some(a=>(a.type==='tag'&&a.side!=='down')||a.type==='hh'||a.type==='bosFlag'||a.type==='shell'||a.type==='line');
+    const _dn=_an.some(a=>(a.type==='tag'&&a.side==='down')||a.type==='hl'||a.type==='sweepFlag');
+    const padX=26,padTop=22+(_up?20:0),padBot=18+(_dn?20:0);
+    const x0=padX,x1=Wc-padX,yTop=padTop,yBot=Hc-padBot,cs=scene.candles,n=cs.length;
+    let lo=1e9,hi=-1e9; cs.forEach(c=>{lo=Math.min(lo,c.l,c.o,c.c);hi=Math.max(hi,c.h,c.o,c.c);});
+    (scene.anns||[]).forEach(a=>{if(a.y!=null){lo=Math.min(lo,a.y);hi=Math.max(hi,a.y);}});
+    const pad=(hi-lo)*0.08; lo-=pad; hi+=pad;
+    if((scene.anns||[]).some(a=>a.type==='shell')) hi+=(hi-lo)*0.20;
+    const Y=v=>yBot-(v-lo)/(hi-lo)*(yBot-yTop);
+    /* FOUNDER 2026-07-23: "make them closer together like the real chart". The old rule capped the
+       BODY at 48px while the slot stayed as wide as the panel — with a 5-candle scene the slot is ~140px,
+       so the effective body:slot ratio collapsed to ~0.34 and the candles floated far apart. Cap the SLOT
+       instead and centre the band: the body:slot ratio is then honoured, and the chart reads as a chart. */
+    const _maxSlot=64,_bandW=Math.min(x1-x0,_maxSlot*n),_bx0=x0+((x1-x0)-_bandW)/2;
+    const slot=_bandW/n,bw=slot*0.80,cx=i=>_bx0+slot*(i+0.5);
+    const printStep=0.26,allIn=n*printStep,t=rawT%(allIn+5.4);
+    /* Solve the label layout once per canvas size, then reuse it every frame — no jitter, no cost. */
+    const _lk=Math.round(Wc)+'x'+Math.round(Hc);
+    if(scene._layKey!==_lk){ try{ scene._lay=buildLayout(ctx,scene,{Wc:Wc,Hc:Hc,cs:cs,bw:bw,cx:cx,Y:Y}); scene._layKey=_lk; }catch(e){ scene._lay=null; } }
+    const LAY=scene._lay||[];
+    ctx.clearRect(0,0,Wc,Hc);
+    ctx.strokeStyle=C.grid; ctx.lineWidth=1;
+    for(let g=0;g<=4;g++){const gy=yTop+g/4*(yBot-yTop);ctx.beginPath();ctx.moveTo(x0-8,gy);ctx.lineTo(x1+8,gy);ctx.stroke();}
+    for(let i=0;i<n;i++){
+      const appear=i*printStep,p=easeOut((t-appear)/printStep); if(p<=0) continue;
+      const c=cs[i],up=c.c>=c.o,x=cx(i),col=c.doji?C.dojiBody:(up?C.green:C.red),edge=c.doji?C.dojiEdge:(up?C.greenEdge:C.redEdge),wcol=c.doji?C.dojiWick:(up?C.greenWick:C.redWick);   /* PHASE 3A: authored doji renders neutral, never directional */
+      const bodyTopV=Math.max(c.o,c.c),bodyBotV=Math.min(c.o,c.c),curTop=lerp(c.o,bodyTopV,p),curBot=lerp(c.o,bodyBotV,p);
+      const wp=c.sweep?easeOut((t-appear-printStep*0.5)/(printStep*1.4)):p,curHi=lerp(bodyTopV,c.h,wp),curLo=lerp(bodyBotV,c.l,p);
+      ctx.strokeStyle=wcol; ctx.lineWidth=c.sweep?3:1.6; ctx.beginPath(); ctx.moveTo(x,Y(curHi)); ctx.lineTo(x,Y(curLo)); ctx.stroke();
+      const bt=Y(curTop),bb=Y(curBot); ctx.fillStyle=col; ctx.fillRect(x-bw/2,bt,bw,Math.max(2,bb-bt));
+      ctx.strokeStyle=edge; ctx.lineWidth=1; ctx.strokeRect(x-bw/2+.5,bt+.5,bw-1,Math.max(2,bb-bt)-1);
+      if(!c.doji){ ctx.fillStyle=up?'rgba(93,237,181,.5)':'rgba(255,120,130,.45)'; ctx.fillRect(x-bw/2+1,bt+1,Math.max(1.5,bw*.16),Math.max(1,(bb-bt)*.9)); }   /* PHASE 3A: no directional sheen on a doji */
+      c._x=x; c._hiY=Y(c.h); c._loY=Y(c.l); c._bt=bt; c._bb=bb;
+    }
+    for(let ai=0;ai<(scene.anns||[]).length;ai++){
+      const a=scene.anns[ai],L=LAY[ai]||{};
+      const ap=easeOut((t-a.at)/0.55); if(ap<=0) continue; ctx.globalAlpha=ap;
+      /* ── the geometry each annotation owns (levels, zones, trendlines, the shell) ── */
+      if(a.type==='eqHighs'){const xa=cx(a.from)-bw*0.7,xb=cx(a.to)+bw*0.7,y=Y(a.y);ctx.strokeStyle=a.color;ctx.lineWidth=1.6;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(xa,y);ctx.lineTo(xb,y);ctx.stroke();ctx.setLineDash([]);}
+      else if(a.type==='hline'){const y=Y(a.y);ctx.strokeStyle=a.color;ctx.lineWidth=1.7;ctx.setLineDash([7,4]);ctx.beginPath();ctx.moveTo(x0-8,y);ctx.lineTo(x1+8,y);ctx.stroke();ctx.setLineDash([]);}
+      else if(a.type==='swingHigh'){const y=Y(a.y);ctx.strokeStyle=C.sub;ctx.lineWidth=1.4;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(x0-8,y);ctx.lineTo(x1+8,y);ctx.stroke();ctx.setLineDash([]);}
+      else if(a.type==='zone'){const xa=cx(a.from)-bw*0.6,xb=cx(a.to)+bw*0.6,yt=Y(Math.max(a.y1,a.y2)),yb=Y(Math.min(a.y1,a.y2)),sa=ctx.globalAlpha;ctx.globalAlpha=sa*0.16;ctx.fillStyle=a.color;ctx.fillRect(xa,yt,xb-xa,yb-yt);ctx.globalAlpha=sa;ctx.strokeStyle=a.color;ctx.lineWidth=1.2;ctx.strokeRect(xa,yt,xb-xa,yb-yt);}
+      else if(a.type==='line'){const xA=cx(a.c1),xB=a.extend?(x1+8):cx(a.c2),yA=Y(a.p1),sl=(Y(a.p2)-yA)/((cx(a.c2)-xA)||1),yB=yA+sl*(xB-xA);ctx.strokeStyle=a.color;ctx.lineWidth=1.8;if(a.dash){ctx.setLineDash([6,4]);}ctx.beginPath();ctx.moveTo(xA,yA);ctx.lineTo(xB,yB);ctx.stroke();ctx.setLineDash([]);}
+      else if(a.type==='shell'){const c=cs[a.candle];if(c&&L.sy!=null){drawShell(ctx,L.sx,L.sy,11,18+Math.sin(t*4)*9);const gp=t-(a.at+0.9);if(gp>0){const rise=easeOut(gp/0.9),fade=clamp(1-(gp-0.9)/1.2,0,1);ctx.globalAlpha=ap*fade;ctx.fillStyle=C.shell;ctx.font='900 14px '+FT;ctx.textAlign='center';ctx.fillText('+5 \u{1F48E}',L.sx,L.sy-16-rise*16);ctx.globalAlpha=ap;}}}
+      ctx.globalAlpha=1;
+    }
+    /* ── PASS 2: every label, ON TOP of all geometry ──────────────────────────────────────
+       Labels must be painted after ALL chart furniture, not interleaved with it. Drawing each
+       annotation's geometry and label together let a later annotation's full-width level line
+       strike straight through an earlier annotation's text (the "rr" scene: the ENTRY line ran
+       through the 1R RISK plate). The chart is the hero; the labels sit above it, always. */
+    for(let ai=0;ai<(scene.anns||[]).length;ai++){
+      const a=scene.anns[ai],L=LAY[ai]||{};
+      const ap=easeOut((t-a.at)/0.55); if(ap<=0||!L.r||!L.text) continue;
+      if(L.ax!=null) leader(ctx,L.ax,L.ay,L.r,L.col,ap);
+      /* A level label only needs a connector when its line does NOT already pass through the
+         plate. Testing the plate's CENTRE instead drew a pointless 8px stub whenever the label
+         straddled its own line (visible on `support`). */
+      else if(L.ly!=null&&(L.ly<L.r.y-1||L.ly>L.r.y+L.r.h+1)) leader(ctx,clamp(L.r.x+L.r.w/2,L.r.x+7,L.r.x+L.r.w-7),L.ly,L.r,L.col,ap,true);
+      plate(ctx,L.r,L.lines||[L.text],L.col,L.tier,ap);
+      ctx.globalAlpha=1;
+    }
+  }
+  /* `pill()` retired 2026-07-30 — superseded by plate()/solve(); it placed labels blind. */
+  function arrow(ctx,x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1),s=6;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-s*Math.cos(a-0.5),y2-s*Math.sin(a-0.5));ctx.lineTo(x2-s*Math.cos(a+0.5),y2-s*Math.sin(a+0.5));ctx.closePath();ctx.fillStyle=ctx.strokeStyle;ctx.fill();}
+  function drawShell(ctx,x,y,r,glow){ctx.save();const halo=ctx.createRadialGradient(x,y,0,x,y,r*2.4);halo.addColorStop(0,'rgba(54,217,224,.45)');halo.addColorStop(1,'rgba(54,217,224,0)');ctx.fillStyle=halo;ctx.beginPath();ctx.arc(x,y,r*2.4,0,7);ctx.fill();ctx.shadowColor=C.shell;ctx.shadowBlur=glow||14;const g=ctx.createLinearGradient(x,y-r,x,y+r);g.addColorStop(0,'#bff6fb');g.addColorStop(.5,C.shell);g.addColorStop(1,'#1aa6ad');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x,y-r);ctx.lineTo(x+r*0.9,y-r*0.15);ctx.lineTo(x,y+r);ctx.lineTo(x-r*0.9,y-r*0.15);ctx.closePath();ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-r*0.4,y-r*0.2);ctx.lineTo(x,y-r*0.7);ctx.lineTo(x+r*0.4,y-r*0.2);ctx.stroke();ctx.restore();}
+  return { mount, has:k=>!!SCENES[k], SCENES };
+})();
+const KEYS=["liquidity", "support", "resistance", "uptrend", "downtrend", "sfp", "head_shoulders", "double_bottom", "choch", "vwap", "ob", "trendline", "htf", "bos", "fake", "candle", "doji", "longshort", "long", "short", "wait_close", "trade_win", "trade_loss", "sl", "tp", "rr", "leverage", "bullflag", "bearflag", "confluence", "momentum", "pullback", "confirmation"];
+const g=document.getElementById('g'),MOUNTS=[];
+KEYS.forEach(k=>{
+  const d=document.createElement('div');d.className='card';
+  d.innerHTML='<div class="key">'+k.toUpperCase()+'</div><canvas></canvas>'+
+              '<div class="cap">'+(LessonChart.SCENES[k].caption||'')+'</div>';
+  g.appendChild(d);
+  MOUNTS.push(LessonChart.mount(d.querySelector('canvas'),k));
+});
+/* Restart every scene together, then settle past the last reveal (max `at` is 3.6s) so a
+   screenshot shows EVERY annotation at once. Deterministic — no phase luck. */
+window.__showAll=function(sec){
+  MOUNTS.forEach(m=>{try{m.freeze(sec==null?4.6:sec);m.redraw();}catch(e){}});
+  return new Promise(r=>setTimeout(()=>r('frozen at t='+(sec==null?4.6:sec)+'s — every annotation revealed'),120));
+};
+/* Set every canvas to `w` CSS px and force a synchronous re-measure + re-solve.
+   Do NOT rely on the rAF loop here: it is throttled while the pane is hidden, so a sweep that
+   just sets a width and waits will silently re-measure the OLD layout and report a false pass. */
+window.__setWidth=function(w){
+  document.querySelectorAll('.card').forEach(e=>e.style.width=w+'px');
+  document.querySelectorAll('canvas').forEach(e=>e.style.width=w+'px');
+  MOUNTS.forEach(m=>{try{m.freeze(4.6);m.redraw();}catch(e){}});
+  const cv=document.querySelector('canvas');
+  return {asked:w, measured:Math.round(cv.getBoundingClientRect().width),
+          solvedFor:LessonChart.SCENES[KEYS[0]]._layKey};
+};
+/* ── AUDIT — the founder's seven criteria, asserted against the layout the engine actually
+   solved (scene._lay) and the obstacle list it actually used (scene._ob). This tests the
+   shipped code, not a re-implementation of it.
+     1 no text TOUCHES a candle   → require a real gap, not merely zero overlap
+     2 no text overlaps candles / other words / other objects (zones, the reward float)
+     3 text always visible and clearly identifies its target → on-frame + anchored
+     4 arrows from term to candle are visible → every anchored label carries one
+     7 mobile → the caller sweeps widths and re-runs this                              */
+window.__audit=function(minGap){
+  const GAP = (minGap==null?3:minGap);
+  const hit=(a,b,p)=>!(a.x+a.w+p<=b.x||b.x+b.w+p<=a.x||a.y+a.h+p<=b.y||b.y+b.h+p<=a.y);
+  const clr=(a,b)=>Math.max(b.x-(a.x+a.w), a.x-(b.x+b.w), b.y-(a.y+a.h), a.y-(b.y+b.h));
+  const bad=[]; let labels=0, arrows=0, tightest=1e9, tightAt='';
+  KEYS.forEach(k=>{
+    const s=LessonChart.SCENES[k],lay=s._lay,ob=s._ob||[],B=s._B;
+    if(!lay){bad.push({scene:k,issue:'NO LAYOUT SOLVED'});return;}
+    const rects=lay.filter(o=>o&&o.r); labels+=rects.length;
+    rects.forEach((o,i)=>{
+      // 1 + 2 — clearance from every candle
+      ob.forEach((c,ci)=>{
+        const g=clr(o.r,c);
+        if(g<tightest){tightest=g;tightAt=k+':"'+o.text+'"';}
+        if(hit(o.r,c,0))        bad.push({scene:k,label:o.text,issue:'OVERLAPS candle '+ci});
+        else if(g<GAP)          bad.push({scene:k,label:o.text,issue:'TOUCHES candle '+ci+' (gap '+g.toFixed(1)+'px < '+GAP+')'});
+      });
+      // 2 — against other words
+      rects.forEach((q,j)=>{ if(j>i&&hit(o.r,q.r,0)) bad.push({scene:k,label:o.text,issue:'OVERLAPS label "'+q.text+'"'}); });
+      // 3 — on-frame
+      if(o.r.x<B.x0-0.5||o.r.x+o.r.w>B.x1+0.5||o.r.y<B.y0-0.5||o.r.y+o.r.h>B.y1+0.5)
+        bad.push({scene:k,label:o.text,issue:'OUT OF FRAME'});
+      // 4 — an anchored label must carry a visible arrow to its target
+      if(o.ax!=null){
+        const mx=o.r.x+o.r.w/2,my=o.r.y+o.r.h/2;
+        const reach=Math.hypot(o.ax-mx,o.ay-my);
+        if(reach<6) bad.push({scene:k,label:o.text,issue:'arrow too short to read ('+reach.toFixed(1)+'px)'});
+        else arrows++;
+      }
+    });
+  });
+  return {scenes:KEYS.length, labels:labels, arrows:arrows,
+          minCandleGap:+tightest.toFixed(1), tightest:tightAt, failures:bad};
+};
+/* Smallest label text actually rendered — criterion 7 guards against tiny type on phones. */
+window.__typeScale=function(){
+  const cv=document.querySelector('canvas'), x=cv.getContext('2d');
+  const before=x.font; const sizes=new Set();
+  KEYS.forEach(k=>(LessonChart.SCENES[k]._lay||[]).forEach(o=>{ if(o&&o.tier) sizes.add(o.tier); }));
+  x.font=before;
+  return {tiersInUse:[...sizes].sort(), canvasWidth:Math.round(cv.getBoundingClientRect().width)};
+};
+</script></body></html>

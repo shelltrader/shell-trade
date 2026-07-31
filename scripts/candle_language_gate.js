@@ -50,6 +50,14 @@ function census() {
   // Exclude the BUILD_TAG changelog string: it NARRATES past fixes in prose and names hexes as history,
   // not as live candle code. Counting it would make the gate lie (and grow every time we write a changelog).
   s = s.replace(/const BUILD_TAG = '[\s\S]*?';\s*\/\//, "const BUILD_TAG = '';//");
+  /* `rounded_candle` counts roundRect() as a proxy for "someone rounded a candle body". A rounded
+     rect drawn for LABEL CHROME (an annotation plate behind text) is not a candle, and counting it
+     made the gate fire on the 2026-07-30 lesson-label pass — a false positive that would have been
+     "fixed" by re-baselining, which silently raises the ceiling for real regressions too.
+     A line may opt out ONLY by carrying the explicit marker below. That keeps the ratchet honest:
+     the exemption is deliberate, greppable, and review-visible — a candle renderer cannot acquire
+     it by accident, it would have to state a falsehood in a comment. */
+  s = s.split('\n').filter(l => !l.includes('CQ-LABEL-CHROME')).join('\n');
   const counts = {};
   for (const [k, sig] of Object.entries(SIGNALS)) counts[k] = (s.match(sig.re) || []).length;
   return counts;

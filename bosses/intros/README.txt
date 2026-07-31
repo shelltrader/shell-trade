@@ -10,12 +10,30 @@ Each clip is named after the SAME number as that boss's portrait image. So the
 clip that plays for the boss whose portrait is  bosses/boss-3.webp  must be named
 bosses/intros/boss-3.mp4 .
 
-READY NOW — the first 5 (clips you've generated):
-  boss-0.mp4   The Sprat Dealer        (The Casino Floor)
-  boss-1.mp4   The Reversal Eel        (Hall of Mirrors)
-  boss-2.mp4   The Trend Crab          (The Grid)
-  boss-3.mp4   The Structure Serpent   (The Deep)
-  boss-4.mp4   The VWAP Oracle         (The Haunt)
+GUARDIANS ARE NUMBERED 1-11 (build 300). There is NO boss 0. The number in the filename IS
+the Guardian number the player sees in the HUD, so "Guardian 1" is boss-1.mp4. The full roster,
+verified against BOSS_CAST in chart-quest.html:
+
+   1  THE GAMBLER              (Hall of Risks)      <- the FIRST boss
+   2  THE FALSE BREAKOUT EEL   (Hall of Mirrors)
+   3  THE TREND CRAB           (The Grid)
+   4  THE STRUCTURE SERPENT    (The Deep)
+   5  THE ORDER-BLOCK GOLEM
+   6  THE RISK HYDRA
+   7  THE VWAP ORACLE
+   8  THE MARGIN KING
+   9  THE TIMEFRAME TITAN
+  10  THE CONFLUENCE KRAKEN
+  11  THE MARKET MAKER         (The Abyss)          <- the FINAL challenge
+
+DEFEAT / REWARD CLIPS  →  ../outros/
+----------------------------------------------------------------------------
+Clips that play AFTER a Guardian falls live in bosses/outros/ and are listed in
+BOSS_OUTRO_VIDEOS in chart-quest.html (level → array of clips, played back-to-back
+fullscreen over the victory card, then the reward ceremony runs). Currently:
+  boss-1-defeat.mp4    The Gambler's defeat        (plays first)
+  finn-journal.mp4     Finn receives the Journal   (transitions straight out of the defeat)
+Adding a level to BOSS_OUTRO_VIDEOS is the ONLY code change needed to wire new outro clips.
 
 ADD LATER (leave empty for now — the game falls back to the still portrait + the
 existing entrance animation for any boss without a clip):

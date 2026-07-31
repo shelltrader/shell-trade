@@ -119,10 +119,10 @@ function run() {
   {
     const hasBossEngine = /function openBoss\s*\(/.test(s) && /function bossRound\s*\(/.test(s);
     const missing = [];
-    for (let i = 0; i <= 10; i++) if (!['png', 'jpg', 'jpeg', 'webp'].some(e => exists(`bosses/boss-${i}.${e}`))) missing.push(i);
+    for (let i = 1; i <= 11; i++) if (!['png', 'jpg', 'jpeg', 'webp'].some(e => exists(`bosses/boss-${i}.${e}`))) missing.push(i);
     const ok = hasBossEngine && missing.length === 0;
     add('5', 'Bosses load (openBoss/bossRound exam + 11 boss art)', ok ? 'PASS' : 'FAIL',
-      ok ? 'boss exam engine (openBoss + bossRound) present; boss-0..10 art present' : `bossEngine=${hasBossEngine} missingBossArt=[${missing}]`);
+      ok ? 'boss exam engine (openBoss + bossRound) present; boss-1..11 art present' : `bossEngine=${hasBossEngine} missingBossArt=[${missing}]`);
   }
 
   // 6 — save init
@@ -156,6 +156,8 @@ function run() {
     const offenders = [];
     for (const line of (git('status --porcelain') || '').split('\n')) {
       if (!line.trim()) continue;
+      const _st = line.slice(0, 2);
+      if (!(_st.includes('?') || _st.includes('A'))) continue;   // only NEW files count; renames/edits of tracked assets do not
       let p = line.slice(3).trim(); if (p.includes(' -> ')) p = p.split(' -> ')[1]; p = p.replace(/^"|"$/g, '');
       if (!exists(p)) continue; try { if (fs.statSync(p).isDirectory()) continue; } catch { continue; }
       let ignored = false; try { cp.execSync(`git check-ignore "${p}"`, { stdio: 'ignore' }); ignored = true; } catch {}
@@ -243,6 +245,38 @@ function run() {
         g.ok ? 'PASS' : 'FAIL', g.detail);
     } catch (e) {
       add('13', 'window.CQ owner integrity', 'WARN', 'gate not runnable: ' + String(e).slice(0, 90));
+    }
+  }
+
+  // 14 — COLLECTIBLE LAW 001 GATE (build 301 · Phase P0.1). Shells were spawning BENEATH the
+  // playable chart because collectibles stored an absolute world y while the terrain they rest on
+  // is groundY-relative — so every resize/orientationchange slid the chart out from under them.
+  // This locks in the three structural invariants of the fix: window.CQREACH owns placement, every
+  // spawn goes through its validating gate, and resize() re-anchors. Any of the three being removed
+  // silently re-opens the whole bug class, which is precisely how it survived ~20 playtests.
+  {
+    try {
+      const g = require(path.join(__dirname, 'collectible_law_gate.js')).check();
+      add('14', 'COLLECTIBLE LAW 001 (CQREACH owns placement · all spawns validated · resize re-anchors)',
+        g.ok ? 'PASS' : 'FAIL', g.detail);
+    } catch (e) {
+      add('14', 'COLLECTIBLE LAW 001 gate', 'WARN', 'gate not runnable: ' + String(e).slice(0, 90));
+    }
+  }
+
+  // 15 — LESSON-LABEL GATE (2026-07-30 · Lesson Visual Polish). The founder scored the "Short"
+  // Knowledge card 2/10: SELLERS TAKE OVER was drawn through three red candles, in red. The cause
+  // was structural — every label used a FIXED offset with no measurement and no collision test —
+  // so it was never one bad scene, it was 33 scenes waiting to break on any wide label. This locks
+  // in the measured-plate + solver layer (and its two-pass render) on BOTH annotated surfaces, so
+  // a one-line blind-placement helper can't quietly reopen the whole class.
+  {
+    try {
+      const g = require(path.join(__dirname, 'lesson_label_gate.js')).check();
+      add('15', 'Lesson labels (measured plates · solver-placed · two-pass · Journal matches)',
+        g.ok ? 'PASS' : 'FAIL', g.detail);
+    } catch (e) {
+      add('15', 'Lesson-label gate', 'WARN', 'gate not runnable: ' + String(e).slice(0, 90));
     }
   }
 }

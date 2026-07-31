@@ -59,9 +59,39 @@ case "${1:-}" in
     python3 scripts/serve_nocache.py "${2:-8795}"
     ;;
   qr)
+    # ── BUILD-IDENTITY GUARD (build 304) ────────────────────────────────────────────────
+    # A founder playtest was silently run against the WRONG BUILD: another worktree had a
+    # server already listening on 8795, so the QR pointed at feature/home-market-ceremony
+    # (build 307) while the work under test sat in main (build 302). Nothing anywhere said so.
+    # The QR now refuses to print unless the server on that port is serving THIS checkout:
+    # it compares the BUILD_TAG on the wire against the BUILD_TAG on disk.
     IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo 127.0.0.1)"
     P="${2:-8795}"; URL="http://$IP:$P/chart-quest.html?fresh=1&mute=1"
-    echo "SCAN (beginner mode, muted): $URL"; echo
+    # Must read the BUILD_TAG LINE specifically — a bare `grep "build [0-9]"` matches prose in
+    # older comments ("build 262 …") and would happily "verify" two unrelated checkouts as equal.
+    # Must read the BUILD_TAG LINE specifically — a bare `grep "build [0-9]"` matches prose in
+    # older comments ("build 262 …") and would "verify" two unrelated checkouts as equal.
+    # And the digits must be [0-9]+, never [0-9]*: with `*` the pattern matches the bare word
+    # "build ", so both sides come back empty and empty==empty passes the guard silently.
+    DISK="$(grep "BUILD_TAG =" chart-quest.html | grep -oE "build [0-9]+" | head -1)"
+    # `|| true` is load-bearing: this script runs under `set -euo pipefail`, so an unreachable
+    # port would abort the whole command silently instead of reaching the friendly error below.
+    WIRE="$(curl -s --max-time 4 "http://127.0.0.1:$P/chart-quest.html" 2>/dev/null | grep "BUILD_TAG =" | grep -oE "build [0-9]+" | head -1 || true)"
+    if [ -z "$WIRE" ]; then
+      echo "✗ nothing is serving port $P."
+      echo "  start this checkout with:  scripts/cq.sh serve $P"
+      exit 1
+    fi
+    if [ "$WIRE" != "$DISK" ]; then
+      echo "✗ PORT $P IS SERVING A DIFFERENT CHECKOUT — refusing to print a misleading QR."
+      echo "    on the wire : $WIRE"
+      echo "    in this dir : $DISK   ($(pwd))"
+      SERVER_CWD="$(lsof -a -d cwd -Fn -p "$(lsof -nP -tiTCP:"$P" -sTCP:LISTEN 2>/dev/null | head -1)" 2>/dev/null | grep '^n' | cut -c2- || true)"
+      [ -n "$SERVER_CWD" ] && echo "    that port is being served from: $SERVER_CWD"
+      echo "  serve THIS checkout on a free port, e.g.:  scripts/cq.sh qr 8799"
+      exit 1
+    fi
+    echo "SCAN (beginner mode, muted) — verified $WIRE from $(pwd):"; echo "$URL"; echo
     command -v qrencode >/dev/null 2>&1 && qrencode -t ANSIUTF8 "$URL" || echo "(brew install qrencode for the QR)"
     ;;
   *)

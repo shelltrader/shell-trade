@@ -2927,7 +2927,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 325 — EVENT SPACING, CLOSED PROPERLY (adversarial audit fallout). Build 324 wired boxes, pages and the boss gate into the ledger; an audit of every player-facing event site then found three holes it had left. (1) THE BIGGEST: pumpLessons is the single choke point every CARD lesson in the game passes through -- teach, teachForced, the post-trade recaps, the QA paths -- and none of them consulted the ledger, so a card could still land on the very next candle after a box smash or a page find, which is exactly the complaint. One gate + one stamp there now covers all of them. It checks the gap ONLY, not the opening warm-up, because suppressing the controls and goal cards for 14 candles would leave a new player with no idea what to press -- the founder rule is about things placed IN THE WORLD, not about the game explaining itself. Deferring is free: the queue holds and drains once the gap passes. (2) THE SPAWN GATES WERE ASKING ABOUT THE WRONG CANDLE. maintainCandles spawns on the candle just printed at the generation edge, roughly 15 candles AHEAD of Finn, so a bare eventClear() answered a question about where Finn was standing rather than where the player will actually meet the reward. Box and page spawns now judge at their own candle id via eventClearAt(). (3) The LEGACY box path -- every level except 1 -- had received none of the build-324 gates at all, so L2+ could still drop a box on candle one or straight after a lesson. Same rules everywhere now.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 326 - CLOSED BETA EXPERIENCE (ticket 2). window.CQBeta, one self-contained script block at the end of the file: the game now ends where the built content ends. Tutorial -> L1 -> first trade -> the Gambler -> Journal unlock -> Journal Discovery -> a premium completion ceremony -> the beta survey. Nothing past Journal Discovery is reachable. Built merge-safe on purpose (other sessions are editing this file): it PATCHES introComplete + CQJournalTutorial.claimPostBoss at runtime instead of editing their call sites, so nothing above the new block changed. It captures the RETURN VALUE of claimPostBoss rather than polling isActive(), so there is no race against its 900ms settle; when it returns false (a veteran who already owns the Journal) an introComplete wrapper finishes instead. A slow level guard catches any other route into L2+. ?beta=0 disables the gate for one load; CQBeta.devFinish() runs the ceremony on demand. Deleting the block restores build 325.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -27312,6 +27312,387 @@ window.SocialAgents = (function () {
       });
     }
   } catch (e) {}
+})();
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   CLOSED BETA EXPERIENCE  —  window.CQBeta                          (ticket 2, build 326)
+   ------------------------------------------------------------------------------------------
+   Temporarily converts the game into a focused Level-1 beta:
+
+       Tutorial → Level 1 → First Trade → Boss 1 → Boss Defeat
+                → Journal Unlock → Journal Discovery → ✦ BETA ENDS ✦ → Survey
+
+   Nothing past Journal Discovery is reachable while this is enabled.
+
+   ── WHY THIS FILE LOOKS LIKE THIS ────────────────────────────────────────────────────────
+   Other sessions are editing unrelated systems in this same file right now, so this feature
+   is built to be MERGE-SAFE ABOVE ALL ELSE:
+
+     • It lives in ONE <script> block at the very end of the document, exactly like
+       window.CQJournalTutorial. Nothing above this line was modified to add it.
+     • It takes over by PATCHING AT RUNTIME (introComplete + CQJournalTutorial.claimPostBoss)
+       rather than by editing the call sites. A conflicting edit to those functions still
+       merges cleanly; the patch re-wraps whatever it finds.
+     • Deleting this one block removes the entire feature and restores build 325 exactly.
+     • Every hook is try/caught. If ANY of this throws, the game continues as though the
+       module were absent — a beta gate must never be able to brick a playtest.
+
+   ── THE HANDOVER, PRECISELY ──────────────────────────────────────────────────────────────
+   bossFinish() → (level 1) → introComplete() → CQJournalTutorial.claimPostBoss(_jtDone).
+   claimPostBoss returns TRUE when the Journal quest takes the moment over, and fires the
+   callback it was handed when the quest finishes. So:
+
+     • claimPostBoss returns true  → we wrapped the callback → finish() at the true end of
+                                     Journal Discovery. This is the real path.
+     • claimPostBoss returns false → veteran who already owns the Journal, or the module is
+                                     missing → introComplete() runs _jtDone() itself → our
+                                     introComplete wrapper finishes on the next tick.
+
+   We capture claimPostBoss's RETURN VALUE rather than polling isActive(), so there is no
+   timing race against its 900ms SETTLE_MS.
+
+   ── QA ───────────────────────────────────────────────────────────────────────────────────
+     ?beta=0                      disable the gate for this load (play on into L2)
+     CQBeta.devFinish()           run the ceremony right now
+     CQBeta.reset()               clear the completion flag
+     CQBeta.state()               { enabled, done, finished, surveyUrl }
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var NS   = 'CQBeta';
+  var DONE = 'cq_beta_done';        // '1' once the ceremony has been reached
+  var WHEN = 'cq_beta_done_at';     // ISO timestamp of first completion
+
+  /* ── config ─────────────────────────────────────────────────────────────────────────────
+     window.CQ_BETA can be set BEFORE this block to override anything (play.html does not
+     need to; the defaults are correct for both the embed and a direct game.html load). */
+  var CFG = (function () {
+    var d = {
+      enabled:    true,
+      surveyUrl:  'survey.html',   // ticket 3 builds this; relative → works in every deploy
+      surveyDelayMs: 0             // 0 = go on click; >0 = auto-advance after the ceremony
+    };
+    try { for (var k in (window.CQ_BETA || {})) if (d.hasOwnProperty(k)) d[k] = window.CQ_BETA[k]; } catch (e) {}
+    /* ?beta=0 turns the gate off for a single load — the founder's escape hatch for testing
+       Level 2+ without having to edit or redeploy anything. */
+    try { if (/[?&]beta=0\b/.test(location.search)) d.enabled = false; } catch (e) {}
+    return d;
+  })();
+
+  var S = { finished: false, claimed: false, patched: false, armed: false };
+
+  function ls(fn, dflt) { try { return fn(); } catch (e) { return dflt; } }
+  function isDone()  { return ls(function () { return localStorage.getItem(DONE) === '1'; }, false); }
+  function markDone(){ ls(function () {
+    localStorage.setItem(DONE, '1');
+    if (!localStorage.getItem(WHEN)) localStorage.setItem(WHEN, new Date().toISOString());
+  }); }
+
+  /* ── analytics seam (ticket 3 fills this in) ────────────────────────────────────────────
+     Ticket 3 defines window.CQTrack. Until it exists we buffer, so no milestone is ever lost
+     just because the analytics module happens to load second. */
+  function emit(name, props) {
+    try {
+      var p = props || {};
+      if (window.CQTrack && typeof window.CQTrack.event === 'function') { window.CQTrack.event(name, p); return; }
+      (window.__cqTrackQueue = window.__cqTrackQueue || []).push({ name: name, props: p, t: Date.now() });
+    } catch (e) {}
+  }
+
+  /* ══ THE CEREMONY ══════════════════════════════════════════════════════════════════════
+     A staged reveal, not a popup. The player has just beaten the Gambler and found the
+     Journal — the last thing they should feel is that the game ran out. Beats:
+        0ms   backdrop blooms
+      250ms   the seal lands + a gold burst
+      900ms   🎉 and the title
+     1400ms+  the three lines, staggered
+     2700ms   the button arms
+     Fully inline-styled: no dependency on any stylesheet rule that another session might
+     be editing right now. */
+  function ceremony() {
+    var reduce = ls(function () {
+      return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }, false);
+
+    var el = document.createElement('div');
+    el.id = 'cqBetaEnd';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-labelledby', 'cqBetaTitle');
+    el.style.cssText =
+      'position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;' +
+      'justify-content:center;text-align:center;padding:26px 22px;box-sizing:border-box;overflow-y:auto;' +
+      'background:radial-gradient(ellipse at 50% 34%,rgba(255,214,10,.16),rgba(6,26,20,.93) 46%,rgba(2,5,10,.985) 100%);' +
+      '-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);' +
+      'font-family:var(--font-ui),-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;' +
+      'opacity:0;transition:opacity .55s ease';
+
+    var st = (reduce ? 'opacity:1;transform:none' : 'opacity:0');
+    el.innerHTML =
+      '<div id="cqbBurst" style="position:absolute;inset:0;pointer-events:none;overflow:hidden"></div>' +
+
+      /* the seal */
+      '<div id="cqbSeal" style="position:relative;width:132px;height:132px;border-radius:50%;display:flex;' +
+        'align-items:center;justify-content:center;font-size:60px;flex:0 0 auto;' +
+        'background:radial-gradient(circle at 38% 30%,rgba(255,214,10,.30),rgba(9,20,16,.96));' +
+        'border:2px solid rgba(255,214,10,.62);' +
+        'box-shadow:0 0 52px rgba(255,214,10,.34),inset 0 0 26px rgba(0,0,0,.62);' +
+        (reduce ? '' : 'transform:scale(.5) rotate(-12deg);opacity:0;transition:transform .85s cubic-bezier(.2,1.5,.35,1),opacity .5s ease') + '">🎉</div>' +
+
+      '<div id="cqbEyebrow" style="margin-top:20px;font:800 10.5px var(--font-ui);letter-spacing:3.4px;' +
+        'color:#ffd60a;text-transform:uppercase;text-shadow:0 0 18px rgba(255,214,10,.5);' + st + ';transition:opacity .6s ease">' +
+        'Closed Beta · Complete</div>' +
+
+      '<h2 id="cqBetaTitle" style="margin:11px 0 0;font:900 clamp(21px,5.6vw,30px) var(--font-ui);line-height:1.22;' +
+        'letter-spacing:.2px;color:#fff;max-width:15ch;text-shadow:0 0 30px rgba(22,199,132,.45);' + st + ';transition:opacity .6s ease">' +
+        'Thank you for playing the ChartQuest Closed Beta.</h2>' +
+
+      '<p id="cqbL1" style="margin:17px 0 0;font:600 15px var(--font-ui);line-height:1.55;color:#dff3ea;max-width:34ch;' + st + ';transition:opacity .6s ease">' +
+        'You have finished <b style="color:#fff">everything we have built so far</b> — the first world, the first Guardian, and the Trader\'s Journal.</p>' +
+
+      '<p id="cqbL2" style="margin:13px 0 0;font:600 15px var(--font-ui);line-height:1.55;color:#9fd9c4;max-width:34ch;' + st + ';transition:opacity .6s ease">' +
+        'You are one of the first people ever to get this far.</p>' +
+
+      '<p id="cqbL3" style="margin:13px 0 0;font:700 15px var(--font-ui);line-height:1.55;color:#ffd60a;max-width:34ch;' + st + ';transition:opacity .6s ease">' +
+        'What you say next decides what we build first.</p>' +
+
+      '<button id="cqbGo" type="button" style="margin-top:26px;padding:16px 40px;border:none;border-radius:13px;cursor:pointer;' +
+        'font:900 15.5px var(--font-ui);letter-spacing:.4px;color:#04130c;' +
+        'background:linear-gradient(180deg,#19d08a,#0e9b64);box-shadow:0 10px 30px rgba(22,199,132,.5);' +
+        'min-height:52px;min-width:210px;-webkit-tap-highlight-color:transparent;' + st + ';transition:opacity .6s ease,transform .18s ease">' +
+        'Continue →</button>' +
+
+      '<div id="cqbFoot" style="margin-top:15px;font:600 12px var(--font-ui);color:#7c95a4;max-width:32ch;line-height:1.5;' + st + ';transition:opacity .6s ease">' +
+        'Next: 5 quick questions. Under a minute.</div>';
+
+    document.body.appendChild(el);
+
+    var $ = function (id) { return el.querySelector('#' + id); };
+    var T = function (fn, ms) { return setTimeout(function () { try { fn(); } catch (e) {} }, reduce ? 0 : ms); };
+    var show = function (id) { var n = $(id); if (n) n.style.opacity = '1'; };
+
+    requestAnimationFrame(function () { try { el.style.opacity = '1'; } catch (e) {} });
+
+    T(function () {
+      var s = $('cqbSeal');
+      if (s) { s.style.transform = 'scale(1) rotate(0deg)'; s.style.opacity = '1'; }
+      burst($('cqbBurst'), reduce);
+      try { if (window.GameMusic && GameMusic.sting) GameMusic.sting('bigwin'); } catch (e) {}
+    }, 250);
+
+    T(function () { show('cqbEyebrow'); show('cqBetaTitle'); }, 900);
+    T(function () { show('cqbL1'); }, 1400);
+    T(function () { show('cqbL2'); }, 1800);
+    T(function () { show('cqbL3'); }, 2200);
+    T(function () {
+      show('cqbGo'); show('cqbFoot');
+      try { $('cqbGo').focus({ preventScroll: true }); } catch (e) {}
+      try { if (window.GameMusic && GameMusic.sting) GameMusic.sting('coin'); } catch (e) {}
+    }, 2700);
+
+    var went = false;
+    function go() {
+      if (went) return; went = true;
+      emit('survey_started', {});
+      openSurvey();
+    }
+    try { $('cqbGo').addEventListener('click', go); } catch (e) {}
+    /* Enter/Space anywhere in the dialog activates Continue — the button is the only action,
+       so a keyboard player should never have to hunt for focus. */
+    try {
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); go(); }
+      });
+    } catch (e) {}
+    if (CFG.surveyDelayMs > 0) T(go, CFG.surveyDelayMs);
+  }
+
+  /* gold/green confetti — pure DOM, self-cleaning, skipped under reduced motion */
+  function burst(host, reduce) {
+    if (!host || reduce) return;
+    var COLORS = ['#ffd60a', '#19d08a', '#46e0ff', '#fff2b0', '#ffffff'];
+    var n = 34, i, p;
+    for (i = 0; i < n; i++) {
+      p = document.createElement('i');
+      var a  = (Math.PI * 2 * i) / n + (i % 3) * 0.14;
+      var d  = 130 + (i % 7) * 34;
+      var sz = 5 + (i % 4) * 2;
+      p.style.cssText =
+        'position:absolute;left:50%;top:34%;width:' + sz + 'px;height:' + (sz * (i % 2 ? 1 : 2.1)) + 'px;' +
+        'background:' + COLORS[i % COLORS.length] + ';border-radius:' + (i % 2 ? '50%' : '2px') + ';' +
+        'opacity:0;will-change:transform,opacity;' +
+        'transform:translate(-50%,-50%);' +
+        'transition:transform ' + (1000 + (i % 5) * 260) + 'ms cubic-bezier(.15,.7,.3,1),opacity ' + (1000 + (i % 5) * 260) + 'ms ease-out';
+      host.appendChild(p);
+      (function (node, ang, dist, k) {
+        setTimeout(function () {
+          try {
+            node.style.opacity = '1';
+            node.style.transform = 'translate(calc(-50% + ' + Math.cos(ang) * dist + 'px),' +
+                                   'calc(-50% + ' + (Math.sin(ang) * dist + 120) + 'px)) rotate(' + (k * 47) + 'deg)';
+          } catch (e) {}
+        }, 20 + (k % 6) * 26);
+        setTimeout(function () { try { node.style.opacity = '0'; } catch (e) {} }, 1150 + (k % 5) * 260);
+      })(p, a, d, i);
+    }
+    setTimeout(function () { try { host.innerHTML = ''; } catch (e) {} }, 2600);
+  }
+
+  /* ── survey handoff ─────────────────────────────────────────────────────────────────────
+     The game is normally iframed by play.html. Ask the parent to take over first (it can
+     present the survey without a page load and without losing the game frame); if there is
+     no parent, or it does not answer, navigate the top-level window ourselves. */
+  function openSurvey() {
+    var url = CFG.surveyUrl;
+    var handedOff = false;
+
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ source: 'cq-beta', type: 'beta_complete', surveyUrl: url }, '*');
+        handedOff = true;
+      }
+    } catch (e) {}
+
+    /* If the parent handled it, it replies and we stand down. Otherwise we go ourselves.
+       Navigating the TOP window matters: without it the survey would open inside the small
+       game box (the exact bug the audit found on play.html's home link). */
+    var t = setTimeout(function () {
+      try {
+        var w = (window.top && window.top !== window) ? window.top : window;
+        w.location.href = url;
+      } catch (e) {
+        try { window.location.href = url; } catch (e2) {}
+      }
+    }, handedOff ? 700 : 0);
+
+    try {
+      window.addEventListener('message', function ack(ev) {
+        var d = ev && ev.data;
+        if (d && d.source === 'cq-beta-host' && d.type === 'survey_shown') {
+          clearTimeout(t);
+          window.removeEventListener('message', ack);
+        }
+      });
+    } catch (e) {}
+  }
+
+  /* ══ THE GATE ══════════════════════════════════════════════════════════════════════════ */
+  function finish(reason) {
+    if (S.finished || !CFG.enabled) return false;
+    S.finished = true;
+    markDone();
+    emit('beta_completed', { reason: reason || 'journal_discovery_complete' });
+
+    /* Stand the world down before the overlay lands, so nothing keeps animating, spawning or
+       teaching underneath a terminal screen. Each is optional — a missing one is not fatal. */
+    try { if (typeof paused !== 'undefined') paused = true; } catch (e) {}
+    try { if (window.GameMusic && GameMusic.duckTo) GameMusic.duckTo(0.25, 600); } catch (e) {}
+
+    try { ceremony(); }
+    catch (e) {
+      /* Last-ditch: the player must still reach the survey even if the ceremony throws. */
+      try { openSurvey(); } catch (e2) {}
+    }
+    return true;
+  }
+
+  /* Patch the Journal quest so the beta ends at the true end of Journal Discovery. */
+  function patchJournal() {
+    if (S.patched) return true;
+    var JT;
+    try { JT = window.CQJournalTutorial; } catch (e) { return false; }
+    if (!JT || typeof JT.claimPostBoss !== 'function') return false;
+
+    var orig = JT.claimPostBoss;
+    JT.claimPostBoss = function (onDone) {
+      var took = false;
+      try {
+        took = orig.call(JT, function () {
+          try { if (typeof onDone === 'function') onDone(); } catch (e) {}
+          finish('journal_discovery_complete');
+        });
+      } catch (e) { took = false; }
+      S.claimed = !!took;
+      return took;
+    };
+    S.patched = true;
+    return true;
+  }
+
+  /* Patch introComplete — the moment Boss 1 hands the world back. */
+  function patchIntroComplete() {
+    var orig;
+    try { orig = window.introComplete; } catch (e) { return false; }
+    if (typeof orig !== 'function' || orig.__cqBeta) return false;
+
+    var wrapped = function () {
+      S.claimed = false;
+      try { patchJournal(); } catch (e) {}
+      emit('journal_unlocked', {});
+      var r;
+      try { r = orig.apply(this, arguments); } catch (e) { r = undefined; }
+      /* claimPostBoss said no (veteran / module absent) → introComplete already ran its own
+         follow-ups, so the beta ends now. One tick of slack lets those settle first. */
+      if (!S.claimed) setTimeout(function () { finish('intro_complete_no_journal'); }, 900);
+      return r;
+    };
+    wrapped.__cqBeta = true;
+    try { window.introComplete = wrapped; } catch (e) { return false; }
+    return true;
+  }
+
+  /* Backstop: nothing past Level 1 is reachable. If any path (a save-restore, a QA flag, a
+     future edit) tries to run Level 2+, the beta ends instead. Cheap poll — this only has to
+     be right, not fast, and it is immune to how the level was entered. */
+  function armLevelGuard() {
+    if (S.armed) return; S.armed = true;
+    setInterval(function () {
+      if (S.finished || !CFG.enabled) return;
+      var lvl = null;
+      try { lvl = (typeof session !== 'undefined' && session) ? session.level : null; } catch (e) {}
+      if (typeof lvl === 'number' && lvl >= 2) finish('level_2_blocked');
+    }, 1500);
+  }
+
+  /* ── boot ───────────────────────────────────────────────────────────────────────────────
+     Patch as early as we can and keep retrying briefly: this block is last in the document,
+     but CQJournalTutorial is defined in the block just above and introComplete far earlier,
+     so in practice the first attempt succeeds. The retries cover load-order surprises. */
+  function boot() {
+    if (!CFG.enabled) return;
+    patchIntroComplete();
+    patchJournal();
+    armLevelGuard();
+    var tries = 0;
+    var iv = setInterval(function () {
+      if ((S.patched || tries > 40) && tries > 0) { clearInterval(iv); return; }
+      tries++;
+      patchIntroComplete();
+      patchJournal();
+    }, 250);
+  }
+
+  try {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+    else boot();
+  } catch (e) {}
+
+  /* ── public API ─────────────────────────────────────────────────────────────────────────*/
+  window[NS] = {
+    finish:     finish,
+    isDone:     isDone,
+    isEnabled:  function () { return !!CFG.enabled; },
+    surveyUrl:  function () { return CFG.surveyUrl; },
+    openSurvey: openSurvey,
+    reset:      function () { ls(function () { localStorage.removeItem(DONE); localStorage.removeItem(WHEN); }); S.finished = false; return true; },
+    devFinish:  function () { S.finished = false; return finish('dev'); },
+    state:      function () {
+      return { enabled: CFG.enabled, done: isDone(), finished: S.finished,
+               patched: S.patched, surveyUrl: CFG.surveyUrl };
+    }
+  };
 })();
 </script>
 </body>

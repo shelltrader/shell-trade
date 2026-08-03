@@ -2927,7 +2927,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 323 — FOUNDER PLAYTEST: THE BOSS FIGHT PASS. (A) THE DEFEAT + FINN-JOURNAL CLIPS NEVER PLAYED, and the reason was invisible: finn-journal.mp4 shipped with an AAC audio track and the outro player -- unlike the flinch player -- never muted the element. Mobile refuses to autoplay unmuted video, so play() rejected and the rejection was swallowed by an EMPTY catch. No clip, no error, no clue -- and the player reached the Journal quest having never been told what the Journal is. Fixed three ways: every clip re-encoded with NO audio track, the element explicitly muted each time, and the catch now skips to the next clip instead of sitting on black. Also unhooked from _firstEverKill: the clips and the quest are one unit but were gated on two different save keys, so a device that had beaten the Gambler before got the quest with no explanation. They now play whenever EITHER gate is open. (B) TRUE 60FPS. The masters in _video-originals are 3840x2160 at 60fps; the shipped clips had been downsampled to 24fps, and build 322 was interpolating flinch-3 up from that degraded copy while a 4K60 master sat on disk. All four flinches and the Finn-journal clip are re-encoded straight from the masters at real 60fps. (C) Flinch 3 opens 2s later -- the explosion is cut, which is what made it choppy. (D) The outro reuses the INTRO scene, so THE GAMBLER / TAP TO ENTER lit up on top of the defeat and journal clips, inviting the player into a fight they had just won. That chrome is hidden for the outro and restored after. (E) THE SOUND NOW LANDS ON THE HIT. It fired 90ms after the clip STARTED, so the founder heard it and watched him lurch two seconds later. The clips do not open on the impact. Offsets are MEASURED per clip (per-frame motion energy, peak): 2.47s / 2.00s / 0.62s / 1.68s, fired 50ms ahead so it reads as synchronous. Cleared if the clip is skipped or stalls.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 324 — REAL ROARS + BREATHING ROOM. (1) THE GUARDIAN NOW SCREAMS FOR REAL. The founder heard the synthesised roar and said it sounds like a computer prompt -- correct, and not fixable by tuning: an oscillator stack has no throat in it. His three recordings are in as bosses/sfx/boss-roar-1..3.m4a, each trimmed so the scream starts on sample ZERO (the sources carried 0.2s, 0.2s and 0.7s of lead-in, which would have re-introduced the exact late-sound problem build 323 just fixed), level-matched, limited and faded so a roar never runs long into the next question. Used interchangeably across every boss via a SHUFFLE BAG, so the same scream never lands twice running inside one fight, and pitched down + louder with each successive flinch so the fight still escalates. The synth roar is kept only as a fallback if the files cannot load. A skipped clip now cuts a roar already screaming. (2) LET THEM LAND BEFORE YOU ASK THEM FOR ANYTHING. A box was placed the moment the player dropped into the map. Nothing of any kind now spawns inside the first LEVEL_WARMUP_CANDLES -- the player just moves, and registers that they are standing on a chart. (3) EVENT SPACING IS NOW A RULE. The ledger existed but only three things stamped it; boxes and the boss gate were invisible to it, so a box could land on the heels of a lesson and a page two candles after a box. Every one of the founder four events -- box, page, lesson, boss -- now both CHECKS and STAMPS it. The box stamps on SMASH (when the player actually experiences it, not when it spawned a screen earlier), and the required gap is re-rolled in the 10-15 band per event so pacing breathes instead of ticking. The boss gate stamps but is never gated, because gating the only way forward could stall the level. (4) The box SHUDDERS on its own now -- a short eased burst every ~2.4s, per-box phase so they never sync -- instead of only quivering once Finn was already on top of it. Render-only: b.x/b.y untouched.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -5879,6 +5879,18 @@ function maybeSpawnBox(c) {
   if (_gov) {
     if (market._boxLevel !== _lvl) { market._boxLevel = _lvl; market._boxMade = 0; market._boxCand = null; market._boxSpace = 0; }
     if (market._boxMade >= BOXES_PER_LEVEL) return;
+    /* FOUNDER (build 324) — LET THEM LAND BEFORE YOU ASK THEM FOR ANYTHING.
+       "the first one always appears when you first get into the game… let the player move for ten
+       to fifteen candles before we introduce anything… we want them to realize that they're in a
+       chart and they're in the blockchain, and THEN we give them that."
+       The player dropped into the world and was immediately presented with a task. Nothing may be
+       placed inside the opening stretch — the first thing they do is simply BE in the chart. */
+    if ((session.candles || 0) < LEVEL_WARMUP_CANDLES) return;
+    /* …and the same rule that governs everything else: a box is an EVENT, so it may not be placed
+       on top of another one. See eventClear() — this is what keeps a box from landing right after
+       a lesson, a Lost Wisdom page, or a trade. */
+    if (!eventClear()) return;
+    if (boxNearBossGate()) return;                              // never hand out a box at the gate
     if (market._boxSpace > 0) { market._boxSpace--; return; }   // keep the two boxes apart
     const me = Math.max(c.open, c.h);
     // ── confirm a pending floor once price has actually CLIMBED back out of it ──
@@ -5919,6 +5931,10 @@ function maybeSpawnBox(c) {
 function smashBox(b) {
   if (b.broken) return;
   b.broken = true; b.breakT = 1;
+  /* EVENT LEDGER (build 324) — breaking a box IS one of the founder's four events, and it is the
+     moment the player EXPERIENCES it (not when it spawned, which was a screen earlier). Stamping
+     here is what guarantees no lesson, page or trade lands in the 10-15 candles after a smash. */
+  try { markEvent('box'); } catch (e) {}
   const bx = b.x, by = b.y, reward = b.premium ? 5 : 1;
   player.shells += reward; session.collected += reward; try { addXP(2); } catch (e) {}
   floaters.push({ text: '+' + reward, shell: true, color: b.premium ? '#ffd94a' : '#ffd60a', y: by - 20, t: 1.3, big: !!b.premium });
@@ -6022,7 +6038,18 @@ function drawBoxes(camX) {
       continue;
     }
     const ex = b.excite || 0, hw = b.w * 0.5;
-    const jit = Math.sin(b.glow * 8) * 1.7 * ex + (b.premium ? Math.sin(b.bob * 3.1) * 1.3 : 0);   // proximity quiver (all) + a gentle always-on jiggle (premium)
+    /* FOUNDER (build 324) — "make it shake a little bit… give the box a little animation so it
+       looks more alive."
+       It only quivered once Finn was already close (b.excite), so from a distance it read as scenery
+       and the player walked past it. It now SHUDDERS on its own: a short burst every ~2.4s, easing
+       in and out so it looks like something straining to get out rather than a sprite vibrating.
+       Render-only — b.x/b.y are untouched, so the collision box and CQREACH's placement contract
+       are unaffected. Clocked off b.glow, which the update loop already advances. */
+    const _sh = b.glow * 0.42 + (b.bob || 0);                 // per-box phase, so they never sync up
+    const _shPhase = _sh - Math.floor(_sh);                    // 0..1 cycle
+    const _shBurst = _shPhase < 0.22 ? Math.sin(_shPhase / 0.22 * Math.PI) : 0;   // one eased burst per cycle
+    const _shake = Math.sin(_shPhase * 132) * 2.6 * _shBurst * (1 - ex);          // fades out as the proximity quiver takes over
+    const jit = Math.sin(b.glow * 8) * 1.7 * ex + _shake + (b.premium ? Math.sin(b.bob * 3.1) * 1.3 : 0);   // proximity quiver (all) + idle shudder + a gentle always-on jiggle (premium)
     const cx = sx + jit, cy = b.y + Math.sin(b.bob) * 3 - 1.6 * ex, pulse = 0.6 + 0.4 * Math.sin(b.glow);
     const edge = b.premium ? BOX_GOLD : BOX_COL, core = b.premium ? '#fff2c4' : BOX_COL2;
     ctx.save();
@@ -6985,7 +7012,19 @@ let maxSeenCandleId = -1;  // furthest candle ever reached (backtrack-proof)
    traversal distance. That matters: it is backtrack-proof (walking back and forth cannot
    manufacture spacing), and it deliberately does not couple to Finn's footsteps, which is
    the coupling the build-298 Trade Clock work existed to remove.                         */
-const EVENT_MIN_GAP = 10;                   // candles — founder raised this from the 5-10 band to a firm 10
+/* FOUNDER (build 324) — BREATHING ROOM IS A RULE, NOT A SUGGESTION.
+   "there should always be ten to fifteen candles between every single event, and an event means
+   breaking a box, collecting a mystery journal page, doing a lesson, or fighting a boss."
+   The ledger already existed but only three things stamped it (page / trade / lesson). Boxes and
+   the boss gate were invisible to it, so a box could land on the heels of a lesson, or a page could
+   land two candles after a box. Everything that interrupts the player now goes through here.
+   The gap is randomised inside the founder's 10-15 band per event, so the pacing does not feel
+   metronomic — a fixed 10 reads as a rule, a varying 10-15 reads as breathing. */
+const EVENT_MIN_GAP = 10;                   // floor of the band (kept: other code reads this name)
+const EVENT_MAX_GAP = 15;
+/* No event of ANY kind inside the opening stretch of a level: the player drops in and just moves,
+   long enough to register that they are standing on a chart. */
+const LEVEL_WARMUP_CANDLES = 14;
 const eventLedger = { at: -999, kind: null };
 // Is the stage clear for a new moment? Also false while a modal moment is literally on
 // screen, so nothing can stack on a lesson card or an open trade ticket.
@@ -6994,13 +7033,29 @@ function eventClear() {
     if (typeof lessonOpen !== 'undefined' && lessonOpen) return false;
     if (typeof trade !== 'undefined' && trade) return false;
     if (typeof pending !== 'undefined' && pending) return false;
+    // Nothing at all inside the opening stretch — see LEVEL_WARMUP_CANDLES.
+    if (typeof session !== 'undefined' && session && (session.candles || 0) < LEVEL_WARMUP_CANDLES) return false;
   } catch (e) {}
-  return (maxSeenCandleId - eventLedger.at) >= EVENT_MIN_GAP;
+  return (maxSeenCandleId - eventLedger.at) >= (eventLedger.gap || EVENT_MIN_GAP);
 }
-// Stamp a moment. Call this the instant a moment BEGINS, not when it resolves.
+/* Stamp a moment. Call this the instant a moment BEGINS, not when it resolves.
+   Each stamp rolls the NEXT required gap somewhere in the founder's 10-15 band, so consecutive
+   events never land on a metronome. */
 function markEvent(kind) {
   eventLedger.at = maxSeenCandleId;
   eventLedger.kind = kind || 'event';
+  eventLedger.gap = EVENT_MIN_GAP + Math.floor(Math.random() * (EVENT_MAX_GAP - EVENT_MIN_GAP + 1));
+}
+/* The Guardian gate is an event too. Once it is up, the level is ABOUT the boss — no box or page
+   may be handed out on the approach, and nothing else may fire on top of it. Kept as a predicate
+   rather than an eventClear() gate on the portal itself, because gating the portal could stall the
+   level: the portal is the only way forward. */
+function boxNearBossGate() {
+  try {
+    if (typeof introFlow !== 'undefined' && introFlow && introFlow.bossPortalUp) return true;
+    if (typeof portals !== 'undefined' && portals.some(function (p) { return p && p.kind === 'boss'; })) return true;
+  } catch (e) {}
+  return false;
 }
 let flashT = 0, flashColor = '#16c784'; // win/loss screen flash
 let portalWarp = null; // { t, dur, x, y } — "jump into another dimension" transition on portal entry
@@ -11259,6 +11314,10 @@ function maybeSpawnWisdomPage(c) {
   // Shared reward ledger (build 303) — never land a page on top of a box the player has not had
   // time to enjoy yet. Placed AFTER the clearance clamp above, which must run on every candle.
   if (rewardTooClose(c)) return;
+  /* FOUNDER (build 324) — a Lost Wisdom page is an EVENT. It used to check only the box/page
+     reward gap, so it could still land right after a lesson or a trade, and it could appear on
+     the boss approach. Full ledger now, same rule as everything else. */
+  if (!eventClear() || boxNearBossGate()) return;
   for (const kind of ['easy', 'hidden']) {
     if (_wisSpawn.placed[kind] || _wisSpawn.n < spot[kind]) continue;
     const idx = (session.level - 1) * 2 + (kind === 'hidden' ? 1 : 0);
@@ -13308,6 +13367,7 @@ function playBossFlinch(level, n, onDone) {
     if (finished) return; finished = true;
     clearTimeout(killT);
     clearTimeout(_sfxT);   // a skipped/stalled clip must never roar over the next question
+    try { if (typeof GameMusic !== 'undefined' && GameMusic.roarStop) GameMusic.roarStop(); } catch (e) {}   // …and cut one already screaming
     vid.onended = null; vid.onerror = null; scene.onclick = null;
     try { vid.pause(); } catch (e) {}
     try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(1, 0.35); } catch (e) {}   // music back up
@@ -14902,6 +14962,9 @@ function onCandleEntered(c) {
         if (introFlow.finalApproach > 0) introFlow.finalApproach--;
         else {
           introFlow.bossPortalUp = true; spawnBossPortal();
+          // EVENT LEDGER — the Guardian gate is the biggest event in the level; stamp it so
+          // nothing else is allowed to fire on top of the summons.
+          try { markEvent('boss'); } catch (e) {}
           /* FOUNDER CALL (build 305) — this was a loose floater pinned at y=104, which sits
              directly behind the canvas-drawn CURRENT LESSON badge in the top-left: the founder
              read a Guardian summons with its first words covered. It is now the BOXED PLATE —
@@ -23229,6 +23292,72 @@ const GameMusic = (() => {
      It ESCALATES across the fight: each successive flinch is lower, longer and angrier, so four
      hits build instead of repeating. Routed through fx() like every other SFX, so it shares the
      stings' bus (never ducked by duckTo) and obeys `muted` — a ?mute=1 QA run stays silent. */
+  /* ══ REAL BOSS ROARS (build 324 · founder-supplied) ════════════════════════════════════════
+     The founder played the synthesised roar and said it "just sounds like a computer prompt", then
+     sent three recorded monster screams. He is right and it was never going to be fixable by
+     tuning: an oscillator stack has no throat in it. These are the real thing.
+
+     bosses/sfx/boss-roar-1..3.m4a — each trimmed so the scream starts on sample ZERO (the sources
+     had 0.2s, 0.2s and 0.7s of lead-in respectively, which would have re-introduced exactly the
+     late-sound problem we just fixed), level-matched, limited, and faded out at ~1.6s so a roar
+     never runs long into the next question. Mono 44.1k AAC, ~24KB each.
+
+     Used INTERCHANGEABLY across every boss, as instructed: pick() shuffles rather than random-picks
+     so the same scream never lands twice in a row inside one fight. playbackRate is nudged per
+     flinch so the fight still escalates — the 4th hit is pitched down and plays loudest, which is
+     the same escalation the synth version had, now applied to real audio.
+
+     The synth roar() below is KEPT as a fallback: if the files 404 or the device refuses to decode
+     them, the Guardian still makes a noise rather than flinching in silence. */
+  const ROAR_SRC = ['bosses/sfx/boss-roar-1.m4a', 'bosses/sfx/boss-roar-2.m4a', 'bosses/sfx/boss-roar-3.m4a'];
+  let _roarPool = null, _roarBag = [], _roarLive = null;
+  function roarPool() {
+    if (_roarPool) return _roarPool;
+    _roarPool = ROAR_SRC.map(function (src) {
+      try {
+        const a = new Audio(); a.src = src; a.preload = 'auto'; a.crossOrigin = 'anonymous';
+        a.load(); return a;
+      } catch (e) { return null; }
+    });
+    return _roarPool;
+  }
+  let _roarLast = -1;
+  function roarPick() {                       // shuffle-bag: never the same scream twice running
+    if (!_roarBag.length) {
+      _roarBag = ROAR_SRC.map(function (_, i) { return i; });
+      for (let i = _roarBag.length - 1; i > 0; i--) {
+        const j = (Math.random() * (i + 1)) | 0; const t = _roarBag[i]; _roarBag[i] = _roarBag[j]; _roarBag[j] = t;
+      }
+      /* A plain shuffle bag still repeats ACROSS the seam — the last scream of one bag and the
+         first of the next can be the same, which measured at 2 repeats in 15 draws. In a fight
+         with only four flinches that is very audible, so if the incoming bag would open on the
+         scream we just played, swap it with its neighbour. */
+      if (_roarBag.length > 1 && _roarBag[_roarBag.length - 1] === _roarLast) {
+        const t = _roarBag[_roarBag.length - 1];
+        _roarBag[_roarBag.length - 1] = _roarBag[0]; _roarBag[0] = t;
+      }
+    }
+    _roarLast = _roarBag.pop();
+    return _roarLast;
+  }
+  function roarStop() { try { if (_roarLive) { _roarLive.pause(); _roarLive.currentTime = 0; _roarLive = null; } } catch (e) {} }
+  function roarReal(tier) {
+    if (muted) return false;                  // ?mute=1 / the music toggle must silence this too
+    const pool = roarPool(); if (!pool) return false;
+    const el = pool[roarPick()]; if (!el) return false;
+    const i = Math.max(0, Math.min(3, (tier || 1) - 1));
+    try {
+      roarStop();
+      el.currentTime = 0;
+      el.volume = Math.min(1, 0.72 + 0.09 * i);     // each hit lands harder than the last
+      el.playbackRate = 1.06 - 0.06 * i;            // …and pitches DOWN: bigger, angrier animal
+      const pr = el.play();
+      if (pr && pr.catch) pr.catch(function () {});
+      _roarLive = el;
+      return true;
+    } catch (e) { return false; }
+  }
+
   let _shaper = null;
   function saturator(a, amount) {
     if (_shaper) return _shaper;
@@ -23243,6 +23372,9 @@ const GameMusic = (() => {
     return _shaper;
   }
   function roar(tier) {
+    // The founder's recorded screams are the real voice; the synth below is only the safety net
+    // for a device that cannot load or decode them.
+    if (roarReal(tier)) return;
     const s = fx(); if (!s) return;                       // null when muted — nothing is scheduled
     const a = s.a, t = s.t;
     const i   = Math.max(0, Math.min(3, (tier || 1) - 1));  // 0..3 across the four flinches
@@ -23310,7 +23442,7 @@ const GameMusic = (() => {
     master.gain.cancelScheduledValues(a.currentTime);
     master.gain.linearRampToValueAtTime(base * level, a.currentTime + (ramp || 0.5));
   }
-  return { unlock, setMuted, play, boss, stop, sting, roar, duckTo, isOn: () => started, move };
+  return { unlock, setMuted, play, boss, stop, sting, roar, roarStop, duckTo, isOn: () => started, move };
 })();
 
 /* ════════ BOSS ARENA (animated background per boss) ════════ */

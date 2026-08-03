@@ -98,6 +98,10 @@
 </div>
 
 <script src="assets/site.js" defer></script>
+<!-- Closed-beta analytics (ticket 3). The game frame reports its own milestones; this
+     records the wrapper page so a tester who never gets the iframe to load is still visible
+     in the funnel rather than silently missing. -->
+<script src="assets/cq-track.js"></script>
 <script>
   var CQ_GAME = (window.CHARTQUEST_CONFIG && window.CHARTQUEST_CONFIG.gameUrl) || 'game.html';
   // Forward the query string into the iframe — without this, /play?fresh=1 (and ?guest,

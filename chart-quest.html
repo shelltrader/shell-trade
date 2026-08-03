@@ -2927,7 +2927,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 322 — FIX 10: THE GUARDIAN ROARS. The flinch clips are encoded with NO AUDIO TRACK on purpose (that is what exempts them from mobile autoplay blocking), so the Gambler was taking four cinematic hits in near-silence with only a thin hit stab over them. There are no audio assets in this game, so the roar is SYNTHESISED: two detuned saws swept downward through a soft-clip waveshaper (a falling pitch is what the ear hears as a throat; the detune makes them beat against each other, which is the roughness of a real animal voice), a closing lowpass so it stays chesty rather than fizzy, band-passed noise for the breath rasping through it, a slow LFO on pitch so it never sits perfectly still, and a sub thump underneath so it lands in the chest on a phone speaker. It ESCALATES: each successive flinch is lower, longer and angrier, so four hits build instead of repeating. The impact stab lands FIRST and the roar answers it ~90ms later -- the hit, then the reaction to the hit; fired together they just sound like one muddy noise. Routed through fx() like every other SFX, so it shares the stings bus (never ducked) and obeys the mute flag -- a mute=1 QA run stays silent.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 323 — FOUNDER PLAYTEST: THE BOSS FIGHT PASS. (A) THE DEFEAT + FINN-JOURNAL CLIPS NEVER PLAYED, and the reason was invisible: finn-journal.mp4 shipped with an AAC audio track and the outro player -- unlike the flinch player -- never muted the element. Mobile refuses to autoplay unmuted video, so play() rejected and the rejection was swallowed by an EMPTY catch. No clip, no error, no clue -- and the player reached the Journal quest having never been told what the Journal is. Fixed three ways: every clip re-encoded with NO audio track, the element explicitly muted each time, and the catch now skips to the next clip instead of sitting on black. Also unhooked from _firstEverKill: the clips and the quest are one unit but were gated on two different save keys, so a device that had beaten the Gambler before got the quest with no explanation. They now play whenever EITHER gate is open. (B) TRUE 60FPS. The masters in _video-originals are 3840x2160 at 60fps; the shipped clips had been downsampled to 24fps, and build 322 was interpolating flinch-3 up from that degraded copy while a 4K60 master sat on disk. All four flinches and the Finn-journal clip are re-encoded straight from the masters at real 60fps. (C) Flinch 3 opens 2s later -- the explosion is cut, which is what made it choppy. (D) The outro reuses the INTRO scene, so THE GAMBLER / TAP TO ENTER lit up on top of the defeat and journal clips, inviting the player into a fight they had just won. That chrome is hidden for the outro and restored after. (E) THE SOUND NOW LANDS ON THE HIT. It fired 90ms after the clip STARTED, so the founder heard it and watched him lurch two seconds later. The clips do not open on the impact. Offsets are MEASURED per clip (per-frame motion energy, peak): 2.47s / 2.00s / 0.62s / 1.68s, fired 50ms ahead so it reads as synchronous. Cleared if the clip is skipped or stalls.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -13130,7 +13130,17 @@ function bossWin() {
   // BOSS 1 (the Gambler) → the Trader's Journal cinematic plays over the victory card.
   // FIX B — unlock cinematics are ONCE-EVER: a veteran re-beating a Guardian on a later run
   // already owns the reward, so the "you found it!" moment must never replay.
-  if (isGambler && bfState._firstEverKill !== false) {
+  /* FOUNDER (build 323) — THE CLIPS AND THE QUEST ARE ONE UNIT.
+     These two clips are the ONLY thing that tells the player what the Trader's Journal even is;
+     the interactive quest that follows assumes they have seen them. But they were gated on
+     _firstEverKill (from cq_bosses_v2) while the quest is gated on player.jtut (from
+     cq_player_v1) — two different keys, so a device that had beaten the Gambler before got the
+     quest with no explanation of what it was teaching. Play them whenever EITHER gate is open, so
+     the pair can never come apart again. */
+  const _journalQuestPending = (function () {
+    try { return !(typeof player !== 'undefined' && player && player.jtut); } catch (e) { return false; }
+  })();
+  if (isGambler && (bfState._firstEverKill !== false || _journalQuestPending)) {
     // GUARDIAN 1 — his DEFEAT clip plays fullscreen over the victory card and TRANSITIONS
     // straight into Finn receiving the Trader's Journal; only then does the Journal-unlock
     // ceremony run. Once-ever (same _firstEverKill gate). Fully try/caught + the outro's own
@@ -13267,10 +13277,20 @@ const BOSS_FLINCH_VIDEOS = {
   // roster, so the Gambler was level 0 there. On main he is level 1 — and BOSS_OUTRO_VIDEOS here is
   // keyed 1, so leaving this at 0 would have made every flinch lookup miss and the cinematics would
   // have silently never played. Caught by comparing the two rosters at runtime after the merge.
+  // Seconds into each clip at which the Gambler actually TAKES the hit — measured, not guessed
+  // (per-frame motion energy, peak). Used to schedule the impact sound; see playBossFlinch.
   1: ['bosses/flinches/boss-1-flinch-1.mp4',   // THE GAMBLER is level 1 on main
       'bosses/flinches/boss-1-flinch-2.mp4',
       'bosses/flinches/boss-1-flinch-3.mp4',
       'bosses/flinches/boss-1-flinch-4.mp4'],
+};
+/* Seconds into each flinch clip at which the Gambler actually TAKES the hit. MEASURED, not
+   guessed: per-frame motion energy (tblend=difference → signalstats YAVG) across each clip,
+   taking the peak. The clips do not open on the impact — each has its own wind-up, which is why
+   firing the sound at clip-start put it a full two seconds early. Re-measure these if a clip is
+   ever re-cut. */
+const BOSS_FLINCH_IMPACT = {
+  1: [2.47, 2.00, 0.62, 1.68],   // flinch 1..4 for THE GAMBLER
 };
 /* Play flinch `n` (1-based) fullscreen, then hand control back. Modelled on
    playBossOutroCinematic, with one deliberate difference: the outro ENDS a scene and so leaves the
@@ -13283,10 +13303,11 @@ function playBossFlinch(level, n, onDone) {
   const scene = document.getElementById('bfFlinchScene');
   const vid   = document.getElementById('bfFlinchVideo');
   if (!src || !scene || !vid) { done1(); return; }        // no clip for this round — carry on silently
-  let finished = false, killT = 0;
+  let finished = false, killT = 0, _sfxT = 0;
   function finish() {
     if (finished) return; finished = true;
     clearTimeout(killT);
+    clearTimeout(_sfxT);   // a skipped/stalled clip must never roar over the next question
     vid.onended = null; vid.onerror = null; scene.onclick = null;
     try { vid.pause(); } catch (e) {}
     try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(1, 0.35); } catch (e) {}   // music back up
@@ -13308,17 +13329,24 @@ function playBossFlinch(level, n, onDone) {
      ours to make. Duck the music under the clip so the impact reads, and hit a sting on the frame
      the Gambler takes it — escalating across the four so the fight builds instead of repeating. */
   try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(0.25, 0.15); } catch (e) {}
-  /* FOUNDER (build 322) — "add appropriate boss sounds; when they flinch, just make them do a scary
-     roar." The Guardian was taking four cinematic hits in total silence apart from a thin 'hit'
-     stab, because the clips carry no audio track. He now ROARS, and the roar deepens and lengthens
-     with each flinch so the fight builds (see GameMusic.roar).
-     ORDER MATTERS: the impact stab lands FIRST and the roar answers it ~90ms later — the hit, then
-     the reaction to the hit. Firing them together just sounds like one muddy noise.
-     The 4th keeps 'bigwin' because that flinch is the one before he falls. */
-  try {
-    if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting(n >= 4 ? 'bigwin' : 'hit');
-    if (typeof GameMusic !== 'undefined' && GameMusic.roar) setTimeout(function () { try { GameMusic.roar(n); } catch (e) {} }, 90);
-  } catch (e) {}
+  /* FOUNDER (build 323) — THE SOUND HAS TO LAND WHEN HE ACTUALLY TAKES THE HIT.
+     Build 322 fired the hit + roar 90ms after the clip STARTED, so the founder heard the sound and
+     then watched the Gambler lurch a full two seconds later. The clips do not open on the impact —
+     each one has its own wind-up.
+     These offsets are MEASURED, not guessed: per-frame motion energy (tblend=difference →
+     signalstats YAVG) over each clip, taking the peak. flinch-1 peaks at 2.47s, flinch-2 at 2.00s,
+     flinch-3 at 0.62s (early because the 2s explosion was cut off the front), flinch-4 at 1.68s and
+     with by far the most energy — it is the last hit before he falls. Fired ~50ms AHEAD of the
+     peak, because a sound that lands fractionally early reads as synchronous while a late one
+     always reads as late.
+     If the clip is skipped, errors or stalls, finish() clears this timer so the roar of a boss the
+     player is no longer looking at never fires over the next question. */
+  const _impact = (BOSS_FLINCH_IMPACT[level] || [])[n - 1];
+  const _hitMs  = Math.max(0, Math.round(((typeof _impact === 'number') ? _impact : 0.1) * 1000) - 50);
+  _sfxT = setTimeout(function () {
+    try { if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting(n >= 4 ? 'bigwin' : 'hit'); } catch (e) {}
+    try { if (typeof GameMusic !== 'undefined' && GameMusic.roar) setTimeout(function () { try { GameMusic.roar(n); } catch (e) {} }, 80); } catch (e) {}
+  }, _hitMs);
   vid.setAttribute('src', src);
   try { vid.loop = false; vid.muted = true; vid.playsInline = true; vid.setAttribute('playsinline',''); vid.load(); } catch (e) {}
   const pr = vid.play();
@@ -13409,11 +13437,40 @@ function playBossOutroCinematic(level, onDone) {
     vid.onended = playNext;
     vid.onerror = playNext;                 // a missing clip skips to the next, never blocks
     vid.setAttribute('src', src);
-    try { vid.loop = false; vid.load(); } catch (e) {}
+    /* FOUNDER (build 323) — WHY THE BOSS-DEFEAT AND FINN-JOURNAL CLIPS NEVER PLAYED.
+       finn-journal.mp4 shipped with an AAC audio track, and this player — unlike the flinch
+       player — never muted the element. Mobile refuses to autoplay unmuted video, so play()
+       rejected, and the rejection was swallowed by an EMPTY catch: no clip, no error, no clue.
+       The player reached the Journal quest having never seen what the Journal was.
+       Belt AND braces now: the clips are re-encoded with no audio track at all, AND the element
+       is explicitly muted every time (the property beats the attribute and can outlive a src
+       swap). The catch also stops being silent — if playback is ever refused again we skip to
+       the next clip instead of sitting on a black screen for the 20s safety timer. */
+    try {
+      vid.loop = false;
+      vid.muted = true; vid.defaultMuted = true; vid.setAttribute('muted', '');
+      vid.playsInline = true; vid.setAttribute('playsinline', '');
+      vid.load();
+    } catch (e) {}
     const pr = vid.play();
-    if (pr && pr.catch) pr.catch(function () {});
+    if (pr && pr.catch) pr.catch(function () { try { console.warn('[outro] playback refused:', src); } catch (e) {} playNext(); });
     killT = setTimeout(playNext, 20000);    // safety: never get stuck on a stalled clip
   }
+
+  /* FOUNDER (build 323) — "the text that says ENTER THE HALL OF RISKS should not be present on the
+     very last screen of the boss."
+     Root cause: the OUTRO reuses #bfPortalScene, which is the INTRO's scene, so it inherits the
+     intro's chrome. The moment the scene gets class 'on', #bfIntroTitle ("THE GAMBLER / DEALER OF
+     EASY MONEY") and #bfIntroTap ("TAP TO ENTER →") light up ON TOP of the defeat and Finn-journal
+     clips — inviting the player to enter a fight they have just won. Confirmed by inspection: both
+     render display:block the instant the scene is 'on'.
+     They belong to the arrival, not the departure. Hidden for the duration of the outro and
+     restored on the way out, so the boss INTRO is completely untouched. */
+  const _introChrome = ['bfIntroTitle', 'bfIntroTap']
+    .map(function (id) { return document.getElementById(id); }).filter(Boolean);
+  _introChrome.forEach(function (n) { n.style.display = 'none'; });
+  const _rawFinish = finish;
+  finish = function () { try { _introChrome.forEach(function (n) { n.style.display = ''; }); } catch (e) {} _rawFinish(); };
 
   scene.onclick = finish;                   // tap skips the whole sequence
   scene.classList.remove('warpout', 'asbg');

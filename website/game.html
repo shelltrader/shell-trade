@@ -2927,7 +2927,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 324 — REAL ROARS + BREATHING ROOM. (1) THE GUARDIAN NOW SCREAMS FOR REAL. The founder heard the synthesised roar and said it sounds like a computer prompt -- correct, and not fixable by tuning: an oscillator stack has no throat in it. His three recordings are in as bosses/sfx/boss-roar-1..3.m4a, each trimmed so the scream starts on sample ZERO (the sources carried 0.2s, 0.2s and 0.7s of lead-in, which would have re-introduced the exact late-sound problem build 323 just fixed), level-matched, limited and faded so a roar never runs long into the next question. Used interchangeably across every boss via a SHUFFLE BAG, so the same scream never lands twice running inside one fight, and pitched down + louder with each successive flinch so the fight still escalates. The synth roar is kept only as a fallback if the files cannot load. A skipped clip now cuts a roar already screaming. (2) LET THEM LAND BEFORE YOU ASK THEM FOR ANYTHING. A box was placed the moment the player dropped into the map. Nothing of any kind now spawns inside the first LEVEL_WARMUP_CANDLES -- the player just moves, and registers that they are standing on a chart. (3) EVENT SPACING IS NOW A RULE. The ledger existed but only three things stamped it; boxes and the boss gate were invisible to it, so a box could land on the heels of a lesson and a page two candles after a box. Every one of the founder four events -- box, page, lesson, boss -- now both CHECKS and STAMPS it. The box stamps on SMASH (when the player actually experiences it, not when it spawned a screen earlier), and the required gap is re-rolled in the 10-15 band per event so pacing breathes instead of ticking. The boss gate stamps but is never gated, because gating the only way forward could stall the level. (4) The box SHUDDERS on its own now -- a short eased burst every ~2.4s, per-box phase so they never sync -- instead of only quivering once Finn was already on top of it. Render-only: b.x/b.y untouched.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 325 — EVENT SPACING, CLOSED PROPERLY (adversarial audit fallout). Build 324 wired boxes, pages and the boss gate into the ledger; an audit of every player-facing event site then found three holes it had left. (1) THE BIGGEST: pumpLessons is the single choke point every CARD lesson in the game passes through -- teach, teachForced, the post-trade recaps, the QA paths -- and none of them consulted the ledger, so a card could still land on the very next candle after a box smash or a page find, which is exactly the complaint. One gate + one stamp there now covers all of them. It checks the gap ONLY, not the opening warm-up, because suppressing the controls and goal cards for 14 candles would leave a new player with no idea what to press -- the founder rule is about things placed IN THE WORLD, not about the game explaining itself. Deferring is free: the queue holds and drains once the gap passes. (2) THE SPAWN GATES WERE ASKING ABOUT THE WRONG CANDLE. maintainCandles spawns on the candle just printed at the generation edge, roughly 15 candles AHEAD of Finn, so a bare eventClear() answered a question about where Finn was standing rather than where the player will actually meet the reward. Box and page spawns now judge at their own candle id via eventClearAt(). (3) The LEGACY box path -- every level except 1 -- had received none of the build-324 gates at all, so L2+ could still drop a box on candle one or straight after a lesson. Same rules everywhere now.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -5889,7 +5889,7 @@ function maybeSpawnBox(c) {
     /* …and the same rule that governs everything else: a box is an EVENT, so it may not be placed
        on top of another one. See eventClear() — this is what keeps a box from landing right after
        a lesson, a Lost Wisdom page, or a trade. */
-    if (!eventClear()) return;
+    if (!eventClearAt(c.id)) return;
     if (boxNearBossGate()) return;                              // never hand out a box at the gate
     if (market._boxSpace > 0) { market._boxSpace--; return; }   // keep the two boxes apart
     const me = Math.max(c.open, c.h);
@@ -5920,6 +5920,10 @@ function maybeSpawnBox(c) {
   // ── LEGACY PATH — unchanged for every non-governed level ──
   if (market._boxGap == null) market._boxGap = 6 + (Math.random() * 6 | 0);
   if (market._boxGap > 0) { market._boxGap--; return; }
+  /* The legacy path serves every non-governed level. It had none of the build-324 gates, so L2+
+     could still drop a box on candle one, or straight after a lesson. Same rules as L1 now. */
+  if ((session.candles || 0) < LEVEL_WARMUP_CANDLES) return;
+  if (!eventClearAt(c.id) || boxNearBossGate()) return;
   if (rewardTooClose(c)) return;                            // FOUNDER CALL (build 303) — see REWARD_GAP
   if (Math.random() > 0.5) return;                          // even when due, only ~half of eligible candles carry one (placed, not metronomic)
   market._boxGap = 22 + (Math.random() * 12 | 0);           // ~22-34 calm candles between boxes — a genuine bonus, never a stream
@@ -7028,15 +7032,37 @@ const LEVEL_WARMUP_CANDLES = 14;
 const eventLedger = { at: -999, kind: null };
 // Is the stage clear for a new moment? Also false while a modal moment is literally on
 // screen, so nothing can stack on a lesson card or an open trade ticket.
-function eventClear() {
+function eventClear(gapOnly) {
   try {
     if (typeof lessonOpen !== 'undefined' && lessonOpen) return false;
     if (typeof trade !== 'undefined' && trade) return false;
     if (typeof pending !== 'undefined' && pending) return false;
-    // Nothing at all inside the opening stretch — see LEVEL_WARMUP_CANDLES.
-    if (typeof session !== 'undefined' && session && (session.candles || 0) < LEVEL_WARMUP_CANDLES) return false;
+    /* Nothing SPAWNS inside the opening stretch — see LEVEL_WARMUP_CANDLES. Callers that only
+       need the spacing rule (the lesson queue) pass gapOnly, because suppressing the opening
+       controls/goal cards for 14 candles would leave a new player with no idea what to press.
+       The founder's "let them move first" is about things placed IN THE WORLD, not about the
+       game explaining itself. */
+    if (!gapOnly && typeof session !== 'undefined' && session && (session.candles || 0) < LEVEL_WARMUP_CANDLES) return false;
   } catch (e) {}
   return (maxSeenCandleId - eventLedger.at) >= (eventLedger.gap || EVENT_MIN_GAP);
+}
+/* Spawn-side spacing must be judged at the candle the thing is PLACED ON, not at Finn's frontier.
+   maintainCandles calls maybeSpawnBox/maybeSpawnWisdomPage with the candle just printed at the
+   generation edge, which is ~15 candles AHEAD of Finn — so a bare eventClear() answers a question
+   about where Finn is standing, not about where the player will meet the reward. */
+function eventClearAt(candleId) {
+  /* It must NOT delegate to eventClear(): that measures the gap from Finn's frontier, and at spawn
+     time Finn is BY DEFINITION still inside the gap — the candle being judged is ~15 ahead of him.
+     Chaining the two made every spawn-side call return false forever. Take eventClear's modal and
+     warm-up guards, then measure the gap from the TARGET candle. */
+  try {
+    if (typeof lessonOpen !== 'undefined' && lessonOpen) return false;
+    if (typeof trade !== 'undefined' && trade) return false;
+    if (typeof pending !== 'undefined' && pending) return false;
+    if (typeof session !== 'undefined' && session && (session.candles || 0) < LEVEL_WARMUP_CANDLES) return false;
+    if (typeof candleId !== 'number') return eventClear();
+    return (candleId - eventLedger.at) >= (eventLedger.gap || EVENT_MIN_GAP);
+  } catch (e) { return true; }
 }
 /* Stamp a moment. Call this the instant a moment BEGINS, not when it resolves.
    Each stamp rolls the NEXT required gap somewhere in the founder's 10-15 band, so consecutive
@@ -7903,7 +7929,16 @@ function pumpLessons(dt) {
   if (lessonOpen) return;                         // waiting for OK
   if (lessonGap > 0) { lessonGap -= dt; return; }
   if (!lessonQ.length || paused) return;
+  /* FOUNDER (build 325) — "there should never be a lesson immediately after a mystery journal page."
+     THIS is where every card lesson in the game reaches the screen — teach(), teachForced(), the
+     post-trade recaps, the QA paths — and none of them consulted the ledger, so a card could land
+     on the very next candle after a box smash or a page find. One gate here covers all of them.
+     gapOnly: the spacing rule applies, but the opening controls/goal cards are NOT suppressed —
+     a new player must still be told what to press. Deferring is free: the queue simply holds and
+     drains the moment the gap has passed. */
+  if (!eventClear(true)) return;
   const l = lessonQ.shift();
+  try { markEvent('lesson'); } catch (e) {}
   const el = $('lesson');
   // Find this lesson's key (lessonQ holds the LESSONS[key] array by reference)
   let _lk = null; for (const k in LESSONS) { if (LESSONS[k] === l) { _lk = k; break; } }
@@ -11317,7 +11352,7 @@ function maybeSpawnWisdomPage(c) {
   /* FOUNDER (build 324) — a Lost Wisdom page is an EVENT. It used to check only the box/page
      reward gap, so it could still land right after a lesson or a trade, and it could appear on
      the boss approach. Full ledger now, same rule as everything else. */
-  if (!eventClear() || boxNearBossGate()) return;
+  if (!eventClearAt(c.id) || boxNearBossGate()) return;
   for (const kind of ['easy', 'hidden']) {
     if (_wisSpawn.placed[kind] || _wisSpawn.n < spot[kind]) continue;
     const idx = (session.level - 1) * 2 + (kind === 'hidden' ? 1 : 0);

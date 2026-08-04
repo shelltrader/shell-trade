@@ -2944,7 +2944,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 329 - ONE BRAND, AND TEXT YOU CAN ACTUALLY READ (ticket 1 audit fallout). The game titled itself Chart Quest (two words) in the browser tab and as the installed-app name, while the landing page said ChartQuest 28 times and never split it - so the brand changed spelling at the exact moment a tester clicked Play. Unified across the game title, the PWA titles, play.html, bosses.html, courses.html, sw.js and two in-game strings. The trademark notice in the file header is deliberately untouched - that is a legal string. Separately, on the marketing site --ink-faint was #5f7285: 4.01 to 1 on the page background, under the 4.5 WCAG AA floor, used at 9 to 12.5px across about 26 selectors including the hero trust line and the financial disclaimer. Now #8195a8, which clears AA on all four backgrounds in the file. The hero trust line also had no text-shadow while every sibling over the key art does.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 330 - FOUNDER HOTFIXES SS1-SS3. (1) The you-can-close-any-time card left the orphan word call. alone on its last line; the guide wrapper now honours explicit line breaks and the copy puts Your call. on its own line. (2) SHELL LAW: the TAP TO CLOSE button set .textContent on a DOM node, so the canvas-side fillTextShell never applied and a raw shell EMOJI leaked through - a different shell from the HUD and every pickup. It now uses shellHTML(), the same scallop as drawShell. Swept the rest: the legend icon draws the canonical shell, and the SVG review-card text (which cannot host an inline path) says shells rather than showing the wrong icon. (3) A brand-new player FIRST WIN no longer answers what happened with it won but this was a weak setup / do not let a lucky win teach a bad habit - strong-vs-weak is a real lesson but not at trade one, and not as the reward for succeeding. PERF: that button write sat inside frame(), mutating the DOM about 60 times a second during a trade and forcing a style and layout pass each time; it is now cached and only written when the label actually changes.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -10518,7 +10518,7 @@ function tradeChartSVGFull(t, opts) {
   // Result badge
   s += '<rect x="' + (VW/2 - 70) + '" y="27" width="140" height="25" rx="5" fill="' + resultCol + '22"/>';
   s += '<text x="' + (VW/2) + '" y="44" fill="' + resultCol + '" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">'
-     + (isWin ? '✓ WIN' : '✗ LOSS') + '  ' + dSign + fmt(Math.abs(t.delta)) + ' 🐚</text>';
+     + (isWin ? '✓ WIN' : '✗ LOSS') + '  ' + dSign + fmt(Math.abs(t.delta)) + ' shells</text>';
 
   // Chart area
   s += '<rect x="' + chartX + '" y="' + chartTop + '" width="' + chartW + '" height="' + chartH
@@ -10811,9 +10811,11 @@ function tradeChartSVGFull(t, opts) {
     whatLines.push({ t: (_gradesKnown ? 'A Grade ' + grade : 'A strong') + ' setup that paid off.', c: _bc });
     whatLines.push({ t: 'Strong setups win more often over time.', c: _bc });
   } else if (isWin && !goodSetup) {
-    whatLines.push({ t: 'It won — but this was a weak setup.', c: '#ffd60a' });
-    whatLines.push({ t: "Don't let a lucky win teach a bad habit.", c: _bc });
-    whatLines.push({ t: _gradesKnown ? 'Judge the setup, not the result — wait for A-grade.' : 'Judge the setup, not the result.', c: _bc });
+    // FOUNDER CALL: say NOTHING here. This fires on a brand-new player's first win, and it used
+    // to answer "what happened?" with "it won - but this was a weak setup / don't let a lucky win
+    // teach a bad habit". Strong-vs-weak setups are a real lesson, but not at trade one, and not
+    // as the reward for succeeding. The result line above already says what happened. Reintroduce
+    // setup quality later, once the concept has actually been taught.
   } else if (!isWin && goodSetup) {
     whatLines.push({ t: (_gradesKnown ? 'This was a Grade ' + grade : 'This was a strong') + ' setup — you did the right thing.', c: _bc });
     whatLines.push({ t: 'Even strong setups lose sometimes. Not a mistake —', c: _bc });
@@ -10835,8 +10837,8 @@ function tradeChartSVGFull(t, opts) {
   if (t.rr && conceptTier('risk') >= 1) {   // 'risk' unlocks Level 5 ('rr' isn't a concept key — unknown keys default to SHOWN)
     const riskAmt = isWin && t.rr > 0.01 ? Math.abs(t.delta) / t.rr : Math.abs(t.delta);
     s += '<text x="14" y="' + whY2 + '" fill="#4a5a70" font-size="10" font-family="monospace">R:R = '
-       + t.rr.toFixed(1) + ':1  ·  risked ' + fmt(riskAmt) + ' 🐚  ·  '
-       + (isWin ? 'won' : 'lost') + ' ' + fmt(Math.abs(t.delta)) + ' 🐚</text>';
+       + t.rr.toFixed(1) + ':1  ·  risked ' + fmt(riskAmt) + ' shells  ·  '
+       + (isWin ? 'won' : 'lost') + ' ' + fmt(Math.abs(t.delta)) + ' shells</text>';
   }
 
   s += '<text x="' + (VW/2) + '" y="' + (VH-10) + '" fill="#242e3e" font-size="11" font-family="monospace" text-anchor="middle">TAP ANYWHERE TO CLOSE</text>';
@@ -10877,7 +10879,7 @@ function tradeReplaySVG(entry, n) {
   s += '<text x="' + (VW/2) + '" y="20" fill="#4cc3ff" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">▶ TRADE REPLAY — ' + (isLong ? '▲ LONG' : '▼ SHORT') + '</text>';
   let status, statusCol;
   if (!done) { status = 'In the trade… watching price'; statusCol = '#7d8aa0'; }
-  else { status = (isWin ? '✓ TAKE PROFIT HIT  ' : '✗ STOPPED OUT  ') + (entry.delta > 0 ? '+' : '−') + fmt(Math.abs(entry.delta)) + ' 🐚'; statusCol = isWin ? COLOR.greenBody : COLOR.redBody; }
+  else { status = (isWin ? '✓ TAKE PROFIT HIT  ' : '✗ STOPPED OUT  ') + (entry.delta > 0 ? '+' : '−') + fmt(Math.abs(entry.delta)) + ' shells'; statusCol = isWin ? COLOR.greenBody : COLOR.redBody; }
   s += '<text x="' + (VW/2) + '" y="42" fill="' + statusCol + '" font-size="12" font-weight="bold" font-family="monospace" text-anchor="middle">' + status + '</text>';
 
   // Chart frame + grid
@@ -18847,7 +18849,7 @@ function drawFirstTradeGuide() {
     // existed. This 4th beat names it (points at the entry line, cyan, no price of its own).
     { h: trade.entryH, col: '#7fd6ff', tag: 'YOU’RE IN CONTROL',
       title: 'You can close any time',
-      body: 'See the glowing CLOSE button? Tap it whenever you want to bank your shells — or hold your plan and ride it to the target. Your call.' },
+      body: 'See the glowing CLOSE button? Tap it whenever you want to bank your shells — or hold your plan and ride it to the target.\nYour call.' },
   ];
   const s = steps[Math.min(g.step, 3)];
   ctx.save();
@@ -18863,9 +18865,14 @@ function drawFirstTradeGuide() {
   const cardW = Math.min(W - 32, 360), cardX = (W - cardW) / 2;   /* SHOT 5 — capped width + explicit centering so the card sits centered on any screen */
   ctx.textAlign = 'center';
   ctx.font = '13px ' + SANS;
-  const _words = s.body.split(' '); const _lines = []; let _cur = '';
-  for (const w of _words) { const t = _cur + (_cur ? ' ' : '') + w; if (ctx.measureText(t).width > cardW - 34) { _lines.push(_cur); _cur = w; } else _cur = t; }
-  if (_cur) _lines.push(_cur);
+  // Wrap each \n-separated segment on its own, so a body can force a hard break.
+  // Without this the greedy wrapper left orphan words ("call.") alone on the last line.
+  const _lines = [];
+  for (const _seg of s.body.split('\n')) {
+    const _words = _seg.split(' '); let _cur = '';
+    for (const w of _words) { const t = _cur + (_cur ? ' ' : '') + w; if (ctx.measureText(t).width > cardW - 34) { _lines.push(_cur); _cur = w; } else _cur = t; }
+    if (_cur) _lines.push(_cur);
+  }
   const cardH = 54 + _lines.length * 17 + 20;                     // title area + body lines + footer area (no overlap at any length)
   const cardY = H - cardH - 26;
   ctx.fillStyle = 'rgba(9,13,22,0.97)'; rr(cardX, cardY, cardW, cardH, 14); ctx.fill();
@@ -19880,7 +19887,7 @@ function drawCandleAcademy() {
       { n: 1, icon: '🚶', col: '#7fd6ff', title: 'WALK THE CHART',   desc: 'Jump on candles — your platforms!' },
       { n: 2, icon: '⚡', col: '#c9b3ff', title: 'SPOT A SETUP',     desc: 'A banner pops up — tap to trade.' },
       { n: 3, icon: '📊', col: '#ffd60a', title: 'ENTER THE TRADE',  desc: 'Choose LONG 📈 or SHORT 📉.' },
-      { n: 4, icon: '🐚', col: '#16c784', title: 'WIN SHELLS',       desc: '+2% to advance, −5% resets. 🐚 = score!' },
+      { n: 4, icon: '🐚', col: '#16c784', title: 'WIN SHELLS',       desc: '+2% to advance, −5% resets. Shells = score!' },
     ];
     const rowH = H * 0.104;
     steps.forEach((s, i) => {
@@ -19898,7 +19905,10 @@ function drawCandleAcademy() {
       ctx.font = '14px serif';
       ctx.fillStyle = '#e6edf3';
       ctx.textAlign = 'left';
-      ctx.fillText(s.icon, W * 0.20, ry + rowH * 0.38);
+      // SHELL LAW: the shell entry draws the canonical scallop, not an emoji glyph, so it
+      // matches the HUD, the pickups and every reward label. Other rows stay emoji.
+      if (s.icon === '\uD83D\uDC1A') { try { drawShell(ctx, W * 0.20 + 7, ry + rowH * 0.38 - 5, 7, 1); } catch (e) {} }
+      else ctx.fillText(s.icon, W * 0.20, ry + rowH * 0.38);
       // title + desc
       ctx.fillStyle = s.col;
       ctx.font = 'bold 12px ' + FONT_UI;
@@ -23843,7 +23853,20 @@ function frame(now) {
     } else {
       _rTxt = _r >= 2 ? 'Excellent!' : _r >= 1 ? 'Strong profit' : _r >= 0.4 ? 'Good profit' : _r >= 0 ? 'Safe profit' : 'In the red';
     }
-    closeBtnEl.textContent = (pnl >= 0 ? '+' : '−') + fmt(Math.abs(pnl)) + ' 🐚   ' + _rTxt + '   ·   TAP TO CLOSE';
+    // SHELL LAW: one shell design everywhere. This is a DOM button, so the canvas-side
+    // fillTextShell() never applied and the raw shell EMOJI leaked through - a different shell
+    // from the one in the HUD and on every pickup. shellHTML() is the same scallop as drawShell().
+    //
+    // PERF: this sits inside frame(), so it used to write .textContent EVERY FRAME during a
+    // trade, mutating the DOM ~60x a second and forcing a style+layout pass each time. The label
+    // only actually changes a couple of times a second, so cache it and touch the DOM only on a
+    // real change - which also makes the innerHTML (SVG parse) safe to use here.
+    const _lbl = (pnl >= 0 ? '+' : '−') + fmt(Math.abs(pnl));
+    const _key = _lbl + '|' + _rTxt;
+    if (closeBtnEl._cqKey !== _key) {
+      closeBtnEl._cqKey = _key;
+      closeBtnEl.innerHTML = _lbl + ' ' + shellHTML(13) + '   ' + _rTxt + '   ·   TAP TO CLOSE';
+    }
     // OBJ 3 (TEC AG-LAW-3) — surface HOLD YOUR PLAN beside CLOSE only during the SCARE (the dip), so
     // holding through fear becomes a deliberate, dignified choice. READ-ONLY of trade._drivePhase.
     if (holdBtnEl) holdBtnEl.style.display = (trade._drivePhase === 'dip' && !trade._heldChoice) ? 'block' : 'none';

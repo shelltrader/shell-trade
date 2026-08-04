@@ -3012,7 +3012,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 335 - PRODUCTION HARDENING. (1) SERVICE WORKER WAS BROKEN SINCE 332: the v10 cache comment was appended AFTER the block comment closed, so sw.js was a SyntaxError and never registered at all - no precache, no offline page, a console error on every load. Repaired. (2) The ?qa=1 bridge is now dev-only. It exposed forceWin, unlockAll, setState, maxProgress and answerData (the correct answer plus the validator source for every mini-game) on the live site. The cheats matter less than they look - the game is readable client-side source and progress is localStorage - but the ANALYTICS damage was real and unrepairable: forceWin calls the genuine bossWin, CQTrack wraps it, and boss_defeated is once-per-player, so a fabricated event permanently discarded that testers real one. Gated on _CQ_DEV, which is true for file://, localhost and LAN addresses, so every existing QR, serve and harness path is unchanged; set localStorage cq_dev=1 once per device to use it against production.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 336 - EVENT SPACING (T-005a). Founder: "Mystery Journal Page, 1 candle, Breakable Box." The build-324 breathing-room rule was never broken - it was never RUN on Level 1. maybeSpawnBox has two paths and BOX_GOVERNED_LEVELS is [1], so L1 (the whole closed beta) takes the GOVERNED branch, and when that branch was forked off the legacy one it lost both halves of the shared reward ledger: it never READ rewardTooClose (legacy 6012) and never WROTE stampReward (legacy 6018). REWARD_GAP is the ONLY thing separating a box from a Lost Wisdom page, so both directions failed - a page stamped a ledger the box ignored, and a box never stamped the ledger the page reads. Second bug in the same branch: clearance was judged on the candle being generated, but the box is placed on the remembered VALLEY candle several behind it, so the candle that got cleared was never the candle that got the box. Both now judged and stamped on the valley candle. NOT a new system - the canonical owner (CQBEAT) is T-005b.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -5984,6 +5984,23 @@ function maybeSpawnBox(c) {
       if (me >= cand.h + BOX_CLIMB_MARGIN) {                    // the climb happened → real valley
         const fc = cand.c;
         market._boxCand = null;                                 // this valley is spent either way
+        /* FOUNDER (build 336) — "Mystery Journal Page → 1 candle → Breakable Box."
+           Two bugs, both introduced when this GOVERNED path was branched off the legacy one, and
+           both invisible outside Level 1 because BOX_GOVERNED_LEVELS is [1]:
+
+           (1) REWARD_GAP is the ONLY mechanism that separates boxes from Lost Wisdom pages, and
+               this path neither READ it (rewardTooClose, legacy :6012) nor WROTE it (stampReward,
+               legacy :6018). Both directions were broken: a page stamped a ledger the box never
+               consulted, and a governed box never stamped the ledger the page does consult — so
+               either could land on top of the other.
+
+           (2) Clearance was judged on `c`, the candle currently being generated, but the box is
+               placed on `fc`, the remembered VALLEY candle several candles behind it. The candle
+               that got cleared was not the candle that received the box. Judge `fc`.
+
+           Refusing here must not cost the level a box: the candidate is already spent above, the
+           budget is only incremented on a real placement, and the next valley tries again. */
+        if (!eventClearAt(fc.id) || rewardTooClose(fc)) return;
         /* A REJECTED BOX MUST NOT COST THE LEVEL A BOX. The budget and the spacing used to be
            consumed BEFORE the placement was attempted, so a valley that CQREACH refused (bad
            geometry, or the world not laid out yet) silently burned one of the level's two boxes
@@ -5992,7 +6009,11 @@ function maybeSpawnBox(c) {
         const _b = CQREACH.place(boxes, { x: fc.x + fc.w / 2, y: candleTop(fc) - BOX_HOVER, w: BOX_W, premium: false,
           broken: false, breakT: 0, bob: Math.random() * 6.28, glow: Math.random() * 6.28,
           rot: Math.random() * 6.28, orb: Math.random() * 6.28, excite: 0 }, { kind: 'valley-box' });
-        if (_b) { market._boxMade++; market._boxSpace = BOX_MIN_GAP; }
+        /* …and STAMP it, so the Lost Wisdom page (which does read this ledger, :11438) keeps its
+           REWARD_GAP clear of a governed box. Stamped on `fc` — the candle the box actually sits
+           on — for the same reason the check above moved there. Only on a real placement: a box
+           CQREACH refused does not exist, so it must not reserve space in the world. */
+        if (_b) { market._boxMade++; market._boxSpace = BOX_MIN_GAP; stampReward(fc); }
         return;
       }
       if (me < cand.h) { cand.c = c; cand.h = me; cand.wait = 0; return; }   // still falling → track the new floor

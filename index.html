@@ -19,12 +19,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Chart Quest">
+<meta name="apple-mobile-web-app-title" content="ChartQuest">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="theme-color" content="#0a0e14">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>Chart Quest</title>
+<title>ChartQuest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <!-- build 262: preload the cold-open poster so the intro is never a black screen while the
@@ -2944,7 +2944,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 328 - LOGO WEIGHT + HONEST SCOPE (ticket 1 audit fallout). The auth overlay is up on first paint and play.html only hides its spinner on the iframe load event, which waits for every subresource - so logo.png, 1.78 MB of 1254x1254 PNG rendered at about 340px, was roughly 9 seconds of pure logo on slow 4G standing between a new tester and the game. Both usages are now a picture element: 38 KB WebP (97.9 percent smaller) with a JPEG fallback, since the source has no alpha channel and a PNG fallback would have been ten times bigger. Added width and height attributes so the card cannot reflow while it decodes - and, in the same edit, height:auto on #authLogo img, because that rule was width:100% only and the height attribute would otherwise render the logo at full height inside a 340px card. Also swept the marketing site of eleven-Guardian and live-chart claims: alt text, OG and Twitter cards, meta descriptions and pillar copy now describe what actually ships.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 329 - ONE BRAND, AND TEXT YOU CAN ACTUALLY READ (ticket 1 audit fallout). The game titled itself Chart Quest (two words) in the browser tab and as the installed-app name, while the landing page said ChartQuest 28 times and never split it - so the brand changed spelling at the exact moment a tester clicked Play. Unified across the game title, the PWA titles, play.html, bosses.html, courses.html, sw.js and two in-game strings. The trademark notice in the file header is deliberately untouched - that is a legal string. Separately, on the marketing site --ink-faint was #5f7285: 4.01 to 1 on the page background, under the 4.5 WCAG AA floor, used at 9 to 12.5px across about 26 selectors including the hero trust line and the financial disclaimer. Now #8195a8, which clears AA on all four backgrounds in the file. The hero trust line also had no text-shadow while every sibling over the key art does.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -7421,7 +7421,7 @@ const LESSONS = {
     '<li><b style="color:#16c784">LONG</b> = you think price will go UP → you buy</li>' +
     '<li><b style="color:#ea3943">SHORT</b> = you think price will go DOWN → you sell first, buy back cheaper</li>' +
     '<li>Both can make money — it depends on your <b>read of the market</b></li>' +
-    '<li>💡 In Chart Quest, tap the banner and choose ▲ LONG or ▼ SHORT</li>' +
+    '<li>💡 In ChartQuest, tap the banner and choose ▲ LONG or ▼ SHORT</li>' +
     '</ul>'],
   what_is_sl: ['STOP LOSS — YOUR SHIELD 🛡️',
     '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
@@ -19865,7 +19865,7 @@ function drawCandleAcademy() {
     // Bottom tip
     ctx.font = '13px ' + FONT_UI;
     ctx.fillStyle = '#c9b3ff'; ctx.textAlign = 'center';
-    ctx.fillText('In Chart Quest, tap the banner to choose', cx, H * 0.84);
+    ctx.fillText('In ChartQuest, tap the banner to choose', cx, H * 0.84);
     ctx.fillText('your direction before every trade.', cx, H * 0.88);
 
   } else if (card === 5) {

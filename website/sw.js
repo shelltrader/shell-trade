@@ -1,4 +1,4 @@
-/* Chart Quest — service worker (asset cache + installability).
+/* ChartQuest — service worker (asset cache + installability).
  *
  * IMPORTANT: page navigations are intentionally NOT intercepted.
  * Cloudflare Pages serves clean URLs (/play.html -> 308 -> /play). A service

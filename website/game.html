@@ -1642,6 +1642,35 @@ const DEV_ALWAYS_FRESH = false;
    Applied after the wipe (further down) so a ?fresh=1&mute=1 launch boots silent. */
 const _CQ_MUTE = (function () { try { return /[?&]mute(=|&|$)/.test(location.search); } catch (e) { return false; } })();
 
+/* ── DEV-ONLY GATE ─────────────────────────────────────────────────────────────────────────
+   True on a developer machine, false on the live site. Captured HERE with the other flags,
+   above the ?fresh block that strips the query string.
+
+   WHY: the ?qa=1 bridge below exposes forceWin(), unlockAll(), setState(), maxProgress() and
+   answerData() (which returns the correct answer AND the validator source for every mini-game).
+   The cheats matter less than they look — the whole game is readable client-side source and
+   progress is localStorage — but the ANALYTICS damage is real and unrepairable: forceWin()
+   calls the genuine bossWin(), CQTrack wraps it, boss_defeated is ONCE-per-player, so the
+   fabricated event permanently discards that tester's real one. During a 20-person beta that
+   silently corrupts the funnel with no way to tell afterwards.
+
+   Everything the founder already uses stays working: cq.sh serve/qr build a LAN URL from
+   `ipconfig getifaddr en0` (192.168.x / 10.x), the headless harness uses localhost, and file://
+   opens pass too. To use the QA tools against the LIVE site, run once per device in devtools:
+       localStorage.setItem('cq_dev','1')
+   It is sticky forever after. No build step, no pipeline change, no effect on the mirror gate. */
+const _CQ_DEV = (function () {
+  try {
+    var h = location.hostname;
+    return location.protocol === 'file:' ||
+           h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '' ||
+           /^192\.168\./.test(h) || /^10\./.test(h) ||
+           /^172\.(1[6-9]|2\d|3[01])\./.test(h) ||
+           localStorage.getItem('cq_dev') === '1';
+  } catch (e) { return false; }
+})();
+try { window._CQ_DEV = _CQ_DEV; } catch (e) {}   /* the QA bridge lives in a later <script> block */
+
 /* ?reach — the developer reachability overlay (COLLECTIBLE LAW 001 / window.CQREACH). Captured
    HERE for the same reason as ?mute: the ?fresh block below strips the query string, and the
    standard beginner-mode test link is `?fresh=1&mute=1&reach=1`, so a flag read any later than
@@ -2983,7 +3012,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 334 - BOOT-CRASH CAPTURE. CQTrack installs its error listeners inside boot(), deferred to DOMContentLoaded, and in this file that block is around line 27,400 of 28,100 - so the one failure that matters most, a parse-time throw that white-screens the page, was structurally unrecordable. Zero crash rows in 118 events was not evidence of no crashes, it was evidence we could not see them. A tiny dependency-free listener now sits in the HEAD of the game and of all three website pages, queues into window.__cqTrackQueue which CQTrack drains on boot, and if CQTrack never boots at all it posts the crash itself after 8 seconds. Deliberately placed far above the CQTRACK markers so the sync gate is unaffected.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 335 - PRODUCTION HARDENING. (1) SERVICE WORKER WAS BROKEN SINCE 332: the v10 cache comment was appended AFTER the block comment closed, so sw.js was a SyntaxError and never registered at all - no precache, no offline page, a console error on every load. Repaired. (2) The ?qa=1 bridge is now dev-only. It exposed forceWin, unlockAll, setState, maxProgress and answerData (the correct answer plus the validator source for every mini-game) on the live site. The cheats matter less than they look - the game is readable client-side source and progress is localStorage - but the ANALYTICS damage was real and unrepairable: forceWin calls the genuine bossWin, CQTrack wraps it, and boss_defeated is once-per-player, so a fabricated event permanently discarded that testers real one. Gated on _CQ_DEV, which is true for file://, localhost and LAN addresses, so every existing QR, serve and harness path is unchanged; set localStorage cq_dev=1 once per device to use it against production.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -25681,7 +25710,9 @@ return {run:MG_run,REG:REG};
    reports results back to the parent. Inert unless ?qa=1 is present.
    ════════════════════════════════════════════════════════════════════════ */
 (function () {
-  const QA_ON = /[?&]qa=1(?:&|$)/.test(location.search);
+  /* Dev machines only. On the live site this is false, so the entire bridge below — window.QA,
+     the postMessage listener, the cheats and answerData() — is inert. See _CQ_DEV. */
+  const QA_ON = !!(window._CQ_DEV) && /[?&]qa=1(?:&|$)/.test(location.search);
   function post(msg) {
     try { if (window.parent && window.parent !== window) window.parent.postMessage(Object.assign({ source: 'cq-qa-game' }, msg), '*'); } catch (e) {}
   }

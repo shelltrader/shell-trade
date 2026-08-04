@@ -13,9 +13,12 @@
    site.js drops the fake signup form — without a bump, anyone who had visited before would
    have kept the old pair and still seen both.
    v9: site.js again — it no longer animates the invisible #cqnet canvas behind the game on
-   the play page. That IS the desktop lag fix, so it must actually reach returning testers. */
+   the play page. That IS the desktop lag fix, so it must actually reach returning testers.
    v10: the tracker itself changed (one session per visit, durable retry, build tag). cq-track.js
-   is now precached EXPLICITLY rather than only runtime-cached, so it is unambiguously versioned. */
+   is now precached EXPLICITLY rather than only runtime-cached, so it is unambiguously versioned.
+   v12: repairing this comment. v10's text was appended AFTER the block's closing delimiter, so
+   from build 332 until now this file was a SyntaxError and the service worker never registered
+   at all — no precache, no offline page, and a console error on every load. */
 const CACHE = 'chartquest-site-v12';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [

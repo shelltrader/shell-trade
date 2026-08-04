@@ -2944,7 +2944,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 331 - DESKTOP LAG: the invisible canvas burning frames behind the game. site.js injects #cqnet, a full-screen fixed canvas at z-index -1. On the PLAY page it is completely covered by the opaque play bar and frame-wrap, so none of it is ever visible - yet it ran a 60fps rAF loop behind the game doing a full-DPR clearRect, an O(n squared) pass over its nodes, and up to about 950 SEPARATE stroked paths every frame. Node count scales with viewport area (clamped 22 to 60), so a phone got 22 nodes on a small surface while a desktop got about 44 on a surface roughly 3.6 times larger - which is exactly why it felt smooth on mobile and laggy on desktop. It no longer runs on the play page at all, reduced-motion now paints one static frame instead of starting the loop anyway (the old code ran it in both branches), and it pauses on tab hide. sw cache bumped to v9 so returning testers actually get the fix.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 332 - BETA CERTIFICATION FIXES. Analytics: ONE session per visit, not one per document (sessionStorage-shared id) - four CQTrack instances were each bumping the shared visit counter, so every first-time tester was reported as RETURNING and new testers read zero. flush() is now durable: rows leave the buffer only after a confirmed write, unconfirmed rows are mirrored to localStorage and drained on boot, and an online listener recovers when the network returns - one bad mobile moment used to delete a funnel stage forever, indistinguishable from a real drop-off. Every row now carries the build in props (no migration). session_end carries exit_stage and completed. The Journal quest X is recorded as journal_discovery_skipped instead of counting as a COMPLETION - it was inflating that metric with exactly the players who rejected the quest. A reload between the boss win and tapping Continue no longer strands the tester: CQBeta reads its own done flag and offers the survey. Survey: response_id is derived from the player and the edge function upserts, so re-answering REPLACES rather than adding a contradictory second row; a restored draft now repaints the rating and choice, which previously looked unanswered while submitting a value the player could not see. Report: monotonic funnel, drop-off ranked by players lost with an n floor (it was headlining a 1-of-1 loss), game-only session length, per-player completion time, test-traffic exclusion, and Tutorial completion relabelled to what it measures.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -27308,7 +27308,16 @@ window.SocialAgents = (function () {
         return true;
       } catch (e) { try { waitThenBegin({ dev: true }); } catch (e2) {} return true; }
     },
-    abort: function () { if (S.active) { S.finished = true; teardown(); } },
+    abort: function () {
+      /* The Journal quest's ✕ reveals after ~6s of stalling and routes here. It ran the same
+         teardown as a real finish, so a player who GAVE UP was counted as having completed
+         Journal Discovery — inflating the one metric that answers whether the quest is worth
+         finishing, using exactly the players who rejected it. Flag it so CQBeta can tell the
+         difference. (Do NOT infer completion from step>=total-1: the 180s watchdog shrinks total.) */
+      S.skipped = true;
+      if (S.active) { S.finished = true; teardown(); }
+    },
+    wasSkipped: function () { return !!S.skipped; },
     isActive: function () { return !!S.active; },
     isDone: isDone,
     reset: reset,
@@ -27404,13 +27413,13 @@ window.SocialAgents = (function () {
   /* The closed set. Must stay identical to EVENT_NAMES in supabase/functions/beta-ingest. */
   var NAMES = ['session_start','session_end','return_visit','tutorial_started','tutorial_completed',
     'first_trade_started','first_trade_won','first_trade_lost','boss_started','boss_defeated',
-    'journal_unlocked','journal_discovery_started','journal_discovery_completed','beta_completed',
+    'journal_unlocked','journal_discovery_started','journal_discovery_completed','journal_discovery_skipped','beta_completed',
     'survey_started','survey_submitted','crash'];
 
   /* Stages that describe a player's furthest progress — recorded once, ever. */
   var ONCE = ['tutorial_started','tutorial_completed','first_trade_started','first_trade_won',
     'first_trade_lost','boss_started','boss_defeated','journal_unlocked',
-    'journal_discovery_started','journal_discovery_completed','beta_completed','survey_submitted'];
+    'journal_discovery_started','journal_discovery_completed','journal_discovery_skipped','beta_completed','survey_submitted'];
 
   function safe(fn, dflt) { try { return fn(); } catch (e) { return dflt; } }
   function get(k)    { return safe(function () { return localStorage.getItem(k); }, null); }
@@ -27456,11 +27465,37 @@ window.SocialAgents = (function () {
     };
   })();
 
-  var SESSION = uid('s-');
+  /* ONE SESSION PER VISIT, NOT ONE PER DOCUMENT.
+     A single tester's journey loads this file four times — index.html, play.html, the game
+     iframe and survey.html — all same-origin. Minting a session id per document produced four
+     "sessions" per visit and, worse, bumped the shared visit counter four times, so every
+     first-time tester was reported as RETURNING and "new testers" read zero.
+
+     sessionStorage is per-tab and shared across same-origin iframes AND across navigations in
+     that tab, so it gives exactly one id per real visit. Only the document that creates it
+     counts as the session start. */
+  var _sess = (function () {
+    try {
+      var s = sessionStorage.getItem('cq_bt_sid');
+      if (s) return { id: s, isNew: false };
+      s = uid('s-'); sessionStorage.setItem('cq_bt_sid', s);
+      return { id: s, isNew: true };
+    } catch (e) { return { id: uid('s-'), isNew: true }; }   // private mode: degrade, never throw
+  })();
+  var SESSION = _sess.id;
+
+  /* Which build produced this row. Without it a Tuesday crash cannot be tied to a Tuesday
+     build, and the beta ships daily. Lives in props (jsonb) so no migration is needed. */
+  var BUILD = safe(function () {
+    var m = /build\s+(\d+)/i.exec(String(window.BUILD_TAG || ''));
+    return m ? m[1] : '';
+  }, '');
+
   var T0      = Date.now();
   var buf     = [];
   var timer   = null;
   var ended   = false;
+  var PENDING = 'cq_bt_pending';        // durable queue for rows whose POST has not been confirmed
 
   function post(kind, rows, keepalive) {
     if (!rows || !rows.length) return Promise.resolve(false);
@@ -27474,11 +27509,56 @@ window.SocialAgents = (function () {
     }, Promise.resolve(false));
   }
 
+  /* Rows leave the buffer only after a CONFIRMED write. The previous version spliced first and
+     threw the promise away, so one bad moment on mobile silently and permanently deleted a
+     funnel stage — indistinguishable in the report from a player who never got there, which
+     means it manufactured false findings. Unconfirmed rows are mirrored to localStorage so they
+     survive the tab closing, and drained on next boot. */
+  function persistPending(rows) {
+    safe(function () {
+      var q = JSON.parse(get(PENDING) || '[]');
+      var seen = {}; var i;
+      for (i = 0; i < q.length; i++) seen[q[i].event_id] = 1;
+      for (i = 0; i < rows.length; i++) if (!seen[rows[i].event_id]) q.push(rows[i]);
+      if (q.length > 200) q = q.slice(q.length - 200);      // bound it; never grow without limit
+      set(PENDING, JSON.stringify(q));
+    });
+  }
+  function clearPending(rows) {
+    safe(function () {
+      var done = {}; var i;
+      for (i = 0; i < rows.length; i++) done[rows[i].event_id] = 1;
+      var q = JSON.parse(get(PENDING) || '[]').filter(function (r) { return !done[r.event_id]; });
+      if (q.length) set(PENDING, JSON.stringify(q)); else safe(function () { localStorage.removeItem(PENDING); });
+    });
+  }
+
+  var inflight = false;
   function flush(keepalive) {
-    if (!buf.length) return;
-    var rows = buf.splice(0, MAX_BATCH);
-    post('events', rows, keepalive);
-    if (buf.length) schedule();
+    if (!buf.length || inflight) return;
+    var rows = buf.slice(0, MAX_BATCH);
+    persistPending(rows);                                   // durable BEFORE the attempt
+    inflight = true;
+    post('events', rows, keepalive).then(function (ok) {
+      inflight = false;
+      if (ok) {
+        buf.splice(0, rows.length);                         // only now do they leave the buffer
+        clearPending(rows);
+        if (buf.length) schedule();
+      } else {
+        schedule();                                         // keep them; try again
+      }
+    });
+  }
+
+  /* Drain anything a previous visit could not confirm. The edge function upserts on event_id,
+     so re-sending is free and can never double-count. */
+  function drainPending() {
+    safe(function () {
+      var q = JSON.parse(get(PENDING) || '[]');
+      if (!q.length) return;
+      post('events', q.slice(0, MAX_BATCH), false).then(function (ok) { if (ok) clearPending(q); });
+    });
   }
 
   function schedule() {
@@ -27495,9 +27575,11 @@ window.SocialAgents = (function () {
         if (get(k)) return false;
         set(k, String(Date.now()));
       }
+      var _p = props || {};
+      if (BUILD && _p.build == null) _p.build = BUILD;
       buf.push({
         event_id: uid('e-'), player_id: pid(), session_id: SESSION,
-        name: name, ts: new Date().toISOString(), props: props || {},
+        name: name, ts: new Date().toISOString(), props: _p,
         device: ENV.device, browser: ENV.browser, os: ENV.os,
         screen: ENV.screen, viewport: ENV.viewport
       });
@@ -27514,9 +27596,15 @@ window.SocialAgents = (function () {
 
   /* ── session bookkeeping ────────────────────────────────────────────────────────────── */
   function startSession() {
+    if (!get('cq_bt_first_seen')) set('cq_bt_first_seen', new Date().toISOString());
+
+    /* Only the document that OPENED this visit counts it. Every later document in the same tab
+       (play.html, the game iframe, survey.html) shares the session id and stays silent, so the
+       visit counter reflects real visits and "new vs returning" is meaningful. */
+    if (!_sess.isNew) return;
+
     var visits = parseInt(get('cq_bt_visits') || '0', 10) + 1;
     set('cq_bt_visits', String(visits));
-    if (!get('cq_bt_first_seen')) set('cq_bt_first_seen', new Date().toISOString());
 
     event('session_start', { visit: visits, ref: safe(function () { return document.referrer || ''; }, ''), page: page() });
     if (visits > 1) {
@@ -27524,7 +27612,7 @@ window.SocialAgents = (function () {
       buf.push({
         event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'return_visit',
         ts: new Date().toISOString(),
-        props: { visit: visits, first_seen: get('cq_bt_first_seen') },
+        props: { visit: visits, first_seen: get('cq_bt_first_seen'), page: page(), build: BUILD },
         device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
       });
       schedule();
@@ -27535,13 +27623,24 @@ window.SocialAgents = (function () {
     return safe(function () { return (location.pathname.split('/').pop() || 'index').replace(/\.html$/, ''); }, '');
   }
 
+  /* Furthest stage this player ever reached — the "Exit Point" the beta spec asks for.
+     Read straight off the once-per-player flags, so it survives across documents and visits. */
+  var STAGES = ['session_start','tutorial_started','first_trade_started','boss_started',
+                'journal_discovery_started','journal_discovery_completed','beta_completed','survey_submitted'];
+  function exitStage() {
+    var far = 'landing';
+    for (var i = 0; i < STAGES.length; i++) if (get('cq_bt_' + STAGES[i])) far = STAGES[i];
+    return far;
+  }
+
   function endSession() {
     if (ended) return; ended = true;
     var secs = Math.round((Date.now() - T0) / 1000);
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'session_end',
       ts: new Date().toISOString(),
-      props: { seconds: secs, page: page(), completion_seconds: completionSeconds() },
+      props: { seconds: secs, page: page(), completion_seconds: completionSeconds(),
+               exit_stage: exitStage(), completed: !!get('cq_bt_beta_completed'), build: BUILD },
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);
@@ -27564,7 +27663,7 @@ window.SocialAgents = (function () {
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'crash',
       ts: new Date().toISOString(),
-      props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '', page: page() },
+      props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '', page: page(), build: BUILD },
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);
@@ -27655,6 +27754,11 @@ window.SocialAgents = (function () {
       });
     });
 
+    /* Re-send anything a previous visit could not confirm, and recover the moment the network
+       comes back — the two things whose absence made a mobile blip delete a milestone forever. */
+    drainPending();
+    safe(function () { window.addEventListener('online', function () { drainPending(); flush(false); }); });
+
     /* Drain anything window.CQBeta buffered before this file was parsed. */
     safe(function () {
       var q = window.__cqTrackQueue || [];
@@ -27676,7 +27780,12 @@ window.SocialAgents = (function () {
     survey: function (row) {
       return safe(function () {
         var r = row || {};
-        r.response_id = r.response_id || uid('r-');
+        /* DERIVED FROM THE PLAYER, not random. With a random id a tester who reloaded the survey
+           and answered again created a SECOND, contradictory row (one gave 7/later, the retry
+           gave 2/not_interested) and the average rating silently absorbed both. One id per
+           player + an upsert means answering again REPLACES their answer, which is what a
+           person re-doing a form actually means. */
+        r.response_id = r.response_id || ('r-' + pid());
         r.player_id   = r.player_id   || pid();
         r.session_id  = r.session_id  || SESSION;
         return post('survey', [r], true);
@@ -27972,6 +28081,36 @@ window.SocialAgents = (function () {
     } catch (e) {}
   }
 
+  /* Small, dismissible prompt for a player who already finished but never reached the survey. */
+  function resumeBanner() {
+    if (document.getElementById('cqBetaResume')) return;
+    var b = document.createElement('div');
+    b.id = 'cqBetaResume';
+    b.style.cssText =
+      'position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:100002;' +
+      'display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:16px;' +
+      'background:rgba(9,15,24,.97);border:1px solid rgba(255,214,10,.42);' +
+      'box-shadow:0 16px 40px rgba(0,0,0,.6);max-width:460px;margin-inline:auto;' +
+      'font-family:var(--font-ui),-apple-system,BlinkMacSystemFont,sans-serif';
+    b.innerHTML =
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-weight:800;font-size:14px;color:#fff">You already finished the beta 🐢</div>' +
+        '<div style="margin-top:3px;font-weight:600;font-size:12.5px;color:#9fd9c4">5 quick questions — under a minute.</div>' +
+      '</div>' +
+      '<button type="button" id="cqBetaResumeGo" style="flex:0 0 auto;min-height:44px;padding:0 16px;border:0;' +
+        'border-radius:12px;cursor:pointer;font-weight:800;font-size:13.5px;color:#04130c;' +
+        'background:linear-gradient(180deg,#19d08a,#0e9b64)">Answer →</button>' +
+      '<button type="button" id="cqBetaResumeX" aria-label="Dismiss" style="flex:0 0 auto;width:34px;height:34px;' +
+        'border:0;background:transparent;color:#7c95a4;font-size:16px;cursor:pointer">✕</button>';
+    document.body.appendChild(b);
+    try {
+      b.querySelector('#cqBetaResumeGo').addEventListener('click', function () {
+        emit('survey_started', { from: 'resume' }); openSurvey();
+      });
+      b.querySelector('#cqBetaResumeX').addEventListener('click', function () { b.remove(); });
+    } catch (e) {}
+  }
+
   /* ══ THE GATE ══════════════════════════════════════════════════════════════════════════ */
   function finish(reason) {
     if (S.finished || !CFG.enabled) return false;
@@ -28006,7 +28145,12 @@ window.SocialAgents = (function () {
         took = orig.call(JT, function () {
           /* The true end of Journal Discovery. Emitted BEFORE finish() so the funnel records
              the stage even if the ceremony throws and we fall through to the survey. */
-          emit('journal_discovery_completed', {});
+          /* A player who tapped ✕ to skip is NOT a completer — otherwise the metric is inflated
+             by exactly the people who rejected the quest. */
+          var _skipped = false;
+          try { _skipped = !!(JT.wasSkipped && JT.wasSkipped()); } catch (e) {}
+          if (_skipped) emit('journal_discovery_skipped', {});
+          else emit('journal_discovery_completed', {});
           try { if (typeof onDone === 'function') onDone(); } catch (e) {}
           finish('journal_discovery_complete');
         });
@@ -28061,6 +28205,11 @@ window.SocialAgents = (function () {
      so in practice the first attempt succeeds. The retries cover load-order surprises. */
   function boot() {
     if (!CFG.enabled) return;
+    /* RESUME. cq_beta_done was written but never read, so a player who reloaded between beating
+       the Gambler and tapping Continue was stranded: cq_played, cq_bosses_v2 and player.jtut are
+       all set by then, so neither introComplete nor claimPostBoss fires again, and the only route
+       back to the survey was replaying all of Level 1. Offer the survey directly instead. */
+    if (isDone() && !S.finished) { setTimeout(function () { try { resumeBanner(); } catch (e) {} }, 2500); }
     patchIntroComplete();
     patchJournal();
     armLevelGuard();

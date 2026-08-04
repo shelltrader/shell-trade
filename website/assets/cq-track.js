@@ -46,13 +46,13 @@
   /* The closed set. Must stay identical to EVENT_NAMES in supabase/functions/beta-ingest. */
   var NAMES = ['session_start','session_end','return_visit','tutorial_started','tutorial_completed',
     'first_trade_started','first_trade_won','first_trade_lost','boss_started','boss_defeated',
-    'journal_unlocked','journal_discovery_started','journal_discovery_completed','beta_completed',
+    'journal_unlocked','journal_discovery_started','journal_discovery_completed','journal_discovery_skipped','beta_completed',
     'survey_started','survey_submitted','crash'];
 
   /* Stages that describe a player's furthest progress — recorded once, ever. */
   var ONCE = ['tutorial_started','tutorial_completed','first_trade_started','first_trade_won',
     'first_trade_lost','boss_started','boss_defeated','journal_unlocked',
-    'journal_discovery_started','journal_discovery_completed','beta_completed','survey_submitted'];
+    'journal_discovery_started','journal_discovery_completed','journal_discovery_skipped','beta_completed','survey_submitted'];
 
   function safe(fn, dflt) { try { return fn(); } catch (e) { return dflt; } }
   function get(k)    { return safe(function () { return localStorage.getItem(k); }, null); }
@@ -98,11 +98,37 @@
     };
   })();
 
-  var SESSION = uid('s-');
+  /* ONE SESSION PER VISIT, NOT ONE PER DOCUMENT.
+     A single tester's journey loads this file four times — index.html, play.html, the game
+     iframe and survey.html — all same-origin. Minting a session id per document produced four
+     "sessions" per visit and, worse, bumped the shared visit counter four times, so every
+     first-time tester was reported as RETURNING and "new testers" read zero.
+
+     sessionStorage is per-tab and shared across same-origin iframes AND across navigations in
+     that tab, so it gives exactly one id per real visit. Only the document that creates it
+     counts as the session start. */
+  var _sess = (function () {
+    try {
+      var s = sessionStorage.getItem('cq_bt_sid');
+      if (s) return { id: s, isNew: false };
+      s = uid('s-'); sessionStorage.setItem('cq_bt_sid', s);
+      return { id: s, isNew: true };
+    } catch (e) { return { id: uid('s-'), isNew: true }; }   // private mode: degrade, never throw
+  })();
+  var SESSION = _sess.id;
+
+  /* Which build produced this row. Without it a Tuesday crash cannot be tied to a Tuesday
+     build, and the beta ships daily. Lives in props (jsonb) so no migration is needed. */
+  var BUILD = safe(function () {
+    var m = /build\s+(\d+)/i.exec(String(window.BUILD_TAG || ''));
+    return m ? m[1] : '';
+  }, '');
+
   var T0      = Date.now();
   var buf     = [];
   var timer   = null;
   var ended   = false;
+  var PENDING = 'cq_bt_pending';        // durable queue for rows whose POST has not been confirmed
 
   function post(kind, rows, keepalive) {
     if (!rows || !rows.length) return Promise.resolve(false);
@@ -116,11 +142,56 @@
     }, Promise.resolve(false));
   }
 
+  /* Rows leave the buffer only after a CONFIRMED write. The previous version spliced first and
+     threw the promise away, so one bad moment on mobile silently and permanently deleted a
+     funnel stage — indistinguishable in the report from a player who never got there, which
+     means it manufactured false findings. Unconfirmed rows are mirrored to localStorage so they
+     survive the tab closing, and drained on next boot. */
+  function persistPending(rows) {
+    safe(function () {
+      var q = JSON.parse(get(PENDING) || '[]');
+      var seen = {}; var i;
+      for (i = 0; i < q.length; i++) seen[q[i].event_id] = 1;
+      for (i = 0; i < rows.length; i++) if (!seen[rows[i].event_id]) q.push(rows[i]);
+      if (q.length > 200) q = q.slice(q.length - 200);      // bound it; never grow without limit
+      set(PENDING, JSON.stringify(q));
+    });
+  }
+  function clearPending(rows) {
+    safe(function () {
+      var done = {}; var i;
+      for (i = 0; i < rows.length; i++) done[rows[i].event_id] = 1;
+      var q = JSON.parse(get(PENDING) || '[]').filter(function (r) { return !done[r.event_id]; });
+      if (q.length) set(PENDING, JSON.stringify(q)); else safe(function () { localStorage.removeItem(PENDING); });
+    });
+  }
+
+  var inflight = false;
   function flush(keepalive) {
-    if (!buf.length) return;
-    var rows = buf.splice(0, MAX_BATCH);
-    post('events', rows, keepalive);
-    if (buf.length) schedule();
+    if (!buf.length || inflight) return;
+    var rows = buf.slice(0, MAX_BATCH);
+    persistPending(rows);                                   // durable BEFORE the attempt
+    inflight = true;
+    post('events', rows, keepalive).then(function (ok) {
+      inflight = false;
+      if (ok) {
+        buf.splice(0, rows.length);                         // only now do they leave the buffer
+        clearPending(rows);
+        if (buf.length) schedule();
+      } else {
+        schedule();                                         // keep them; try again
+      }
+    });
+  }
+
+  /* Drain anything a previous visit could not confirm. The edge function upserts on event_id,
+     so re-sending is free and can never double-count. */
+  function drainPending() {
+    safe(function () {
+      var q = JSON.parse(get(PENDING) || '[]');
+      if (!q.length) return;
+      post('events', q.slice(0, MAX_BATCH), false).then(function (ok) { if (ok) clearPending(q); });
+    });
   }
 
   function schedule() {
@@ -137,9 +208,11 @@
         if (get(k)) return false;
         set(k, String(Date.now()));
       }
+      var _p = props || {};
+      if (BUILD && _p.build == null) _p.build = BUILD;
       buf.push({
         event_id: uid('e-'), player_id: pid(), session_id: SESSION,
-        name: name, ts: new Date().toISOString(), props: props || {},
+        name: name, ts: new Date().toISOString(), props: _p,
         device: ENV.device, browser: ENV.browser, os: ENV.os,
         screen: ENV.screen, viewport: ENV.viewport
       });
@@ -156,9 +229,15 @@
 
   /* ── session bookkeeping ────────────────────────────────────────────────────────────── */
   function startSession() {
+    if (!get('cq_bt_first_seen')) set('cq_bt_first_seen', new Date().toISOString());
+
+    /* Only the document that OPENED this visit counts it. Every later document in the same tab
+       (play.html, the game iframe, survey.html) shares the session id and stays silent, so the
+       visit counter reflects real visits and "new vs returning" is meaningful. */
+    if (!_sess.isNew) return;
+
     var visits = parseInt(get('cq_bt_visits') || '0', 10) + 1;
     set('cq_bt_visits', String(visits));
-    if (!get('cq_bt_first_seen')) set('cq_bt_first_seen', new Date().toISOString());
 
     event('session_start', { visit: visits, ref: safe(function () { return document.referrer || ''; }, ''), page: page() });
     if (visits > 1) {
@@ -166,7 +245,7 @@
       buf.push({
         event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'return_visit',
         ts: new Date().toISOString(),
-        props: { visit: visits, first_seen: get('cq_bt_first_seen') },
+        props: { visit: visits, first_seen: get('cq_bt_first_seen'), page: page(), build: BUILD },
         device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
       });
       schedule();
@@ -177,13 +256,24 @@
     return safe(function () { return (location.pathname.split('/').pop() || 'index').replace(/\.html$/, ''); }, '');
   }
 
+  /* Furthest stage this player ever reached — the "Exit Point" the beta spec asks for.
+     Read straight off the once-per-player flags, so it survives across documents and visits. */
+  var STAGES = ['session_start','tutorial_started','first_trade_started','boss_started',
+                'journal_discovery_started','journal_discovery_completed','beta_completed','survey_submitted'];
+  function exitStage() {
+    var far = 'landing';
+    for (var i = 0; i < STAGES.length; i++) if (get('cq_bt_' + STAGES[i])) far = STAGES[i];
+    return far;
+  }
+
   function endSession() {
     if (ended) return; ended = true;
     var secs = Math.round((Date.now() - T0) / 1000);
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'session_end',
       ts: new Date().toISOString(),
-      props: { seconds: secs, page: page(), completion_seconds: completionSeconds() },
+      props: { seconds: secs, page: page(), completion_seconds: completionSeconds(),
+               exit_stage: exitStage(), completed: !!get('cq_bt_beta_completed'), build: BUILD },
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);
@@ -206,7 +296,7 @@
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'crash',
       ts: new Date().toISOString(),
-      props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '', page: page() },
+      props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '', page: page(), build: BUILD },
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);
@@ -297,6 +387,11 @@
       });
     });
 
+    /* Re-send anything a previous visit could not confirm, and recover the moment the network
+       comes back — the two things whose absence made a mobile blip delete a milestone forever. */
+    drainPending();
+    safe(function () { window.addEventListener('online', function () { drainPending(); flush(false); }); });
+
     /* Drain anything window.CQBeta buffered before this file was parsed. */
     safe(function () {
       var q = window.__cqTrackQueue || [];
@@ -318,7 +413,12 @@
     survey: function (row) {
       return safe(function () {
         var r = row || {};
-        r.response_id = r.response_id || uid('r-');
+        /* DERIVED FROM THE PLAYER, not random. With a random id a tester who reloaded the survey
+           and answered again created a SECOND, contradictory row (one gave 7/later, the retry
+           gave 2/not_interested) and the average rating silently absorbed both. One id per
+           player + an upsert means answering again REPLACES their answer, which is what a
+           person re-doing a form actually means. */
+        r.response_id = r.response_id || ('r-' + pid());
         r.player_id   = r.player_id   || pid();
         r.session_id  = r.session_id  || SESSION;
         return post('survey', [r], true);

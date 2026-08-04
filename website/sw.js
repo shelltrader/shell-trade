@@ -14,12 +14,14 @@
    have kept the old pair and still seen both.
    v9: site.js again — it no longer animates the invisible #cqnet canvas behind the game on
    the play page. That IS the desktop lag fix, so it must actually reach returning testers. */
-const CACHE = 'chartquest-site-v9';
+   v10: the tracker itself changed (one session per visit, durable retry, build tag). cq-track.js
+   is now precached EXPLICITLY rather than only runtime-cached, so it is unambiguously versioned. */
+const CACHE = 'chartquest-site-v10';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',
   OFFLINE_URL,
-  './assets/site.css', './assets/site.js', './assets/config.js',
+  './assets/site.css', './assets/site.js', './assets/config.js', './assets/cq-track.js',
   './assets/chartquest-poster.jpg', './manifest.webmanifest',
   './assets/pwa/icon-192.png', './assets/pwa/icon-512.png', './assets/pwa/icon-180.png'
 ];

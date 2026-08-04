@@ -91,6 +91,16 @@ def fetch(table, key, since_iso):
         return json.loads(r.read().decode())
 
 
+# Player ids that are the team's own testing, not beta testers. Excluded from every number,
+# and the exclusion is PRINTED, so a suspiciously small cohort is never a silent mystery.
+EXCLUDE_PREFIXES = ('CERT-TEST', 'e2e-', 'selftest', 'browsertest', 'QA-', 'DEV-')
+
+
+def is_test_player(pid):
+    p = str(pid or '')
+    return any(p.startswith(x) for x in EXCLUDE_PREFIXES)
+
+
 def load(args):
     since = datetime.now(timezone.utc) - timedelta(days=args.days)
     since_iso = since.isoformat()
@@ -118,6 +128,26 @@ def bar(frac, width=22):
 
 def players_with(events, name):
     return {e.get('player_id') for e in events if e.get('name') == name and e.get('player_id')}
+
+
+def monotonic_stages(events):
+    """A funnel must not go UP. Six independently-collected sets could report 'kept from
+    previous' above 100% whenever an event was lost or fired out of order, which makes the
+    table unreadable. Take each player's FURTHEST stage and credit every stage before it."""
+    order = [k for k, _, _ in FUNNEL]
+    reached = {}
+    for e in events:
+        pid_, nm = e.get('player_id'), e.get('name')
+        if not pid_:
+            continue
+        for i, (key, _, ev) in enumerate(FUNNEL):
+            if nm == ev:
+                reached[pid_] = max(reached.get(pid_, 0), i)
+    out = {k: set() for k in order}
+    for pid_, far in reached.items():
+        for i in range(far + 1):
+            out[order[i]].add(pid_)
+    return out
 
 
 def theme_hits(texts):
@@ -162,6 +192,11 @@ def main():
     events, surveys, since = load(args)
     now = datetime.now(timezone.utc)
 
+    excluded_players = {e.get('player_id') for e in events if is_test_player(e.get('player_id'))}
+    excluded_events = len([e for e in events if is_test_player(e.get('player_id'))])
+    events = [e for e in events if not is_test_player(e.get('player_id'))]
+    surveys = [s_ for s_ in surveys if not is_test_player(s_.get('player_id'))]
+
     out = []
     w = out.append
 
@@ -185,17 +220,26 @@ def main():
     new_players = players - returning
 
     # session length from session_end
+    # Only GAME sessions. Pooling a ~6s landing-page view with a ~15min play session made the
+    # median meaningless (it read 0.2 min against a real 44s+). props.page is on every row.
     secs = [e['props'].get('seconds') for e in events
             if e.get('name') == 'session_end' and isinstance(e.get('props'), dict)
-            and isinstance(e['props'].get('seconds'), (int, float))]
+            and isinstance(e['props'].get('seconds'), (int, float))
+            and str(e['props'].get('page', '')) in ('game', 'chart-quest', 'play')]
     avg_s = sum(secs) / len(secs) if secs else 0
     med_s = sorted(secs)[len(secs) // 2] if secs else 0
 
-    comp = [e['props'].get('completion_seconds') for e in events
-            if e.get('name') == 'session_end' and isinstance(e.get('props'), dict)
-            and isinstance(e['props'].get('completion_seconds'), (int, float))]
+    # completion_seconds is recomputed and re-sent on EVERY later session_end, so counting rows
+    # let one finisher dominate the median. One value per player.
+    _comp_by_player = {}
+    for e in events:
+        if e.get('name') == 'session_end' and isinstance(e.get('props'), dict):
+            v = e['props'].get('completion_seconds')
+            if isinstance(v, (int, float)) and v > 0:
+                _comp_by_player.setdefault(e.get('player_id'), v)
+    comp = list(_comp_by_player.values())
 
-    stage = {k: players_with(events, ev) for k, _, ev in FUNNEL}
+    stage = monotonic_stages(events)
     total = len(stage['landing']) or len(players)
 
     # ── 1 · overview ────────────────────────────────────────────────────────────────────
@@ -209,14 +253,29 @@ def main():
     w(f'| Sessions | {len(sessions)} |')
     w(f'| Average session | {avg_s / 60:.1f} min |')
     w(f'| Median session | {med_s / 60:.1f} min |')
-    w(f'| Tutorial completion | {pct(len(players_with(events, "tutorial_completed")), total)} |')
+    # HONEST LABEL: tutorial_completed is wired to introComplete(), which the game calls from
+    # bossFinish() when level==1 — i.e. AFTER the Gambler. It means "finished the guided intro
+    # chain", not "finished the tutorial". Calling it tutorial completion invited exactly the
+    # wrong diagnosis (0% tutorial vs 0% boss are very different problems).
+    w(f'| Intro chain completed (ends after Guardian 1) | {pct(len(players_with(events, "tutorial_completed")), total)} |')
     w(f'| Boss defeated | {pct(len(players_with(events, "boss_defeated")), total)} |')
     w(f'| Journal Discovery completed | {pct(len(stage["journal"]), total)} |')
     w(f'| Beta completed | {pct(len(players_with(events, "beta_completed")), total)} |')
     w(f'| Survey completion | {pct(len(surveys), total)} |')
     if comp:
         w(f'| Time to finish the beta (median) | {sorted(comp)[len(comp) // 2] / 60:.0f} min |')
+    builds = collections.Counter(
+        str((e.get('props') or {}).get('build')) for e in events
+        if isinstance(e.get('props'), dict) and (e.get('props') or {}).get('build'))
+    if builds:
+        w(f'| Builds seen | {", ".join(b for b, _ in builds.most_common(5))} |')
+    if excluded_players:
+        w(f'| _Excluded as team testing_ | _{len(excluded_players)} player(s), {excluded_events} events_ |')
     w('')
+    if not builds:
+        w('> ⚠ No build number on any event — sessions cannot be attributed to a build. '
+          'Expected on data collected before build 332.')
+        w('')
 
     # ── 2 · funnel ──────────────────────────────────────────────────────────────────────
     w('## Funnel')
@@ -225,6 +284,7 @@ def main():
     w('|---|---:|---:|---:|---|')
     prev = None
     drops = []
+    prev_sizes = {}
     for key, label, _ in FUNNEL:
         n = len(stage[key])
         keep = pct(n, len(prev)) if prev is not None else '—'
@@ -232,16 +292,26 @@ def main():
             lost = len(prev) - n
             drops.append((lost, 100.0 * lost / len(prev), label, prev_label))
         w(f'| {label} | {n} | {pct(n, total)} | {keep} | `{bar(n / total if total else 0)}` |')
+        prev_sizes[label] = stage[key]
         prev, prev_label = stage[key], label
     w('')
 
     if drops:
-        drops.sort(key=lambda d: (-d[1], -d[0]))
-        worst = drops[0]
-        w(f'**Biggest drop-off: {worst[3]} → {worst[2]}** — lost {worst[0]} of them '
-          f'({worst[1]:.0f}%). This is the single highest-leverage thing to fix.')
+        # Rank by ABSOLUTE players lost, not by rate. Sorting by rate let a 1-of-1 loss outrank a
+        # 7-of-13 loss and print "nothing costs more players", which would have sent the founder
+        # into week one working on the wrong thing.
+        MIN_N = 5
+        drops.sort(key=lambda d: (-d[0], -d[1]))
+        headline = [d for d in drops if d[0] > 0 and (len(prev_sizes.get(d[3], set())) >= MIN_N)]
+        worst = headline[0] if headline else None
+        if worst:
+            w(f'**Biggest drop-off: {worst[3]} → {worst[2]}** — lost {worst[0]} players '
+              f'({worst[1]:.0f}%). This is the single highest-leverage thing to fix.')
+        else:
+            w(f'_No transition yet has the n≥{MIN_N} needed to call a biggest drop-off honestly. '
+              f'Largest so far: {drops[0][3]} → {drops[0][2]}, −{drops[0][0]}._')
         w('')
-        others = [d for d in drops[1:] if d[1] >= 25 and d[0] > 0]
+        others = [d for d in drops[1:] if d[0] > 0]
         if others:
             w('Also leaking:')
             for lost, p, label, prev_label in others:

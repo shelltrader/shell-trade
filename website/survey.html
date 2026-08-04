@@ -293,6 +293,20 @@ footer a{color:var(--ink-faint)}
     });
   });
 
+  /* Re-render a restored draft. Previously only the textareas were repopulated, so after a
+     mid-survey refresh the rating and the choice looked UNANSWERED while Next stayed enabled —
+     and if the player did not re-tap, a rating they could not see was submitted for them. */
+  function paintRestored() {
+    if (answers.q1 != null) {
+      var b = scale.children[answers.q1 - 1];
+      if (b) { b.classList.add('sel'); b.setAttribute('aria-checked', 'true'); }
+    }
+    if (answers.q4 != null) {
+      var c = cont.querySelector('.choice[data-v="' + answers.q4 + '"]');
+      if (c) { c.classList.add('sel'); c.setAttribute('aria-checked', 'true'); }
+    }
+  }
+
   /* ── text fields ──────────────────────────────────────────────────────── */
   [['q2', 'c2'], ['q3', 'c3'], ['q5', 'c5']].forEach(function (p) {
     var ta = document.getElementById(p[0]), c = document.getElementById(p[1]);
@@ -360,7 +374,7 @@ footer a{color:var(--ink-faint)}
       q3_improvement: answers.q3.trim(),
       q4_continue: answers.q4,
       q5_anything: (answers.q5 || '').trim(),
-      seconds_taken: Math.round((Date.now() - T0) / 1000)
+      seconds_taken: Math.round((Date.now() - T0) / 1000)   // time in THIS sitting
     };
 
     var p = (window.CQTrack && CQTrack.survey) ? CQTrack.survey(row) : Promise.resolve(false);
@@ -379,6 +393,32 @@ footer a{color:var(--ink-faint)}
       try { window.scrollTo(0, 0); } catch (e2) {}
     });
   });
+
+  paintRestored();
+
+  /* Already answered? Show the thank-you rather than a pristine form. Re-answering is still
+     possible and now REPLACES the previous answer (one row per player), instead of quietly
+     adding a second contradictory response to the average. */
+  try {
+    if (localStorage.getItem('cq_bt_survey_submitted')) {
+      form.style.display = 'none';
+      document.querySelector('.top').style.display = 'none';
+      var done = document.getElementById('done');
+      done.classList.add('on');
+      var again = document.createElement('div');
+      again.style.cssText = 'margin-top:18px';
+      again.innerHTML = '<button type="button" id="againBtn" style="background:none;border:0;color:var(--ink-faint);' +
+        'font:600 13.5px var(--sans);cursor:pointer;text-decoration:underline;text-underline-offset:3px;' +
+        'min-height:44px;padding:0 10px">Change my answers</button>';
+      done.appendChild(again);
+      again.querySelector('#againBtn').addEventListener('click', function () {
+        done.classList.remove('on');
+        document.querySelector('.top').style.display = '';
+        form.style.display = '';
+        go(0);
+      });
+    }
+  } catch (e) {}
 
   try { if (window.CQTrack) CQTrack.event('survey_started', {}); } catch (e) {}
   sync();

@@ -4,6 +4,45 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ChartQuest — The World's First Trading RPG</title>
+<script>
+/* BOOT-CRASH CAPTURE — deliberately in <head>, before everything else.
+   CQTrack installs its error listeners inside boot(), deferred to DOMContentLoaded, and in the
+   game that block is ~line 27,400 of 28,100. So the one failure that matters most — a parse-time
+   throw that white-screens the page — was structurally unrecordable: zero crash rows in 118
+   events is not evidence of no crashes, it is evidence we cannot see them.
+   Queues into window.__cqTrackQueue, which CQTrack drains on boot; and if CQTrack never boots at
+   all (the white-screen case) it posts the crash itself after 8s. Intentionally tiny and
+   dependency-free — this must run even when everything below it is broken. */
+(function(){
+  var Q = (window.__cqTrackQueue = window.__cqTrackQueue || []), n = 0, sent = false;
+  function cap(m, w) {
+    if (n++ > 2) return;
+    Q.push({ name: 'crash', props: { kind: 'boot', message: String(m || '').slice(0, 500), where: w || '' }, t: Date.now() });
+  }
+  try {
+    addEventListener('error', function (e) { cap(e && e.message, e && e.filename ? e.filename + ':' + e.lineno : ''); });
+    addEventListener('unhandledrejection', function (e) { var r = e && e.reason; cap((r && (r.message || r)) || 'unhandledrejection', ''); });
+  } catch (e) {}
+  /* Fallback: if CQTrack never came up, nobody will ever drain the queue. Send it ourselves. */
+  setTimeout(function () {
+    try {
+      if (sent || window.CQTrack || !Q.length) return;
+      sent = true;
+      var K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
+      var pid = 'anon'; try { pid = localStorage.getItem('cq_pid') || 'anon'; } catch (e) {}
+      fetch('https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest', {
+        method: 'POST', keepalive: true,
+        headers: { apikey: K, Authorization: 'Bearer ' + K, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'events', rows: Q.slice(0, 3).map(function (q, i) {
+          return { event_id: 'boot-' + Date.now() + '-' + i, player_id: pid, session_id: 'boot',
+                   name: 'crash', ts: new Date().toISOString(), props: q.props };
+        }) })
+      }).catch(function () {});
+    } catch (e) {}
+  }, 8000);
+})();
+</script>
+
 <meta name="description" content="The ChartQuest beta is open. Play World 1 free, beat the first Guardian, and tell us what to build next. Dive inside real candlestick charts as Finn the turtle — no download, no sign-up.">
 <meta name="theme-color" content="#060910">
 

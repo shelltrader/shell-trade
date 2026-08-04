@@ -25,6 +25,45 @@
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>ChartQuest</title>
+<script>
+/* BOOT-CRASH CAPTURE — deliberately in <head>, before everything else.
+   CQTrack installs its error listeners inside boot(), deferred to DOMContentLoaded, and in the
+   game that block is ~line 27,400 of 28,100. So the one failure that matters most — a parse-time
+   throw that white-screens the page — was structurally unrecordable: zero crash rows in 118
+   events is not evidence of no crashes, it is evidence we cannot see them.
+   Queues into window.__cqTrackQueue, which CQTrack drains on boot; and if CQTrack never boots at
+   all (the white-screen case) it posts the crash itself after 8s. Intentionally tiny and
+   dependency-free — this must run even when everything below it is broken. */
+(function(){
+  var Q = (window.__cqTrackQueue = window.__cqTrackQueue || []), n = 0, sent = false;
+  function cap(m, w) {
+    if (n++ > 2) return;
+    Q.push({ name: 'crash', props: { kind: 'boot', message: String(m || '').slice(0, 500), where: w || '' }, t: Date.now() });
+  }
+  try {
+    addEventListener('error', function (e) { cap(e && e.message, e && e.filename ? e.filename + ':' + e.lineno : ''); });
+    addEventListener('unhandledrejection', function (e) { var r = e && e.reason; cap((r && (r.message || r)) || 'unhandledrejection', ''); });
+  } catch (e) {}
+  /* Fallback: if CQTrack never came up, nobody will ever drain the queue. Send it ourselves. */
+  setTimeout(function () {
+    try {
+      if (sent || window.CQTrack || !Q.length) return;
+      sent = true;
+      var K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
+      var pid = 'anon'; try { pid = localStorage.getItem('cq_pid') || 'anon'; } catch (e) {}
+      fetch('https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest', {
+        method: 'POST', keepalive: true,
+        headers: { apikey: K, Authorization: 'Bearer ' + K, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'events', rows: Q.slice(0, 3).map(function (q, i) {
+          return { event_id: 'boot-' + Date.now() + '-' + i, player_id: pid, session_id: 'boot',
+                   name: 'crash', ts: new Date().toISOString(), props: q.props };
+        }) })
+      }).catch(function () {});
+    } catch (e) {}
+  }, 8000);
+})();
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <!-- build 262: preload the cold-open poster so the intro is never a black screen while the
@@ -2944,7 +2983,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 333 - the build tag was never actually reaching the analytics rows. BUILD_TAG is a top-level const in the first script block, and top-level const and let live in the global LEXICAL scope, not as properties of window - so window.BUILD_TAG read undefined from the tracker block and every row shipped an empty build, exactly the gap build 332 set out to close. Caught by running the Gate B pipeline check against production rather than trusting the code. Now read through the lexical binding with a typeof guard so it stays safe on the website pages, where BUILD_TAG does not exist.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 334 - BOOT-CRASH CAPTURE. CQTrack installs its error listeners inside boot(), deferred to DOMContentLoaded, and in this file that block is around line 27,400 of 28,100 - so the one failure that matters most, a parse-time throw that white-screens the page, was structurally unrecordable. Zero crash rows in 118 events was not evidence of no crashes, it was evidence we could not see them. A tiny dependency-free listener now sits in the HEAD of the game and of all three website pages, queues into window.__cqTrackQueue which CQTrack drains on boot, and if CQTrack never boots at all it posts the crash itself after 8 seconds. Deliberately placed far above the CQTRACK markers so the sync gate is unaffected.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 

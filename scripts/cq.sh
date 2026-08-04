@@ -38,6 +38,42 @@ case "${1:-}" in
     mkdir -p website/finn website/bosses
     cp -f finn/*.png    website/finn/   2>/dev/null || true
     cp -f bosses/*.webp website/bosses/ 2>/dev/null || true
+    # ── BOSS MEDIA IN SUBFOLDERS (build 336 fix) ─────────────────────────────────────────
+    # The line above is `bosses/*.webp` — non-recursive, one extension. bosses/ also has
+    # flinches/ intros/ outros/ sfx/, and NONE of it was ever copied. Production therefore
+    # served the SPA fallback (200 + text/html) for every Guardian-1 clip and roar: the boss
+    # intro, the defeat cinematic and the Journal-unlock cinematic played nothing for every
+    # external tester, for ~20 builds. It was invisible because (a) there is no 404 page, so a
+    # missing path returns the landing page at HTTP 200, (b) playBossOutroCinematic degrades
+    # silently by design (onerror → playNext), and (c) `cq.sh serve`/the QR serve the REPO
+    # ROOT, where all the files exist — so it could only ever be reproduced on the live site.
+    #
+    # Do NOT "fix" this with `cp -R bosses/ website/bosses/`. bosses/intros/ is 113 MB: the
+    # game references only boss-1/2/3/11 (BOSS_INTRO_VIDEOS), and boss-4..boss-10 are ~97 MB
+    # of clips nothing loads. Recursive-copy would put all of it in the deploy and in git.
+    #
+    # So: copy exactly what the game REFERENCES, preserving subfolder structure — the same
+    # auto-discovery principle as the top-level media line below, so a newly-referenced clip
+    # ships automatically and an unreferenced one never does.
+    bmedia="$(
+      # 1. literal paths written in the source
+      grep -oE "bosses/[A-Za-z0-9._/-]+\.(mp4|m4a|webp|png|jpg)" chart-quest.html
+      # 2. the intro clips, whose path is BUILT at runtime (bossIntroVideoSrc: 'bosses/intros/
+      #    boss-' + level + '.mp4'), so no literal exists to grep. Expand the authoritative set.
+      grep -oE "BOSS_INTRO_VIDEOS = new Set\(\[[0-9, ]*\]\)" chart-quest.html \
+        | grep -oE "[0-9]+" | while read -r n; do echo "bosses/intros/boss-$n.mp4"; done
+    )"
+    bcopied=0
+    for f in $(echo "$bmedia" | sort -u); do
+      case "$f" in */*/*) ;; *) continue ;; esac      # top-level bosses/*.webp already handled above
+      # Skip refs that resolve to nothing on disk: some are prose inside comments
+      # (bosses/trend-crab.webp, bosses/sfx/boss-roar-1..3.m4a). Gate #17 reports those.
+      [ -f "$f" ] || continue
+      mkdir -p "website/$(dirname "$f")"
+      cp -f "$f" "website/$f" || { echo "✗ site: failed to copy $f"; exit 1; }
+      bcopied=$((bcopied+1))
+    done
+    echo "  ↳ boss media: $bcopied referenced file(s) mirrored into website/bosses/"
     # top-level media the game references (auto-discovered so a NEW asset is never missed)
     media="$(grep -oE '[A-Za-z0-9][A-Za-z0-9._-]*\.(png|jpg|jpeg|webp|gif|svg|mp4|webm|mp3|ogg)' chart-quest.html | grep -vE '/' | sort -u || true)"
     for f in $media logo.png icon-192.png; do [ -f "$f" ] && cp -f "$f" website/ 2>/dev/null || true; done
@@ -48,7 +84,12 @@ case "${1:-}" in
     if [ -n "$SRC" ] && [ "$SRC" = "$SITE" ]; then echo "✓ website embed synced → $SITE (+ finn, bosses, logo, cinematic)"; else echo "✗ site: build-tag mismatch (source='$SRC' site='$SITE')"; exit 1; fi
     ;;
   ship)
-    "$0" mirror && node scripts/verify.js && "$0" site && echo -n "build tag: " && "$0" tag && "$0" desktop-qr
+    # ORDER (build 336): mirror → site → verify. `site` used to run AFTER the gate, so the gate
+    # never observed the state that actually ships — which is precisely how the missing boss
+    # media survived every ship for ~20 builds. Gate #17 checks website/ asset parity, so the
+    # deploy folder must be built BEFORE verify runs. A FAIL still blocks the commit; it just
+    # now leaves a refreshed website/ behind, which the next ship overwrites.
+    "$0" mirror && "$0" site && node scripts/verify.js && echo -n "build tag: " && "$0" tag && "$0" desktop-qr
     ;;
   desktop-qr)
     # Refresh the always-current test QR on the Desktop (labelled with the build + LAN URL).

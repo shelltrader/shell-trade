@@ -321,6 +321,69 @@ function run() {
       add('16', 'Market identity gate', 'WARN', 'gate not runnable: ' + String(e).slice(0, 90));
     }
   }
+
+  // 17 — DEPLOY ASSET PARITY (build 336). Production serves website/, not the repo root, and
+  // `cq.sh site` copied only `bosses/*.webp` — non-recursive, one extension. So every clip in
+  // bosses/flinches|intros|outros|sfx was absent from the deploy: the Guardian-1 intro, the
+  // DEFEAT cinematic and the JOURNAL-UNLOCK cinematic played nothing for every external tester,
+  // across ~20 builds, while the build itself was byte-perfect. Three things hid it:
+  //   • no 404 page — Cloudflare answers a missing path with the landing page at HTTP 200, so a
+  //     status-code check passes and the browser gets text/html where a video should be;
+  //   • playBossOutroCinematic is defensive by design (onerror → playNext), so it degrades in
+  //     silence — verified live: MEDIA_ERR_SRC_NOT_SUPPORTED, sequence completed instantly;
+  //   • `cq.sh serve` and the LAN QR serve the REPO ROOT, where every file is present, so a
+  //     founder playtest structurally cannot reproduce it.
+  // This gate closes the class: anything the game REFERENCES and that exists at the repo root
+  // must also exist in website/, at the same size. It compares the deploy folder against the
+  // source of truth (the game's own asset references), not against a hand-maintained list.
+  // NOTE: an exception here is a FAIL, not the WARN used above. A gate whose whole purpose is
+  // to catch "the file silently wasn't there" must not itself pass silently when it breaks.
+  {
+    try {
+      const s = read(SRC);
+      const refs = new Set();
+      // 1. literal asset paths written in the source
+      for (const m of s.matchAll(/(?:bosses|finn)\/[A-Za-z0-9._/-]+\.(?:mp4|m4a|webp|png|jpg|jpeg)/g)) refs.add(m[0]);
+      // 2. the boss intro clips, whose path is BUILT at runtime (bossIntroVideoSrc concatenates
+      //    'bosses/intros/boss-' + level + '.mp4'), so no literal exists to match. Expand the
+      //    authoritative set — this is the same list cq.sh `site` copies from.
+      const iv = s.match(/BOSS_INTRO_VIDEOS = new Set\(\[([0-9, ]*)\]\)/);
+      if (iv) for (const n of iv[1].match(/\d+/g) || []) refs.add(`bosses/intros/boss-${n}.mp4`);
+      // 3. the boss portraits, built as 'bosses/boss-' + level + '.webp'
+      if (/bosses\/boss-'\s*\+\s*level/.test(s)) for (let i = 1; i <= 11; i++) refs.add(`bosses/boss-${i}.webp`);
+
+      // Only paths that actually resolve at the repo root are deploy obligations. The rest are
+      // prose inside comments (e.g. bosses/trend-crab.webp, bosses/sfx/boss-roar-1..3.m4a) —
+      // reported for visibility so a genuinely missing SOURCE asset is never mistaken for one.
+      const real = [...refs].filter(f => exists(f)).sort();
+      const phantom = [...refs].filter(f => !exists(f)).sort();
+
+      // ON-DISK presence is NOT the deploy condition, and assuming it was is what let this ship.
+      // The boss clips WERE sitting in website/bosses/ the whole time — all four subfolders,
+      // 128 MB, on disk since late July — and production still served the landing page for them,
+      // because every one of those files is UNTRACKED. Cloudflare Pages builds from the GIT REPO,
+      // so an untracked file is invisible to the deploy no matter how correct the folder looks in
+      // Finder or to `ls`. The only question that maps to "will a tester receive this byte" is:
+      // is it committed? Hence the git-tracked assertion below — it is the real gate.
+      const tracked = new Set((git('ls-files -- website') || '').split('\n').filter(Boolean));
+      const onDisk = real.filter(f => exists(path.join('website', f)));
+      const missing = real.filter(f => !exists(path.join('website', f)));
+      const untracked = onDisk.filter(f => !tracked.has(path.posix.join('website', f)));
+      const mismatched = onDisk.filter(f => fs.statSync(f).size !== fs.statSync(path.join('website', f)).size);
+
+      const ok = missing.length === 0 && untracked.length === 0 && mismatched.length === 0;
+      add('17', 'Deploy asset parity (every referenced asset present in website/, committed, same size)',
+        ok ? 'PASS' : 'FAIL',
+        ok ? `${real.length} referenced asset(s) present, git-tracked and identical in website/` +
+             (phantom.length ? ` · ${phantom.length} comment-only ref(s) ignored: ${phantom.slice(0, 3).join(', ')}` : '')
+           : [missing.length ? `NOT IN website/ — run \`scripts/cq.sh site\`: ${missing.join(', ')}` : '',
+              untracked.length ? `IN website/ BUT UNTRACKED — Cloudflare deploys from git, so production returns the 200-OK landing page for these: ${untracked.join(', ')} → git add them` : '',
+              mismatched.length ? `size mismatch vs source (stale copy): ${mismatched.join(', ')}` : ''
+             ].filter(Boolean).join(' · '));
+    } catch (e) {
+      add('17', 'Deploy asset parity', 'FAIL', 'gate could not run (treated as FAIL by design): ' + String(e).slice(0, 90));
+    }
+  }
 }
 
 // 3b — optional real headless boot (only if puppeteer is installed)

@@ -3,8 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chart Quest Academy — Trading Courses for Beginners &amp; Beyond</title>
-<meta name="description" content="Go from turtle to trader. Chart Quest Academy: Foundations ($39.99) and Pro Trader Mastery ($149.99). Lifetime access, real trade breakdowns, 30-day money-back guarantee.">
+<!-- NOINDEX while the page is gated for the closed beta (see showCoursesPage /
+     showBossesPage in assets/config.js). Deliberately NOT disallowed in robots.txt:
+     a crawler has to be able to FETCH the page to see this tag and drop it from the
+     index. Remove this line in the same edit that flips the page back on. -->
+<meta name="robots" content="noindex">
+<title>ChartQuest — Courses (coming later)</title>
+<meta name="description" content="ChartQuest courses are not available yet. Right now ChartQuest is a free early beta — the game itself is the lesson.">
 <meta name="theme-color" content="#04060f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -19,6 +24,27 @@
 </head>
 <body data-page="courses">
 <div id="nav"></div>
+
+<!-- ── TOGGLED-OFF VIEW ────────────────────────────────────────────────────────────
+     Mirrors the bosses.html gate so both orphan pages behave the same way and both
+     are re-enabled by flipping ONE boolean in assets/config.js.
+
+     Off by default during the closed beta. This page advertises an Academy with
+     $39.99 / $149.99 courses, "over $600 of value", a 30-day money-back guarantee
+     and a certificate — none of which exist yet, and its checkout button used to
+     pop an alert telling the visitor to edit assets/config.js. A beta tester who
+     searched for ChartQuest could land here directly; nothing else on the site
+     damaged trust faster. Set showCoursesPage:true once the courses are real. -->
+<div id="coursesGate" style="display:none">
+  <div class="gate wrap">
+    <div class="holo bob" style="width:160px"><img src="assets/finn-hero.png" alt="Finn, the turtle explorer" width="622" height="383" style="width:100%;height:auto;display:block" loading="lazy" decoding="async"></div>
+    <h2 class="big">Finn is still writing this one ✏️</h2>
+    <p class="lead measure">There is no course to buy yet — right now ChartQuest is a free early beta, and the game itself is the lesson. Jump in and meet the first Guardian.</p>
+    <div class="btn-row" style="justify-content:center"><a class="btn btn-primary btn-lg" href="play.html">▶ Play the Beta</a><a class="btn btn-ghost btn-lg" href="index.html">Back to home</a></div>
+  </div>
+</div>
+
+<div id="coursesContent">
 
 <header class="hero wrap" style="padding-bottom:8px">
   <span class="ticker reveal"><span class="pulse"></span>CHART QUEST ACADEMY · LIFETIME ACCESS</span>
@@ -179,12 +205,29 @@
   </div></div>
 </section>
 
+</div><!-- /coursesContent -->
+
 <div id="footer"></div>
 
 <div class="sticky-cta" id="cqSticky">
   <div><div class="sc-label">Pro Mastery · $149.99</div><div class="sc-sub">Lifetime · 30-day guarantee</div></div>
   <button class="btn btn-primary" onclick="cqBuy('pro')">Get it</button>
 </div>
+
+<script>
+  /* Same shape as the bosses gate: content and gate are mutually exclusive, and the
+     default when config.js is missing is OFF — a page selling things that do not
+     exist must fail CLOSED, not open. */
+  (function () {
+    var on = !!(window.CHARTQUEST_CONFIG && window.CHARTQUEST_CONFIG.showCoursesPage === true);
+    document.getElementById('coursesContent').style.display = on ? '' : 'none';
+    document.getElementById('coursesGate').style.display    = on ? 'none' : 'block';
+    if (!on) {
+      var s = document.getElementById('cqSticky');   /* the fixed "$149.99 · Get it" bar */
+      if (s) s.style.display = 'none';
+    }
+  })();
+</script>
 
 <script src="assets/site.js" defer></script>
 </body>

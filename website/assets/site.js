@@ -43,14 +43,17 @@
     {id:'home',  label:'Home',     href:'index.html'},
     {id:'game',  label:'The Game', href:'index.html#game'},
     {id:'bosses',label:'Bosses',   href:'bosses.html', boss:true},
-    {id:'courses',label:'Courses', href:'courses.html'},
+    {id:'courses',label:'Courses', href:'courses.html', course:true},
     {id:'play',  label:'Play',     href:'play.html'}
   ];
   var navHTML = '<nav class="nav"><div class="nav-in">'
     + '<a class="brand" href="index.html">'+logomark()+'<span>ChartQuest</span></a>'
     + '<button class="nav-burger" aria-label="Menu" id="cqBurger"><span></span></button>'
     + '<div class="nav-links" id="cqLinks">';
+  /* Both orphan pages fail CLOSED: a missing config must hide them, not reveal them. */
+  var showCourses = CFG.showCoursesPage === true;
   links.forEach(function(l){ if(l.boss && !CFG.showBossesPage) return;
+    if(l.course && !showCourses) return;
     navHTML += '<a href="'+l.href+'"'+(l.id===page?' class="active"':'')+'>'+l.label+'</a>'; });
   navHTML += '<span class="nav-cta"><a class="btn btn-primary" href="play.html">Play Free</a></span></div></div></nav>';
   var navMount = document.getElementById('nav'); if(navMount) navMount.outerHTML = navHTML;
@@ -64,17 +67,27 @@
   var footHTML='<footer class="foot"><div class="wrap"><div class="foot-grid">'
     +'<div><a class="brand" href="index.html" style="color:#fff">'+logomark()+'<span>ChartQuest</span></a>'
     +'<p style="margin-top:14px;max-width:280px;color:#8497ad">A side-scrolling trading RPG. Hop across live crypto charts, beat the Guardians, and learn to trade — free, in your browser.</p></div>'
-    +'<div><h5>Game</h5><ul><li><a href="index.html#how">How it works</a></li><li><a href="index.html#worlds">The 10 worlds</a></li>'
+    +'<div><h5>Game</h5><ul><li><a href="index.html#how">How it works</a></li><li><a href="index.html#roadmap">The map ahead</a></li>'
     +(CFG.showBossesPage?'<li><a href="bosses.html">The 11 Guardians</a></li>':'')
     +'<li><a href="play.html">Play free</a></li><li><a href="index.html#install">Install the app</a></li></ul></div>'
-    +'<div><h5>Learn</h5><ul><li><a href="courses.html">Courses</a></li><li><a href="courses.html#foundations">Foundations</a></li><li><a href="courses.html#pro">Pro Mastery</a></li><li><a href="index.html#faq">FAQ</a></li></ul></div>'
-    +'<div><h5>Get launch updates</h5><p style="color:#8497ad">New worlds, bosses &amp; course drops. No spam.</p>'
-    +'<form class="news" onsubmit="return cqNews(event)"><input type="email" required placeholder="you@email.com" aria-label="Email"><button class="btn btn-primary" type="submit">Join</button></form>'
-    +'<p id="cqNewsMsg" style="color:var(--green);font-size:13px;margin-top:10px;display:none">Thanks — you\'re on the list! 🐢</p></div>'
-    +'</div><p class="disclaimer"><b>Important:</b> Chart Quest is an educational game. All trades in the game are <b>simulated</b> with play money — you never risk real funds to play. Nothing in Chart Quest or Chart Quest Academy is financial advice, and we are not financial advisors. Trading real assets (including crypto) carries significant risk, including loss of capital. Always do your own research.</p>'
-    +'<div class="foot-bottom"><span>© '+year+' Chart Quest // slow and steady</span><span>Built with 🐢 for new traders everywhere</span></div></div></footer>';
+    /* The three course links are gated too. Hiding the nav entry but leaving these was how
+       courses.html stayed one click away from every page while looking switched off. */
+    +'<div><h5>Learn</h5><ul>'
+    +(showCourses?'<li><a href="courses.html">Courses</a></li><li><a href="courses.html#foundations">Foundations</a></li><li><a href="courses.html#pro">Pro Mastery</a></li>':'')
+    +'<li><a href="index.html#faq">FAQ</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="terms.html">Terms</a></li></ul></div>'
+    /* This used to be an email form that replied "Thanks — you're on the list! 🐢" and sent
+       NOTHING anywhere — cqNews only unhid a message. Collecting an address and silently
+       dropping it is worse than not asking, so the ask is gone until there is a real list. */
+    +'<div><h5>The beta</h5><p style="color:#8497ad">ChartQuest is a free early beta. World 1 and the first Guardian are playable now.</p>'
+    +'<div class="btn-row" style="margin-top:12px"><a class="btn btn-primary" href="play.html">▶ Play the Beta</a></div></div>'
+    /* One-word ChartQuest throughout, and no "Academy" — that product is gated and does not exist. */
+    +'</div><p class="disclaimer"><b>ChartQuest is in beta.</b> Right now you can play World 1 and fight the first Guardian, the Gambler. The other worlds are still being built.<br><br><b>Important:</b> ChartQuest is an educational game. Every trade inside the game uses <b>pretend money</b> — you can never lose real money by playing. We are not financial advisors, and nothing here is advice about your money. Buying and selling real things like crypto or shares is risky and people do lose money doing it. Always check things for yourself before you use real money.</p>'
+    +'<div class="foot-bottom"><span>© '+year+' ChartQuest // slow and steady</span><span>Built with 🐢 for new traders everywhere</span></div></div></footer>';
   var footMount=document.getElementById('footer'); if(footMount) footMount.outerHTML=footHTML;
-  window.cqNews=function(e){e.preventDefault();var m=document.getElementById('cqNewsMsg');if(m)m.style.display='block';e.target.reset();return false;};
+  /* cqNews removed with the fake signup form above. Kept as a no-op ONLY because a stale
+     cached copy of an orphan page could still have the old inline onsubmit handler; without
+     this the form would submit and reload the page. It intentionally does nothing. */
+  window.cqNews=function(e){ if(e&&e.preventDefault) e.preventDefault(); return false; };
 
 
   /* ---------- FAQ ---------- */
@@ -107,7 +120,9 @@
   window.cqBuy=function(which){
     var url=which==='pro'?CFG.checkoutProMasteryUrl:CFG.checkoutFoundationsUrl;
     if(url){window.location.href=url;return;}
-    alert("Checkout is opening soon! 🐢\n\nThis is where your secure payment page will load once you connect a checkout provider (Stripe, Gumroad, Teachable…). Set the link in assets/config.js.");
+    /* This used to read: "Set the link in assets/config.js." — a developer instruction, shown
+       to whoever clicked Buy. Never ship setup notes to a visitor; say the true thing instead. */
+    alert("These courses aren't for sale yet 🐢\n\nChartQuest is a free early beta right now — the game itself is the lesson. We'll announce the courses when they're ready.");
   };
 
   /* ---------- Service worker ---------- */

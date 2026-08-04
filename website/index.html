@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ChartQuest — The World's First Trading RPG</title>
-<meta name="description" content="ChartQuest is the world's first trading RPG. Play as Finn the turtle explorer, dive inside real candlestick charts, defeat the Guardians, and become a trader. The chart is the world.">
+<meta name="description" content="The ChartQuest beta is open. Play World 1 free, beat the first Guardian, and tell us what to build next. Dive inside real candlestick charts as Finn the turtle — no download, no sign-up.">
 <meta name="theme-color" content="#060910">
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -41,7 +41,7 @@
 <link rel="canonical" href="https://playchartquest.com/">
 <meta property="og:site_name" content="ChartQuest">
 <meta property="og:title" content="ChartQuest — The World's First Trading RPG">
-<meta property="og:description" content="Dive inside real charts as Finn the turtle. Candles are terrain. Setups are puzzles. Bosses teach trading. The chart is the world.">
+<meta property="og:description" content="The beta is open. Play the first world free, beat the Gambler, and help us build the other ten. Candles are terrain. Setups are puzzles.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://playchartquest.com/">
 <meta property="og:image" content="https://playchartquest.com/assets/og-cover.jpg">
@@ -49,10 +49,10 @@
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Finn the turtle faces the eleven Guardians on a rising candlestick chart">
+<meta property="og:image:alt" content="Finn the turtle faces the Guardians of the Blockchain Ocean on a rising candlestick chart">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ChartQuest — The World's First Trading RPG">
-<meta name="twitter:description" content="Dive inside real charts as Finn the turtle. Learn to read any market — free, in your browser.">
+<meta name="twitter:description" content="The ChartQuest beta is open. Play the first world free and learn to read a real chart, in your browser.">
 <meta name="twitter:image" content="https://playchartquest.com/assets/og-cover.jpg">
 
 <!-- Typography: Inter (body) + Space Grotesk (display).
@@ -86,7 +86,11 @@
   --line:rgba(120,170,215,.12);--line-2:rgba(120,170,215,.24);
   --green:#16C784;--green-2:#0f9d68;--red:#EA3943;--gold:#FFD60A;--gold-2:#e0b400;
   --blue:#3EA6FF;--cyan:#46E0FF;
-  --ink:#EAF2FB;--ink-dim:#9AB0C6;--ink-faint:#5f7285;
+  /* --ink-faint was #5f7285 — 4.01:1 on --bg, below the 4.5:1 WCAG AA floor, and it is used at
+     9-12.5px across ~26 selectors including the hero trust line and the FINANCIAL DISCLAIMER.
+     #8195a8 clears AA on every background in this file: 6.45 on --bg, 6.30 on --bg-2,
+     6.03 on --panel, 5.66 on --panel-2. Do not darken it again without re-checking all four. */
+  --ink:#EAF2FB;--ink-dim:#9AB0C6;--ink-faint:#8195a8;
   --display:"Space Grotesk","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
   --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
@@ -343,7 +347,7 @@ img{max-width:100%;display:block;height:auto}
 .sticky-cta{position:fixed;left:12px;right:12px;bottom:12px;z-index:70;display:none;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px 11px 18px;border-radius:16px;border:1px solid rgba(255,214,10,.3);background:rgba(8,13,22,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 30px rgba(0,0,0,.5);transform:translateY(150%);transition:transform .3s ease}
 .sticky-cta.show{transform:translateY(0)}
 .sticky-cta .sc-label{font-weight:800;font-size:14px}
-.sticky-cta .sc-sub{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+.sticky-cta .sc-sub{font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
 
 /* Modal */
 .modal{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(3,5,10,.74);backdrop-filter:blur(6px)}
@@ -1024,7 +1028,10 @@ body.tab-hidden *{animation-play-state:paused!important}
 .bridge + .section{padding-top:clamp(28px,4vw,54px)}
 
 /* ---- hero: remove friction, point the way down ---- */
-.hero-trust{margin:15px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+/* The line whose whole job is "this costs you nothing" was the least readable text on the page:
+   faint, 11px, uppercase, wide-tracked — over the key art, and alone among its hero siblings in
+   having no text-shadow, so its contrast rode on whatever pixel of artwork sat behind it. */
+.hero-trust{margin:15px 0 0;font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);text-shadow:0 2px 14px rgba(0,0,0,.95),0 1px 3px rgba(0,0,0,.9)}
 /* bottom-RIGHT, not centre: the key art's Finn owns the centre, and the hero's
    last ~15px sit below the fold, so anchor it clear of both */
 .hero-scroll{position:absolute;right:clamp(16px,3vw,44px);bottom:clamp(30px,5.5vh,62px);z-index:5;
@@ -1178,8 +1185,9 @@ body.tab-hidden *{animation-play-state:paused!important}
        you scroll the hero; the copy overlays it and the stage releases into the next section. On
        desktop the wrapper is display:contents, so the hero layout is byte-for-byte unchanged. -->
   <div class="hero-cine-stage">
-  <!-- Official key art: Finn faces the eleven Guardians. The image does the selling. -->
-  <img class="hero-cine-bg" src="assets/hero-key-art.jpg" alt="Finn the turtle stands before the eleven Guardian bosses on a rising candlestick chart" width="1672" height="941" fetchpriority="high">
+  <!-- Official key art: Finn faces the Guardians. Aspirational on purpose — but the ALT TEXT must
+       not state a count, because only the first Guardian is built. -->
+  <img class="hero-cine-bg" src="assets/hero-key-art.jpg" alt="Finn the turtle stands before the Guardians of the Blockchain Ocean on a rising candlestick chart" width="1672" height="941" fetchpriority="high">
 
   <!-- microinteraction: the galaxy at the Market Maker's core softly breathes + turns (almost imperceptible) -->
   <div class="hero-cine-glow" aria-hidden="true"></div>
@@ -1316,7 +1324,7 @@ body.tab-hidden *{animation-play-state:paused!important}
   <div class="wrap pillars">
     <div class="pillar explore reveal">
       <div class="scene">
-        <img class="shot" src="assets/EXPLORE.jpg" alt="Finn sprinting across live BTC candles" loading="lazy" decoding="async">
+        <img class="shot" src="assets/EXPLORE.jpg" alt="Finn sprinting across a Bitcoin candlestick chart" loading="lazy" decoding="async">
       </div>
       <div class="body"><div class="tagn">◈ Explore</div><h3>Run the chart</h3><p>Every candle is solid ground. Run and jump your way across a real market.</p></div>
     </div>
@@ -1328,9 +1336,9 @@ body.tab-hidden *{animation-play-state:paused!important}
     </div>
     <div class="pillar battle reveal">
       <div class="scene">
-        <img class="shot" src="assets/BATTLE.jpg" alt="Facing a Guardian boss — a towering serpent made of candles" loading="lazy" decoding="async">
+        <img class="shot" src="assets/BATTLE.jpg" alt="Facing a Guardian boss made of candles" loading="lazy" decoding="async">
       </div>
-      <div class="body"><div class="tagn">◈ Battle</div><h3>Defeat the Guardians</h3><p>A boss guards every world. Beat it using the skill you just learned.</p></div>
+      <div class="body"><div class="tagn">◈ Battle</div><h3>Beat the Guardian</h3><p>A giant boss made of candles guards the end of the world. Beat it with the trick you just learned. One Guardian is awake right now — the Gambler.</p></div>
     </div>
   </div>
 </section>
@@ -1385,7 +1393,7 @@ body.tab-hidden *{animation-play-state:paused!important}
       <div class="cmp-row good"><span class="m">✓</span>Real skills, learned by doing</div>
 
       <div class="cmp-row bad"><span class="m">✕</span>You quit at lesson 3</div>
-      <div class="cmp-row good"><span class="m">✓</span>Bosses, ranks, worlds to unlock</div>
+      <div class="cmp-row good"><span class="m">✓</span>A real boss fight you have to earn</div>
 
       <div class="cmp-row bad"><span class="m">✕</span>Nothing sticks</div>
       <div class="cmp-row good"><span class="m">✓</span>It sticks — because you lived it</div>
@@ -1412,12 +1420,17 @@ body.tab-hidden *{animation-play-state:paused!important}
   <div class="wrap section-head">
     <span class="kicker reveal">The expedition</span>
     <h2 class="big reveal" style="margin-top:14px">The map ahead</h2>
-    <p class="lead reveal">ChartQuest is being built in the open. Here's the journey — and where you jump in.</p>
+    <p class="lead reveal">Right now you can play the first world and fight the first Guardian. Everything after that is still being built — and what beta players tell us decides what gets built first.</p>
   </div>
   <div class="wrap expedition reveal">
-    <div class="ex-node done"><div class="ex-dot">✓</div><div><div class="ex-phase">Phase 01</div><div class="ex-title">Alpha</div><div class="ex-desc">The core world &amp; first Guardians.</div></div></div>
-    <div class="ex-node now"><div class="ex-dot"></div><div><div class="ex-phase">Phase 02 · Now</div><div class="ex-title">Open Beta</div><div class="ex-desc">10 worlds, 11 Guardians, playable free.</div></div></div>
-    <div class="ex-node"><div class="ex-dot"></div><div><div class="ex-phase">Phase 03</div><div class="ex-title">Launch</div><div class="ex-desc">Every device. The full descent.</div></div></div>
+    <!-- HONEST SCOPE. Only World 1 and the first Guardian exist. Phase 02 used to promise the
+         full ten-world roster as the CURRENT phase, which overstated the build about tenfold.
+         That promise now lives in Phase 03, where it is true. Do not move it back up without
+         shipping the worlds first. (Wording kept vague on purpose — an HTML comment is served
+         to the browser, so restating the old claim here would leave it in the page.) -->
+    <div class="ex-node done"><div class="ex-dot">✓</div><div><div class="ex-phase">Phase 01</div><div class="ex-title">Alpha</div><div class="ex-desc">We built the first world and the first Guardian.</div></div></div>
+    <div class="ex-node now"><div class="ex-dot"></div><div><div class="ex-phase">Phase 02 · You are here</div><div class="ex-title">Early Beta</div><div class="ex-desc">World 1 and the first Guardian are playable now. The rest gets built with beta players.</div></div></div>
+    <div class="ex-node"><div class="ex-dot"></div><div><div class="ex-phase">Phase 03</div><div class="ex-title">Launch</div><div class="ex-desc">10 worlds. 11 Guardians. Every device.</div></div></div>
     <div class="ex-node"><div class="ex-dot"></div><div><div class="ex-phase">Phase 04</div><div class="ex-title">New Realms</div><div class="ex-desc">Fresh worlds, factions &amp; setups.</div></div></div>
     <div class="ex-node"><div class="ex-dot"></div><div><div class="ex-phase">Phase 05</div><div class="ex-title">Guilds</div><div class="ex-desc">Leaderboards, events &amp; challenges.</div></div></div>
   </div>
@@ -1444,7 +1457,7 @@ body.tab-hidden *{animation-play-state:paused!important}
           </svg>
           <span>Chart<b>Quest</b></span>
         </a>
-        <p style="max-width:300px;color:var(--ink-dim);margin-top:14px;font-size:14px">The world's first trading RPG. Dive inside real charts as Finn, defeat the Guardians, and learn to trade — free, in your browser.</p>
+        <p style="max-width:300px;color:var(--ink-dim);margin-top:14px;font-size:14px">Dive inside real charts as Finn and learn to trade — free, in your browser. ChartQuest is an early beta: World 1 and the first Guardian are playable now.</p>
       </div>
       <div>
         <h5>The world</h5>
@@ -1458,6 +1471,9 @@ body.tab-hidden *{animation-play-state:paused!important}
     <p class="disclaimer"><b>Important:</b> ChartQuest is an educational game. All trades in the game are <b>simulated with play money</b> — you never risk real funds to play. Nothing in ChartQuest is financial advice, and we are not financial advisors. Trading real assets (including crypto) carries significant risk, including loss of capital. Always do your own research.</p>
     <div class="foot-bottom">
       <span>© <span id="yr">2026</span> ChartQuest // the chart is the world</span>
+      <!-- These are REQUIRED, not decoration: the game's signup consent checkbox links to both,
+           and until now neither file existed in the deploy output so both 404'd into the homepage. -->
+      <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span>
       <span>Built with 🐢 for explorers everywhere</span>
     </div>
   </div>
@@ -1512,6 +1528,11 @@ body.tab-hidden *{animation-play-state:paused!important}
     <button class="btn btn-primary isheet-go" id="isGot" type="button">Got it</button>
   </div>
 </div>
+
+<!-- Closed-beta analytics (ticket 3). Cookieless, no third parties, no personal data.
+     This is the FIRST stage of the beta funnel — without it the report cannot show how
+     many people who saw the landing page went on to play. -->
+<script src="assets/cq-track.js"></script>
 
 <script>
 /* CHARTQUEST — portal experience. Edit URLs in one place: */

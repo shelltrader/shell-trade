@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-<title>Play Chart Quest</title>
-<meta name="description" content="Play Chart Quest free in your browser — hop across live crypto charts and learn to trade.">
+<title>Play the ChartQuest Beta</title>
+<meta name="description" content="Play the ChartQuest beta free in your browser — run across a real candlestick chart and learn to trade.">
 <meta name="theme-color" content="#060910">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/pwa/icon-192.png">
@@ -12,7 +12,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Chart Quest">
+<meta name="apple-mobile-web-app-title" content="ChartQuest">
 <link rel="stylesheet" href="assets/site.css">
 <script src="assets/config.js"></script>
 <style>
@@ -68,13 +68,13 @@
 </div>
 
 <div class="frame-wrap" id="frameWrap">
-  <iframe id="cqGame" title="Chart Quest game" allow="fullscreen; autoplay" loading="eager"></iframe>
+  <iframe id="cqGame" title="ChartQuest game" allow="fullscreen; autoplay" loading="eager"></iframe>
 </div>
 
 <div class="loader" id="cqLoader">
   <div style="text-align:center">
     <h3>Diving into the Blockchain Ocean…</h3>
-    <p>Loading live charts &amp; waking up Finn 🐢</p>
+    <p>Getting your chart ready &amp; waking up Finn 🐢</p>
   </div>
   <div class="lbar"><i></i></div>
   <a id="cqOpenTab" href="game.html" target="_blank" style="color:#6f8597;font-size:13px;text-decoration:underline;display:none">Taking too long? Open the game in a new tab →</a>
@@ -98,6 +98,10 @@
 </div>
 
 <script src="assets/site.js" defer></script>
+<!-- Closed-beta analytics (ticket 3). The game frame reports its own milestones; this
+     records the wrapper page so a tester who never gets the iframe to load is still visible
+     in the funnel rather than silently missing. -->
+<script src="assets/cq-track.js"></script>
 <script>
   var CQ_GAME = (window.CHARTQUEST_CONFIG && window.CHARTQUEST_CONFIG.gameUrl) || 'game.html';
   // Forward the query string into the iframe — without this, /play?fresh=1 (and ?guest,
@@ -111,7 +115,27 @@
   setTimeout(function(){ document.getElementById('cqOpenTab').style.display='inline'; }, 5000);
   setTimeout(function(){ loader.classList.add('hide'); }, 9000);
 
-  document.getElementById('cqRestartBtn').addEventListener('click', function(){ gframe.src = CQ_GAME; });
+  document.getElementById('cqRestartBtn').addEventListener('click', function(){ gframe.src = CQ_GAME + CQ_QS; });
+
+  /* ── CLOSED BETA → SURVEY handoff (ticket 2) ───────────────────────────────
+     window.CQBeta (in the game) posts this the moment the player finishes Journal
+     Discovery and taps Continue on the completion ceremony. We take the survey
+     top-level rather than into the frame: the game box is 3:4 on a phone, and a
+     form rendered inside it would be the same mistake as the home link that used
+     to load the whole marketing site into the embed.
+
+     The ack matters — CQBeta navigates itself after 700ms if nobody answers, so a
+     silent listener would race us. Origin-checked: this only ever acts on messages
+     from our own game frame. */
+  window.addEventListener('message', function (ev) {
+    if (ev.origin !== location.origin) return;
+    var d = ev && ev.data;
+    if (!d || d.source !== 'cq-beta' || d.type !== 'beta_complete') return;
+    try { ev.source.postMessage({ source: 'cq-beta-host', type: 'survey_shown' }, ev.origin); } catch (e) {}
+    var url = (typeof d.surveyUrl === 'string' && /^[\w./-]+$/.test(d.surveyUrl)) ? d.surveyUrl : 'survey.html';
+    try { (window.top || window).location.href = url; }
+    catch (e) { location.href = url; }
+  });
 
   /* ── Fullscreen ─────────────────────────────────────────────────────────────
      The old code did `(el.requestFullscreen || el.webkitRequestFullscreen || noop)`

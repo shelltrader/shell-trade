@@ -19,12 +19,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Chart Quest">
+<meta name="apple-mobile-web-app-title" content="ChartQuest">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="theme-color" content="#0a0e14">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>Chart Quest</title>
+<title>ChartQuest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <!-- build 262: preload the cold-open poster so the intro is never a black screen while the
@@ -1059,7 +1059,11 @@
     position: relative;   /* anchors the universal ✕ */
   }
   #authLogo { text-align: center; margin: 0 -22px 18px; }
-  #authLogo img { width: 100%; border-radius: 14px 14px 0 0; display: block; }
+  /* height:auto is LOAD-BEARING. The <img> now carries width/height attributes (so the card
+     cannot reflow while the logo decodes). Without an explicit height:auto here, a browser
+     that honours the height attribute over the intrinsic ratio renders the logo at its full
+     512px height inside a 340px card. */
+  #authLogo img { width: 100%; height: auto; border-radius: 14px 14px 0 0; display: block; }
   #authTabs { display: flex; margin-bottom: 16px; border-radius: 7px; overflow: hidden; border: 1px solid #2a3442; }
   #authTabs button { flex: 1; padding: 8px 0; font: bold 11px var(--font-ui); letter-spacing: 1px;
     background: transparent; border: none; color: #7d8aa0; cursor: pointer; }
@@ -1192,7 +1196,16 @@
     <!-- UNIVERSAL ✕ (permanent rule) — same exit as the guest path; wired next to authGuestBtn -->
     <button class="uxX" id="authX" style="top:max(10px, env(safe-area-inset-top));" aria-label="Close">&#10005;</button>
     <div id="authLogo">
-      <img src="logo.png" alt="Chart Quest">
+      <!-- This is the FIRST image a new player ever waits on: the auth overlay is up on first
+           paint, and play.html only hides its loading spinner on the iframe's `load` event,
+           which waits for every subresource. It used to be logo.png — 1.78 MB of 1254x1254 PNG
+           rendered at ~340px, roughly 9 s of pure logo on slow 4G before the spinner cleared.
+           Now 38 KB of WebP (97.9% smaller). The source has no alpha channel, so the legacy
+           fallback is a JPEG rather than a much larger PNG; a browser fetches ONE of the two. -->
+      <picture>
+        <source srcset="logo-512.webp" type="image/webp">
+        <img src="logo-512.jpg" alt="ChartQuest" width="512" height="512" decoding="async">
+      </picture>
     </div>
     <div id="authTabs">
       <button id="authTabSignin" class="active">SIGN IN</button>
@@ -1547,7 +1560,11 @@
   <div style="position:relative;z-index:1;">
     <!-- header -->
     <div style="text-align:center;padding:28px 24px 16px;">
-      <img src="logo.png" alt="Chart Quest" style="width:200px;height:auto;display:block;margin:0 auto 10px;" onerror="this.style.display='none'">
+      <picture>
+        <source srcset="logo-512.webp" type="image/webp">
+        <img src="logo-512.jpg" alt="ChartQuest" width="512" height="512" decoding="async"
+             style="width:200px;height:auto;display:block;margin:0 auto 10px;" onerror="this.style.display='none'">
+      </picture>
       <div style="width:40px;height:2px;background:linear-gradient(90deg,transparent,#86c210,transparent);margin:0 auto 14px;"></div>
       <div style="font-size:13px;color:#7d8aa0;max-width:380px;margin:0 auto 6px;line-height:1.6;font-family:'Inter',sans-serif;">
         Your chart determines which <strong style="color:#c7d1de;">real live market</strong> you'll trade on.
@@ -2927,7 +2944,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 325 — EVENT SPACING, CLOSED PROPERLY (adversarial audit fallout). Build 324 wired boxes, pages and the boss gate into the ledger; an audit of every player-facing event site then found three holes it had left. (1) THE BIGGEST: pumpLessons is the single choke point every CARD lesson in the game passes through -- teach, teachForced, the post-trade recaps, the QA paths -- and none of them consulted the ledger, so a card could still land on the very next candle after a box smash or a page find, which is exactly the complaint. One gate + one stamp there now covers all of them. It checks the gap ONLY, not the opening warm-up, because suppressing the controls and goal cards for 14 candles would leave a new player with no idea what to press -- the founder rule is about things placed IN THE WORLD, not about the game explaining itself. Deferring is free: the queue holds and drains once the gap passes. (2) THE SPAWN GATES WERE ASKING ABOUT THE WRONG CANDLE. maintainCandles spawns on the candle just printed at the generation edge, roughly 15 candles AHEAD of Finn, so a bare eventClear() answered a question about where Finn was standing rather than where the player will actually meet the reward. Box and page spawns now judge at their own candle id via eventClearAt(). (3) The LEGACY box path -- every level except 1 -- had received none of the build-324 gates at all, so L2+ could still drop a box on candle one or straight after a lesson. Same rules everywhere now.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 329 - ONE BRAND, AND TEXT YOU CAN ACTUALLY READ (ticket 1 audit fallout). The game titled itself Chart Quest (two words) in the browser tab and as the installed-app name, while the landing page said ChartQuest 28 times and never split it - so the brand changed spelling at the exact moment a tester clicked Play. Unified across the game title, the PWA titles, play.html, bosses.html, courses.html, sw.js and two in-game strings. The trademark notice in the file header is deliberately untouched - that is a legal string. Separately, on the marketing site --ink-faint was #5f7285: 4.01 to 1 on the page background, under the 4.5 WCAG AA floor, used at 9 to 12.5px across about 26 selectors including the hero trust line and the financial disclaimer. Now #8195a8, which clears AA on all four backgrounds in the file. The hero trust line also had no text-shadow while every sibling over the key art does.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -7404,7 +7421,7 @@ const LESSONS = {
     '<li><b style="color:#16c784">LONG</b> = you think price will go UP → you buy</li>' +
     '<li><b style="color:#ea3943">SHORT</b> = you think price will go DOWN → you sell first, buy back cheaper</li>' +
     '<li>Both can make money — it depends on your <b>read of the market</b></li>' +
-    '<li>💡 In Chart Quest, tap the banner and choose ▲ LONG or ▼ SHORT</li>' +
+    '<li>💡 In ChartQuest, tap the banner and choose ▲ LONG or ▼ SHORT</li>' +
     '</ul>'],
   what_is_sl: ['STOP LOSS — YOUR SHIELD 🛡️',
     '<ul style="margin:6px 0 0 14px;padding:0;line-height:2.1">' +
@@ -19848,7 +19865,7 @@ function drawCandleAcademy() {
     // Bottom tip
     ctx.font = '13px ' + FONT_UI;
     ctx.fillStyle = '#c9b3ff'; ctx.textAlign = 'center';
-    ctx.fillText('In Chart Quest, tap the banner to choose', cx, H * 0.84);
+    ctx.fillText('In ChartQuest, tap the banner to choose', cx, H * 0.84);
     ctx.fillText('your direction before every trade.', cx, H * 0.88);
 
   } else if (card === 5) {
@@ -27312,6 +27329,746 @@ window.SocialAgents = (function () {
       });
     }
   } catch (e) {}
+})();
+</script>
+<script>
+/* CQTRACK:BEGIN — generated from website/assets/cq-track.js by scripts/sync_track.py — DO NOT EDIT HERE */
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   CHARTQUEST — CLOSED BETA ANALYTICS               window.CQTrack        (ticket 3, v1)
+   ------------------------------------------------------------------------------------------
+   CANONICAL SOURCE. This exact file is also inlined into chart-quest.html (the game is one
+   self-contained document and cannot depend on a separate script). Do NOT edit the inlined
+   copy — edit this file and re-sync:
+
+       python3 scripts/sync_track.py            # splices this file into chart-quest.html
+       python3 scripts/sync_track.py --check    # fails if the two have drifted
+
+   ── WHAT IT DOES ─────────────────────────────────────────────────────────────────────────
+   Records the closed-beta funnel with ZERO player interaction, and nothing else. It is
+   deliberately not a general analytics library: the event names are a closed set, agreed
+   with the beta-ingest edge function, so a typo here cannot silently invent a funnel stage
+   the Founder Report then cannot explain.
+
+   ── WHAT IT DOES NOT COLLECT ─────────────────────────────────────────────────────────────
+   No cookies. No fingerprinting. No IP storage (the edge function uses IP only for an
+   in-memory rate-limit window). No third parties. The player id is a random local string
+   with no personal data in it, reusing the game's existing cq_pid so a tester is one person
+   across the funnel rather than a new stranger on every page.
+
+   ── DESIGN NOTES ─────────────────────────────────────────────────────────────────────────
+   • Milestones are ONCE-PER-PLAYER (localStorage), because "first trade won" is a funnel
+     stage, not a counter. Replays must not inflate it.
+   • Every event carries a client-generated event_id, and the edge function upserts on it,
+     so a retry after a flaky mobile connection can never double-count a stage.
+   • Buffered and flushed in batches; flushed hard on pagehide with keepalive (NOT
+     sendBeacon — beacon cannot set the apikey/Authorization headers this endpoint needs).
+   • Every public method is try/caught and non-throwing. Analytics must never be able to
+     break a playtest — a dropped metric is a nuisance, a broken game is the beta.
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  if (window.CQTrack) return;                      // never double-install
+
+  var ENDPOINT = 'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest';
+  /* Supabase ANON key — a public, publishable key. It is already shipped in the game; it
+     grants nothing on its own (every beta table has RLS on with no anon policy, and the
+     only write path is the service-role edge function). */
+  var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
+
+  var FLUSH_MS  = 4000;
+  var MAX_BATCH = 40;
+
+  /* The closed set. Must stay identical to EVENT_NAMES in supabase/functions/beta-ingest. */
+  var NAMES = ['session_start','session_end','return_visit','tutorial_started','tutorial_completed',
+    'first_trade_started','first_trade_won','first_trade_lost','boss_started','boss_defeated',
+    'journal_unlocked','journal_discovery_started','journal_discovery_completed','beta_completed',
+    'survey_started','survey_submitted','crash'];
+
+  /* Stages that describe a player's furthest progress — recorded once, ever. */
+  var ONCE = ['tutorial_started','tutorial_completed','first_trade_started','first_trade_won',
+    'first_trade_lost','boss_started','boss_defeated','journal_unlocked',
+    'journal_discovery_started','journal_discovery_completed','beta_completed','survey_submitted'];
+
+  function safe(fn, dflt) { try { return fn(); } catch (e) { return dflt; } }
+  function get(k)    { return safe(function () { return localStorage.getItem(k); }, null); }
+  function set(k, v) { safe(function () { localStorage.setItem(k, v); }); }
+
+  function uid(p) {
+    return (p || '') + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+
+  /* Reuse the game's existing player id so the website and the game are one tester. */
+  function pid() {
+    var p = get('cq_pid');
+    if (!p) { p = 'p-' + Math.random().toString(36).slice(2, 12); set('cq_pid', p); }
+    return p;
+  }
+
+  /* ── environment, resolved once ─────────────────────────────────────────────────────── */
+  var ENV = (function () {
+    var ua = safe(function () { return navigator.userAgent || ''; }, '');
+    var d = 'desktop';
+    if (/iPad|Tablet|PlayBook|Silk|(Android(?!.*Mobile))/i.test(ua)) d = 'tablet';
+    else if (/Mobi|Android|iPhone|iPod|IEMobile|BlackBerry|Opera Mini/i.test(ua)) d = 'mobile';
+
+    var b = 'other';
+    /* Order matters — Edge and Chrome both claim Safari, Chrome claims Safari. */
+    if (/Edg\//.test(ua))                       b = 'Edge';
+    else if (/OPR\/|Opera/.test(ua))            b = 'Opera';
+    else if (/Firefox\/|FxiOS/.test(ua))        b = 'Firefox';
+    else if (/CriOS|Chrome\//.test(ua))         b = 'Chrome';
+    else if (/Safari\//.test(ua))               b = 'Safari';
+
+    var o = 'other';
+    if (/iPhone|iPad|iPod/.test(ua))            o = 'iOS';
+    else if (/Android/.test(ua))                o = 'Android';
+    else if (/Mac OS X|Macintosh/.test(ua))     o = 'macOS';
+    else if (/Windows/.test(ua))                o = 'Windows';
+    else if (/Linux|X11/.test(ua))              o = 'Linux';
+
+    return {
+      device: d, browser: b, os: o,
+      screen:   safe(function () { return screen.width + 'x' + screen.height; }, ''),
+      viewport: safe(function () { return window.innerWidth + 'x' + window.innerHeight; }, '')
+    };
+  })();
+
+  var SESSION = uid('s-');
+  var T0      = Date.now();
+  var buf     = [];
+  var timer   = null;
+  var ended   = false;
+
+  function post(kind, rows, keepalive) {
+    if (!rows || !rows.length) return Promise.resolve(false);
+    return safe(function () {
+      return fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: kind, rows: rows }),
+        keepalive: !!keepalive
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }, Promise.resolve(false));
+  }
+
+  function flush(keepalive) {
+    if (!buf.length) return;
+    var rows = buf.splice(0, MAX_BATCH);
+    post('events', rows, keepalive);
+    if (buf.length) schedule();
+  }
+
+  function schedule() {
+    if (timer) return;
+    timer = setTimeout(function () { timer = null; flush(false); }, FLUSH_MS);
+  }
+
+  /* ── the one entry point ────────────────────────────────────────────────────────────── */
+  function event(name, props) {
+    return safe(function () {
+      if (NAMES.indexOf(name) < 0) return false;         // unknown → drop, never invent a stage
+      if (ONCE.indexOf(name) >= 0) {
+        var k = 'cq_bt_' + name;
+        if (get(k)) return false;
+        set(k, String(Date.now()));
+      }
+      buf.push({
+        event_id: uid('e-'), player_id: pid(), session_id: SESSION,
+        name: name, ts: new Date().toISOString(), props: props || {},
+        device: ENV.device, browser: ENV.browser, os: ENV.os,
+        screen: ENV.screen, viewport: ENV.viewport
+      });
+      /* Stamp here rather than making CQBeta call a second method — one writer, so the
+         completion clock can never be missing just because a caller forgot. */
+      if (name === 'beta_completed') set('cq_bt_beta_completed', String(Date.now()));
+      /* beta_completed is the report's headline number and often lands moments before the
+         player leaves for the survey — never let it sit in a buffer. */
+      if (name === 'beta_completed' || name === 'survey_submitted') flush(true);
+      else schedule();
+      return true;
+    }, false);
+  }
+
+  /* ── session bookkeeping ────────────────────────────────────────────────────────────── */
+  function startSession() {
+    var visits = parseInt(get('cq_bt_visits') || '0', 10) + 1;
+    set('cq_bt_visits', String(visits));
+    if (!get('cq_bt_first_seen')) set('cq_bt_first_seen', new Date().toISOString());
+
+    event('session_start', { visit: visits, ref: safe(function () { return document.referrer || ''; }, ''), page: page() });
+    if (visits > 1) {
+      /* return_visit is NOT in ONCE — every return is a data point. */
+      buf.push({
+        event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'return_visit',
+        ts: new Date().toISOString(),
+        props: { visit: visits, first_seen: get('cq_bt_first_seen') },
+        device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
+      });
+      schedule();
+    }
+  }
+
+  function page() {
+    return safe(function () { return (location.pathname.split('/').pop() || 'index').replace(/\.html$/, ''); }, '');
+  }
+
+  function endSession() {
+    if (ended) return; ended = true;
+    var secs = Math.round((Date.now() - T0) / 1000);
+    buf.push({
+      event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'session_end',
+      ts: new Date().toISOString(),
+      props: { seconds: secs, page: page(), completion_seconds: completionSeconds() },
+      device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
+    });
+    flush(true);
+  }
+
+  /* Completion time = first ever session start → beta completed. Null until they finish. */
+  function completionSeconds() {
+    var a = get('cq_bt_first_seen'), b = get('cq_bt_beta_completed');
+    if (!a || !b) return null;
+    return safe(function () { return Math.round((Number(b) - new Date(a).getTime()) / 1000); }, null);
+  }
+
+  /* ── crashes ───────────────────────────────────────────────────────────────────────────
+     Capped hard: one broken frame can fire onerror hundreds of times a second, and the beta
+     budget is 120 requests/minute for the whole tester. */
+  var crashes = 0;
+  function crash(kind, msg, extra) {
+    if (crashes >= 3) return;
+    crashes++;
+    buf.push({
+      event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'crash',
+      ts: new Date().toISOString(),
+      props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '', page: page() },
+      device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
+    });
+    flush(true);
+  }
+
+  /* ── game hooks ─────────────────────────────────────────────────────────────────────────
+     Same philosophy as window.CQBeta: patch at runtime, never edit the call sites, so this
+     merges cleanly against other sessions editing the same file. Each patch is independent —
+     one missing function does not stop the others. No-ops entirely on the website, where
+     none of these globals exist. */
+  function wrap(name, before, after) {
+    return safe(function () {
+      var fn = window[name];
+      if (typeof fn !== 'function' || fn.__cqTrack) return false;
+      var w = function () {
+        /* Capture into a named local. `arguments` inside the nested safe() closures below
+           would resolve to THOSE functions' own arguments, not this wrapper's. */
+        var args = arguments, self = this;
+        if (before) safe(function () { before(args); });
+        var r = fn.apply(self, args);
+        if (after) safe(function () { after(r, args); });
+        return r;
+      };
+      w.__cqTrack = true;
+      window[name] = w;
+      return true;
+    }, false);
+  }
+
+  function hookGame() {
+    var done = {};
+
+    done.boss = wrap('openBoss', null, function (r, args) {
+      var lvl = args && args[0];
+      event('boss_started', { level: typeof lvl === 'number' ? lvl : null });
+    });
+
+    done.bossWin = wrap('bossWin', null, function () {
+      var attempts = safe(function () { return (typeof bfState !== 'undefined' && bfState) ? (bfState.attempt || 1) : null; }, null);
+      event('boss_defeated', { attempts: attempts });
+    });
+
+    done.trade = wrap('commitTrade', null, function () { event('first_trade_started', {}); });
+
+    done.resolve = wrap('resolveTrade', null, function (r, args) {
+      var res = args && args[0];
+      if (res === 'win')       event('first_trade_won', {});
+      else if (res === 'loss') event('first_trade_lost', {});
+    });
+
+    done.intro = wrap('introComplete', null, function () { event('tutorial_completed', {}); });
+
+    return done;
+  }
+
+  /* tutorial_started has no function of its own — the intro is a state, not a call. Poll
+     briefly for it rather than reaching into the intro machinery. Cheap, and it stops the
+     moment it fires (or after ~2 minutes, for a veteran who never sees an intro at all). */
+  function watchTutorialStart() {
+    if (get('cq_bt_tutorial_started')) return;
+    var n = 0;
+    var iv = setInterval(function () {
+      if (++n > 240) { clearInterval(iv); return; }
+      var active = safe(function () {
+        return typeof introFlow !== 'undefined' && introFlow && !!introFlow.active;
+      }, false);
+      if (active) { clearInterval(iv); event('tutorial_started', {}); }
+    }, 500);
+  }
+
+  function boot() {
+    startSession();
+
+    safe(function () {
+      window.addEventListener('error', function (e) {
+        crash('error', e && e.message, e && e.filename ? (e.filename + ':' + e.lineno) : '');
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        var r = e && e.reason;
+        crash('promise', (r && (r.message || r)) || 'unhandledrejection', '');
+      });
+    });
+
+    safe(function () {
+      window.addEventListener('pagehide', endSession);
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') flush(true);
+      });
+    });
+
+    /* Drain anything window.CQBeta buffered before this file was parsed. */
+    safe(function () {
+      var q = window.__cqTrackQueue || [];
+      for (var i = 0; i < q.length; i++) event(q[i].name, q[i].props);
+      window.__cqTrackQueue = [];
+    });
+
+    /* Retry the game hooks briefly: on the website they never appear, and that is fine. */
+    var tries = 0;
+    var iv = setInterval(function () { if (++tries > 40) clearInterval(iv); hookGame(); }, 250);
+    hookGame();
+    watchTutorialStart();
+  }
+
+  window.CQTrack = {
+    event: event,
+    crash: crash,
+    flush: function () { flush(true); },
+    survey: function (row) {
+      return safe(function () {
+        var r = row || {};
+        r.response_id = r.response_id || uid('r-');
+        r.player_id   = r.player_id   || pid();
+        r.session_id  = r.session_id  || SESSION;
+        return post('survey', [r], true);
+      }, Promise.resolve(false));
+    },
+    /* Stamped by CQBeta so completion time can be computed later. */
+    stampCompleted: function () { set('cq_bt_beta_completed', String(Date.now())); },
+    pid: pid,
+    session: function () { return SESSION; },
+    env: function () { return ENV; },
+    state: function () {
+      return { pid: pid(), session: SESSION, buffered: buf.length, visits: get('cq_bt_visits'), env: ENV };
+    },
+    reset: function () {
+      safe(function () {
+        for (var i = 0; i < NAMES.length; i++) localStorage.removeItem('cq_bt_' + NAMES[i]);
+        localStorage.removeItem('cq_bt_visits');
+        localStorage.removeItem('cq_bt_first_seen');
+        localStorage.removeItem('cq_bt_beta_completed');
+      });
+      return true;
+    }
+  };
+
+  safe(function () {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+    else boot();
+  });
+})();
+/* CQTRACK:END */
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   CLOSED BETA EXPERIENCE  —  window.CQBeta                          (ticket 2, build 326)
+   ------------------------------------------------------------------------------------------
+   Temporarily converts the game into a focused Level-1 beta:
+
+       Tutorial → Level 1 → First Trade → Boss 1 → Boss Defeat
+                → Journal Unlock → Journal Discovery → ✦ BETA ENDS ✦ → Survey
+
+   Nothing past Journal Discovery is reachable while this is enabled.
+
+   ── WHY THIS FILE LOOKS LIKE THIS ────────────────────────────────────────────────────────
+   Other sessions are editing unrelated systems in this same file right now, so this feature
+   is built to be MERGE-SAFE ABOVE ALL ELSE:
+
+     • It lives in ONE <script> block at the very end of the document, exactly like
+       window.CQJournalTutorial. Nothing above this line was modified to add it.
+     • It takes over by PATCHING AT RUNTIME (introComplete + CQJournalTutorial.claimPostBoss)
+       rather than by editing the call sites. A conflicting edit to those functions still
+       merges cleanly; the patch re-wraps whatever it finds.
+     • Deleting this one block removes the entire feature and restores build 325 exactly.
+     • Every hook is try/caught. If ANY of this throws, the game continues as though the
+       module were absent — a beta gate must never be able to brick a playtest.
+
+   ── THE HANDOVER, PRECISELY ──────────────────────────────────────────────────────────────
+   bossFinish() → (level 1) → introComplete() → CQJournalTutorial.claimPostBoss(_jtDone).
+   claimPostBoss returns TRUE when the Journal quest takes the moment over, and fires the
+   callback it was handed when the quest finishes. So:
+
+     • claimPostBoss returns true  → we wrapped the callback → finish() at the true end of
+                                     Journal Discovery. This is the real path.
+     • claimPostBoss returns false → veteran who already owns the Journal, or the module is
+                                     missing → introComplete() runs _jtDone() itself → our
+                                     introComplete wrapper finishes on the next tick.
+
+   We capture claimPostBoss's RETURN VALUE rather than polling isActive(), so there is no
+   timing race against its 900ms SETTLE_MS.
+
+   ── QA ───────────────────────────────────────────────────────────────────────────────────
+     ?beta=0                      disable the gate for this load (play on into L2)
+     CQBeta.devFinish()           run the ceremony right now
+     CQBeta.reset()               clear the completion flag
+     CQBeta.state()               { enabled, done, finished, surveyUrl }
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var NS   = 'CQBeta';
+  var DONE = 'cq_beta_done';        // '1' once the ceremony has been reached
+  var WHEN = 'cq_beta_done_at';     // ISO timestamp of first completion
+
+  /* ── config ─────────────────────────────────────────────────────────────────────────────
+     window.CQ_BETA can be set BEFORE this block to override anything (play.html does not
+     need to; the defaults are correct for both the embed and a direct game.html load). */
+  var CFG = (function () {
+    var d = {
+      enabled:    true,
+      surveyUrl:  'survey.html',   // ticket 3 builds this; relative → works in every deploy
+      surveyDelayMs: 0             // 0 = go on click; >0 = auto-advance after the ceremony
+    };
+    try { for (var k in (window.CQ_BETA || {})) if (d.hasOwnProperty(k)) d[k] = window.CQ_BETA[k]; } catch (e) {}
+    /* ?beta=0 turns the gate off for a single load — the founder's escape hatch for testing
+       Level 2+ without having to edit or redeploy anything. */
+    try { if (/[?&]beta=0\b/.test(location.search)) d.enabled = false; } catch (e) {}
+    return d;
+  })();
+
+  var S = { finished: false, claimed: false, patched: false, armed: false };
+
+  function ls(fn, dflt) { try { return fn(); } catch (e) { return dflt; } }
+  function isDone()  { return ls(function () { return localStorage.getItem(DONE) === '1'; }, false); }
+  function markDone(){ ls(function () {
+    localStorage.setItem(DONE, '1');
+    if (!localStorage.getItem(WHEN)) localStorage.setItem(WHEN, new Date().toISOString());
+  }); }
+
+  /* ── analytics seam (ticket 3 fills this in) ────────────────────────────────────────────
+     Ticket 3 defines window.CQTrack. Until it exists we buffer, so no milestone is ever lost
+     just because the analytics module happens to load second. */
+  function emit(name, props) {
+    try {
+      var p = props || {};
+      if (window.CQTrack && typeof window.CQTrack.event === 'function') { window.CQTrack.event(name, p); return; }
+      (window.__cqTrackQueue = window.__cqTrackQueue || []).push({ name: name, props: p, t: Date.now() });
+    } catch (e) {}
+  }
+
+  /* ══ THE CEREMONY ══════════════════════════════════════════════════════════════════════
+     A staged reveal, not a popup. The player has just beaten the Gambler and found the
+     Journal — the last thing they should feel is that the game ran out. Beats:
+        0ms   backdrop blooms
+      250ms   the seal lands + a gold burst
+      900ms   🎉 and the title
+     1400ms+  the three lines, staggered
+     2700ms   the button arms
+     Fully inline-styled: no dependency on any stylesheet rule that another session might
+     be editing right now. */
+  function ceremony() {
+    var reduce = ls(function () {
+      return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }, false);
+
+    var el = document.createElement('div');
+    el.id = 'cqBetaEnd';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-labelledby', 'cqBetaTitle');
+    el.style.cssText =
+      'position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;' +
+      'justify-content:center;text-align:center;padding:26px 22px;box-sizing:border-box;overflow-y:auto;' +
+      'background:radial-gradient(ellipse at 50% 34%,rgba(255,214,10,.16),rgba(6,26,20,.93) 46%,rgba(2,5,10,.985) 100%);' +
+      '-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);' +
+      'font-family:var(--font-ui),-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;' +
+      'opacity:0;transition:opacity .55s ease';
+
+    var st = (reduce ? 'opacity:1;transform:none' : 'opacity:0');
+    el.innerHTML =
+      '<div id="cqbBurst" style="position:absolute;inset:0;pointer-events:none;overflow:hidden"></div>' +
+
+      /* the seal */
+      '<div id="cqbSeal" style="position:relative;width:132px;height:132px;border-radius:50%;display:flex;' +
+        'align-items:center;justify-content:center;font-size:60px;flex:0 0 auto;' +
+        'background:radial-gradient(circle at 38% 30%,rgba(255,214,10,.30),rgba(9,20,16,.96));' +
+        'border:2px solid rgba(255,214,10,.62);' +
+        'box-shadow:0 0 52px rgba(255,214,10,.34),inset 0 0 26px rgba(0,0,0,.62);' +
+        (reduce ? '' : 'transform:scale(.5) rotate(-12deg);opacity:0;transition:transform .85s cubic-bezier(.2,1.5,.35,1),opacity .5s ease') + '">🎉</div>' +
+
+      '<div id="cqbEyebrow" style="margin-top:20px;font:800 10.5px var(--font-ui);letter-spacing:3.4px;' +
+        'color:#ffd60a;text-transform:uppercase;text-shadow:0 0 18px rgba(255,214,10,.5);' + st + ';transition:opacity .6s ease">' +
+        'Closed Beta · Complete</div>' +
+
+      '<h2 id="cqBetaTitle" style="margin:11px 0 0;font:900 clamp(21px,5.6vw,30px) var(--font-ui);line-height:1.22;' +
+        'letter-spacing:.2px;color:#fff;max-width:15ch;text-shadow:0 0 30px rgba(22,199,132,.45);' + st + ';transition:opacity .6s ease">' +
+        'Thank you for playing the ChartQuest Closed Beta.</h2>' +
+
+      '<p id="cqbL1" style="margin:17px 0 0;font:600 15px var(--font-ui);line-height:1.55;color:#dff3ea;max-width:34ch;' + st + ';transition:opacity .6s ease">' +
+        'You have finished <b style="color:#fff">everything we have built so far</b> — the first world, the first Guardian, and the Trader\'s Journal.</p>' +
+
+      '<p id="cqbL2" style="margin:13px 0 0;font:600 15px var(--font-ui);line-height:1.55;color:#9fd9c4;max-width:34ch;' + st + ';transition:opacity .6s ease">' +
+        'You are one of the first people ever to get this far.</p>' +
+
+      '<p id="cqbL3" style="margin:13px 0 0;font:700 15px var(--font-ui);line-height:1.55;color:#ffd60a;max-width:34ch;' + st + ';transition:opacity .6s ease">' +
+        'What you say next decides what we build first.</p>' +
+
+      '<button id="cqbGo" type="button" style="margin-top:26px;padding:16px 40px;border:none;border-radius:13px;cursor:pointer;' +
+        'font:900 15.5px var(--font-ui);letter-spacing:.4px;color:#04130c;' +
+        'background:linear-gradient(180deg,#19d08a,#0e9b64);box-shadow:0 10px 30px rgba(22,199,132,.5);' +
+        'min-height:52px;min-width:210px;-webkit-tap-highlight-color:transparent;' + st + ';transition:opacity .6s ease,transform .18s ease">' +
+        'Continue →</button>' +
+
+      '<div id="cqbFoot" style="margin-top:15px;font:600 12px var(--font-ui);color:#7c95a4;max-width:32ch;line-height:1.5;' + st + ';transition:opacity .6s ease">' +
+        'Next: 5 quick questions. Under a minute.</div>';
+
+    document.body.appendChild(el);
+
+    var $ = function (id) { return el.querySelector('#' + id); };
+    var T = function (fn, ms) { return setTimeout(function () { try { fn(); } catch (e) {} }, reduce ? 0 : ms); };
+    var show = function (id) { var n = $(id); if (n) n.style.opacity = '1'; };
+
+    requestAnimationFrame(function () { try { el.style.opacity = '1'; } catch (e) {} });
+
+    T(function () {
+      var s = $('cqbSeal');
+      if (s) { s.style.transform = 'scale(1) rotate(0deg)'; s.style.opacity = '1'; }
+      burst($('cqbBurst'), reduce);
+      try { if (window.GameMusic && GameMusic.sting) GameMusic.sting('bigwin'); } catch (e) {}
+    }, 250);
+
+    T(function () { show('cqbEyebrow'); show('cqBetaTitle'); }, 900);
+    T(function () { show('cqbL1'); }, 1400);
+    T(function () { show('cqbL2'); }, 1800);
+    T(function () { show('cqbL3'); }, 2200);
+    T(function () {
+      show('cqbGo'); show('cqbFoot');
+      try { $('cqbGo').focus({ preventScroll: true }); } catch (e) {}
+      try { if (window.GameMusic && GameMusic.sting) GameMusic.sting('coin'); } catch (e) {}
+    }, 2700);
+
+    var went = false;
+    function go() {
+      if (went) return; went = true;
+      emit('survey_started', {});
+      openSurvey();
+    }
+    try { $('cqbGo').addEventListener('click', go); } catch (e) {}
+    /* Enter/Space anywhere in the dialog activates Continue — the button is the only action,
+       so a keyboard player should never have to hunt for focus. */
+    try {
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); go(); }
+      });
+    } catch (e) {}
+    if (CFG.surveyDelayMs > 0) T(go, CFG.surveyDelayMs);
+  }
+
+  /* gold/green confetti — pure DOM, self-cleaning, skipped under reduced motion */
+  function burst(host, reduce) {
+    if (!host || reduce) return;
+    var COLORS = ['#ffd60a', '#19d08a', '#46e0ff', '#fff2b0', '#ffffff'];
+    var n = 34, i, p;
+    for (i = 0; i < n; i++) {
+      p = document.createElement('i');
+      var a  = (Math.PI * 2 * i) / n + (i % 3) * 0.14;
+      var d  = 130 + (i % 7) * 34;
+      var sz = 5 + (i % 4) * 2;
+      p.style.cssText =
+        'position:absolute;left:50%;top:34%;width:' + sz + 'px;height:' + (sz * (i % 2 ? 1 : 2.1)) + 'px;' +
+        'background:' + COLORS[i % COLORS.length] + ';border-radius:' + (i % 2 ? '50%' : '2px') + ';' +
+        'opacity:0;will-change:transform,opacity;' +
+        'transform:translate(-50%,-50%);' +
+        'transition:transform ' + (1000 + (i % 5) * 260) + 'ms cubic-bezier(.15,.7,.3,1),opacity ' + (1000 + (i % 5) * 260) + 'ms ease-out';
+      host.appendChild(p);
+      (function (node, ang, dist, k) {
+        setTimeout(function () {
+          try {
+            node.style.opacity = '1';
+            node.style.transform = 'translate(calc(-50% + ' + Math.cos(ang) * dist + 'px),' +
+                                   'calc(-50% + ' + (Math.sin(ang) * dist + 120) + 'px)) rotate(' + (k * 47) + 'deg)';
+          } catch (e) {}
+        }, 20 + (k % 6) * 26);
+        setTimeout(function () { try { node.style.opacity = '0'; } catch (e) {} }, 1150 + (k % 5) * 260);
+      })(p, a, d, i);
+    }
+    setTimeout(function () { try { host.innerHTML = ''; } catch (e) {} }, 2600);
+  }
+
+  /* ── survey handoff ─────────────────────────────────────────────────────────────────────
+     The game is normally iframed by play.html. Ask the parent to take over first (it can
+     present the survey without a page load and without losing the game frame); if there is
+     no parent, or it does not answer, navigate the top-level window ourselves. */
+  function openSurvey() {
+    var url = CFG.surveyUrl;
+    var handedOff = false;
+
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ source: 'cq-beta', type: 'beta_complete', surveyUrl: url }, '*');
+        handedOff = true;
+      }
+    } catch (e) {}
+
+    /* If the parent handled it, it replies and we stand down. Otherwise we go ourselves.
+       Navigating the TOP window matters: without it the survey would open inside the small
+       game box (the exact bug the audit found on play.html's home link). */
+    var t = setTimeout(function () {
+      try {
+        var w = (window.top && window.top !== window) ? window.top : window;
+        w.location.href = url;
+      } catch (e) {
+        try { window.location.href = url; } catch (e2) {}
+      }
+    }, handedOff ? 700 : 0);
+
+    try {
+      window.addEventListener('message', function ack(ev) {
+        var d = ev && ev.data;
+        if (d && d.source === 'cq-beta-host' && d.type === 'survey_shown') {
+          clearTimeout(t);
+          window.removeEventListener('message', ack);
+        }
+      });
+    } catch (e) {}
+  }
+
+  /* ══ THE GATE ══════════════════════════════════════════════════════════════════════════ */
+  function finish(reason) {
+    if (S.finished || !CFG.enabled) return false;
+    S.finished = true;
+    markDone();
+    emit('beta_completed', { reason: reason || 'journal_discovery_complete' });
+
+    /* Stand the world down before the overlay lands, so nothing keeps animating, spawning or
+       teaching underneath a terminal screen. Each is optional — a missing one is not fatal. */
+    try { if (typeof paused !== 'undefined') paused = true; } catch (e) {}
+    try { if (window.GameMusic && GameMusic.duckTo) GameMusic.duckTo(0.25, 600); } catch (e) {}
+
+    try { ceremony(); }
+    catch (e) {
+      /* Last-ditch: the player must still reach the survey even if the ceremony throws. */
+      try { openSurvey(); } catch (e2) {}
+    }
+    return true;
+  }
+
+  /* Patch the Journal quest so the beta ends at the true end of Journal Discovery. */
+  function patchJournal() {
+    if (S.patched) return true;
+    var JT;
+    try { JT = window.CQJournalTutorial; } catch (e) { return false; }
+    if (!JT || typeof JT.claimPostBoss !== 'function') return false;
+
+    var orig = JT.claimPostBoss;
+    JT.claimPostBoss = function (onDone) {
+      var took = false;
+      try {
+        took = orig.call(JT, function () {
+          /* The true end of Journal Discovery. Emitted BEFORE finish() so the funnel records
+             the stage even if the ceremony throws and we fall through to the survey. */
+          emit('journal_discovery_completed', {});
+          try { if (typeof onDone === 'function') onDone(); } catch (e) {}
+          finish('journal_discovery_complete');
+        });
+      } catch (e) { took = false; }
+      S.claimed = !!took;
+      /* Only a TRUE claim means the quest actually took the moment over and is now running. */
+      if (took) emit('journal_discovery_started', {});
+      return took;
+    };
+    S.patched = true;
+    return true;
+  }
+
+  /* Patch introComplete — the moment Boss 1 hands the world back. */
+  function patchIntroComplete() {
+    var orig;
+    try { orig = window.introComplete; } catch (e) { return false; }
+    if (typeof orig !== 'function' || orig.__cqBeta) return false;
+
+    var wrapped = function () {
+      S.claimed = false;
+      try { patchJournal(); } catch (e) {}
+      emit('journal_unlocked', {});
+      var r;
+      try { r = orig.apply(this, arguments); } catch (e) { r = undefined; }
+      /* claimPostBoss said no (veteran / module absent) → introComplete already ran its own
+         follow-ups, so the beta ends now. One tick of slack lets those settle first. */
+      if (!S.claimed) setTimeout(function () { finish('intro_complete_no_journal'); }, 900);
+      return r;
+    };
+    wrapped.__cqBeta = true;
+    try { window.introComplete = wrapped; } catch (e) { return false; }
+    return true;
+  }
+
+  /* Backstop: nothing past Level 1 is reachable. If any path (a save-restore, a QA flag, a
+     future edit) tries to run Level 2+, the beta ends instead. Cheap poll — this only has to
+     be right, not fast, and it is immune to how the level was entered. */
+  function armLevelGuard() {
+    if (S.armed) return; S.armed = true;
+    setInterval(function () {
+      if (S.finished || !CFG.enabled) return;
+      var lvl = null;
+      try { lvl = (typeof session !== 'undefined' && session) ? session.level : null; } catch (e) {}
+      if (typeof lvl === 'number' && lvl >= 2) finish('level_2_blocked');
+    }, 1500);
+  }
+
+  /* ── boot ───────────────────────────────────────────────────────────────────────────────
+     Patch as early as we can and keep retrying briefly: this block is last in the document,
+     but CQJournalTutorial is defined in the block just above and introComplete far earlier,
+     so in practice the first attempt succeeds. The retries cover load-order surprises. */
+  function boot() {
+    if (!CFG.enabled) return;
+    patchIntroComplete();
+    patchJournal();
+    armLevelGuard();
+    var tries = 0;
+    var iv = setInterval(function () {
+      if ((S.patched || tries > 40) && tries > 0) { clearInterval(iv); return; }
+      tries++;
+      patchIntroComplete();
+      patchJournal();
+    }, 250);
+  }
+
+  try {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+    else boot();
+  } catch (e) {}
+
+  /* ── public API ─────────────────────────────────────────────────────────────────────────*/
+  window[NS] = {
+    finish:     finish,
+    isDone:     isDone,
+    isEnabled:  function () { return !!CFG.enabled; },
+    surveyUrl:  function () { return CFG.surveyUrl; },
+    openSurvey: openSurvey,
+    reset:      function () { ls(function () { localStorage.removeItem(DONE); localStorage.removeItem(WHEN); }); S.finished = false; return true; },
+    devFinish:  function () { S.finished = false; return finish('dev'); },
+    state:      function () {
+      return { enabled: CFG.enabled, done: isDone(), finished: S.finished,
+               patched: S.patched, surveyUrl: CFG.surveyUrl };
+    }
+  };
 })();
 </script>
 </body>

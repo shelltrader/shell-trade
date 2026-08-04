@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ChartQuest Beta — 5 quick questions</title>
+<meta name="description" content="Five quick questions about the ChartQuest closed beta. Under a minute.">
+<meta name="theme-color" content="#060910">
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/pwa/icon-192.png">
+<link rel="apple-touch-icon" href="assets/pwa/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap">
+<style>
+/* ============================================================================
+   ChartQuest — BETA SURVEY (ticket 3)
+   One question per screen. Five steps, three of them a single tap.
+   Mobile first: every control is >=52px, the primary action never moves, and
+   nothing needs a zoom or a horizontal scroll at 320px.
+   ============================================================================ */
+:root{
+  --bg:#060910;--panel:#0c131e;--panel-2:#111a27;
+  --line:rgba(120,170,215,.14);--line-2:rgba(120,170,215,.28);
+  --green:#16C784;--green-2:#0e9b64;--gold:#FFD60A;--red:#EA3943;
+  --ink:#EAF2FB;--ink-dim:#A8BCD0;--ink-faint:#8195a8;
+  --display:"Space Grotesk","SF Pro Display",-apple-system,BlinkMacSystemFont,sans-serif;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(80% 55% at 20% -10%,rgba(22,199,132,.13),transparent 60%),
+    radial-gradient(70% 50% at 92% 2%,rgba(255,214,10,.08),transparent 55%),
+    var(--bg);
+  color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;
+  min-height:100dvh;display:flex;flex-direction:column}
+
+/* ---- header + progress ---- */
+.top{position:sticky;top:0;z-index:5;padding:calc(14px + env(safe-area-inset-top,0px)) 20px 12px;
+  background:rgba(6,9,16,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line)}
+.top-in{width:min(560px,100%);margin-inline:auto;display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;letter-spacing:-.01em;font-family:var(--display)}
+.brand b{color:var(--gold)}
+.brand svg{width:20px;height:20px;flex:0 0 auto}
+.step-n{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+.bar{width:min(560px,100%);margin:10px auto 0;height:4px;border-radius:4px;background:rgba(120,170,215,.16);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,var(--green),var(--gold));
+  transition:width .38s cubic-bezier(.2,.8,.2,1)}
+
+/* ---- card ---- */
+main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:26px 20px 30px}
+.wrap{width:min(560px,100%)}
+.step{display:none;animation:in .34s cubic-bezier(.2,.8,.2,1) both}
+.step.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+h1{margin:10px 0 0;font-family:var(--display);font-size:clamp(22px,5.4vw,29px);font-weight:700;line-height:1.22;letter-spacing:-.015em}
+.hint{margin:10px 0 0;color:var(--ink-dim);font-size:14.5px;line-height:1.55}
+.req{color:var(--ink-faint);font-size:12.5px;margin-top:7px}
+
+/* ---- 1-10 scale ---- */
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:22px}
+.scale button{min-height:56px;border-radius:13px;border:1px solid var(--line-2);background:rgba(120,170,215,.05);
+  color:var(--ink);font:800 17px var(--sans);cursor:pointer;transition:transform .14s,background .18s,border-color .18s;
+  -webkit-tap-highlight-color:transparent}
+.scale button:hover{background:rgba(120,170,215,.12)}
+.scale button:active{transform:scale(.95)}
+.scale button.sel{background:linear-gradient(180deg,#1ce39a,var(--green-2));border-color:transparent;color:#04130c}
+.scale-ends{display:flex;justify-content:space-between;margin-top:9px;font-size:12px;color:var(--ink-faint)}
+
+/* ---- choices ---- */
+.choices{display:flex;flex-direction:column;gap:11px;margin-top:22px}
+.choice{display:flex;align-items:center;gap:13px;min-height:60px;padding:14px 17px;border-radius:14px;
+  border:1px solid var(--line-2);background:rgba(120,170,215,.05);color:var(--ink);cursor:pointer;
+  font:600 15.5px var(--sans);text-align:left;transition:background .18s,border-color .18s,transform .14s;
+  -webkit-tap-highlight-color:transparent}
+.choice:hover{background:rgba(120,170,215,.11)}
+.choice:active{transform:scale(.99)}
+.choice .dot{flex:0 0 auto;width:21px;height:21px;border-radius:50%;border:2px solid var(--line-2);position:relative}
+.choice.sel{border-color:var(--green);background:rgba(22,199,132,.13)}
+.choice.sel .dot{border-color:var(--green)}
+.choice.sel .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--green)}
+
+/* ---- text ---- */
+textarea{width:100%;margin-top:20px;min-height:132px;padding:15px 16px;border-radius:14px;resize:vertical;
+  border:1px solid var(--line-2);background:rgba(120,170,215,.05);color:var(--ink);
+  font:500 16px var(--sans);line-height:1.55;-webkit-appearance:none}
+textarea::placeholder{color:#61758a}
+textarea:focus{outline:none;border-color:var(--green);background:rgba(22,199,132,.06)}
+.count{margin-top:7px;font-size:12px;color:var(--ink-faint);text-align:right}
+
+/* ---- actions ---- */
+.actions{display:flex;gap:11px;align-items:center;margin-top:24px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:0 26px;
+  border-radius:13px;border:1px solid transparent;font:800 15.5px var(--sans);cursor:pointer;
+  transition:transform .16s,box-shadow .2s,background .2s;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:translateY(1px)}
+.btn-primary{flex:1;background:linear-gradient(180deg,#1ce39a,var(--green-2));color:#04130c;
+  box-shadow:0 10px 28px rgba(22,199,132,.4)}
+.btn-primary[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn-ghost{background:rgba(120,170,215,.07);color:var(--ink-dim);border-color:var(--line-2);padding:0 18px}
+.skip{margin-top:14px;text-align:center}
+.skip button{background:none;border:0;color:var(--ink-faint);font:600 13.5px var(--sans);cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px;min-height:44px;padding:0 10px}
+
+/* ---- thank you ---- */
+.done{display:none;text-align:center;padding:16px 0 0}
+.done.on{display:block;animation:in .4s cubic-bezier(.2,.8,.2,1) both}
+.seal{width:110px;height:110px;margin:6px auto 0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:50px;background:radial-gradient(circle at 38% 30%,rgba(255,214,10,.28),rgba(9,20,16,.96));
+  border:2px solid rgba(255,214,10,.55);box-shadow:0 0 46px rgba(255,214,10,.28),inset 0 0 22px rgba(0,0,0,.6)}
+.done h2{margin:20px 0 0;font-family:var(--display);font-size:clamp(23px,5.6vw,30px);font-weight:700;letter-spacing:-.015em}
+.done p{margin:14px auto 0;max-width:34ch;color:var(--ink-dim);font-size:15px;line-height:1.6}
+.done .home{margin-top:26px}
+
+/* ---- error ---- */
+.err{margin-top:14px;padding:12px 14px;border-radius:11px;border:1px solid rgba(234,57,67,.4);
+  background:rgba(234,57,67,.1);color:#ffc9cd;font-size:13.5px;display:none}
+.err.on{display:block}
+
+footer{padding:20px 20px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;
+  font-size:12px;color:var(--ink-faint);border-top:1px solid var(--line)}
+footer a{color:var(--ink-faint)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-in">
+    <span class="brand">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect x="6" y="10" width="6" height="14" rx="2" fill="#16C784"/><rect x="8" y="4" width="2" height="24" rx="1" fill="#16C784"/>
+        <rect x="20" y="8" width="6" height="12" rx="2" fill="#EA3943"/><rect x="22" y="4" width="2" height="24" rx="1" fill="#EA3943"/>
+      </svg>
+      <!-- The wordmark MUST be one flex item. Left bare, the text node and the <b> become
+           two items and the container's gap:9px renders the brand as "Chart Quest". -->
+      <span>Chart<b>Quest</b></span>
+    </span>
+    <span class="step-n" id="stepN">1 / 5</span>
+  </div>
+  <div class="bar"><i id="bar"></i></div>
+</div>
+
+<main>
+<div class="wrap">
+
+  <form id="form" novalidate>
+
+    <!-- 1 ───────────────────────────────────────────────────────────────── -->
+    <section class="step on" data-step="1">
+      <span class="eyebrow">Question 1 of 5</span>
+      <h1>How was it, overall?</h1>
+      <p class="hint">1 means you did not enjoy it. 10 means you loved it.</p>
+      <div class="scale" id="scale" role="radiogroup" aria-label="Rate your experience from 1 to 10"></div>
+      <div class="scale-ends"><span>1 · Not fun</span><span>10 · Loved it</span></div>
+      <div class="actions"><button type="button" class="btn btn-primary" data-next disabled>Next →</button></div>
+    </section>
+
+    <!-- 2 ───────────────────────────────────────────────────────────────── -->
+    <section class="step" data-step="2">
+      <span class="eyebrow">Question 2 of 5</span>
+      <h1>When did it click?</h1>
+      <p class="hint">Was there a moment where you thought <b>“okay, this is actually fun”</b>? Tell us when.
+        If that never happened, tell us why — that is just as useful.</p>
+      <textarea id="q2" maxlength="2000" rows="5"
+        placeholder="e.g. when I landed on the first green candle… or: it never really clicked, because…"></textarea>
+      <div class="count"><span id="c2">0</span> / 2000</div>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="button" class="btn btn-primary" data-next disabled>Next →</button>
+      </div>
+    </section>
+
+    <!-- 3 ───────────────────────────────────────────────────────────────── -->
+    <section class="step" data-step="3">
+      <span class="eyebrow">Question 3 of 5</span>
+      <h1>Change one thing.</h1>
+      <p class="hint">If you could fix or improve <b>one thing</b> before we launch, what would it be?</p>
+      <textarea id="q3" maxlength="2000" rows="5"
+        placeholder="The one thing that bugged you most…"></textarea>
+      <div class="count"><span id="c3">0</span> / 2000</div>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="button" class="btn btn-primary" data-next disabled>Next →</button>
+      </div>
+    </section>
+
+    <!-- 4 ───────────────────────────────────────────────────────────────── -->
+    <section class="step" data-step="4">
+      <span class="eyebrow">Question 4 of 5</span>
+      <h1>Would you keep going?</h1>
+      <p class="hint">If World 2 were ready right now…</p>
+      <div class="choices" id="cont" role="radiogroup" aria-label="Would you continue?">
+        <button type="button" class="choice" data-v="immediately"><span class="dot"></span>I would play it straight away.</button>
+        <button type="button" class="choice" data-v="later"><span class="dot"></span>I would probably come back to it later.</button>
+        <button type="button" class="choice" data-v="not_interested"><span class="dot"></span>It is not really for me.</button>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="button" class="btn btn-primary" data-next disabled>Next →</button>
+      </div>
+    </section>
+
+    <!-- 5 ───────────────────────────────────────────────────────────────── -->
+    <section class="step" data-step="5">
+      <span class="eyebrow">Last one</span>
+      <h1>Anything else?</h1>
+      <p class="hint">Anything at all you want us to know. Bugs, ideas, things that confused you.</p>
+      <p class="req">Optional — you can send without this.</p>
+      <textarea id="q5" maxlength="2000" rows="5" placeholder="Optional…"></textarea>
+      <div class="count"><span id="c5">0</span> / 2000</div>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="submit" class="btn btn-primary" id="send">Send it →</button>
+      </div>
+      <div class="err" id="err"></div>
+    </section>
+
+  </form>
+
+  <!-- thank you ─────────────────────────────────────────────────────────── -->
+  <section class="done" id="done">
+    <div class="seal">🐢</div>
+    <h2>Thank you. Genuinely.</h2>
+    <p>You are one of the first people ever to finish ChartQuest, and the first to tell us what it felt like.</p>
+    <p>We read every single one of these. What you just wrote goes straight into what we build next.</p>
+    <div class="home"><a class="btn btn-ghost" href="index.html">← Back to ChartQuest</a></div>
+  </section>
+
+</div>
+</main>
+
+<footer>ChartQuest closed beta · <a href="index.html">playchartquest.com</a></footer>
+
+<script src="assets/cq-track.js"></script>
+<script>
+(function () {
+  'use strict';
+  var DRAFT = 'cq_survey_draft';
+  var T0 = Date.now();
+
+  var form  = document.getElementById('form');
+  var steps = [].slice.call(document.querySelectorAll('.step'));
+  var bar   = document.getElementById('bar');
+  var stepN = document.getElementById('stepN');
+  var errEl = document.getElementById('err');
+  var cur   = 0;
+
+  var answers = { q1: null, q2: '', q3: '', q4: null, q5: '' };
+
+  /* Restore a draft — a survey that loses your typing when the browser reloads is a
+     survey people abandon. */
+  try {
+    var saved = JSON.parse(localStorage.getItem(DRAFT) || '{}');
+    for (var k in answers) if (saved[k] != null) answers[k] = saved[k];
+  } catch (e) {}
+  function saveDraft() { try { localStorage.setItem(DRAFT, JSON.stringify(answers)); } catch (e) {} }
+
+  /* ── build the 1-10 scale ─────────────────────────────────────────────── */
+  var scale = document.getElementById('scale');
+  for (var i = 1; i <= 10; i++) {
+    (function (n) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = n; b.setAttribute('role', 'radio');
+      b.setAttribute('aria-label', n + ' out of 10');
+      b.addEventListener('click', function () {
+        answers.q1 = n; saveDraft();
+        [].forEach.call(scale.children, function (c) { c.classList.remove('sel'); c.setAttribute('aria-checked', 'false'); });
+        b.classList.add('sel'); b.setAttribute('aria-checked', 'true');
+        sync();
+        /* One tap is the whole answer — move them on rather than making them find Next. */
+        setTimeout(function () { if (cur === 0) go(1); }, 260);
+      });
+      scale.appendChild(b);
+    })(i);
+  }
+
+  /* ── choices ──────────────────────────────────────────────────────────── */
+  var cont = document.getElementById('cont');
+  [].forEach.call(cont.querySelectorAll('.choice'), function (b) {
+    b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', 'false');
+    b.addEventListener('click', function () {
+      answers.q4 = b.getAttribute('data-v'); saveDraft();
+      [].forEach.call(cont.querySelectorAll('.choice'), function (c) { c.classList.remove('sel'); c.setAttribute('aria-checked', 'false'); });
+      b.classList.add('sel'); b.setAttribute('aria-checked', 'true');
+      sync();
+      setTimeout(function () { if (cur === 3) go(4); }, 260);
+    });
+  });
+
+  /* ── text fields ──────────────────────────────────────────────────────── */
+  [['q2', 'c2'], ['q3', 'c3'], ['q5', 'c5']].forEach(function (p) {
+    var ta = document.getElementById(p[0]), c = document.getElementById(p[1]);
+    ta.value = answers[p[0]] || '';
+    c.textContent = ta.value.length;
+    ta.addEventListener('input', function () {
+      answers[p[0]] = ta.value; c.textContent = ta.value.length; saveDraft(); sync();
+    });
+  });
+
+  /* ── navigation ───────────────────────────────────────────────────────── */
+  function valid(idx) {
+    if (idx === 0) return answers.q1 != null;
+    if (idx === 1) return answers.q2.trim().length > 0;
+    if (idx === 2) return answers.q3.trim().length > 0;
+    if (idx === 3) return answers.q4 != null;
+    return true;                                   // q5 optional
+  }
+
+  function sync() {
+    var s = steps[cur];
+    var next = s.querySelector('[data-next]');
+    if (next) next.disabled = !valid(cur);
+    bar.style.width = Math.round(((cur + (valid(cur) ? 1 : 0)) / steps.length) * 100) + '%';
+    stepN.textContent = (cur + 1) + ' / ' + steps.length;
+  }
+
+  function go(n) {
+    if (n < 0 || n >= steps.length) return;
+    steps[cur].classList.remove('on');
+    cur = n;
+    steps[cur].classList.add('on');
+    sync();
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+    var f = steps[cur].querySelector('textarea');
+    /* Only autofocus where typing is the point, and never on touch — a keyboard that
+       shoots up the moment the screen changes is disorienting on a phone. */
+    if (f && !window.matchMedia('(hover:none) and (pointer:coarse)').matches) {
+      setTimeout(function () { try { f.focus(); } catch (e) {} }, 320);
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var n = e.target.closest ? e.target.closest('[data-next]') : null;
+    var b = e.target.closest ? e.target.closest('[data-back]') : null;
+    if (n && !n.disabled) go(cur + 1);
+    if (b) go(cur - 1);
+  });
+
+  /* ── submit ───────────────────────────────────────────────────────────── */
+  var send = document.getElementById('send');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!valid(0) || !valid(1) || !valid(2) || !valid(3)) {
+      errEl.textContent = 'Some answers are missing — use ← to go back and fill them in.';
+      errEl.classList.add('on');
+      return;
+    }
+    send.disabled = true; send.textContent = 'Sending…';
+    errEl.classList.remove('on');
+
+    var row = {
+      q1_rating: answers.q1,
+      q2_hook: answers.q2.trim(),
+      q3_improvement: answers.q3.trim(),
+      q4_continue: answers.q4,
+      q5_anything: (answers.q5 || '').trim(),
+      seconds_taken: Math.round((Date.now() - T0) / 1000)
+    };
+
+    var p = (window.CQTrack && CQTrack.survey) ? CQTrack.survey(row) : Promise.resolve(false);
+    Promise.resolve(p).then(function (ok) {
+      if (!ok) {
+        send.disabled = false; send.textContent = 'Send it →';
+        errEl.textContent = 'That did not send — check your connection and try again. Your answers are saved.';
+        errEl.classList.add('on');
+        return;
+      }
+      try { if (window.CQTrack) CQTrack.event('survey_submitted', { rating: row.q1_rating, cont: row.q4_continue, seconds: row.seconds_taken }); } catch (e2) {}
+      try { localStorage.removeItem(DRAFT); } catch (e2) {}
+      form.style.display = 'none';
+      document.querySelector('.top').style.display = 'none';
+      document.getElementById('done').classList.add('on');
+      try { window.scrollTo(0, 0); } catch (e2) {}
+    });
+  });
+
+  try { if (window.CQTrack) CQTrack.event('survey_started', {}); } catch (e) {}
+  sync();
+})();
+</script>
+</body>
+</html>

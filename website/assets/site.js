@@ -17,8 +17,20 @@
     + '<rect x="6" y="10" width="6" height="14" rx="2" fill="#16C784"/><rect x="8" y="4" width="2" height="24" rx="1" fill="#16C784"/>'
     + '<rect x="20" y="8" width="6" height="12" rx="2" fill="#EA3943"/><rect x="22" y="4" width="2" height="24" rx="1" fill="#EA3943"/></svg>';}
 
-  /* ---------- Animated blockchain network ---------- */
+  /* ---------- Animated blockchain network ----------
+     PERF (the desktop lag): #cqnet is a full-screen fixed canvas at z-index:-1. On the PLAY
+     page it is completely covered by the opaque .play-bar + .frame-wrap, so nothing of it is
+     ever visible — yet it was still running a 60fps rAF loop behind the game: a full-DPR
+     clearRect, an O(n²) pass over the nodes, and up to ~950 SEPARATE stroked paths per frame.
+
+     Node count scales with viewport area (clamped 22..60), so a phone got 22 nodes (~230
+     pairs) on a small surface while a desktop got ~44 (~950 pairs) on a surface ~3.6x larger.
+     That is precisely why the game felt smooth on mobile and laggy on desktop.
+
+     Two fixes: never run it where it cannot be seen, and actually honour reduced-motion —
+     the old `if(reduce) frame(); else frame();` ran the animation either way. */
   (function net(){
+    if (page === 'play') return;                       // invisible there; pure waste
     var c=document.getElementById('cqnet'); if(!c||!c.getContext) return;
     var ctx=c.getContext('2d'), w=0,h=0,nodes=[],raf,DPR=Math.min(window.devicePixelRatio||1,2);
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -35,7 +47,15 @@
       raf=requestAnimationFrame(frame);
     }
     resize(); window.addEventListener('resize',function(){cancelAnimationFrame(raf);resize();if(!reduce)frame();});
-    if(reduce) frame(); else frame();
+    /* Honour reduced motion for real: paint ONE static frame and stop, instead of the old
+       `if(reduce) frame(); else frame();` which started the loop in both branches. */
+    if(reduce){ ctx.clearRect(0,0,w,h); for(var k=0;k<nodes.length;k++){var q=nodes[k];ctx.fillStyle=q.g?'rgba(22,242,154,.9)':'rgba(70,224,255,.85)';ctx.beginPath();ctx.arc(q.x,q.y,q.g?2.2:1.6,0,6.3);ctx.fill();} return; }
+    /* Stop burning frames while the tab is in the background. */
+    document.addEventListener('visibilitychange',function(){
+      cancelAnimationFrame(raf);
+      if(document.visibilityState==='visible') frame();
+    });
+    frame();
   })();
 
   /* ---------- Navigation ---------- */

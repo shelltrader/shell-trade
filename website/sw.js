@@ -11,8 +11,10 @@
    Static assets below are cache-first with NO revalidation, so a returning tester keeps the
    old copy until this string changes. v8: config.js now gates the courses page off and
    site.js drops the fake signup form — without a bump, anyone who had visited before would
-   have kept the old pair and still seen both. */
-const CACHE = 'chartquest-site-v8';
+   have kept the old pair and still seen both.
+   v9: site.js again — it no longer animates the invisible #cqnet canvas behind the game on
+   the play page. That IS the desktop lag fix, so it must actually reach returning testers. */
+const CACHE = 'chartquest-site-v9';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',

@@ -1,8 +1,10 @@
 #!/bin/bash
 # ChartQuest dev helper — automates the per-change loop so steps aren't missed.
-# Usage:  scripts/cq.sh <check | verify | mirror | site | tag | ship | serve [port] | qr [port] | desktop-qr [port]>
+# Usage:  scripts/cq.sh <check | verify | smoke [url] | mirror | site | tag | ship | serve [port] | qr [port] | desktop-qr [port]>
 #   check   syntax-check the inline game <script> (node --check)
 #   verify  run the full regression gate (scripts/verify.js) — prints PASS/FAIL
+#   smoke   POST-DEPLOY: probe the LIVE site (default playchartquest.com) — served BUILD_TAG +
+#           every referenced asset's content-type and byte length. Run it after `git push`.
 #   mirror  copy chart-quest.html -> index.html (the deployed mirror) + verify identical
 #   site    refresh website/game.html + assets so the marketing site shows the latest build
 #   tag     print the current BUILD_TAG
@@ -28,6 +30,15 @@ case "${1:-}" in
     ;;
   verify)
     node scripts/verify.js
+    ;;
+  smoke)
+    # POST-DEPLOY check — the only thing here that looks at PRODUCTION rather than this disk.
+    # Run it AFTER `git push` has deployed. Every other gate describes your machine; for ~20
+    # builds production disagreed with all of them and nothing could see it. Asserts the served
+    # BUILD_TAG matches this checkout, and that every referenced asset answers with a real media
+    # content-type and the exact local byte length — because with no 404.html a missing file
+    # answers HTTP 200 with the landing page, so a status code alone proves nothing.
+    node scripts/smoke_deploy.js "${2:-}"
     ;;
   site)
     # Refresh the marketing-site embedded game so website/ ALWAYS shows the latest build.
@@ -136,6 +147,6 @@ case "${1:-}" in
     command -v qrencode >/dev/null 2>&1 && qrencode -t ANSIUTF8 "$URL" || echo "(brew install qrencode for the QR)"
     ;;
   *)
-    echo "usage: scripts/cq.sh <check | verify | mirror | site | tag | ship | serve [port] | qr [port]>"
+    echo "usage: scripts/cq.sh <check | verify | smoke [url] | mirror | site | tag | ship | serve [port] | qr [port]>"
     ;;
 esac

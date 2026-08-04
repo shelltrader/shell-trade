@@ -66,7 +66,7 @@
   var year=new Date().getFullYear();
   var footHTML='<footer class="foot"><div class="wrap"><div class="foot-grid">'
     +'<div><a class="brand" href="index.html" style="color:#fff">'+logomark()+'<span>ChartQuest</span></a>'
-    +'<p style="margin-top:14px;max-width:280px;color:#8497ad">A side-scrolling trading RPG. Hop across live crypto charts, beat the Guardians, and learn to trade — free, in your browser.</p></div>'
+    +'<p style="margin-top:14px;max-width:280px;color:#8497ad">A side-scrolling trading RPG. Run across a real candlestick chart, beat the Guardian, and learn to trade — free, in your browser.</p></div>'
     +'<div><h5>Game</h5><ul><li><a href="index.html#how">How it works</a></li><li><a href="index.html#roadmap">The map ahead</a></li>'
     +(CFG.showBossesPage?'<li><a href="bosses.html">The 11 Guardians</a></li>':'')
     +'<li><a href="play.html">Play free</a></li><li><a href="index.html#install">Install the app</a></li></ul></div>'

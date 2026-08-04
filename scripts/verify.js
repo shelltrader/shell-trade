@@ -384,6 +384,49 @@ function run() {
       add('17', 'Deploy asset parity', 'FAIL', 'gate could not run (treated as FAIL by design): ' + String(e).slice(0, 90));
     }
   }
+
+  // 18 — EVENT SPACING OWNER (T-005b · window.CQBEAT). "ChartQuest should feel like music."
+  // Spacing is a property of WORLD SPACE decided at PLACEMENT time. The old eventLedger could
+  // never enforce it: markEvent() stamps at maxSeenCandleId (Finn's frontier, when the player
+  // EXPERIENCES an event) while eventClearAt() judges the spawn candle generated ~15 ahead, so
+  // two events already placed but not yet reached are invisible to each other by construction.
+  // This gate locks in the single owner and its properties, the same way #13 locks window.CQ and
+  // #14 locks CQREACH — so a future spawner cannot quietly bypass the pacing rules.
+  {
+    try {
+      const s = read(SRC);
+      const owner = /var NS = 'CQBEAT';/.test(s) && /window\[NS\] = \{/.test(s);
+      // must be a self-contained trailing IIFE that declares NO top-level names (invariant I1:
+      // a duplicate top-level binding across inline blocks is a parse-time SyntaxError that
+      // silently kills the whole block)
+      const iife = /\(function \(\) \{\s*'use strict';\s*var NS = 'CQBEAT';/.test(s);
+      const rules = ['boss', 'cinematic', 'bossIntro', 'lesson', 'portal', 'journalUnlock', 'page', 'minigame', 'box']
+        .filter(k => new RegExp('\\b' + k + ':\\s*\\{ gap:').test(s));
+      // every spawner the owner must observe
+      const wraps = ['maybeSpawnBox', 'maybeSpawnWisdomPage', 'spawnPortal', 'markEvent']
+        .filter(f => new RegExp("wrapSpawner\\('" + f + "'|window\\." + f + " = wrapped").test(s));
+      const api = ['may:', 'audit:', 'setMode:', 'RULES:'].filter(k => s.includes(k));
+      // placement must be judged AFTER the fact (the array grew), never by pre-emptively vetoing
+      // a per-candle poll — the first implementation did that and logged 80 vetoes vs 12 grants
+      // on one L1 run, because these spawners are polled on every candle and usually decline.
+      const postHoc = /if \(len\(arrName\) <= before\) return out;/.test(s);
+      const overlay = /\[?&\]beat|cqBeatOv/.test(s) || s.includes('cqBeatOv');
+      const ok = owner && iife && rules.length >= 9 && wraps.length === 4 && api.length === 4 && postHoc && overlay;
+      add('18', 'Event spacing owner (CQBEAT published · rules · spawners observed · post-hoc placement)',
+        ok ? 'PASS' : 'FAIL',
+        ok ? `owner published · self-contained IIFE (0 top-level names) · ${rules.length} categories · ${wraps.length}/4 spawners observed · audit+setMode+RULES exposed · placement judged post-hoc · ?beat overlay`
+           : [!owner ? 'window.CQBEAT not published' : '',
+              !iife ? 'not a self-contained trailing IIFE (top-level names would kill the block)' : '',
+              rules.length < 9 ? `rule table incomplete (${rules.length}/9 categories)` : '',
+              wraps.length !== 4 ? `spawners not observed: ${['maybeSpawnBox', 'maybeSpawnWisdomPage', 'spawnPortal', 'markEvent'].filter(f => !new RegExp("wrapSpawner\\('" + f + "'|window\\." + f + " = wrapped").test(s)).join(', ')}` : '',
+              api.length !== 4 ? 'API incomplete (need may/audit/setMode/RULES)' : '',
+              !postHoc ? 'placement is not judged post-hoc — a per-candle poll must not be pre-vetoed' : '',
+              !overlay ? '?beat debug overlay missing' : ''
+             ].filter(Boolean).join(' · '));
+    } catch (e) {
+      add('18', 'Event spacing owner', 'FAIL', 'gate could not run (treated as FAIL by design): ' + String(e).slice(0, 90));
+    }
+  }
 }
 
 // 3b — optional real headless boot (only if puppeteer is installed)

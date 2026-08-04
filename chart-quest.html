@@ -3012,7 +3012,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 336 - EVENT SPACING (T-005a). Founder: "Mystery Journal Page, 1 candle, Breakable Box." The build-324 breathing-room rule was never broken - it was never RUN on Level 1. maybeSpawnBox has two paths and BOX_GOVERNED_LEVELS is [1], so L1 (the whole closed beta) takes the GOVERNED branch, and when that branch was forked off the legacy one it lost both halves of the shared reward ledger: it never READ rewardTooClose (legacy 6012) and never WROTE stampReward (legacy 6018). REWARD_GAP is the ONLY thing separating a box from a Lost Wisdom page, so both directions failed - a page stamped a ledger the box ignored, and a box never stamped the ledger the page reads. Second bug in the same branch: clearance was judged on the candle being generated, but the box is placed on the remembered VALLEY candle several behind it, so the candle that got cleared was never the candle that got the box. Both now judged and stamped on the valley candle. NOT a new system - the canonical owner (CQBEAT) is T-005b.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 337 - EVENT SPACING SYSTEM, PHASE 1 (T-005b). window.CQBEAT is now the canonical owner of gameplay pacing: one exclusion-zone map in CANDLE-ID space, a configurable rule table (boss 40, cinematic 25, bossIntro 25-30, lesson 15-20, portal 20, journalUnlock 20, ceremony 20-25, page 15, minigame 15, trade 15-20, box 10-15), priority so a box defers around a lesson and never the reverse, a ?beat debug overlay drawing every zone with actual-vs-required spacing, and audit() which lists every violation with both events, the distance and the requirement. WHY A NEW OWNER: markEvent() stamps eventLedger at maxSeenCandleId - Finn FRONTIER, when the player EXPERIENCES an event - while eventClearAt() judges the spawn candle generated ~15 candles AHEAD, so two events already placed but not yet reached were invisible to each other BY CONSTRUCTION. eventLedger is kept for what it is actually good at (the interruption guard: is a modal on screen). CQBEAT owns PLACEMENT. SHIPS IN OBSERVE MODE: it records and reports but vetoes nothing, because Level 1 is rated ~10/10 and the audit had to be MEASURED before anything moved. Measured on a real L1 run: 3 violations, all trade-vs-object (worst: a box 4 candles from a trade). Merge-safe - one trailing IIFE, zero top-level names, runtime-patches the spawners, and deleting the block restores build 336 exactly. Guarded by verify gate #18.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -28337,6 +28337,336 @@ window.SocialAgents = (function () {
       return { enabled: CFG.enabled, done: isDone(), finished: S.finished,
                patched: S.patched, surveyUrl: CFG.surveyUrl };
     }
+  };
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   EVENT SPACING SYSTEM  —  window.CQBEAT                        (T-005b · build 337 · PHASE 1)
+   ═══════════════════════════════════════════════════════════════════════════════════════════
+   THE CANONICAL OWNER OF GAMEPLAY PACING. "ChartQuest should feel like music."
+
+   Every Major Event owns an exclusion zone measured in CANDLE IDS. No second Major Event may be
+   placed inside it. Spacing is a property of WORLD SPACE decided at PLACEMENT time.
+
+   ── WHY THE OLD MECHANISM COULD NOT DO THIS (the T-005a finding) ─────────────────────────────
+   `markEvent()` stamps `eventLedger.at = maxSeenCandleId` — Finn's FRONTIER, at the moment the
+   player EXPERIENCES an event. `eventClearAt(c.id)` judges the SPAWN candle, generated ~15 ahead.
+   So two events already placed in the world but not yet reached are invisible to each other BY
+   CONSTRUCTION. No amount of extra call sites fixes that; the question is asked in the wrong
+   coordinate space. CQBEAT keeps its own reservation map in spawn space and is the only thing
+   allowed to answer "may something go here".
+
+   `eventLedger` is NOT replaced — it still answers a different and useful question ("is a modal
+   on screen / has the player just had a moment"), which is the INTERRUPTION guard. CQBEAT owns
+   PLACEMENT only.
+
+   ── DESIGN LAWS (why this file looks like this) ──────────────────────────────────────────────
+   L1  SELF-CONTAINED + MERGE-SAFE. One IIFE in its own trailing <script> at the end of the
+       document, exactly like window.CQBeta and window.CQJournalTutorial. It declares ZERO
+       top-level names (a duplicate top-level const across blocks is a parse-time SyntaxError
+       that silently kills the whole block). Nothing above this line was modified to add it.
+   L2  TAKEOVER BY RUNTIME PATCHING. maybeSpawnBox / maybeSpawnWisdomPage / spawnPortal are
+       column-0 function declarations, so they are properties of the global object and can be
+       re-wrapped here. No call site is edited, so a concurrent edit to any spawner still merges
+       cleanly. Deleting this block restores build 336 exactly.
+   L3  PHASE 1 IS OBSERVE-ONLY. `MODE` starts at 'observe': CQBEAT records every placement and
+       reports every violation, but vetoes NOTHING. Level 1 is currently rated ~10/10 and the
+       founder's own brief says to audit before correcting — so the audit is MEASURED first.
+       Flip to 'enforce' (window.CQBEAT.setMode) once the real violation rate is known.
+   L4  A VETO MEANS "RESCHEDULE", NOT "DELETE". In enforce mode a refused spawn simply does not
+       happen on that candle; every spawner is already a per-candle "may I?" poll that will try
+       again on the next eligible candle. That is the founder's "Move it / Reschedule it / Skip
+       it" with no relocation logic and no risk of losing an event.
+   L5  PRIORITY DECIDES WHO YIELDS. Lower priority number = more important. A box defers around a
+       lesson; a lesson NEVER defers around a box. Critical educational content is never moved by
+       optional content.
+   L6  EVERY HOOK try/caught. If any of this throws, the game continues exactly as if the module
+       were absent. A pacing system must never be able to brick a playtest.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var NS = 'CQBEAT';
+
+  /* ── THE RULE TABLE — the founder's values, one configurable literal ──────────────────────
+     `gap` is the exclusion radius in candles, applied BEFORE and AFTER the event.
+     `pri` is priority: 1 = highest (never yields). Ranges are [min,max] and are rolled per
+     event so pacing reads as breathing rather than a metronome (the same reason build 324
+     randomised EVENT_MIN_GAP..EVENT_MAX_GAP). */
+  var RULES = {
+    boss:          { gap: [40, 40], pri: 1, label: 'Boss' },
+    cinematic:     { gap: [25, 25], pri: 2, label: 'Major cinematic' },
+    bossIntro:     { gap: [25, 30], pri: 3, label: 'Boss introduction' },
+    lesson:        { gap: [15, 20], pri: 4, label: 'Lesson' },
+    portal:        { gap: [20, 20], pri: 5, label: 'Portal' },
+    journalUnlock: { gap: [20, 20], pri: 6, label: 'Journal unlock' },
+    ceremony:      { gap: [20, 25], pri: 6, label: 'Home Market ceremony' },
+    page:          { gap: [15, 15], pri: 7, label: 'Mystery Journal page' },
+    minigame:      { gap: [15, 15], pri: 8, label: 'Mini-game entrance' },
+    trade:         { gap: [15, 20], pri: 4, label: 'Trade' },
+    box:           { gap: [10, 15], pri: 9, label: 'Breakable box' }
+  };
+  var DEFAULT_RULE = { gap: [15, 15], pri: 9, label: 'Event' };
+  /* Nothing may be placed in the opening stretch — the player lands and simply MOVES first.
+     Mirrors LEVEL_WARMUP_CANDLES rather than duplicating a second number. */
+  function warmup() { try { return (typeof LEVEL_WARMUP_CANDLES === 'number') ? LEVEL_WARMUP_CANDLES : 14; } catch (e) { return 14; } }
+
+  var MODE = 'observe';                 // 'observe' | 'enforce'  (see L3)
+  var S = { level: null, res: [], violations: [], vetoes: 0, grants: 0 };
+
+  function rule(kind) { return RULES[kind] || DEFAULT_RULE; }
+  function rollGap(k) { var g = rule(k).gap; return g[0] + Math.floor(Math.random() * (g[1] - g[0] + 1)); }
+  function lvl() { try { return (typeof session !== 'undefined' && session) ? session.level : 1; } catch (e) { return 1; } }
+
+  /* Level changed → the world was rebuilt and every candle id restarts. Drop the map or the
+     previous level's reservations would haunt the new one. */
+  function syncLevel() { var L = lvl(); if (S.level !== L) { S.level = L; S.res = []; S.violations = []; } }
+
+  /* THE CORE QUESTION. Is `candleId` outside every existing reservation's exclusion zone?
+     Two events conflict when their separation is less than the LARGER of the two gaps — so a
+     box (10) placed near a lesson (15..20) is judged by the lesson's radius, not the box's. */
+  function conflictAt(candleId, kind) {
+    var want = rule(kind), g = rollGap(kind), i, r, need;
+    if (typeof candleId !== 'number' || !isFinite(candleId)) return null;
+    if (candleId < warmup()) return { reason: 'warmup', need: warmup(), got: candleId, other: null };
+    for (i = 0; i < S.res.length; i++) {
+      r = S.res[i];
+      need = Math.max(g, r.gap);
+      if (Math.abs(candleId - r.at) < need) {
+        return { reason: 'spacing', need: need, got: Math.abs(candleId - r.at), other: r, wantPri: want.pri };
+      }
+    }
+    return null;
+  }
+
+  function record(candleId, kind) {
+    S.res.push({ at: candleId, kind: kind, gap: rollGap(kind), pri: rule(kind).pri, t: Date.now() });
+    if (S.res.length > 400) S.res.splice(0, S.res.length - 400);
+    S.grants++;
+  }
+
+  /* THE VALIDATION PASS. Never silently ship a spacing violation — log it with both events, the
+     measured distance and the required distance, exactly as the brief asks. */
+  function violation(candleId, kind, c) {
+    var v = {
+      level: S.level, a: (c.other ? c.other.kind : c.reason), aAt: (c.other ? c.other.at : null),
+      b: kind, bAt: candleId, distance: c.got, required: c.need, mode: MODE
+    };
+    S.violations.push(v);
+    if (S.violations.length > 200) S.violations.shift();
+    try {
+      console.warn('[CQBEAT] SPACING VIOLATION — ' + rule(v.a).label + ' @' + v.aAt + '  →  ' +
+        rule(v.b).label + ' @' + v.bAt + '   distance ' + v.distance + ', required ' + v.required +
+        (MODE === 'observe' ? '   (observe mode — allowed)' : '   (vetoed)'));
+    } catch (e) {}
+    return v;
+  }
+
+  /* may(candleId, kind) — the single entry point. Returns true if placement is allowed.
+     In observe mode it always returns true but still records and reports. */
+  function may(candleId, kind) {
+    try {
+      syncLevel();
+      var c = conflictAt(candleId, kind);
+      if (!c) { record(candleId, kind); return true; }
+      violation(candleId, kind, c);
+      if (MODE === 'enforce') {
+        /* L5 — priority. A HIGHER-priority event is allowed through and claims the space; the
+           lower-priority one is the one that reschedules. Educational content is never moved by
+           optional content. */
+        if (c.other && rule(kind).pri < c.other.pri) { record(candleId, kind); return true; }
+        S.vetoes++;
+        return false;
+      }
+      record(candleId, kind);          // observe mode: allow, but the space is still claimed
+      return true;
+    } catch (e) { return true; }       // L6 — never block the game on our own bug
+  }
+
+  /* ── RUNTIME PATCHING (L2) ────────────────────────────────────────────────────────────────
+     Each spawner is a per-candle poll. We cannot see INSIDE it, so we detect a placement by
+     watching the target array grow across the call — which also means we only ever record
+     events that genuinely happened, not ones the spawner declined for its own reasons. */
+  function len(name) { try { var a = (0, eval)(name); return (a && a.length) || 0; } catch (e) { return 0; } }
+
+  /* CRITICAL: maybeSpawnBox / maybeSpawnWisdomPage are PER-CANDLE POLLS, not placement calls.
+     They are invoked on every generated candle and almost always decline for their own reasons
+     (no valley, budget spent, trade live, RNG). So a pre-emptive "may I?" before the call is the
+     WRONG question: it vetoes and logs calls that would never have placed anything.
+
+     Measured, first implementation, one L1 run: 80 vetoes against 12 grants, with violations
+     logged for runs of consecutive candles (127,128,129,130…) against BOTH page and box — an
+     artefact of polling, not real pacing data.
+
+     So placement is judged ONLY AFTER the fact, by watching the target array grow. That is
+     accurate by construction: the array grew ⟺ something was really placed. On a conflict in
+     enforce mode the freshly-pushed object is rolled back and the spawner's own budget is
+     restored via `undo`, so a refusal costs the level nothing and the next candidate tries
+     again — the founder's "reschedule", not "delete". */
+  function wrapSpawner(fnName, arrName, kind, undo) {
+    try {
+      var orig = window[fnName];
+      if (typeof orig !== 'function' || orig.__cqBeat) return false;
+      var wrapped = function (c) {
+        var before = len(arrName), out, id, placedAt, conflict;
+        out = orig.apply(this, arguments);
+        if (len(arrName) <= before) return out;          // nothing placed — not an event, say nothing
+        /* Judge the candle the object actually SITS ON, not the candle being generated (the
+           T-005a lesson: a governed box is placed on a remembered valley several candles back). */
+        placedAt = placedCandleOf(arrName);
+        if (placedAt == null) placedAt = (c && typeof c.id === 'number') ? c.id : currentCandleId();
+        syncLevel();
+        conflict = conflictAt(placedAt, kind);
+        if (!conflict) { record(placedAt, kind); return out; }
+        violation(placedAt, kind, conflict);
+        /* L5 — a higher-priority event claims the space and stands. */
+        if (conflict.other && rule(kind).pri < conflict.other.pri) { record(placedAt, kind); return out; }
+        if (MODE === 'enforce') {
+          try { (0, eval)(arrName + '.pop()'); S.vetoes++; if (typeof undo === 'function') undo(); } catch (e) {}
+          return out;
+        }
+        record(placedAt, kind);                           // observe: allow, but claim the space
+        return out;
+      };
+      wrapped.__cqBeat = true;
+      window[fnName] = wrapped;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  /* The candle the LAST element of a spawn array is standing on. */
+  function placedCandleOf(arrName) {
+    try {
+      return (0, eval)('(function(){var a=' + arrName + ';if(!a||!a.length)return null;var o=a[a.length-1];' +
+        'if(typeof candles==="undefined")return null;var best=null,bd=1e9;' +
+        'for(var i=0;i<candles.length;i++){var c=candles[i];var d=Math.abs((c.x+c.w/2)-o.x);if(d<bd){bd=d;best=c.id;}}' +
+        'return best;})()');
+    } catch (e) { return null; }
+  }
+
+  function currentCandleId() { try { return (typeof maxSeenCandleId === 'number') ? maxSeenCandleId : 0; } catch (e) { return 0; } }
+
+  /* Portals carry their kind as the 4th arg ('lesson' | 'trade' | 'boss'), so one wrapper covers
+     three categories at their real priorities. */
+  function wrapPortal() {
+    try {
+      var orig = window.spawnPortal;
+      if (typeof orig !== 'function' || orig.__cqBeat) return false;
+      var wrapped = function (label, sublabel, action, kind) {
+        var k = (kind === 'boss') ? 'boss' : (kind === 'lesson') ? 'lesson' : (kind === 'trade') ? 'trade' : 'portal';
+        var id = currentCandleId();
+        /* A boss portal is priority 1 and is the ONLY way forward in a level — it is never
+           vetoed, only recorded, so pacing can never stall progression. */
+        if (MODE === 'enforce' && k !== 'boss' && !may(id, k)) return;
+        if (!(MODE === 'enforce' && k !== 'boss')) may(id, k);
+        return orig.apply(this, arguments);
+      };
+      wrapped.__cqBeat = true;
+      window.spawnPortal = wrapped;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  /* markEvent() is the existing "a moment just began" signal (lesson / trade / boss / page /
+     box). We mirror it into the reservation map so categories with no array to watch — lessons
+     and trades — still occupy space. Recorded at the frontier, which for a consumed event IS
+     its world position. */
+  function wrapMarkEvent() {
+    try {
+      var orig = window.markEvent;
+      if (typeof orig !== 'function' || orig.__cqBeat) return false;
+      var wrapped = function (kind) {
+        try { if (kind === 'lesson' || kind === 'trade') may(currentCandleId(), kind); } catch (e) {}
+        return orig.apply(this, arguments);
+      };
+      wrapped.__cqBeat = true;
+      window.markEvent = wrapped;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  /* ── DEBUG OVERLAY (?beat) — same opt-in shape as ?reach ─────────────────────────────────── */
+  var OVERLAY = (function () { try { return /[?&]beat(=|&|$)/.test(location.search); } catch (e) { return false; } })();
+  function draw() {
+    if (!OVERLAY) return;
+    try {
+      var cv = document.getElementById('cqBeatOv');
+      if (!cv) {
+        cv = document.createElement('canvas'); cv.id = 'cqBeatOv';
+        cv.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:99998';
+        document.body.appendChild(cv);
+      }
+      if (cv.width !== innerWidth) { cv.width = innerWidth; cv.height = innerHeight; }
+      var x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height);
+      var cs = (typeof candles !== 'undefined') ? candles : null;
+      var camx = (typeof cameraX === 'number') ? cameraX : 0;
+      if (cs) {
+        S.res.forEach(function (r) {
+          var c = null, i;
+          for (i = 0; i < cs.length; i++) if (cs[i].id === r.at) { c = cs[i]; break; }
+          if (!c) return;
+          var px = c.x - camx, w = (c.w || 8);
+          /* the exclusion band */
+          x.fillStyle = 'rgba(127,214,255,0.10)';
+          x.fillRect(px - r.gap * (w + 4), 0, (r.gap * 2) * (w + 4), cv.height);
+          x.strokeStyle = 'rgba(127,214,255,0.55)'; x.lineWidth = 1;
+          x.beginPath(); x.moveTo(px, 0); x.lineTo(px, cv.height); x.stroke();
+          x.fillStyle = '#7fd6ff'; x.font = '10px ui-monospace,Menlo,monospace';
+          x.fillText(rule(r.kind).label + ' @' + r.at + ' ±' + r.gap, px + 4, 14);
+        });
+        S.violations.slice(-12).forEach(function (v, i) {
+          x.fillStyle = '#ff4d4d'; x.font = '11px ui-monospace,Menlo,monospace';
+          x.fillText('VIOLATION ' + rule(v.a).label + '@' + v.aAt + ' → ' + rule(v.b).label + '@' + v.bAt +
+                     '  ' + v.distance + '/' + v.required, 12, 40 + i * 14);
+        });
+      }
+      x.fillStyle = 'rgba(0,0,0,0.55)'; x.fillRect(8, cv.height - 46, 330, 38);
+      x.fillStyle = '#7fd6ff'; x.font = '11px ui-monospace,Menlo,monospace';
+      x.fillText('CQBEAT ' + MODE + ' · lvl ' + S.level + ' · reservations ' + S.res.length, 16, cv.height - 30);
+      x.fillStyle = S.violations.length ? '#ff4d4d' : '#16c784';
+      x.fillText('violations ' + S.violations.length + ' · grants ' + S.grants + ' · vetoes ' + S.vetoes, 16, cv.height - 16);
+    } catch (e) {}
+  }
+
+  function boot() {
+    try {
+      /* undo hooks: hand the spawner's own budget back on a veto, so a refused placement never
+         costs the level its box (the same rule maybeSpawnBox already applies to a CQREACH
+         refusal) or its page. Reaching into these counters is the one piece of coupling in this
+         module — it is the price of enforcing from a wrapper, and it is why the long-term shape
+         is to route the spawners through CQBEAT natively. */
+      wrapSpawner('maybeSpawnBox', 'boxes', 'box', function () {
+        try { (0, eval)('market._boxMade = Math.max(0, (market._boxMade||1) - 1); market._boxSpace = 0;'); } catch (e) {}
+      });
+      wrapSpawner('maybeSpawnWisdomPage', 'wisdomPages', 'page', function () {
+        try { (0, eval)('if (typeof _wisSpawn !== "undefined" && _wisSpawn && _wisSpawn.placed) { _wisSpawn.placed.easy = false; }'); } catch (e) {}
+      });
+      wrapPortal();
+      wrapMarkEvent();
+      if (OVERLAY) setInterval(draw, 200);
+      try { console.log('[CQBEAT] active — mode=' + MODE + (OVERLAY ? ' · ?beat overlay on' : '')); } catch (e) {}
+    } catch (e) {}
+  }
+  if (document.readyState === 'loading') { try { document.addEventListener('DOMContentLoaded', boot); } catch (e) {} }
+  else boot();
+
+  window[NS] = {
+    may: may,
+    RULES: RULES,
+    get mode() { return MODE; },
+    setMode: function (m) { if (m === 'observe' || m === 'enforce') { MODE = m; return true; } return false; },
+    /* audit() — the validation pass the brief asks for. Returns every reservation and every
+       violation with distance vs required, for the gate, the overlay and a playtest report. */
+    audit: function () {
+      syncLevel();
+      return {
+        level: S.level, mode: MODE, reservations: S.res.slice(), violations: S.violations.slice(),
+        grants: S.grants, vetoes: S.vetoes,
+        ok: S.violations.length === 0
+      };
+    },
+    reset: function () { S.res = []; S.violations = []; S.vetoes = 0; S.grants = 0; },
+    _S: S
   };
 })();
 </script>

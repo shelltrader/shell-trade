@@ -2944,7 +2944,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 332 - BETA CERTIFICATION FIXES. Analytics: ONE session per visit, not one per document (sessionStorage-shared id) - four CQTrack instances were each bumping the shared visit counter, so every first-time tester was reported as RETURNING and new testers read zero. flush() is now durable: rows leave the buffer only after a confirmed write, unconfirmed rows are mirrored to localStorage and drained on boot, and an online listener recovers when the network returns - one bad mobile moment used to delete a funnel stage forever, indistinguishable from a real drop-off. Every row now carries the build in props (no migration). session_end carries exit_stage and completed. The Journal quest X is recorded as journal_discovery_skipped instead of counting as a COMPLETION - it was inflating that metric with exactly the players who rejected the quest. A reload between the boss win and tapping Continue no longer strands the tester: CQBeta reads its own done flag and offers the survey. Survey: response_id is derived from the player and the edge function upserts, so re-answering REPLACES rather than adding a contradictory second row; a restored draft now repaints the rating and choice, which previously looked unanswered while submitting a value the player could not see. Report: monotonic funnel, drop-off ranked by players lost with an n floor (it was headlining a 1-of-1 loss), game-only session length, per-player completion time, test-traffic exclusion, and Tutorial completion relabelled to what it measures.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 333 - the build tag was never actually reaching the analytics rows. BUILD_TAG is a top-level const in the first script block, and top-level const and let live in the global LEXICAL scope, not as properties of window - so window.BUILD_TAG read undefined from the tracker block and every row shipped an empty build, exactly the gap build 332 set out to close. Caught by running the Gate B pipeline check against production rather than trusting the code. Now read through the lexical binding with a typeof guard so it stays safe on the website pages, where BUILD_TAG does not exist.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -27487,7 +27487,13 @@ window.SocialAgents = (function () {
   /* Which build produced this row. Without it a Tuesday crash cannot be tied to a Tuesday
      build, and the beta ships daily. Lives in props (jsonb) so no migration is needed. */
   var BUILD = safe(function () {
-    var m = /build\s+(\d+)/i.exec(String(window.BUILD_TAG || ''));
+    /* BUILD_TAG is a top-level `const` in the game's FIRST script block. Top-level const/let
+       live in the global LEXICAL scope, NOT as properties of window — so `window.BUILD_TAG` is
+       undefined even though a bare `BUILD_TAG` resolves fine from this later block. Reading it
+       via window silently produced an empty build on every row; verified in production before
+       this fix. The typeof guard keeps it safe on the website pages, where it does not exist. */
+    var t = (typeof BUILD_TAG !== 'undefined') ? BUILD_TAG : (window.BUILD_TAG || '');
+    var m = /build\s+(\d+)/i.exec(String(t || ''));
     return m ? m[1] : '';
   }, '');
 

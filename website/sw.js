@@ -16,7 +16,7 @@
    the play page. That IS the desktop lag fix, so it must actually reach returning testers. */
    v10: the tracker itself changed (one session per visit, durable retry, build tag). cq-track.js
    is now precached EXPLICITLY rather than only runtime-cached, so it is unambiguously versioned. */
-const CACHE = 'chartquest-site-v10';
+const CACHE = 'chartquest-site-v11';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',

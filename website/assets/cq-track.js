@@ -120,7 +120,13 @@
   /* Which build produced this row. Without it a Tuesday crash cannot be tied to a Tuesday
      build, and the beta ships daily. Lives in props (jsonb) so no migration is needed. */
   var BUILD = safe(function () {
-    var m = /build\s+(\d+)/i.exec(String(window.BUILD_TAG || ''));
+    /* BUILD_TAG is a top-level `const` in the game's FIRST script block. Top-level const/let
+       live in the global LEXICAL scope, NOT as properties of window — so `window.BUILD_TAG` is
+       undefined even though a bare `BUILD_TAG` resolves fine from this later block. Reading it
+       via window silently produced an empty build on every row; verified in production before
+       this fix. The typeof guard keeps it safe on the website pages, where it does not exist. */
+    var t = (typeof BUILD_TAG !== 'undefined') ? BUILD_TAG : (window.BUILD_TAG || '');
+    var m = /build\s+(\d+)/i.exec(String(t || ''));
     return m ? m[1] : '';
   }, '');
 

@@ -7,7 +7,12 @@
  * the browser handle HTML navigation (and its redirects) natively avoids that
  * entire class of bug for /play, /bosses, /courses, etc.
  */
-const CACHE = 'chartquest-site-v7';
+/* BUMP THIS IN THE SAME COMMIT AS ANY CHANGE TO A PRECACHED OR RUNTIME-CACHED ASSET.
+   Static assets below are cache-first with NO revalidation, so a returning tester keeps the
+   old copy until this string changes. v8: config.js now gates the courses page off and
+   site.js drops the fake signup form — without a bump, anyone who had visited before would
+   have kept the old pair and still seen both. */
+const CACHE = 'chartquest-site-v8';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',

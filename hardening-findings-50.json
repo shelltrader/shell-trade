@@ -1,0 +1,858 @@
+[
+ {
+  "title": "?qa=1 ships a full remote-control + cheat + answer-key bridge to production",
+  "severity": "Critical",
+  "timing": "QUICK_WIN",
+  "file": "chart-quest.html:25684 (identical in website/game.html)",
+  "line": "25684, 25746, 25775, 25829, 25838, 25891",
+  "evidence": "`const QA_ON = /[?&]qa=1(?:&|$)/.test(location.search);` (25684). When true it exposes `window.QA = { cmd, boot, catalog, answerData };   // console access too` (25891). Commands include `forceWin()` \u2014 `bfState.bossHP = 0; bossWin();` (25775); `unlockAll()` \u2014 `player.level = Math.max(player.level, 20); player.shells = Math.max(player.shells, 100000);` (25829); `maxProgress()` (25838); `setState({coins,xp,level,rank})` (25817); `level(n)`, `lesson(key)`, `resetProgress()`. Worst is `answerData(id, diff)` (25746), which returns `out.correctAnswer = st.answer` and `out.validation = g.validate ? fnSrc(g.validate)` \u2014 the correct answer AND the validator source for every registered mini-game. ?qa=1 also bypasses the progress-wipe prompt at 1683 (`|| _qa ||`) and paints the internal BUILD_TAG at 24114.",
+  "risk": "A tester who is handed, or guesses, `playchartquest.com/play.html?qa=1` gets: the answer key to the entire educational library dumped from the console, 100,000 shells, level 20, every boss and lesson unlocked, and one-call boss wins. The IP loss is the answer key \u2014 that is the teachable content the courses are meant to sell. The analytics loss is worse: `forceWin()` calls the real `bossWin()`, which CQTrack wraps at 27751 to emit `boss_defeated`, and `QAboss()` calls the real `openBoss()` (wrapped at 27745) to emit `boss_started`. Both are in ONCE (27459), so the fabricated events are recorded permanently and that tester's genuine boss events are silently discarded forever by `if (get(k)) return false;` (27618). The funnel cannot be repaired after the fact \u2014 the real event was never sent.",
+  "fix": "Gate the whole bridge on a dev check. Add one constant beside `_CQ_MUTE` (~line 1643, above the ?fresh block so it survives the query-string strip):\n\n```js\nconst _CQ_DEV = (function () { try { var h = location.hostname;\n  return location.protocol === 'file:' || h === 'localhost' || h === '127.0.0.1' || h === '::1'\n    || /^192\\.168\\./.test(h) || /^10\\./.test(h) || /^172\\.(1[6-9]|2\\d|3[01])\\./.test(h)\n    || localStorage.getItem('cq_dev') === '1'; } catch (e) { return false; } })();\nwindow._CQ_DEV = _CQ_DEV;   // the QA bridge is in a later <script> block\n```\n\nThen change 25684 to `const QA_ON = !!window._CQ_DEV && /[?&]qa=1(?:&|$)/.test(location.search);`. Nothing else in the bridge needs touching \u2014 every capability, `window.QA`, the postMessage listener (25880 `if (!QA_ON) return;`) and the BUILD_TAG paint already key off QA_ON or the same flag.",
+  "maintainabilityCost": "Effectively zero for the daily loop. `scripts/cq.sh qr` builds `http://$IP:$P/chart-quest.html?fresh=1&mute=1` from `ipconfig getifaddr en0` (cq.sh:69) \u2014 a 192.168.x/10.x address \u2014 so every existing QR, `cq.sh serve`, file:// opens and the headless-Chrome iframe harness all satisfy _CQ_DEV unchanged. Testing ?qa=1 against the LIVE site needs `localStorage.cq_dev='1'` typed once per device in devtools; it is sticky forever after. No build step, no change to cq.sh, verify.js, the byte-identity contract or the deploy. The one real cost: if you ever debug on a production URL from a device you have not unlocked, the flags appear dead \u2014 mitigate with a one-line console.info when _CQ_DEV is false and a dev flag was passed.",
+  "effort": "S",
+  "area": "Debug hooks, dev flags, cheats and console commands reachable in the production build",
+  "verified": {
+   "real": true,
+   "reason": "Every cited line is present exactly as quoted. chart-quest.html:25684 `const QA_ON = /[?&]qa=1(?:&|$)/.test(location.search);`; :25891 `window.QA = { cmd, boot, catalog, answerData };   // console access too`; :25775 forceWin sets `bfState.bossHP = 0; bossWin();`; :25829 unlockAll sets `player.level = Math.max(player.level, 20); player.shells = Math.max(player.shells, 100000);`; :25746 answerData returns `out.correctAnswer = st.answer` and `out.validation = g.validate ? fnSrc(g.validate)`; :1682-1683 `const _qa = ...` / `|| _qa ||`; :24114 `if (/[?&](qa|build)=1/.test(location.search))` paints BUILD_TAG. `cmp -s chart-quest.html website/game.html` returns BYTE-IDENTICAL, so all of it ships. Reachability confirmed: website/play.html:148 `var CQ_QS = location.search || '';` forwards the query string into the game iframe (:110). The CQTrack claims check out too: ONCE at :27459-27461 includes boss_started/boss_defeated, :27618 `if (get(k)) return false;`, and hookGame wraps the real openBoss (:27745) and bossWin (:27751). The QA dashboard consumer is /Users/owl/Claude/Projects/Shell Trade/dashboard.html, which sits at repo root OUTSIDE the website/ output dir and therefore never deploys \u2014 so gating the bridge cannot break it. The proposed fix location (~1643) is the file's own established pattern: _CQ_MUTE (:1642), _REACH_DEBUG (:1648), window._CQ_JTUT (:1655), window._CQ_JQ (:1661) all capture flags there for exactly the stated reason. cq.sh:69 `IP=\"$(ipconfig getifaddr en0 ...)\"` and `URL=\"http://$IP:$P/chart-quest.html?fresh=1&mute=1\"` confirm the zero-cost maintainability claim. The finding survives, but severity and three risk statements need correcting.",
+   "correction": "Finding is real; downgrade Critical -> High, keep QUICK_WIN. Four corrections:\n\n1. REACHABILITY IS NARROWER THAN STATED \u2014 and the project's own standard link neuters it. chart-quest.html:1697 does `_p.delete('fresh'); _p.delete('qa');` then `history.replaceState(...)` inside the top-level ?fresh block, which executes at parse time, long before QA_ON is evaluated at :25684. So `?fresh=1&qa=1` leaves QA_ON FALSE \u2014 the bridge is dead. Per the project's beginner-mode-testing rule every tester URL carries ?fresh=1, and cq.sh:69 hard-codes `?fresh=1&mute=1`. Only a BARE `?qa=1` (no fresh) arms the bridge. The cited \"playchartquest.com/play.html?qa=1\" is also mechanically imprecise: play.html contains zero QA code (`grep -c \"qa=1\" website/play.html` = 0); it works only because play.html:148 forwards location.search into the iframe. `game.html?qa=1` is the direct path.\n\n2. THE ANSWER-KEY \"IP LOSS\" IS ~ENTIRELY ALREADY PUBLIC. There is no build step: website/game.html is 1.87 MB of unminified, commented source containing every MG.REG entry with its `gen` and `validate` functions inline. `answerData()` is a convenience wrapper over content already fully readable in view-source. The marginal exposure is convenience, not disclosure. It still matters under \"reduce casual copying\" (a URL flag is the casual path), but \"the answer key to the entire educational library\" overstates what an attacker gains beyond Ctrl-U.\n\n3. THE CHEATS ADD LITTLE OVER DEVTOOLS. Progress is client-side localStorage only (the beta tables are RLS-gated, write-only via edge function, analytics only). `unlockAll()` setting `player.shells = 100000` is something any visitor can already do by editing localStorage on a fully-readable client-side game. No server-authoritative state is affected.\n\n4. \"PERMANENTLY / CANNOT BE REPAIRED\" IS FALSE. The ONCE stamps are `cq_bt_*` keys and the player id is `cq_pid` (:27473). chart-quest.html:1686 `_rk.forEach(k => { if (/^(cq_|shellTrade)/.test(k)) localStorage.removeItem(k); });` wipes BOTH on any ?fresh load \u2014 the standard tester link. `CQTrack.reset()` (:27847-27852) also clears every `cq_bt_*` stamp explicitly. So a poisoned device self-heals on the next ?fresh visit. The residual harm is real but is FUNNEL NOISE, not loss: the fabricated boss_started/boss_defeated land under a player_id that is then discarded, so the beta funnel shows one phantom boss-defeating player rather than losing a genuine event. This is the one harm devtools alone would not casually cause, and it is the strongest remaining argument for the fix.\n\nThe proposed one-line fix is sound and I found nothing it breaks: dashboard.html does not deploy, the postMessage listener already returns on `if (!QA_ON) return;` (:25880) and additionally checks `ev.origin !== location.origin`, the game's own same-origin iframe is unaffected (no header/CSP change involved), and the fix is a pure source edit that flows through cq.sh mirror/site with the verify.js #8 byte-identity gate intact. Use `window._CQ_DEV` as proposed \u2014 the bridge is in a later &lt;script&gt; block and top-level const is not a window property (the Block-2 script-scope trap). One addition to the fix: also gate the BUILD_TAG paint at :24114, which tests `location.search` independently of QA_ON and still leaks the internal build string on production via `?build=1`."
+  }
+ },
+ {
+  "title": "window.CQTrack.event() and .survey() let anyone write arbitrary rows into the live beta tables from the console",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "chart-quest.html:27821",
+  "line": "27821-27837, 27453-27456",
+  "evidence": "`window.CQTrack = { event: event, crash: crash, flush: ..., survey: function (row) {...}, stampCompleted: function () { set('cq_bt_beta_completed', String(Date.now())); }, pid: pid, ... reset: ... };` (27821-27855). The complete accepted vocabulary sits three lines above it in plain text: `var NAMES = ['session_start','session_end','return_visit','tutorial_started',... 'beta_completed','survey_started','survey_submitted','crash'];` (27453-27456). `survey()` derives `r.response_id = r.response_id || ('r-' + pid());`, and `CQTrack.reset()` (27851) clears every cq_bt_* flag.",
+  "risk": "`CQTrack.event('beta_completed',{})` from any console writes a real row. Repeated `CQTrack.reset()` plus rewriting `localStorage.cq_pid` allows an arbitrary number of fabricated testers and survey responses. This is not a likely act of malice from 10-20 invited friends, but it is the kind of thing one bored tester does for fun, and at n=20 a handful of injected rows moves every percentage in the Founder Report. Note the real enforcement point is the beta-ingest edge function's validation and its stated 120 req/min budget (cq-track.js:297) \u2014 that is outside this area but is where the durable control belongs.",
+  "fix": "Do not remove the API \u2014 CQBeta and the survey page depend on it. Narrow the surface instead: drop `stampCompleted` and `reset` from the published object unless `_CQ_DEV` (they are only ever called by CQBeta and by hand), and treat server-side validation in supabase/functions/beta-ingest as the real control. If you want a cheap client-side signal, have `event()` attach `props._dev = true` whenever `_CQ_DEV` is set, so every event produced on a dev machine is filterable in the report.",
+  "maintainabilityCost": "Low. Keeping `event`/`crash`/`flush`/`survey`/`pid`/`state` published preserves all debugging; you lose the ability to type `CQTrack.reset()` on a production device without the unlock key. The `_dev` prop is a genuine improvement \u2014 it lets the Founder Report exclude the founder's own dozens of test runs, which right now are indistinguishable from real testers.",
+  "effort": "S",
+  "area": "Debug hooks, dev flags, cheats and console commands reachable in the production build",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "?flow=1 ships an explicitly unvalidated gameplay prototype to external testers",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "chart-quest.html:14734",
+  "line": "14725-14734, 6780-6781",
+  "evidence": "The block header says it outright: \"GATED OFF by default \u2014 enable for testing with ?flow=1 (or localStorage cq_flow='1'). Normal play is completely unaffected until this is validated on a device.\" (14732-14733). The flag: `const FLOW_READS = (function(){ try { return new URLSearchParams(location.search).get('flow') === '1' || localStorage.getItem('cq_flow') === '1'; } catch(e){ return false; } })();` (14734). It rewires the movement keys \u2014 `flowReadCommit(0)` on ArrowUp/KeyW and `flowReadCommit(1)` on ArrowDown/KeyS (6780-6781) \u2014 and awards shells on a correct read.",
+  "risk": "A tester on ?flow=1 plays a different game from every other tester: an unvalidated mechanic that changes what jump and tuck mean and pays out shells. Their qualitative survey feedback would be about a prototype the founder is not shipping, which is worse than no feedback \u2014 it is feedback that reads as real. This is the classic case of a prototype flag surviving into a release because it was correctly gated off and therefore never noticed again.",
+  "fix": "`return _CQ_DEV && (new URLSearchParams(location.search).get('flow') === '1' || localStorage.getItem('cq_flow') === '1');` at 14734. The localStorage half matters here too \u2014 `cq_flow` is a plain key anyone can set, and unlike the URL flag it is sticky.",
+  "maintainabilityCost": "None. The flag exists solely to validate the mechanic on the founder's own device, which is exactly what _CQ_DEV permits.",
+  "effort": "S",
+  "area": "Debug hooks, dev flags, cheats and console commands reachable in the production build",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "?hmc and ?bcj skip the cinematic and tutorial, distorting the same onboarding funnel",
+  "severity": "Medium",
+  "timing": "QUICK_WIN",
+  "file": "chart-quest.html:2535",
+  "line": "2535, 2545, 2549",
+  "evidence": "`if (/[?&]bcj(=|&|$)/.test(location.search)) { ... _runMovementTutorial(localStorage.getItem('cq_faction') || 'BTC'); }` (2535-2543) and `if (/[?&]hmc(=|&|$)/.test(location.search)) { _hmcDevMode = true;   // read by _handleSession/resolveAuth so the cinematic never starts` (2545-2546), which then calls `_afterMovementTutorial('BTC')` directly (2549). Both are labelled DEV-ONLY in the comment at 2529: \"the same fast-iteration hatch the Journey has at ?bcj.\"",
+  "risk": "Same shape as ?dev: the opening cinematic and (for ?hmc) the movement tutorial are bypassed, so `tutorial_started` may never fire and the tester's exit stage misrepresents where they actually were. ?hmc additionally hard-codes the BTC market rather than letting the player choose, so the Home Market Ceremony \u2014 the beat the founder deliberately built as an identity moment \u2014 is skipped and cannot be evaluated by that tester.",
+  "fix": "Prefix both tests with `_CQ_DEV &&` at 2535 and 2545.",
+  "maintainabilityCost": "None. Both are described in-file as fast-iteration hatches for the founder and are only used locally.",
+  "effort": "S",
+  "area": "Debug hooks, dev flags, cheats and console commands reachable in the production build",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "?jtut re-runs the Journal onboarding over real progress, ignoring the once-ever flag",
+  "severity": "Medium",
+  "timing": "QUICK_WIN",
+  "file": "chart-quest.html:1656",
+  "line": "1656, 27279, 27383-27384",
+  "evidence": "`window._CQ_JTUT = (function () { try { return /[?&]jtut(=|&|$)/.test(location.search); } ... })();` (1656), auto-firing `API.devStart()` on load (27383-27384). devStart is `if (S.active) return false; reset(); waitThenBegin({ dev: true }); return true;` (27279-27284) \u2014 it calls `reset()` first, so it deliberately discards the completion flag. The flag also forces the post-boss claim: `try { forced = !!window._CQ_JTUT; } catch (e) {}` / `if (isDone() && !forced) return false;` (27258-27260).",
+  "risk": "Lower analytics impact than ?jq \u2014 devStart does not route through the patched `claimPostBoss`, so it does not emit `journal_discovery_started`. But it wipes the tester's journal-tutorial completion state and replays a tutorial they already finished, mid-run, which reads as a bug and will be reported as one. It also makes the ?jtut session non-representative of a real playthrough.",
+  "fix": "`window._CQ_JTUT = _CQ_DEV && /[?&]jtut(=|&|$)/.test(location.search);` at 1656, plus an early `if (!_CQ_DEV) return false;` in devStart (27279) so the console entry is covered too.",
+  "maintainabilityCost": "None.",
+  "effort": "S",
+  "area": "Debug hooks, dev flags, cheats and console commands reachable in the production build",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "?reach paints the internal level-design telemetry overlay over the live game",
+  "severity": "Low",
+  "timing": "QUICK_WIN",
+  "file": "chart-quest.html:1649",
+  "line": "1649, 18189-18191, 16234",
+  "evidence": "`const _REACH_DEBUG = (function () { try { return /[?&]reach(=|&|$)/.test(location.search); } ... })();` (1649). The overlay it enables draws \"red hatch = unsafe: inside terrain, or below the chart baseline (dead space) / amber line = the playable ceiling / per-shell tick + clearance readout / live spawn accept/reject tally with the reason each candidate died\" (18185-18188). The comment at 18189 asserts \"Gated on the query string only \u2014 see _REACH_DEBUG. Players can never see this\" \u2014 which is precisely the assumption this finding contradicts, since the query string is player-supplied. It also gates a console warning: `if (_viol.length && _REACH_DEBUG) console.warn('[CQREACH] healed', _viol);` (16234).",
+  "risk": "No cheating, no analytics corruption. It exposes the collectible-placement solver's internals \u2014 the reachability envelope, the spawn accept/reject reasons \u2014 which is design IP, and a tester who lands on it sees what looks like a broken, half-finished build. Minor on both counts, but it is a one-word change to fix.",
+  "fix": "`const _REACH_DEBUG = _CQ_DEV && /[?&]reach(=|&|$)/.test(location.search);` at 1649. Note _CQ_DEV must be declared above this line \u2014 it belongs at the top of the same capture block beside _CQ_MUTE, above the ?fresh query-strip, for exactly the reason the existing comments give.",
+  "maintainabilityCost": "None. The standard beginner-mode test link is documented at 1647 as `?fresh=1&mute=1&reach=1` on a LAN URL, which satisfies _CQ_DEV.",
+  "effort": "S",
+  "area": "Debug hooks, dev flags, cheats and console commands reachable in the production build",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "BUILD_TAG is a 700-character internal engineering changelog, rendered on-canvas by ?qa=1 or ?build=1",
+  "severity": "Low",
+  "timing": "BEFORE_FULL_RELEASE",
+  "file": "chart-quest.html:2986",
+  "line": "2986, 24111-24122",
+  "evidence": "`const BUILD_TAG = 'build 334 - BOOT-CRASH CAPTURE. CQTrack installs its error listeners inside boot(), deferred to DOMContentLoaded, and in this file that block is around line 27,400 of 28,100 ... Zero crash rows in 118 events was not evidence of no crashes, it was evidence we could not see them. ...';` (2986). Rendered by `if (/[?&](qa|build)=1/.test(location.search))` (24114), under a comment that already states the intent: \"BUILD TAG \u2014 QA ONLY (Phase-1 polish: never show players an internal build string).\"",
+  "risk": "The string discloses internal beta volume (118 events), the analytics architecture, file line numbers and the reasoning behind a recent bug \u2014 and it is in the deployed source in plaintext regardless of the flag, so gating the flag does not hide it. Rating this Low because the exposure is the string, not the flag; the flag only makes it visible without devtools. Worth noting because the founder's stated goal includes preventing accidental exposure, and 'zero crash rows in 118 events' is a private beta metric.",
+  "fix": "Two independent changes. (1) Gate the paint: `if (_CQ_DEV && /[?&](qa|build)=1/.test(location.search))` at 24114. (2) The real fix \u2014 split the constant: keep a short machine-readable `const BUILD_TAG = 'build 334';` for the cache/QR identity check (which is what `scripts/cq.sh qr` greps for at cq.sh:76, `grep \"BUILD_TAG =\" ... grep -oE \"build [0-9]+\"`) and move the prose to a separate `BUILD_NOTES` comment that is not a rendered string.",
+  "maintainabilityCost": "The split needs care: cq.sh:76 and cq.sh:79 both parse the BUILD_TAG line, and the guard compares disk against wire. Keeping the `BUILD_TAG = 'build NNN'` prefix intact means neither line changes. Real cost is the habit change \u2014 the founder currently writes the build story into the constant, and that story is genuinely useful; it just needs to live in the comment directly above rather than inside the string.",
+  "effort": "S",
+  "area": "Debug hooks, dev flags, cheats and console commands reachable in the production build",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "No gate enforces dev-flag hygiene, so the next debug hook will ship the same way these twelve did",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "scripts/verify.js",
+  "line": "237-283 (existing gates #12-#16; next free number is #17)",
+  "evidence": "verify.js already runs exactly this class of enforcement \u2014 `// 12 \u2014 CANDLE-LANGUAGE GATE (build 287). The enforcement wire the Visual Market Constitution promised` (221), `// 13 \u2014 window.CQ OWNER-INTEGRITY GATE` (236), `// 14 \u2014 COLLECTIBLE LAW 001 GATE` (251), `// 15 \u2014 LESSON-LABEL GATE` (267), `// 16 \u2014 MARKET IDENTITY GATE` (283). There is no equivalent for debug flags, which is why ten of them accumulated undetected across builds 233-334.",
+  "risk": "Every finding above is a one-line fix, and every one of them will regress. The pattern in this codebase is well established: a flag is added correctly gated-off for a legitimate test, the comment says 'players never pass it', and it is never revisited. Without a gate, the audit has to be re-run by hand before every release.",
+  "fix": "Add check #17 to scripts/verify.js: scan chart-quest.html for every `location.search` / `URLSearchParams` test, and FAIL unless each match is either on a short allowlist (`mute`, `fresh`) or appears on a line containing `_CQ_DEV`. About 20 lines, matching the structure of #12-#16. It runs inside `cq.sh ship` (cq.sh:51, `\"$0\" mirror && node scripts/verify.js && \"$0\" site`), so it blocks the deploy rather than nagging.",
+  "maintainabilityCost": "Real but modest and the same cost the five existing gates already carry: adding a genuinely new player-facing URL parameter means editing the allowlist, and a regex gate can false-fail on an unusual formatting of the same test. Given that this exact failure mode has now produced ten live findings, the gate pays for itself on the first prevented regression. Do NOT extend this into a build step \u2014 the whole point is that it validates the readable source in place and leaves chart-quest.html byte-identical to website/game.html, preserving verify.js check #8.",
+  "effort": "M",
+  "area": "Debug hooks, dev flags, cheats and console commands reachable in the production build",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "590 KB (30.9%) of the deployed game is developer comments \u2014 including 50 verbatim founder quotes and written post-mortems of shipped defects",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/game.html",
+  "line": "file-wide; examples at 460, 3029, 5212, 5924, 5439",
+  "evidence": "Measured over the deployed file: 4,719 line comments (330,903 B), 719 block comments (255,147 B), 29 HTML comments (4,148 B) = 590,198 B of 1,913,088 B (30.9%). Gzip: 616,169 B \u2192 362,680 B stripped. 50 comments are tagged `FOUNDER`. Representative content: `/* FOUNDER (build 317) \u2014 THIS WAS THE ACTUAL \"WEIRD GLITCHY SCREEN SHAKE\". ... It was never a stylistic choice; it was a CSS bug, and it hit the wrong-answer shake and the victory shake too */` (:460-466); `/* FOUNDER (build 320) \u2014 THIS IS WHY THE TRADE STILL ENDED EARLY ... trade._press is never initialised anywhere ... so `!trade._press` evaluated `!undefined === true` */` (:5212-5214); `/* A HIDDEN PAGE HAS NO SIZE ... That left the game running on broken geometry, and since build 313 it is also visible as a flood of GROUND_NOT_READY spawn rejections \u2014 collectibles silently refused for the rest of the session. */` (:3029-3031); `/* FOUNDER (build 313) \u2014 \"I don't see any of the destructible boxes in level 1, we should have 2.\" */` (:5924); `/* T-001 \u00b7 WICK LAW (FOUNDER REJECTION #2 \u2014 \"there are far too many wicks\") */` (:5439).",
+  "risk": "Three things at once. (a) A tester reading source gets a running list of the game's known defects and the exact conditions that trigger them \u2014 useful for a bug report, corrosive in a screenshot. (b) The founder's unfiltered product criticism of his own build is published under his own domain. (c) It is 248 KB of gzipped payload on a mobile-first game whose funnel already leaks before the first trade. The perf argument alone justifies the fix independent of any IP argument.",
+  "fix": "LINE-PRESERVING comment strip at the deploy copy only. Add scripts/strip_comments.js using acorn 8.15.0 (already at node_modules/acorn as a transitive dep of javascript-obfuscator \u2014 promote it to an explicit devDependency so it survives a prune): parse each inline <script> body with `onComment`, and replace each comment's source range with the SAME NUMBER of newlines rather than deleting it; do the same for `<!-- -->` and CSS `/* */`. Then change cq.sh:37 from `cp chart-quest.html website/game.html` to `node scripts/strip_comments.js chart-quest.html website/game.html`. I measured the exact output: 1,324,538 B raw (-30.7%), 363,373 B gzip (-41%), and line count EXACTLY 28,292 \u2014 identical to chart-quest.html. Block extraction is safe: `</script` occurs exactly 9 times in the file, matching the 9 real closing tags, so none is hidden inside a string.",
+  "maintainabilityCost": "Low, and deliberately so. The dev loop is untouched: you still open, edit and debug chart-quest.html with every comment intact, and `cq.sh serve` / the QR test URL are unaffected. Production debuggability is preserved by the line-preserving trick \u2014 a stack trace at line N in the deployed file is line N in chart-quest.html, no source map needed, which is the specific thing minification would take away. The real ongoing costs are: (i) `cq.sh site`'s build-tag check at cq.sh:47 now greps a transformed file \u2014 it reads the BUILD_TAG string literal, which survives, but verify this on the first run; (ii) one new script to maintain; (iii) `diff chart-quest.html website/game.html` stops being empty, so if anything downstream assumes byte-identity to the site copy it must be updated \u2014 I found nothing that does (verify.js reads only chart-quest.html and index.html, verify.js:29-30). Do NOT hand-roll a character-scanner version of this; use acorn, so regex literals and template strings are handled by a parser rather than by luck.",
+  "effort": "M",
+  "area": "Source exposure & the minification question (website/game.html, build.js, cq.sh/verify.js pipeline)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "BUILD_TAG is a runtime string that publishes the beta's telemetry blind spot and crash history \u2014 and no code transform will remove it",
+  "severity": "Medium",
+  "timing": "QUICK_WIN",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/game.html",
+  "line": "2986",
+  "evidence": "`const BUILD_TAG = 'build 334 - BOOT-CRASH CAPTURE. CQTrack installs its error listeners inside boot(), deferred to DOMContentLoaded, and in this file that block is around line 27,400 of 28,100 - so the one failure that matters most, a parse-time throw that white-screens the page, was structurally unrecordable. Zero crash rows in 118 events was not evidence of no crashes, it was evidence we could not see them. A tiny dependency-free listener now sits in the HEAD ... and if CQTrack never boots at all it posts the crash itself after 8 seconds. Deliberately placed far above the CQTRACK markers so the sync gate is unaffected.';` \u2014 a single ~700-character string literal.",
+  "risk": "It states the sample size (118 events), admits the beta was blind to its own crashes, and describes exactly where the telemetry listeners sit and how to defeat the sync gate. Unlike the comments, this is a live string: it is `grep`-able in the deployed file, survives comment stripping, survives minification, and survives obfuscation's stringArray in decodable form. cq.sh:47 greps it, so it cannot simply be deleted. It is the clearest case in this area of \"the transform question is a distraction from the content question\".",
+  "fix": "Split the field. Keep `BUILD_TAG = 'build 334'` \u2014 that is all cq.sh:47's `grep -o \"build [0-9][^']*\"` and the cache-check playtest workflow actually need. Move the narrative into a comment directly above it (where the stripper then removes it from the deploy) or into the commit message, which is where the other 333 builds' rationale already lives. Apply the same rule going forward: BUILD_TAG is a version, not a changelog.",
+  "maintainabilityCost": "None. The cache-check workflow is unchanged \u2014 a tester still reads \"build 334\" to confirm which build loaded. It is strictly less to type per release.",
+  "effort": "S",
+  "area": "Source exposure & the minification question (website/game.html, build.js, cq.sh/verify.js pipeline)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Unwired-checkout stub names the payment providers and tells the reader payment is not real",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/game.html",
+  "line": "13820-13831",
+  "evidence": "`function cqStartCheckout(ov, onLater) { // FOUNDER HOOK: wire a real checkout here. Set window.CQ_CHECKOUT_URL to your` / `// hosted checkout (Stripe / Gumroad / Lemon Squeezy / Paddle) and it opens there.` / `try { if (window.CQ_CHECKOUT_URL) { window.open(window.CQ_CHECKOUT_URL, '_blank'); return; } } catch (e) {}` (:13820-13823). The user-visible fallback copy at :13831 reads \"Payment isn't wired into this build yet.\"",
+  "risk": "Two layers. The comment is removable and should go. The `window.CQ_CHECKOUT_URL` global is not a comment \u2014 it is a documented, globally writable redirect target: anything that can run script on the page (a future third-party include, a compromised dependency) can set it and `window.open` an arbitrary URL from a trusted flow the user reached by clicking a buy button. Combined with courses.html shipping $39.99/$149.99 for products that do not exist, a tester reading source learns the pricing is aspirational before the founder gets to frame it.",
+  "fix": "Two small changes. (1) Let the stripper remove the provider-naming comment (covered by the F3 fix). (2) Validate before opening: require the URL to parse, be `https:`, and match a hardcoded host allowlist, rather than opening whatever the global holds. Leave the visible \"Payment isn't wired\" copy alone \u2014 it is honest and player-facing, and honesty about the beta is worth more than the concealment.",
+  "maintainabilityCost": "Negligible; ~5 lines, and the hook still works exactly as designed when the real checkout is wired.",
+  "effort": "S",
+  "area": "Source exposure & the minification question (website/game.html, build.js, cq.sh/verify.js pipeline)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "The dev/test backdoors are documented in the deployed source, in prose",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/game.html",
+  "line": "1631-1636, 1658, 1962, 2546, 27905-27907",
+  "evidence": "`/* ?jq \u2014 FOUNDER TEST LINK for the whole Journal beat end to end: it skips the opening intro,` (:1658); `let _hmcDevMode = false;      // ?hmc \u2014 jump straight to the ceremony, never start the cinematic` (:1962); `_hmcDevMode = true;   // read by _handleSession/resolveAuth so the cinematic never starts` (:2546); `wipes all local progress on load (no prompt) for a true brand-new-player cold-open \u2014 a FOUNDER-` (:1633); and a labelled console API: `CQBeta.devFinish()           run the ceremony right now` / `CQBeta.reset()               clear the completion flag` / `CQBeta.state()               { enabled, done, finished, surveyUrl }` (:27905-27907).",
+  "risk": "The flags themselves are needed \u2014 the memory rules mandate `?fresh=1` and `&mute=1` for every playtest, and `CQBeta.devFinish()` is how the completion ceremony gets tested. The exposure is that the comments are a step-by-step guide to skipping the tutorial, wiping a save, and marking the beta complete without playing. In a 20-person invited beta the realistic harm is polluted funnel data: `CQBeta.devFinish()` writes the completion flag that `completionSeconds()` (:27694-27698) derives from, so a curious tester can silently corrupt the one metric the beta exists to produce.",
+  "fix": "Ship the flags, strip the manual \u2014 the line-preserving comment strip (F3) removes every one of these prose descriptions from the deploy while `?jq`, `?hmc`, `?fresh` and `CQBeta.devFinish()` keep working identically in dev and in production. That is the right split: do not disable founder tooling to hide it, just stop publishing its documentation. Optionally, have CQTrack stamp a `dev:true` prop on events from a session where a dev flag or dev API was used, so synthetic completions can be filtered out of the Founder Report rather than trusted.",
+  "maintainabilityCost": "Zero for the strip. The dev-flag stamp is ~10 lines in the CQTrack block; it must be authored in website/assets/cq-track.js and re-synced via scripts/sync_track.py, not edited into chart-quest.html directly, or sync_track.py --check fails the ship gate.",
+  "effort": "S",
+  "area": "Source exposure & the minification question (website/game.html, build.js, cq.sh/verify.js pipeline)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Minifying the game would cost line-accurate production debugging and buy almost nothing over stripping \u2014 recommend against it, for now",
+  "severity": "Low",
+  "timing": "OPTIONAL_LONG_TERM",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/scripts/cq.sh",
+  "line": "37",
+  "evidence": "Measured deltas from the deployed 1,913,088 B / 616,169 B gzip baseline: comment strip alone gives 1,324,538 B / 363,373 B gzip at an IDENTICAL 28,292 lines. The remaining code after stripping is ~1.32 MB, of which 216,673 B (11.3% of the original file) is string literals \u226525 chars \u2014 content a minifier cannot shrink. The file is one 1.87 MB HTML document with 8 inline <script> blocks that share global lexical bindings by bare name across block boundaries (game.html:26357: `<script>, so they are GLOBAL LEXICAL bindings \u2014 shared with this block by BARE NAME but ...`), which is hostile to every bundler and makes cross-block mangling unsafe by construction.",
+  "risk": "This is the cost side of the central question, stated plainly. Minifying adds maybe 15-20% more over-the-wire on top of the 41% stripping already gives, and in exchange: (a) production stack traces stop mapping to chart-quest.html line numbers, and there are no source maps because there is no build that could emit them \u2014 so the boot-crash telemetry the founder JUST built at :2986 to see white-screens would start reporting mangled, unlocatable frames; (b) cross-block bare-name sharing means a mangler must be configured to not rename top-level bindings, which removes most of its benefit anyway; (c) it adds a second, slower, failure-prone stage to a ship command that currently takes seconds.",
+  "fix": "Recommend AGAINST minification and obfuscation. Ship the line-preserving comment strip (F3) and stop there. Revisit only if two things become true at once: the file drops below ~1 MB, and a real error-reporting service with source-map upload is in place. Until then the honest answer is: not worth it yet, and the 41% gzip win from stripping already captures most of the available benefit at none of the debuggability cost.",
+  "maintainabilityCost": "Recommending against it has zero cost. Recommending FOR it would cost the daily loop a slower ship, an extra tool to keep working, and \u2014 the one that actually matters for a solo founder \u2014 the ability to read a production stack trace and jump straight to the line in the source file he is already editing.",
+  "effort": "S",
+  "area": "Source exposure & the minification question (website/game.html, build.js, cq.sh/verify.js pipeline)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "website/sw.js is a JavaScript syntax error \u2014 service worker never registers, and it is the only console error every tester sees",
+  "severity": "High",
+  "timing": "QUICK_WIN",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/sw.js",
+  "line": "17",
+  "evidence": "Line 16 closes the block comment: \"the play page. That IS the desktop lag fix, so it must actually reach returning testers. */\" \u2014 and then lines 17-18 are bare English prose sitting in executable scope: \"   v10: the tracker itself changed (one session per visit, durable retry, build tag). cq-track.js\" / \"   is now precached EXPLICITLY rather than only runtime-cached, so it is unambiguously versioned. */\". Proven, not inferred: `node --check website/sw.js` returns \"SyntaxError: Unexpected identifier 'tracker'\" pointing at line 17. The file is registered from three separate places, so this fires on every deployed page \u2014 website/index.html:2139 \"navigator.serviceWorker.register('sw.js').catch(function(){});\", website/assets/site.js:149 (identical line, loaded by every site page), and website/game.html:24143 \"navigator.serviceWorker.register('/sw.js').then(reg => { try { reg.update(); } catch (e) {} }).catch(() => {});\".",
+  "risk": "Two distinct costs. (1) Console: the `.catch(){}` swallows the promise rejection but not the browser's own report \u2014 per the SW spec, registration rejects on script evaluation failure and browsers log that parse error to the page console. This is the single line of console output a tester will actually see on a normal run, and it reads as \"this site is broken\". I could not confirm the exact browser wording because the rules forbid me driving a browser; the syntax error and the failed registration are proven from the file itself. (2) Functional: `const CACHE = 'chartquest-site-v12'` (line 19) never installs, so nothing is precached, `offline.html` never serves, and the freshness reload at game.html:24149-24152 can never fire because `controllerchange` requires a working worker \u2014 meaning the documented \"I deployed but my phone shows the old version\" fix is inoperative for the 10-20 invited testers.",
+  "fix": "Move the `*/` from the end of line 16 to the end of line 18, or delete lines 17-18. One-character-class edit, no behaviour change beyond making the file parse. Verify with `node --check website/sw.js` before shipping. Note that sw.js lives in the output dir so it deploys directly; no mirror sync needed.",
+  "maintainabilityCost": "None. This is a comment-delimiter repair, not a change to any system.",
+  "effort": "S",
+  "area": "CONSOLE OUTPUT",
+  "verified": {
+   "real": true,
+   "reason": "I tried to refute this and could not. Every cited artifact is exactly where claimed.\n\nCONFIRMED \u2014 the syntax error. /Users/owl/Claude/Projects/Shell Trade/website/sw.js line 16 ends the block comment with \"...must actually reach returning testers. */\", and lines 17-18 are bare English in executable scope (\"   v10: the tracker itself changed (one session per visit, durable retry, build tag). cq-track.js\" / \"   is now precached EXPLICITLY rather than only runtime-cached, so it is unambiguously versioned. */\"). `node --check website/sw.js` exits 1 with \"SyntaxError: Unexpected identifier 'tracker'\" at line 17, caret under `tracker`. Not inferred.\n\nCONFIRMED \u2014 it deploys. Output dir is website/, so /sw.js resolves to website/sw.js. I checked the other three copies in the repo: ./sw.js, ./deploy/sw.js and ./ChartQuest_Landing_Review/sw.js \u2014 root sw.js and deploy/sw.js both pass `node --check`; only website/sw.js is broken. Root sw.js is a different, older worker (`const CACHE = 'chart-quest-v325'`) and is outside the output dir, so it cannot shadow the broken one.\n\nCONFIRMED \u2014 all three registration sites, verbatim: website/index.html:2139 `navigator.serviceWorker.register('sw.js').catch(function(){});`, website/assets/site.js:149 (identical, loaded by every site page), website/game.html:24143 `navigator.serviceWorker.register('/sw.js').then(reg => { try { reg.update(); } catch (e) {} }).catch(() => {});`.\n\nCONFIRMED \u2014 the freshness path at game.html:24148-24152 is gated on `controllerchange`, which cannot fire without an installed worker: `let _swReloaded = false; navigator.serviceWorker.addEventListener('controllerchange', () => { if (!_hadController) return; ... location.reload(); });`.\n\nI also tested the \"only console output on a normal run\" claim rather than take it: all 11 console.* calls in website/game.html are on error/catch paths, and the one unconditional-looking warn at game.html:1687 is gated by `DEV_ALWAYS_FRESH`, which is `false` at game.html:1639. So nothing else logs on a clean run. Plausible as stated.\n\nThe fix cannot break either protected mechanism. `grep -n \"sw\\.js\" scripts/cq.sh scripts/verify.js` returns nothing \u2014 cq.sh never copies or regenerates sw.js, so an edit to website/sw.js is durable and will not be clobbered by `mirror`/`site`/`ship`. verify.js check #8 compares index.html to chart-quest.html; sw.js is not in that comparison, so the byte-identical mirror gate is untouched. The same-origin iframe is unaffected because the worker never intercepts navigations while online (sw.js:50-51, `if (req.mode === 'navigate') { if (!self.navigator.onLine) {`).\n\nSeverity High is defensible but sits at the top of its range; the maintainability cost of \"none\" is accurate.",
+   "correction": "Two corrections to the risk framing; the defect and the fix stand as written.\n\n1. The functional risk is overstated in one specific way. The report says the documented \"I deployed but my phone shows the old version\" fix is \"inoperative\". True as to the reload path, but it implies testers are therefore seeing stale builds \u2014 the opposite is closer to true. The staleness that reload was written to cure is caused by the SW's own cache-first policy (sw.js:10-12: \"Static assets below are cache-first with NO revalidation, so a returning tester keeps the old copy until this string changes\"). With the worker failing to install, there is no SW cache at all, so no SW-level staleness exists to reload past. What is actually lost is narrower and should be stated as: no precache of the 11 entries in ASSETS (sw.js:21-27), no offline.html fallback (sw.js:50-60), no PWA installability (the install prompt requires a registered worker with a fetch handler), and no update-reload path once a worker does exist. One caveat that cuts the other way and I could not resolve without git history: if a previously-deployed sw.js parsed cleanly, testers who visited before build 334 may still be controlled by that older worker and pinned to its cache, with every subsequent update attempt failing to parse \u2014 that would be worse, not better, and is worth a five-minute check of the file's history.\n\n2. \"the only console error every tester sees ... reads as 'this site is broken'\" overstates the user-facing cost. Testers do not open DevTools; the practical impact of the console line on a 10-20 person invited beta is close to zero. The report's own hedge about not being able to confirm browser wording is honest, but the conclusion should follow it: the real cost here is the functional loss above, not tester perception. On that basis the severity is better read as Medium for the closed beta, rising to High before public beta when installability and offline behaviour start to matter. QUICK_WIN timing is correct either way \u2014 it is a one-character-class edit gated by `node --check`."
+  }
+ },
+ {
+  "title": "verify.js syntax gate #3a only parses chart-quest.html's inline scripts \u2014 no standalone deployed .js file is ever syntax-checked",
+  "severity": "Medium",
+  "timing": "QUICK_WIN",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/scripts/verify.js",
+  "line": "99",
+  "evidence": "The gate is scoped to inline blocks only: \"const blocks = [...s.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)].map(m => m[1]).filter(b => b.trim().length > 20);\" then verify.js:103 \"cp.execSync(`node --check \\\"${tmp}\\\"`, { stdio: 'ignore' })\", reported at :106 as \"'Game script parses (syntax = boot proxy)'\". `s` is chart-quest.html (verify.js:29 \"const SRC = 'chart-quest.html';\"). website/sw.js, website/assets/site.js, config.js, cq-track.js and market-data.js are never passed to `node --check` by any gate. That is exactly the hole the sw.js break fell through \u2014 `scripts/cq.sh ship` reported PASS on a deploy containing unparseable JavaScript.",
+  "risk": "Any standalone deployed JS can ship syntactically broken and the ship gate will still say PASS. sw.js already did. site.js is the worst-case remainder: it is loaded by every marketing page, so a parse error there kills the site nav, the play button and the tracker bootstrap simultaneously \u2014 and would surface to a tester as a console error plus a dead page, with no pipeline signal at all.",
+  "fix": "Reuse the machinery already present. Add a check that runs the same `node --check` over an explicit list \u2014 website/sw.js and website/assets/{site,config,cq-track,market-data}.js \u2014 and `add('3c', 'Deployed standalone JS parses', ...)`. Roughly 10 lines using the existing `add`/`exists` helpers at verify.js:33-35. Deliberately list the files rather than globbing, so the vendored lightweight-charts bundle is not re-parsed on every ship.",
+  "maintainabilityCost": "Near zero: adds well under a second to `cq.sh ship`, touches no game code, and needs editing only when a new standalone JS file is added to the deploy \u2014 which is rare (five files today).",
+  "effort": "S",
+  "area": "CONSOLE OUTPUT",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "The only console-error gate (check #3b) is permanently inert and reports SKIP, which reads as a pass",
+  "severity": "Low",
+  "timing": "OPTIONAL_LONG_TERM",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/scripts/verify.js",
+  "line": "330",
+  "evidence": "\"try { puppeteer = require('puppeteer'); } catch { add('3b', 'Headless boot (console errors)', 'SKIP', 'puppeteer not installed \u2014 `npm i -D puppeteer` to enable; syntax (3a) is the proxy'); return; }\". Confirmed inert: there is no node_modules/puppeteer and no package.json in the repo at all, so this branch is always taken. Separately, even if installed it could not have caught the sw.js defect, because verify.js:341 loads over file:// \u2014 \"await page.goto('file://' + path.join(ROOT, SRC) + '?fresh=1', ...)\" \u2014 and service workers cannot register on a file:// origin.",
+  "risk": "The pipeline's only defence against console errors has never run. Its SKIP status sits alongside PASS rows in the ship output and is easy to read as \"nothing to see here\", which is how a deployed parse failure survived to build 334.",
+  "fix": "Two honest options, and I do not recommend the heavy one. (a) Cheap and sufficient: leave 3b alone and take finding #2 instead \u2014 static `node --check` over the standalone files would have caught the real defect for free. (b) Thorough: add a package.json with puppeteer as a devDependency and point 3b at http://localhost over a static server rooted at website/ so SW registration is genuinely exercised. TRADEOFF, stated plainly: (b) adds ~150 MB to the dev tree, adds several seconds and a browser launch to every `cq.sh ship`, and introduces the first npm dependency to a project that today has none. For a 10-20-person closed beta that is a poor trade against a two-line static check. If (b) is declined, at minimum reword the SKIP detail so it does not read as reassurance.",
+  "maintainabilityCost": "Option (a): none. Option (b): real \u2014 it makes `ship` slower and adds a dependency tree and a lockfile to a currently dependency-free repo, which is a direct hit to the rapid loop the founder wants preserved.",
+  "effort": "M",
+  "area": "CONSOLE OUTPUT",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "No gate keeps console output at its current near-zero level \u2014 the discipline is cultural, not enforced",
+  "severity": "Low",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/chart-quest.html",
+  "line": "1687",
+  "evidence": "The full inventory is 11 statements, 100% console.warn, in one file. The 9 failure-path ones are all shaped identically \u2014 chart-quest.html:2447 \"} catch (e) { try { console.warn('[HomeMarket] ceremony failed \u2192 entering game', e); } catch (_) {} }\", :2466 \"console.warn('[Journey] failed \u2192 chart selection', e)\", :2549 \"console.warn('[hmc] launch failed', e)\", :4291 \"console.warn('[HomeMarketCeremony] onDone threw',e)\", :4333 \"console.warn('[HomeMarketCeremony] start failed \u2192 skipping to game',e)\", :13609 \"console.warn('[outro] playback refused:', src)\", :23127 and :23129 and :23763 for BlockchainJourney. Every one is a last-resort diagnostic on a path that has already fallen back gracefully. The 2 gated ones are :1687 \"if (DEV_ALWAYS_FRESH) { try { console.warn('\u26a0\ufe0f ChartQuest DEV_ALWAYS_FRESH is ON \u2014 local progress wiped for a cold-open. SET false before beta.'); } catch (e) {} }\" \u2014 dead code, since :1639 reads \"const DEV_ALWAYS_FRESH = false;\" \u2014 and :16234 \"if (_viol.length && _REACH_DEBUG) console.warn('[CQREACH] healed', _viol);\", gated by :1649 on the ?reach query flag. Nothing in the pipeline prevents the next session adding twenty console.log calls.",
+  "risk": "Low today and I want to be clear about that: the volume is immaterial, a healthy run prints nothing, and the leak value is nil because the unminified 1.87 MB source with all its comments is served in plaintext anyway. The only real exposure is drift \u2014 a future debugging session leaving console.log statements that dump save state, trade internals or player IDs into a tester's console, with no gate to catch it.",
+  "fix": "Do NOT add a strip step, and do NOT re-enable build.js:44 \"disableConsoleOutput: true\" \u2014 that is a new build stage (build.js also sets debugProtection/debugProtectionInterval at :41-43, which actively fights devtools) and it would trade the readable dev source for protection that the plaintext deploy already forfeits. Instead add one verify.js check in the style of #3a: FAIL if chart-quest.html contains `console.log|info|debug|table|trace|dir`, while explicitly ALLOWING `console.warn` and `console.error`. That bans the noisy verbs from the canonical file, keeps every existing warn, and costs nothing at runtime. If a future feature genuinely needs verbose logging, follow the house pattern already in the file \u2014 a query-flag constant like `_REACH_DEBUG` (chart-quest.html:1649) guarding it, which the gate would still permit under console.warn. Separately, delete the dead :1687 warn and its `if (DEV_ALWAYS_FRESH)` wrapper, which can never execute.",
+  "maintainabilityCost": "Very low, but non-zero and worth naming: a developer mid-debug who reaches for console.log will hit a FAIL on ship. Mitigate by having the failure message name the two allowed verbs, so the fix is a one-word edit rather than a hunt through verify.js. Everything else about the dev loop is untouched.",
+  "effort": "S",
+  "area": "CONSOLE OUTPUT",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Internal working doc website/assets/SCREENSHOTS.md deploys, is crawlable, and admits the landing screenshots are stale placeholders",
+  "severity": "Medium",
+  "timing": "QUICK_WIN",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/assets/SCREENSHOTS.md",
+  "line": "1-34",
+  "evidence": "Tracked under website/, therefore live at https://playchartquest.com/assets/SCREENSHOTS.md. It is the ONLY .md in the deploy (extension census of the 90 tracked files: 47 png, 14 webp, 9 html, 8 jpg, 6 js, 1 each of xml/webmanifest/txt/mp4/md/css). Line 3-4: `The landing page (website/index.html) uses these files as **placeholders**. They're real gameplay from an earlier build.` Line 28-30: `I'll overwrite website/assets/shot-*.png, re-verify in the browser, and regenerate your review-folder screenshots.` website/robots.txt does not exclude it \u2014 it says `User-agent: *` / `Allow: /` and only disallows /game, /game.html and /offline.html.",
+  "risk": "A public URL, reachable by crawlers and by anyone who guesses or scrapes it, that (a) is written in internal first-person production voice ('hand them to me \u2014 I'll drop each into the same filename'), (b) discloses that the marketing screenshots are placeholders from an old build, (c) names the internal source-tree path website/index.html and an internal 'review folder', and (d) is stale on its own terms \u2014 the seven shot-*.png files it describes are no longer referenced by index.html at all, so the doc documents a page that no longer exists. Low technical impact; real credibility impact for a product about to be shown to invited testers and, later, press.",
+  "fix": "Delete website/assets/SCREENSHOTS.md (keep the copy outside the deploy dir if it is still useful \u2014 e.g. move it to docs/). Delete the seven website/assets/shot-*.png it references at the same time; they are dead (see the aggregate dead-asset finding). Neither is produced by cq.sh, so nothing will restore them.",
+  "maintainabilityCost": "None. Neither file is generated or copied by scripts/cq.sh, so a plain delete is permanent and the dev loop is untouched.",
+  "effort": "S",
+  "area": "Deployed assets & repository artifacts (Cloudflare Pages output dir = website/, tracked files only)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "1.87 MB website/logo.png is dead but self-healing \u2014 cq.sh restores it twice over, once hardcoded and once from a code COMMENT",
+  "severity": "Medium",
+  "timing": "QUICK_WIN",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/scripts/cq.sh",
+  "line": "42-43",
+  "evidence": "The only occurrence of the string in any deployed file is a comment \u2014 website/game.html:1240 `which waits for every subresource. It used to be logo.png \u2014 1.78 MB of 1254x1254 PNG`. The real markup uses the replacement: game.html:1245-1246 `<source srcset=\"logo-512.webp\" type=\"image/webp\">` / `<img src=\"logo-512.jpg\" ...>` (repeated at 1603-1604). Yet cq.sh:43 reads `for f in $media logo.png icon-192.png; do [ -f \"$f\" ] && cp -f \"$f\" website/ 2>/dev/null || true; done` \u2014 logo.png is hardcoded. AND cq.sh:42's auto-discovery independently finds it: running that exact grep over chart-quest.html yields a list containing `logo.png` (alongside spurious tokens `B.png`, `walk.png`, `trend-crab.webp`), because the regex matches the prose in the line-1240 comment and `grep -vE '/'` lets the slash-free token through. website/logo.png is 1,871,495 bytes.",
+  "risk": "1.87 MB \u2014 8% of the whole 22.34 MB deploy \u2014 of a file no page loads, permanently re-added by the ship pipeline. Anyone who deletes it from website/ will find it silently back after the next `scripts/cq.sh ship`, which makes the cleanup look done while the byte weight stays. The same comment-scraping bug means any future asset name mentioned in prose gets copied into the deploy, so this recurs. (The naive check is the trap here: a plain `grep -rl logo.png website/` reports the file as REFERENCED.)",
+  "fix": "Two edits, both needed. (1) Remove `logo.png` from the hardcoded list on cq.sh:43. (2) Stop the auto-discovery matching prose \u2014 restrict cq.sh:42 to tokens that appear inside an attribute or string, e.g. add `| grep -oE \"(src|href|srcset)=[\\\"']([A-Za-z0-9][A-Za-z0-9._-]*\\.(png|jpg|...))\"` style extraction, or at minimum strip comment lines first. Then delete website/logo.png (and, if it is also unused at root, the tracked root copy). Verify by running `scripts/cq.sh site` and confirming website/logo.png does not reappear.",
+  "maintainabilityCost": "Low but real: cq.sh:36 documents the auto-discovery as deliberate \u2014 'auto-discovered so a NEW asset is never missed'. Tightening the regex slightly raises the chance a genuinely new top-level asset is missed. Mitigate by keeping the discovery but printing what it copied, so a wrong result is visible at ship time rather than silent. Do not remove the discovery outright.",
+  "effort": "S",
+  "area": "Deployed assets & repository artifacts (Cloudflare Pages output dir = website/, tracked files only)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "2.85 MB (12.7%) of the 22.34 MB deploy is dead: superseded logos, orphaned finn sprites, and screenshots no page references",
+  "severity": "Medium",
+  "timing": "QUICK_WIN",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/assets/chartquest-logo.png",
+  "line": "n/a (asset inventory)",
+  "evidence": "Deploy total across the 90 tracked files under website/ = 23,426,590 bytes. Verified-dead set (each checked against every deployed .html/.js/.css/.webmanifest/.xml AND against every string-built path in game.html): website/logo.png 1,871,495 (comment only); website/assets/chartquest-logo.png 346,613 (zero hits anywhere); website/assets/shot-{hud,level1,momentum,predict,short,structure,terrain}.png 315,721 total (hits only in SCREENSHOTS.md); website/assets/finn-{run,jump,dazed,roll}.png 243,910 (zero hits \u2014 index.html:1320,1404 use finn-boost.png and :1446 uses finn-hero.png, and the only `assets/finn-` matches in site.js:15 and index.html:114 are both comments, so nothing builds these names dynamically); website/bosses/boss-0.webp 193,424; website/icon-512.png 11,431 (root-level icon-192.png is used by courses.html:15-16, bosses.html:15-16 and play.html:125, but nothing references root icon-512.png \u2014 the PWA uses assets/pwa/icon-512.png); website/assets/SCREENSHOTS.md 2,544. Sum = 2,985,138 bytes.",
+  "risk": "Modest: bandwidth and Cloudflare build weight, not exposure. The material part is the confusion cost \u2014 assets/finn-*.png duplicate website/finn/*.png byte-for-byte (finn-run.png and finn/run.png are both 85,177 bytes; finn-dazed.png and finn/dazed-after-fall.png both 52,428; finn-jump/jump.png both 60,667; finn-roll/shell-fall-roll.png both 45,638), so a future edit can easily land on the dead copy and appear to do nothing. Memory already records this exact class of bug ('old procedural turtle' fallback from a missing sprite). chartquest-logo.png is 347 KB of the stale 'Shell'-era brand the founder has been retiring since build 328.",
+  "fix": "Delete, in one commit: website/logo.png (after the cq.sh fix above, or it returns), website/assets/chartquest-logo.png, website/assets/shot-*.png (7), website/assets/finn-{run,jump,dazed,roll}.png, website/bosses/boss-0.webp, website/icon-512.png, website/assets/SCREENSHOTS.md. Do NOT touch website/bosses/boss-1..11.webp (built at game.html:12822 `return BOSS_PORTRAIT_SRC[level] || (BOSS_IMG_DIR + 'boss-' + level + '.' + BOSS_IMG_EXT)`), assets/pwa/* (manifest.webmanifest), assets/{BATTLE,EXPLORE,TRADE}.jpg (manifest screenshots + index.html), assets/og-cover.jpg (index.html:86-95 og:image), assets/chartquest-poster.jpg (bosses.html:21, courses.html:21, sw.js precache), assets/hero-key-art.jpg (index.html:1229), or assets/finn-{boost,hero}.png. Only assets/finn-{run,jump,dazed,roll}.png and shot-*.png in that directory are dead.",
+  "maintainabilityCost": "None. None of these files is generated or copied by cq.sh except logo.png (covered by the preceding finding), so the deletions are permanent and the dev loop is unchanged.",
+  "effort": "S",
+  "area": "Deployed assets & repository artifacts (Cloudflare Pages output dir = website/, tracked files only)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "cq.sh `site` only ever copies, never prunes \u2014 website/ accumulates stale files forever, and boss-0.webp proves it",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/scripts/cq.sh",
+  "line": "38-43",
+  "evidence": "cq.sh:38-40 `mkdir -p website/finn website/bosses` / `cp -f finn/*.png    website/finn/` / `cp -f bosses/*.webp website/bosses/` \u2014 plain cp, no rsync --delete, no clean step. Proof: website/bosses/boss-0.webp exists (193,424 bytes) but there is NO boss-0.webp in the source directory \u2014 `git ls-files bosses/` lists boss-1.webp through boss-11.webp and nothing else. Its MD5 is identical to boss-1.webp (both de0b3605fc79746ea7d357991a3b25d3). game.html contains zero occurrences of the string `boss-0` (grep -c = 0), and the roster comment at game.html:13437 records why: `RENUMBERED ON MERGE (build 321): the ceremony branch forked before build 300 renumbered the roster, so the Gambler was level 0 there. On main he is level 1`.",
+  "risk": "Every renamed, renumbered or retired asset silently stays in production forever. boss-0.webp is a 193 KB fossil of the pre-build-300 numbering that has survived at least 34 builds. As the boss roster and sprite set churn, the deploy grows monotonically with files that no code references, and each one is an invitation for a future reader to conclude the wrong asset is live. It also means the dead-asset cleanup in the previous finding has to be repeated periodically rather than staying fixed.",
+  "fix": "Change cq.sh:39-40 from `cp -f` to `rsync -a --delete finn/ website/finn/` and `rsync -a --delete --include='*.webp' --include='*/' --exclude='*' bosses/ website/bosses/` (rsync is present on macOS by default). Keep the existing safety guard at cq.sh:45 \u2014 `[ -f website/finn/run.png ] || { echo '\u2717 site: website/finn/run.png missing ...'; exit 1; }` \u2014 which already protects the one failure mode --delete could cause. Delete website/bosses/boss-0.webp in the same commit.",
+  "maintainabilityCost": "Low, but --delete deserves respect: if the boss-cinematics fix (Option B above) copies subdirectories into website/bosses/, the rsync filter must include them or --delete will remove them on the next ship. Land the cinematics fix first, then the rsync change, and run `scripts/cq.sh site` once and diff website/ before committing.",
+  "effort": "S",
+  "area": "Deployed assets & repository artifacts (Cloudflare Pages output dir = website/, tracked files only)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "~51 MB of stray ZIP archives and a 69 MB gitignored video tree are tracked in git \u2014 they never deploy, but they are in every clone",
+  "severity": "Medium",
+  "timing": "BEFORE_FULL_RELEASE",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/archive/misc/zixWYTP8",
+  "line": "n/a (tracked binary)",
+  "evidence": "`git ls-files archive/misc/` returns four entries: `._delete_test.txt` (a macOS AppleDouble resource-fork artifact), `website.zip` (764,947 bytes), `zieVGeSX` (25,216,557 bytes) and `zixWYTP8` (25,216,599 bytes). `file` identifies both extensionless blobs as `Zip archive data, at least v2.0 to extract` \u2014 50.4 MB of unnamed ZIPs with no indication of contents. Separately, .gitignore line `_video-originals/` is ineffective because the files were tracked before it was added: `git ls-files _video-originals/` returns five .mp4s totalling ~69 MB, including `Market-maker-cinematic_ORIGINAL_19mb.mp4` (19,836,136 bytes). Also tracked: `docs/previews/chart-quest.min.html` (2,221,459 bytes \u2014 an obfuscated build artifact, matching netlify.toml's disabled-obfuscation note) and a stale parallel `deploy/` tree (deploy/chart-quest.html 675,735 bytes from Jun 17, deploy/logo.png, deploy/manifest.json, deploy/sw.js). Whole-repo tracked total is 370,894,878 bytes (353.7 MB) against a 721 MB .git directory. Note the good news: deploy.zip (137,496,918 bytes) sits in archive/misc/ on disk but IS correctly gitignored and untracked.",
+  "risk": "None of this reaches playchartquest.com \u2014 Cloudflare's output dir is website/, so only the 90 tracked files there deploy. The exposure is at the repository layer: anyone with clone access (and everyone, if shelltrader/shell-trade is or ever becomes public) gets two unlabelled 25 MB ZIPs whose contents nobody has audited, a 764 KB website.zip snapshot, the full-resolution video masters the .gitignore was written to keep out, and a stale deploy/ tree containing an older chart-quest.html \u2014 a second, divergent copy of the game source that no gate checks. The 353.7 MB tracked / 721 MB .git also makes clones and CI checkouts slow.",
+  "fix": "Sequence this deliberately. First, inspect archive/misc/zieVGeSX and zixWYTP8 (`unzip -l`) before doing anything \u2014 they are unidentified and may hold something that matters. Then `git rm --cached` archive/misc/* , _video-originals/*, docs/previews/chart-quest.min.html and deploy/*, keeping the files on disk, and add `archive/`, `deploy/` and `docs/previews/chart-quest.min.html` to .gitignore (`_video-originals/` is already there and will start working once untracked). This shrinks future clones but does NOT purge history \u2014 a history rewrite (git-filter-repo) is a separate, disruptive decision and is not justified by anything found here unless the repo is public. Confirm the repo's visibility on GitHub first; that single fact decides how urgent this is.",
+  "maintainabilityCost": "Low. None of these paths is read by scripts/cq.sh, scripts/verify.js or the Cloudflare build, so untracking them cannot affect the dev loop or a deploy. The one caution is deploy/ \u2014 confirm no script or runbook still reads it before untracking (a grep of scripts/ and docs/operations/ will settle it in a minute).",
+  "effort": "M",
+  "area": "Deployed assets & repository artifacts (Cloudflare Pages output dir = website/, tracked files only)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Market-maker-cinematic.mp4 is 52% of the deploy and is tracked twice \u2014 24.5 MB in git for one 11.7 MB asset",
+  "severity": "Low",
+  "timing": "OPTIONAL_LONG_TERM",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/Market-maker-cinematic.mp4",
+  "line": "n/a (asset)",
+  "evidence": "website/Market-maker-cinematic.mp4 is 12,243,957 bytes \u2014 52.3% of the 23,426,590-byte deploy, and larger than website/game.html (1,913,088) plus all twelve boss portraits (2,983,196) combined. An identical copy is tracked at repo root (`Market-maker-cinematic.mp4`, same 12,243,957 bytes) because chart-quest.html loads it relatively in local dev; cq.sh:42-43 copies it into website/ on every ship. It is genuinely used \u2014 game.html:20964 `v.setAttribute('src', 'Market-maker-cinematic.mp4');` with a poster preloaded at game.html:71 `<link rel=\"preload\" as=\"image\" href=\"mm-poster.jpg\" fetchpriority=\"high\">`. The 19 MB and 18 MB masters it was encoded from are in _video-originals/ (tracked \u2014 see previous finding).",
+  "risk": "Low and mostly a cost, not a threat: one asset dominates deploy size and every Cloudflare build. For testers on phones it is a 11.7 MB download for a single cinematic, which matters given the memory note that traversal is already a funnel leak before the trade. The double-tracking is a git-weight annoyance, not a correctness problem.",
+  "fix": "Do not remove it \u2014 it is live content. If deploy weight becomes a concern, re-encode at a lower bitrate or serve a shorter loop, and measure whether the cinematic still lands before spending effort. The root/website duplication is inherent to the self-contained-copy design documented at cq.sh:33-36 ('website/game.html is a SELF-CONTAINED copy ... the marketing site deploys separately and can't reach the root game') and should be left alone.",
+  "maintainabilityCost": "Deliberately none \u2014 recommending no change. Deduplicating root and website/ copies would mean breaking the self-contained-copy invariant that makes `cq.sh site` safe, which is a worse trade than 12 MB of git weight.",
+  "effort": "S",
+  "area": "Deployed assets & repository artifacts (Cloudflare Pages output dir = website/, tracked files only)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "access-control-allow-origin: * on every response lets any site read the full game source in-browser",
+  "severity": "Medium",
+  "timing": "QUICK_WIN",
+  "file": "website/game.html",
+  "line": "1 (whole-file, via platform default header)",
+  "evidence": "Established production header set is `x-content-type-options`, `referrer-policy` and `access-control-allow-origin: *` only. No repo file sets it \u2014 grep for `Access-Control-Allow-Origin` across website/ returns nothing \u2014 so it is a Cloudflare Pages platform default applied to all 1.87 MB of readable, commented source at /game.html.",
+  "risk": "Any third-party page can `fetch('https://playchartquest.com/game.html').then(r=>r.text())` and read, re-host, diff or mine the entire commented source from a visitor's browser, with no server of their own. It does not stop a determined copier (curl works regardless), but it removes the last speed bump for drive-by, in-page scraping and for tooling that re-serves the source under another brand \u2014 which is exactly the 'casual copying' tier the founder asked about. Nothing on the site needs it: no cross-origin fetch exists, iframes do not require CORS, and the same-origin `new Audio()` with `a.crossOrigin = 'anonymous'` (game.html:23419) still passes the CORS check because same-origin responses always do.",
+  "fix": "Add `! Access-Control-Allow-Origin` inside the `/*` block of website/_headers (Cloudflare Pages' `_headers` syntax for removing a header). Ship it LAST, as its own commit, and verify with `curl -sI https://playchartquest.com/game | grep -i access-control`. If it survives, Cloudflare is stamping it downstream of `_headers` and the removal must be done with a dashboard Transform Rule instead. Deployment risk if it silently over-applies: essentially zero, because nothing cross-origin exists to break \u2014 but confirm the Supabase edge functions still accept the beta telemetry, since those set their OWN CORS headers on their own responses and are unaffected by this change.",
+  "maintainabilityCost": "None today. One future gotcha: if the marketing site is ever split to a different domain from the game, or a partner is given an embed, this line must be revisited. Worth a one-line comment in _headers saying so.",
+  "effort": "S",
+  "area": "Deployment, headers, caching, compression (Cloudflare Pages, output dir `website/`)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "No 404.html \u2014 every missing path returns index.html with HTTP 200, masking real deploy gaps",
+  "severity": "Medium",
+  "timing": "BEFORE_FULL_RELEASE",
+  "file": "website/robots.txt",
+  "line": "3-5",
+  "evidence": "The file's own header comment documents the observed behaviour: `# This file must exist. Cloudflare Pages' not-found handler returns index.html with` / `# a 200 for any missing path, so without a real robots.txt crawlers were being served` / `# the HTML landing page as though it were robots.txt.` There is no `website/404.html` \u2014 `git ls-files website` lists 21 root-level files and none is 404.html.",
+  "risk": "Compounding rather than standalone. It is the reason the missing boss videos (finding 5) fail as a 200 HTML body rather than a clean 404, and it means any future asset that fails to sync will do so silently. It also lets search engines index unlimited junk URLs as duplicate copies of the landing page, and it makes path-probing uninformative in the wrong direction: an attacker cannot enumerate, but neither can the founder detect a broken deploy by curling for it. Note this behaviour was already discovered once, the hard way, via robots.txt itself being served as HTML.",
+  "fix": "Add a minimal `website/404.html` styled like offline.html (which already exists at 1,964 bytes and is the right template). Cloudflare Pages serves a 404.html at the output root with a real 404 status automatically \u2014 no config needed. Then re-check the boss video paths: with a real 404 in place, `curl -sI https://playchartquest.com/bosses/intros/boss-1.mp4` becomes a reliable one-line deploy smoke test. Deployment risk: near zero \u2014 adding 404.html cannot affect any path that currently resolves.",
+  "maintainabilityCost": "None. One static file, and it turns a whole class of silent deploy failures into curl-detectable ones.",
+  "effort": "S",
+  "area": "Deployment, headers, caching, compression (Cloudflare Pages, output dir `website/`)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Cache strategy is undeclared and about to become two-layered the moment sw.js is fixed",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "website/sw.js",
+  "line": "10-19",
+  "evidence": "`/* BUMP THIS IN THE SAME COMMIT AS ANY CHANGE TO A PRECACHED OR RUNTIME-CACHED ASSET.` / `   Static assets below are cache-first with NO revalidation, so a returning tester keeps the` / `   old copy until this string changes.` (sw.js:10-12), `const CACHE = 'chartquest-site-v12';` (sw.js:19). The cache-first branch is sw.js:76-85: `caches.match(req).then(hit => hit || fetch(req)...)`. No `Cache-Control` is set anywhere in the repo for the deployed site \u2014 no website/_headers exists. Every asset is unhashed: `./assets/site.css`, `./assets/site.js`, `./assets/config.js`, `./assets/cq-track.js` (sw.js:24) keep the same filename across every build.",
+  "risk": "Two failure modes. (1) TODAY: HTTP caching is entirely at Cloudflare's default with nothing pinning it, so a platform default change \u2014 or anyone adding a well-meaning `max-age=31536000` to the unhashed asset dirs \u2014 would pin testers to a stale build with no cache-busting mechanism available, because the filenames never change. (2) THE DAY sw.js IS FIXED (finding 1): the cache-first layer switches on for the first time and site.js/config.js/cq-track.js become pinned until `CACHE` is bumped by hand. config.js is the file that gates courses.html and bosses.html off for the beta (`showCoursesPage: false`, config.js:40) and cq-track.js is the telemetry client \u2014 a missed CACHE bump means returning testers keep the old gates and the old tracker, and the funnel data quietly goes stale.",
+  "fix": "Keep ONE cache layer. At the HTTP layer, pin Cloudflare's current (correct) behaviour explicitly in website/_headers: `Cache-Control: public, max-age=0, must-revalidate` in the `/*` block, plus `Cache-Control: no-cache, no-store, must-revalidate` on `/sw.js` \u2014 the SW is the vehicle for every other fix and must never be held. Revalidation against Cloudflare's edge is a cheap 304, so the cost is one conditional request per asset, not a re-download. Do NOT add long max-age to /assets/, /finn/ or /bosses/ while filenames are unhashed; that is a second, uncoordinated pinning layer and it is how 'I deployed but my phone shows the old version' happens (a bug game.html:24145-24147 already documents fighting). Leave the SW's version-keyed cache as the only long-lived cache. One parser trap when writing the rules: Cloudflare 308s /play.html -> /play, so the 200 is issued for the CLEAN path \u2014 a rule scoped to `/*.html` would never match the page anyone actually loads. Scope cache rules to `/*` or list both forms.",
+  "maintainabilityCost": "Zero added ritual \u2014 `must-revalidate` at HTTP is what already happens, and the SW CACHE bump is already the documented per-release step. The honest tradeoff of NOT adding long max-age: repeat visitors issue a conditional request per asset instead of hitting local cache silently. For a 10-20 tester beta with rapid builds that is unambiguously the right trade; revisit only if hashed filenames are ever introduced (which would require the build step that deliberately does not exist).",
+  "effort": "S",
+  "area": "Deployment, headers, caching, compression (Cloudflare Pages, output dir `website/`)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "1.78 MB dead logo.png plus ~647 KB of unreferenced assets deploy on every push",
+  "severity": "Low",
+  "timing": "QUICK_WIN",
+  "file": "scripts/cq.sh",
+  "line": "43",
+  "evidence": "`for f in $media logo.png icon-192.png; do [ -f \"$f\" ] && cp -f \"$f\" website/ 2>/dev/null || true; done` \u2014 logo.png is hardcoded, outside the auto-discovery on cq.sh:42. `ls -la website/logo.png` -> 1,871,495 bytes. The only surviving reference in any deployed file is a comment explaining its removal: game.html:1240 `which waits for every subresource. It used to be logo.png \u2014 1.78 MB of 1254x1254 PNG`. No `<img>`, CSS `url()`, manifest entry or preload references it. Alongside it: assets/shot-*.png (7 files, ~316 KB), assets/chartquest-logo.png (346 KB), assets/finn-dazed|roll|jump|run.png \u2014 while the game loads website/finn/*.",
+  "risk": "Low and mostly hygiene. It does not slow first paint (nothing requests logo.png), but it is ~2.4 MB of dead weight in every clone, every deploy, and Cloudflare Pages' per-deployment file budget; and it is incompressible, so none of the automatic Brotli/gzip helps. The assets/shot-*.png files are also stale gameplay from an earlier build \u2014 website/assets/SCREENSHOTS.md:3-4 says so explicitly (`uses these files as **placeholders**. They're real gameplay from an earlier build`) \u2014 so they are both dead weight and a source of publicly-fetchable outdated screenshots.",
+  "fix": "Drop `logo.png` from the cq.sh:43 hardcoded list and delete website/logo.png; the auto-discovery on cq.sh:42 will keep any genuinely-referenced top-level media in sync on its own. Separately delete website/assets/shot-*.png, website/assets/chartquest-logo.png and website/assets/finn-dazed|roll|jump|run.png. Before deleting: grep the four HTML pages plus site.css for each filename \u2014 logo-512.webp and logo-512.jpg ARE referenced and must stay. Also delete website/assets/SCREENSHOTS.md, which is internal capture direction addressed to the founder and is publicly fetchable today (robots.txt allows all); the X-Robots-Tag rule in the proposed _headers is a stopgap, deletion is the fix.",
+  "maintainabilityCost": "None, and it removes a hardcoded exception from cq.sh that the auto-discovery comment (cq.sh:41, \"auto-discovered so a NEW asset is never missed\") was written to avoid. Confirm nothing external hotlinks /logo.png before deleting \u2014 it is a plausible target for an old social-card or press reference.",
+  "effort": "S",
+  "area": "Deployment, headers, caching, compression (Cloudflare Pages, output dir `website/`)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Compression is correct by default \u2014 the only actionable risk is trying to configure it",
+  "severity": "Low",
+  "timing": "OPTIONAL_LONG_TERM",
+  "file": "website/game.html",
+  "line": "1214, 20964",
+  "evidence": "Nothing in the repo enables, disables or configures compression: no website/_headers, no _routes.json, no wrangler.toml. Cloudflare Pages applies Brotli/gzip automatically by content type. The largest compressible asset is game.html at 1,913,088 bytes of comment-heavy single-file source, which compresses very well. The largest asset overall, Market-maker-cinematic.mp4 at 12,243,957 bytes, is already lazy: game.html:1214 `<video id=\"mmVideo\" muted playsinline preload=\"none\"></video>` with the src attached only at game.html:20964 `v.setAttribute('src', 'Market-maker-cinematic.mp4');`. game.html:71 does preload one image eagerly \u2014 `<link rel=\"preload\" as=\"image\" href=\"mm-poster.jpg\" fetchpriority=\"high\">` (174 KB) \u2014 which is deliberate and fine.",
+  "risk": "None currently. The risk is prospective: a `Content-Encoding` line added to `_headers` in an attempt to 'enable' compression would make Cloudflare label an uncompressed body as compressed and every browser would fail to decode it \u2014 a total site outage from a one-line header edit. Worth stating explicitly because compression is on the review checklist and looks configurable.",
+  "fix": "Do not put `Content-Encoding` in _headers. Confirm the current state once with `curl -sI -H 'Accept-Encoding: br' https://playchartquest.com/game | grep -i content-encoding` and `curl -s -H 'Accept-Encoding: br' https://playchartquest.com/game -o /dev/null -w '%{size_download}\\n'` \u2014 if the second number is a few hundred KB rather than ~1.9 MB, compression is working and there is nothing to do. If it is NOT compressing, the cause would be a content-type mismatch, not a missing config. The only payload work worth doing is finding 9 (delete the dead 2.4 MB), since incompressible bytes are the ones compression cannot help.",
+  "maintainabilityCost": "None \u2014 the recommendation is to change nothing.",
+  "effort": "S",
+  "area": "Deployment, headers, caching, compression (Cloudflare Pages, output dir `website/`)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Migration 0009 was never applied: get_recent_bug_reports and get_dashboard_stats are anon-callable with NO admin guard",
+  "severity": "Critical",
+  "timing": "QUICK_WIN",
+  "file": "automation/migrations/0009_lockdown_switchover.sql",
+  "line": "1, 40-62",
+  "evidence": "The file's own header reads \"-- Chart Quest \u2014 LOCKDOWN SWITCHOVER  \u26a0\ufe0f DO NOT APPLY UNTIL DEPLOYED \u26a0\ufe0f\" and it adds the guard `if not public.is_admin() then raise exception 'Forbidden'` plus `revoke execute on function public.get_recent_bug_reports(integer) from anon;`. Live `list_migrations` returns ...,\"ingest_and_admins\",\"ingest_throttle_retention\",\"closed_beta_analytics_and_survey\" \u2014 no `lockdown_switchover`. Live `pg_get_functiondef` returns `CREATE OR REPLACE FUNCTION public.get_recent_bug_reports(p_limit integer DEFAULT 50) ... SECURITY DEFINER ... select message, status, created_at from public.bug_reports order by created_at desc limit p_limit;` with no is_admin() check, and `aclexplode` shows grantee `anon`. docs/PRODUCTION_READINESS.md:82-88 already names the risk: \"Anyone who loads that URL \u2014 or just calls the RPCs with the anon key baked into the game's public source \u2014 can read your business analytics and every bug report (bug reports contain user-typed text + context = possible PII)\".",
+  "risk": "One curl with the public anon key to /rest/v1/rpc/get_recent_bug_reports with {\"p_limit\":1000000} returns every bug report body verbatim \u2014 free text testers typed, which is exactly where people paste emails, names and screenshots-in-words. get_dashboard_stats returns count(*) from auth.users (your real signup number), total_visits, active_players_24h/7d and avg_player_level. Note dashboard.html is NOT in website/ so it does not deploy \u2014 but that is irrelevant, the RPCs are open to anyone regardless of the page.",
+  "fix": "Apply the two RPC halves of 0009 now (steps 1 and the revokes, lines 17-62). Because dashboard.html is not deployed, there is no client to break \u2014 this is a pure lockdown with zero deploy sequencing. Add explicitly `revoke execute on function public.get_dashboard_stats() from anon, authenticated;` and the same for get_recent_bug_reports(integer) \u2014 revoking from PUBLIC alone does not work here (see finding 2).",
+  "maintainabilityCost": "None. Two SQL statements. The dashboard is not deployed, so nothing regresses; when you later re-enable it, sign in as the founder account (already seeded in `admins`, 0008:52-54) and it works via the is_admin() path.",
+  "effort": "S",
+  "area": "API & Backend Surface (Supabase edge functions, RLS, RPC grants)",
+  "verified": {
+   "real": true,
+   "reason": "I tried to refute it and could not on the facts \u2014 every load-bearing technical claim reproduced exactly. (1) The file text is there verbatim: /Users/owl/Claude/Projects/Shell Trade/automation/migrations/0009_lockdown_switchover.sql:1 \"-- Chart Quest \u2014 LOCKDOWN SWITCHOVER  \u26a0\ufe0f DO NOT APPLY UNTIL DEPLOYED \u26a0\ufe0f\", :47-48 \"if not public.is_admin() then / raise exception 'Forbidden' using errcode = '42501';\", :59-60 \"revoke execute on function public.get_dashboard_stats() from anon; / revoke execute on function public.get_recent_bug_reports(integer) from anon;\". (2) Live list_migrations on ymxppzhczvmiuoncuqqu ends \"...ingest_and_admins, ingest_throttle_retention, closed_beta_analytics_and_survey\" \u2014 no lockdown_switchover, so 0009 is unapplied. (3) Live pg_get_functiondef confirms both RPCs are still the pre-0009 LANGUAGE sql SECURITY DEFINER bodies with NO is_admin() guard, and aclexplode returns anon:EXECUTE for both; has_schema_privilege('anon','public','usage')=true and has_function_privilege('anon', ...,'execute')=true for both, so the PostgREST /rest/v1/rpc path really is open to the public anon key. (4) The fix is deploy-safe: `ls website/` contains no dashboard.html (only dashboard.html and deploy/dashboard.html at repo root, outside the Pages output dir), so nothing deployed calls these RPCs. Where it fails verification is the RISK paragraph and the Critical rating \u2014 see correction.",
+   "correction": "Severity is Critical \u2192 downgrade to MEDIUM (timing QUICK_WIN is correct). The technical hole is real and should be closed, but the stated impact is fiction, not measurement. Live counts: `select count(*) from public.bug_reports` = 1 row, max(length(message)) = 59 chars, and zero rows match '@|http'; `count(*) from auth.users` = 0; `count(*) from public.profiles` = 0. So the actual payload of the curl the finding describes is one 59-character legacy bug-report string \u2014 not \"every bug report body verbatim, free text testers typed... emails, names\". And get_dashboard_stats today returns total_signups=0, players_reached_end=0, active_players_24h=0, active_players_7d=0, avg_player_level=0 \u2014 every field except total_visits=1033 is a zero. The single disclosed business number is a visit counter. Second correction: the finding implies testers are filling bug_reports right now. They are not \u2014 `grep -c bug_reports` over website/game.html, index.html, play.html and survey.html returns 0 in all four, i.e. the deployed build has no bug-report write path at all. Closed-beta free text lands in beta_surveys (1 row) and beta_events (132 rows), and neither RPC reads those tables, so the PII channel the finding is worried about is not the channel that is open. Third correction: maintainabilityCost \"None\" is right for the two RPC halves only, and the finding is correct to scope the apply to lines 17-62 \u2014 but flag loudly that running the WHOLE file also executes sections 2-3, which drop content_events / content_replays / player_mastery anon policies; that happens to be survivable today (website/game.html:6520 already writes via `https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/ingest`, not direct anon inserts), but it is a separate change and must not be smuggled in under \"two SQL statements\". Also note deploy/dashboard.html:1031 calls get_dashboard_stats with the plain anon key and no sign-in, so that local copy will start 403ing after the revoke; the root dashboard.html:779-792 already handles the 403/admin path."
+  }
+ },
+ {
+  "title": "Anon can call destructive maintenance RPCs \u2014 prune_beta_events(0) deletes the entire closed-beta dataset",
+  "severity": "Critical",
+  "timing": "QUICK_WIN",
+  "file": "automation/migrations/0006_retention.sql",
+  "line": "76-79",
+  "evidence": "The migration attempts `revoke execute on function public.prune_content_events(integer) from public; grant execute ... to service_role;` \u2014 and 0010_ingest_throttle_retention.sql:27-28 and 0008_ingest_and_admins.sql:36-37 use the identical pattern. That revoke is a no-op: Supabase's ALTER DEFAULT PRIVILEGES grants EXECUTE directly to the `anon` and `authenticated` roles, not through PUBLIC. Live `aclexplode(p.proacl)` over pg_proc returns grantee `anon` for prune_beta_events, prune_content_events, prune_ingest_throttle, rollup_site_visits AND bump_ingest_throttle. Supabase's own security advisor flags all of them: \"Function `public.prune_beta_events(keep_days integer)` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/prune_beta_events`\". Live definition: `delete from public.beta_events where created_at < now() - (keep_days || ' days')::interval;` with keep_days fully caller-controlled.",
+  "risk": "Three unauthenticated POSTs destroy the beta. prune_beta_events(0) deletes all 132 beta_events (verified count) \u2014 every funnel row the Founder Report is built from, with no soft-delete and no backup on the Free plan. prune_content_events(0) deletes published/rejected content_events (575 rows). rollup_site_visits(0) deletes all 1033 site_visits raw rows. prune_ingest_throttle(0) wipes the rate-limit table, resetting every attacker's throttle bucket to zero on demand \u2014 it defeats the ONLY rate limit protecting beta-ingest. This is irreversible data loss triggerable by anyone who views source, including a curious invited tester.",
+  "fix": "`revoke execute on function public.prune_beta_events(integer), public.prune_content_events(integer), public.prune_ingest_throttle(integer), public.rollup_site_visits(integer), public.bump_ingest_throttle(text, timestamptz) from anon, authenticated;` \u2014 naming the roles, not PUBLIC. service_role bypasses the API and keeps working, so the edge functions and any cron are unaffected. Then re-run get_advisors to confirm the WARNs clear. Audit every future `revoke ... from public` in this repo the same way; it has silently failed three times.",
+  "maintainabilityCost": "None. One SQL statement. bump_ingest_throttle is only ever called by the edge functions (service role), and the prune/rollup functions are ops-only and not yet scheduled (0006:82-89 still commented out).",
+  "effort": "S",
+  "area": "API & Backend Surface (Supabase edge functions, RLS, RPC grants)",
+  "verified": {
+   "real": true,
+   "reason": "Every load-bearing claim verified. 0006_retention.sql:76-79 contains the quoted `revoke ... from public` verbatim, as do 0010:27-28 and 0008:36-37. Live pg_proc ACLs confirm EXECUTE is held by `anon` and `authenticated` on prune_beta_events, prune_content_events, prune_ingest_throttle, rollup_site_visits and bump_ingest_throttle, all SECURITY DEFINER \u2014 so the revoke-from-PUBLIC is indeed a no-op against Supabase's direct role grants. Supabase's own advisor emits the quoted WARN for all five. Live definition of prune_beta_events matches the quote with caller-controlled keep_days. beta_events = 132 and site_visits = 1033 as stated. beta-ingest/index.ts:143 confirms bump_ingest_throttle is that function's only rate limit. Critical/QUICK_WIN is justified: unauthenticated, irreversible destruction of the entire closed-beta dataset via a documented REST path, using the anon key already published in game.html. Two imprecisions require correction (see correction field) \u2014 notably the proposed fix is incomplete and would leave the headline function still exploitable.",
+   "correction": "Two corrections. (1) THE PROPOSED FIX IS INCOMPLETE AND WOULD NOT CLOSE THE HEADLINE HOLE. Live aclexplode shows prune_beta_events (and is_admin) carry EXECUTE for grantee `-` = PUBLIC *in addition to* anon and authenticated: execute_grantees = {-, anon, authenticated, postgres, service_role}. Revoking only `from anon, authenticated` leaves the PUBLIC grant intact, and anon inherits EXECUTE through PUBLIC \u2014 prune_beta_events would remain callable. The revoke must name all three: `revoke execute on function public.prune_beta_events(integer), public.prune_content_events(integer), public.prune_ingest_throttle(integer), public.rollup_site_visits(integer), public.bump_ingest_throttle(text, timestamptz) from public, anon, authenticated;`. (2) The blast-radius numbers are partly overstated. prune_content_events(0) deletes ZERO rows today, not 575: all 575 content_events rows have processed_status = 'new', and the function's guard at 0006_retention.sql:67 (`and processed_status in ('published','rejected')`) matches none of them \u2014 it is a latent, not current, loss. rollup_site_visits(0) does delete all 1033 raw site_visits rows, but it INSERTs the daily aggregate into site_visits_daily first (0006_retention.sql:41-48), so per-day visit totals survive; only per-visit raw detail is lost. The confirmed irreversible loss is prune_beta_events(0) \u2192 all 132 beta_events (the Founder Report's entire source data), plus prune_ingest_throttle(0) \u2192 all 446 ingest_throttle rows, which resets every attacker's rate-limit bucket and defeats beta-ingest's only rate limit (supabase/functions/beta-ingest/index.ts:143-144). That alone sustains Critical / QUICK_WIN. The maintainabilityCost claim of \"None\" is accurate: service_role retains its direct grant and bypasses PostgREST, so both edge functions and any future cron are unaffected."
+  }
+ },
+ {
+  "title": "beta-ingest origin allowlist uses prefix matching \u2014 https://playchartquest.com.evil.com is accepted and echoed back",
+  "severity": "High",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "supabase/functions/beta-ingest/index.ts",
+  "line": "110, 117",
+  "evidence": "Both the repo copy and the DEPLOYED v3 (fetched via get_edge_function) contain `const isAllowed = ALLOWED_ORIGINS.some((o) => origin.startsWith(o));` and then `'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0]`. The identical bug was found and fixed in the two sibling functions \u2014 deployed `ingest` v3 and `update-progress` v5 both now read `const ALLOWED_ORIGINS = new Set([...])` with the comment \"It also used a prefix match, which would have accepted https://playchartquest.com.evil.com. Both fixed here.\" beta-ingest, the newest function and the one the closed beta actually depends on, never got that fix. Note the prefix list also includes bare `'http://localhost'`, which matches `http://localhost.attacker.com`.",
+  "risk": "Any attacker-registered hostname beginning with the allowed prefix passes the check AND gets its own origin echoed in Access-Control-Allow-Origin, so a hostile page can write to beta_events/beta_surveys cross-origin from a real browser with real victim IPs. Caveat worth stating plainly: an Origin check is only ever a browser control \u2014 a script can send any Origin header it likes, so this allowlist stops nothing determined either way. The prefix bug matters because it converts a browser-enforced boundary into no boundary at all.",
+  "fix": "Port the exact-match block from the deployed `ingest` v3 verbatim into beta-ingest: `new Set([...])` plus `PREVIEW_ORIGIN = /^https:\\\\/\\\\/[a-z0-9-]+\\\\.chartquest\\\\.pages\\\\.dev$/` and `LOCAL_ORIGIN = /^http:\\\\/\\\\/(?:localhost|127\\\\.0\\\\.0\\\\.1)(?::\\\\d+)?$/`. Same 6 lines, already proven in production on two functions. Re-test from the LAN QR URL after deploying \u2014 per the edge-fn-origin-allowlist lesson, curl gives a false PASS on CORS.",
+  "maintainabilityCost": "None. Copy an existing, deployed, working block. It preserves localhost with any port, which is what the dev loop needs.",
+  "effort": "S",
+  "area": "API & Backend Surface (Supabase edge functions, RLS, RPC grants)",
+  "verified": {
+   "real": true,
+   "reason": "Every cited fact verified. beta-ingest/index.ts:110 and :117 contain the quoted prefix-match and origin-echo verbatim, and the DEPLOYED beta-ingest v3 (fetched via get_edge_function) contains the identical code, so this is a live defect and not a stale-repo artifact. The supporting claim is also true: deployed ingest v3 and update-progress v5 both carry the exact-match Set plus the PREVIEW_ORIGIN/LOCAL_ORIGIN regexes the fix proposes, with a comment explicitly naming this attack (\"It also used a prefix match, which would have accepted https://playchartquest.com.evil.com.\"). The bare 'http://localhost' entry does match http://localhost.attacker.com. Not mitigated elsewhere. The fix cannot break the same-origin iframe or the byte-identical mirror gate (edge functions live entirely outside chart-quest.html), LOCAL_ORIGIN preserves localhost on any port for the dev loop, and LAN IPs are already rejected by the current prefix list so no new regression is introduced. Maintainability cost is genuinely near-zero. Real, but the severity and risk framing need correction.",
+   "correction": "Downgrade severity from High to Low (Medium at the very outside); retag as QUICK_WIN rather than BEFORE_PUBLIC_BETA-critical. Two parts of the risk statement overstate the case. (1) \"real victim IPs\" is wrong: shapeEvent persists no IP column \u2014 the IP is read only for the bump_ingest_throttle RPC and never stored, so the browser path yields at most mild per-IP rate-limit spreading. (2) The finding's own caveat defeats its severity: because any script can spoof the Origin header, the prefix bug confers ZERO incremental capability on a determined attacker, who would simply curl with Origin: https://playchartquest.com rather than register playchartquest.com.evil.com and lure victims. There is also no CSRF privilege gain, because nothing in beta-ingest derives authority from the caller \u2014 it writes with the service role and shapes rows purely from the request body, using no cookie or JWT identity. The realistic worst case is whitelisted (EVENT_NAMES), field-clamped, MAX_ROWS=60, 120/min/IP rate-limited junk rows polluting beta_events/beta_surveys, i.e. a dirty Founder Report for a 10-20 person closed beta \u2014 a data-quality problem, not a breach; the function is write-only with no read path. The defect is still worth fixing, but the real justification is consistency and hygiene, not attack surface: two of three sibling functions were deliberately hardened with a comment naming this exact bug, and the third was missed, so a future maintainer will reasonably assume all three are hardened. Two minor attribution notes: the quoted phrase \"Both fixed here.\" appears in update-progress v5, not ingest v3 (ingest's comment ends at \"...playchartquest.com.evil.com.\"); and the beta-ingest repo header still reads \"DEPLOYED: version 2\" while production is v3, so the repo copy is stale in other respects too and should be re-synced from deployed v3 before editing."
+  }
+ },
+ {
+  "title": "submit_bug_report is anonymous, unrate-limited and unbounded; bug_reports also accepts direct anon INSERT with a forgeable user_id",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "website/game.html",
+  "line": "2105",
+  "evidence": "Client: `await _supa.rpc('submit_bug_report', { p_message: msg, p_context: {...} })`. Live definition: `CREATE OR REPLACE FUNCTION public.submit_bug_report(p_message text, p_context jsonb DEFAULT '{}'::jsonb) ... SECURITY DEFINER ... insert into public.bug_reports (user_id, message, context) values (auth.uid(), p_message, p_context);` \u2014 no length cap, no throttle, no auth requirement, and `aclexplode` confirms grantee `anon`. Separately, live pg_policies shows `bug_reports | \"anyone can submit a bug report\" | INSERT | {anon,authenticated} | with_check true`, so the RPC can be skipped entirely and rows POSTed straight to /rest/v1/bug_reports with an arbitrary user_id column.",
+  "risk": "Unbounded text insertion on a Free-tier database by anyone with the key, plus the ability to attribute a fabricated report to any real user_id. Combined with finding 1 (the reports are also publicly readable) this becomes a public, writable, readable message board sitting inside your production DB. Table currently holds 1 row, so nothing is polluted yet.",
+  "fix": "Inside submit_bug_report add `p_message := left(p_message, 2000);`, reject empty, and gate on a bump_ingest_throttle-style counter (the atomic-upsert helper already exists, 0008:19-34). Drop the redundant `\"anyone can submit a bug report\"` INSERT policy so the SECURITY DEFINER function is the only path \u2014 that is the same one-validated-write-path pattern the ingest function already establishes.",
+  "maintainabilityCost": "None. The client call site at game.html:2105 is unchanged; it already ignores the return value.",
+  "effort": "S",
+  "area": "API & Backend Surface (Supabase edge functions, RLS, RPC grants)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "record_site_visit is anon and unrate-limited \u2014 one row per call, retention job never scheduled",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "website/game.html",
+  "line": "1762",
+  "evidence": "`(async () => { try { await _supa.rpc('record_site_visit', {}); } catch(e) {} })();` fires on every page load. Live definition: `CREATE OR REPLACE FUNCTION public.record_site_visit() RETURNS void LANGUAGE sql SECURITY DEFINER AS $function$ insert into public.site_visits default values; $function$` \u2014 no arguments, no dedupe, no throttle, grantee `anon`. site_visits currently holds 1033 rows, RLS is enabled with no policies (confirmed by the advisor: \"Table `public.site_visits` has RLS enabled, but no policies exist\"), and 0006_retention.sql:82-89 leaves the pg_cron rollup schedule commented out. CHARTQUEST_RC1.1_TELEMETRY_FIX_2026-07-15.md:20 already noted it: \"`site_visits` uses a different path with no origin check\".",
+  "risk": "A trivial loop inflates your visit counter to any number you like \u2014 which then feeds get_dashboard_stats' total_visits \u2014 and grows an append-only table without limit on the Free plan. Not a compromise; a metrics-integrity and cost problem, and the metric feeds the growth decisions this beta exists to inform.",
+  "fix": "Two options, both cheap: (a) throttle it through the existing bump_ingest_throttle helper keyed on the connection IP, or (b) drop the RPC and derive visits from beta_events `session_start` instead \u2014 cq-track.js:248 already records exactly that, with a visit counter, so record_site_visit is largely redundant with the beta funnel. Either way, schedule rollup_site_visits (0006:86-87) once the grants in finding 2 are fixed.",
+  "maintainabilityCost": "Option (b) removes a call site and a table from the mental model \u2014 negative cost. Option (a) is a five-line function edit. Neither touches the game loop.",
+  "effort": "S",
+  "area": "API & Backend Surface (Supabase edge functions, RLS, RPC grants)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Repo edge-function sources are stale against production and verify_jwt is not pinned \u2014 a redeploy from the repo would 403 all content telemetry and drop a funnel event",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "supabase/functions/ingest/index.ts",
+  "line": "22-27",
+  "evidence": "Repo: `const ALLOWED_ORIGINS = [ 'https://chart-quest-game.netlify.app', 'https://shelltrader.github.io', 'http://localhost', 'http://127.0.0.1' ];` with `origin.startsWith(o)` at line 107 \u2014 no playchartquest.com. Deployed v3 (fetched live) instead uses an exact-match Set including playchartquest.com and carries the comment \"The previous version had no entry for the live Cloudflare domain, so every event from playchartquest.com was rejected 403\". Similarly supabase/functions/beta-ingest/index.ts:46-55 lacks `journal_discovery_skipped`, which deployed v3 has and which the client sends (website/assets/cq-track.js:49), and the repo header at line 17 says \"DEPLOYED: version 2\" while the live slug reports version 3. The `update-progress` function (version 5, ACTIVE, the sole writer of profiles and the entire anti-cheat gate) has NO source in the repo at all. There is no supabase/config.toml, so verify_jwt is not pinned anywhere in version control.",
+  "risk": "`supabase functions deploy ingest` from a clean checkout instantly reproduces the outage documented in the edge-fn-origin-allowlist memory \u2014 every content/mastery write from the live domain 403s, silently. Deploying beta-ingest from the repo drops journal_discovery_skipped, and the Founder Report then counts quest-abandoners as nothing at all. And the one function that enforces shells/level/xp anti-cheat cannot be code-reviewed because it exists only in production; if it is ever redeployed with --no-verify-jwt (which supabase/functions/market-price/index.ts:23 explicitly instructs as the pattern for a sibling function), `payload.sub` becomes attacker-chosen and anyone can write any user's progress.",
+  "fix": "Pull the three deployed sources back into the repo verbatim (get_edge_function returns them), add supabase/functions/update-progress/index.ts, and add a supabase/config.toml with a per-function `verify_jwt` block so the flag is version-controlled rather than a deploy-time argument. Optionally add a repo-vs-deployed drift check to the ship gate alongside the existing `sync_track.py --check` \u2014 same pattern, same rationale.",
+  "maintainabilityCost": "None ongoing. One-off copy-back. It makes the backend auditable in the same place as everything else and removes a landmine that has already detonated once.",
+  "effort": "M",
+  "area": "API & Backend Surface (Supabase edge functions, RLS, RPC grants)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "bump_ingest_throttle is anon-executable with caller-chosen ip and window \u2014 the rate limiter can be driven by the people it limits",
+  "severity": "Medium",
+  "timing": "QUICK_WIN",
+  "file": "automation/migrations/0008_ingest_and_admins.sql",
+  "line": "36-37",
+  "evidence": "`revoke execute on function public.bump_ingest_throttle(text, timestamptz) from public; grant execute ... to service_role;` under the comment \"-- Ops-only: not callable via the public API.\" Live aclexplode contradicts that comment: grantees `anon` and `authenticated`. Supabase's advisor agrees: \"Function `public.bump_ingest_throttle(p_ip text, p_window timestamp with time zone)` can be executed by the `anon` role\". The function body upserts and increments an arbitrary (ip, window) bucket and returns the count.",
+  "risk": "An attacker calls it 121 times with p_ip set to a tester's IP and that tester's telemetry 429s for the rest of the minute \u2014 repeatable indefinitely, and invisible in the data (a suppressed funnel stage looks exactly like a player who never got there, which is the failure mode cq-track.js:151-155 was specifically rewritten to avoid). Also an unbounded-row-insert primitive into the rate-limiter table itself, which nothing prunes.",
+  "fix": "Covered by the single revoke in finding 2 \u2014 name `anon, authenticated` explicitly. Nothing legitimate calls it from the API; the edge functions use the service role.",
+  "maintainabilityCost": "None.",
+  "effort": "S",
+  "area": "API & Backend Surface (Supabase edge functions, RLS, RPC grants)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "market-price is deployed with verify_jwt: true but is documented and coded as requiring --no-verify-jwt; its rate limiter is per-isolate memory",
+  "severity": "Low",
+  "timing": "BEFORE_FULL_RELEASE",
+  "file": "supabase/functions/market-price/index.ts",
+  "line": "23-24, 57",
+  "evidence": "Header: \"MUST BE DEPLOYED WITH --no-verify-jwt. Guests play without an account; a JWT requirement would make prices work only for signed-in users.\" Live list_edge_functions reports `verify_jwt: true` for slug market-price. The client calls it with a bare fetch and no Authorization header (website/game.html:4438 `return fetch(url, { signal: ctl.signal })`), so it would 401 \u2014 but website/game.html:4419 sets `const PROXY_LIVE = false;` with the comment \"Flip to true once `supabase functions deploy market-price --no-verify-jwt` has run\", so the path is inert today. Separately the limiter is `const hits = new Map<string, {n:number; until:number}>()` at line 57 \u2014 per warm isolate, not shared.",
+  "risk": "Zero live exposure right now (PROXY_LIVE false). The trap is future: flipping that flag without the --no-verify-jwt redeploy ships silently broken equity prices to AAPL/TSLA/NVDA/SPX players. And when it does go live, the in-memory Map resets on every cold start and is not shared across isolates, so the stated 60/min/IP protection against your upstream providers is far weaker than it reads \u2014 relevant because api.binance.com already 451s in the US (docs/PRODUCTION_READINESS.md:120-125).",
+  "fix": "Do not flip PROXY_LIVE until the function is redeployed with --no-verify-jwt and the flag is recorded in supabase/config.toml (finding 8). When it goes live, back the limiter with bump_ingest_throttle like the other two functions rather than process memory. Leave it as-is for the closed beta.",
+  "maintainabilityCost": "None today \u2014 the recommendation is to change nothing and record the constraint. The config.toml entry is the durable fix.",
+  "effort": "S",
+  "area": "API & Backend Surface (Supabase edge functions, RLS, RPC grants)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Beta funnel rows are self-asserted: player_id and session_id are client-chosen strings, so a tester can fabricate or inflate the entire funnel",
+  "severity": "Low",
+  "timing": "OPTIONAL_LONG_TERM",
+  "file": "website/assets/cq-track.js",
+  "line": "68, 219-224",
+  "evidence": "`if (!p) { p = 'p-' + Math.random().toString(36).slice(2, 12); set('cq_pid', p); }` \u2014 the player id is a localStorage value with no server binding. beta-ingest accepts whatever arrives: shapeEvent (index.ts:74-90) validates only that `event_id` exists and `name` is in EVENT_NAMES, then stores player_id, session_id, ts, device, browser, os and screen exactly as sent. website/game.html:6520 likewise sends `player_id: localStorage.getItem('cq_pid') || 'anon'` for mastery.",
+  "risk": "Data quality, not security. One tester with curl can invent 500 players who all completed the beta, or replay another player's id. At 10-20 invited testers this is a non-issue and the closed set of EVENT_NAMES already prevents the worst failure mode (inventing funnel stages the report cannot explain). Worth knowing before you read a surprising number as a real finding.",
+  "fix": "Accept and document for the closed beta \u2014 the honest tradeoff is that binding player_id to a server-issued identity means an account wall, which would gut the funnel this instrumentation exists to measure. If it ever matters, have beta-ingest mint and set a signed httpOnly cookie on first contact and prefer that over the body's player_id, keeping the client's id as a fallback.",
+  "maintainabilityCost": "Zero if accepted. The cookie option would add a real session concept to a system that deliberately has none \u2014 recommend NOT doing it for the beta.",
+  "effort": "M",
+  "area": "API & Backend Surface (Supabase edge functions, RLS, RPC grants)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "update-progress decodes the JWT subject without verifying it, relying entirely on an unpinned platform flag",
+  "severity": "Low",
+  "timing": "BEFORE_FULL_RELEASE",
+  "file": "supabase/functions/update-progress/index.ts",
+  "line": "deployed v5 only \u2014 no repo copy",
+  "evidence": "Deployed source: \"// JWT is already verified by the Edge Runtime (verify_jwt: true). // Extract user ID from the Authorization header.\" then `const payload = JSON.parse(atob(jwt.split('.')[1])); const userId: string = payload.sub;` \u2014 an unvalidated base64 decode of an attacker-supplied string, with no try/catch. It then upserts profiles.shells/player_level/xp for that userId with the service role. Correct today because list_edge_functions reports verify_jwt: true, and because migration 0004 (applied \u2014 live pg_policies shows profiles has only \"Users can view own profile\" SELECT) makes this the sole writer.",
+  "risk": "None today, and profiles currently holds 0 rows so there is no live progress data at all. The exposure is one bad deploy away: a single --no-verify-jwt flag turns this into \"set any user's shells to 10,000,000 and level to 10\" for anyone, since the userId comes from an unverified token payload. The malformed-JWT JSON.parse would also throw an unhandled 500 rather than a clean 401.",
+  "fix": "Don't rely on the flag alone \u2014 verify the token inside the function (`supa.auth.getUser(jwt)`) and wrap the decode in try/catch returning 401. Combined with pinning verify_jwt in supabase/config.toml (finding 8), that makes the control local and auditable instead of an invisible dashboard setting.",
+  "maintainabilityCost": "One extra round-trip per cloud save on a path that already does a SELECT then an UPSERT \u2014 negligible, and it only runs for signed-in players.",
+  "effort": "S",
+  "area": "API & Backend Surface (Supabase edge functions, RLS, RPC grants)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Terms of Use assigns ownership to no named entity; three conflicting identities ship",
+  "severity": "High",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/terms.html",
+  "line": "57",
+  "evidence": "\"<p>ChartQuest, including its code, artwork, characters, and text, belongs to its creators and is protected by copyright.\" \u2014 no entity named. Meanwhile three different identities ship simultaneously: website/game.html:3 \"Copyright \u00a9 2024-2026 Dream Home Spotlight. All rights reserved.\"; website/index.html:1512 \"\u00a9 <span id=\\\"yr\\\">2026</span> ChartQuest // the chart is the world\"; and website/privacy.html + website/terms.html name no entity anywhere \u2014 grep for 'Dream Home|LLC|Ltd|Inc\\.|operated by' across both returns only the mailto habitsimulator@gmail.com.",
+  "risk": "The Terms of Use is the single document that contractually assigns ownership and binds the player. \"Its creators\" is not an assignable party \u2014 it names no one who could sue, license, or be served. Privacy Policy and Terms also carry no copyright line and no entity, so the two documents most likely to be cited in a dispute identify the rights holder as a Gmail address. For a product about money, aimed partly at younger players (privacy.html:80 explicitly addresses parents and guardians), an unnamed operator also reads as untrustworthy to any tester who checks.",
+  "fix": "Name one entity and use it in all four places. In terms.html:57 replace \"belongs to its creators\" with \"is owned by Dream Home Spotlight\". Add a footer line \"\u00a9 2024-2026 Dream Home Spotlight\" to both terms.html and privacy.html (neither currently has any <footer>). Change index.html:1512 to \"\u00a9 <span id=\\\"yr\\\">2026</span> Dream Home Spotlight \u00b7 ChartQuest\" so the entity, not the product name, holds the copyright.",
+  "maintainabilityCost": "None. Four static text edits in files that already deploy verbatim. The index.html year is already auto-maintained by JS at index.html:1581 (yr.textContent=new Date().getFullYear()), so nothing goes stale.",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "Every citation verified verbatim at the cited line. terms.html:57 contains the exact \"belongs to its creators\" text with no entity named; game.html:3 names \"Dream Home Spotlight\"; website/index.html:1512 assigns copyright to the product name; grep across privacy.html and terms.html for Dream Home|LLC|Ltd|Inc\\.|operated by|copyright|\u00a9 returns only terms.html:57, and neither file has a <footer>. privacy.html:80 does address \"Parents and guardians\". The core defect is genuine and the proposed fix is safe. However the risk framing is legally overstated and the severity is one notch high, so the statement needs correction rather than acceptance as written.",
+   "correction": "Severity should be Medium, not High (timing BEFORE_PUBLIC_BETA is correct). Four corrections to the finding as written:\n\n1. RISK OVERSTATED. \"it names no one who could sue, license, or be served\" is legally wrong. Copyright vests on creation; the actual owner retains standing regardless of what the ToS says. The naming gap weakens contract formation and reads as untrustworthy \u2014 it does not extinguish enforcement rights.\n\n2. PARTIAL MITIGATION OMITTED. website/game.html:3-6 already carries both a named holder and an explicit proprietary notice \u2014 \"Copyright \u00a9 2024-2026 Dream Home Spotlight. All rights reserved.\" followed by \"This source code is proprietary and confidential.\" Because there is no build step, that notice ships verbatim inside the 1.87 MB readable source a casual copier would take. The IP-protection risk is therefore materially lower than claimed.\n\n3. THE FINDING UNDERSTATES THE REAL DEFECT. Focusing on the ownership clause misses the larger gap: grep -nE '\"we\"|refer to|means |We are ' over terms.html and privacy.html returns NOTHING. Both documents use \"we\"/\"us\" throughout (\"We may suspend accounts that break these rules.\" terms.html:60; \"we will delete it promptly.\" privacy.html:80) and never define who \"we\" is. An undefined counterparty is a bigger contract-formation problem than one vague ownership sentence, and it appears in the Children-and-families section that invites parents to contact an unnamed operator at a Gmail address.\n\n4. FIX PRECISION. (a) The finding never states WHY the fix is mirror-safe: website/index.html is the marketing homepage, whereas the verify.js #8 byte-identical gate applies to the REPO-ROOT index.html (the game mirror \u2014 it contains \"Dream Home Spotlight\"; website/index.html does not). All three proposed edits touch non-gated files, so the mirror gate and the same-origin iframe are unaffected. (b) Anyone later unifying game.html:3 must edit chart-quest.html and re-run scripts/cq.sh mirror + site \u2014 never website/game.html directly \u2014 or verify #8 fails. (c) \"Dream Home Spotlight\" appears in the repo only as an HTML copyright string and the git user name; there is no evidence it is a registered legal entity. The recommendation should be \"name whichever entity actually holds the rights, and use it consistently in all four places\" \u2014 selecting that name is a founder decision, not an auditor's.\n\nMaintainability cost \"None\" is accurate for the three proposed static text edits."
+  }
+ },
+ {
+  "title": "bosses.html gate is fail-OPEN and its content is visible by default in markup",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/bosses.html",
+  "line": "122 (and 29, 39)",
+  "evidence": "Line 122: \"var on = !window.CHARTQUEST_CONFIG || window.CHARTQUEST_CONFIG.showBossesPage !== false;\" \u2014 the leading !window.CHARTQUEST_CONFIG makes it fail OPEN. Line 29 gives the gate an inline style: \"<div id=\\\"bossGate\\\" style=\\\"display:none\\\">\" but line 39 gives the content none: \"<div id=\\\"bossContent\\\">\". The sibling page uses the opposite, fail-CLOSED logic at courses.html:222: \"var on = !!(window.CHARTQUEST_CONFIG && window.CHARTQUEST_CONFIG.showCoursesPage === true);\"",
+  "risk": "Two exposure paths for a page the founder deliberately turned off. (a) If assets/config.js fails to load \u2014 404 after a path change, ad/script blocker, cached miss \u2014 window.CHARTQUEST_CONFIG is undefined and the gate evaluates true, publishing the full 11-Guardian roster. (b) With JavaScript disabled the inline script never runs at all, and because #bossContent has no display:none the roster renders unconditionally. Either path shows a beta tester eleven named Guardians, eleven arenas and eleven rank rewards when exactly one Guardian (the Gambler) is built \u2014 plus the legacy \"Shell\" naming in the next finding. The inconsistency with courses.html shows this is an oversight, not a decision.",
+  "fix": "Mirror courses.html exactly: change line 122 to \"var on = !!(window.CHARTQUEST_CONFIG && window.CHARTQUEST_CONFIG.showBossesPage === true);\" and add style=\"display:none\" to <div id=\"bossContent\"> at line 39 so the default state with no JS is hidden rather than published.",
+  "maintainabilityCost": "None, and it slightly reduces cost by making the two gated pages behave identically \u2014 one pattern to remember instead of two opposite ones. Flipping showBossesPage:true in config.js still works exactly as before.",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Legacy mascot name \"Shell\" in deployed player-facing copy, contradicting alt text on the same page",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/bosses.html",
+  "line": "44",
+  "evidence": "Line 44: \"<p class=\\\"lead measure reveal\\\">Shell is trapped in the Blockchain Ocean.\" \u2014 thirteen lines above it, line 31: \"alt=\\\"Finn, the turtle explorer\\\"\". This is the only surviving proper-noun \"Shell\" in deployed marketing copy (verified: grep -oE '(^|[^a-zA-Z])Shell([^a-zA-Z]|$)' across index/play/courses/bosses/survey/privacy/terms returns bosses.html:44 alone). The same page also uses it in dialogue at line 55: \"Which one's real, little shell?\"",
+  "risk": "The character was renamed Finn; this is the pre-rename name still on a live page. It is uniquely confusing because \"Shell\"/\"SHELLS\" is simultaneously the in-game currency (game.html:5832 \"Each shell is worth 10 SHELLS\"), so a reader cannot tell whether the protagonist or the money is trapped. For IP purposes, inconsistent use of a character name is exactly what erodes it as a protectable mark \u2014 the notice in finding 1 claims neither name, and the site uses both.",
+  "fix": "bosses.html:44 \"Shell is trapped\" \u2192 \"Finn is trapped\". Line 55's \"little shell?\" is Guardian dialogue and reads as an insult about his shell, not a name \u2014 leave it or change to \"little turtle\" if the founder prefers zero ambiguity. Do this in the same pass as the gate fix so the page is correct whenever it is switched on.",
+  "maintainabilityCost": "None. One word in static copy on a currently-gated page.",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "The game itself carries no \"not financial advice\" disclaimer \u2014 only the marketing site does",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/game.html",
+  "line": "n/a \u2014 zero occurrences in 1.87 MB",
+  "evidence": "grep -in 'not financial advice|financial advice|simulated|play money|educational only' website/game.html returns NOTHING. The disclaimer exists only on the marketing landing page, index.html:1510: \"<b>Important:</b> ChartQuest is an educational game. All trades in the game are <b>simulated with play money</b>\u2026 Nothing in ChartQuest is financial advice\", and in terms.html:32. game.html does link the legal pages, but only inside the signup consent row at line 1259: \"I agree to the <a href=\\\"privacy.html\\\"\u2026>Privacy Policy</a> and <a href=\\\"terms.html\\\"\u2026>Terms</a>.\" Meanwhile the game teaches leveraged liquidation with real tickers \u2014 game.html:12379: \"You open a trade with 10\u00d7 leverage. Price moves 10% against you.\" and spawnPortals uses keys ['BTC','ETH','SOL'].",
+  "risk": "Testers are invited straight to the game (robots.txt disallows /game.html; the funnel is play.html \u2192 game.html; per project convention every test link is a QR to the game). A tester can play the whole beta, be taught leverage, liquidation and shorting on real asset names, and never pass the one page that carries the disclaimer. The founder is not a licensed advisor and the product teaches real trading mechanics to an audience that privacy.html:80 acknowledges includes minors. This is the legal gap most likely to matter and the least visible.",
+  "fix": "Add one short line to a screen the player cannot miss \u2014 the title/menu screen or the first Journal open: \"Practice money only. This is a game, not financial advice.\" That wording already matches the project's 10-year-old-wording rule. Do not gate it behind a modal; a persistent small line is enough and costs no clicks.",
+  "maintainabilityCost": "Low but not zero \u2014 this is the only finding that touches the game's own render path rather than static text. Keep it to a single static string drawn on an existing screen, not a new overlay or state, so it cannot interact with the cinematic/tutorial/ceremony chain. No gameplay, save-data or analytics change.",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Game page links a PWA manifest that does not exist at the deployed path",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/game.html",
+  "line": "18",
+  "evidence": "Line 18: \"<link rel=\\\"manifest\\\" href=\\\"/manifest.json\\\">\" \u2014 but `git ls-files website/ | grep -i manifest` returns only \"website/manifest.webmanifest\". There is no website/manifest.json. Because the Cloudflare output dir is website/, the repo-root manifest.json never deploys, so /manifest.json 404s. Every other deployed page links correctly and relatively, e.g. courses.html:14 \"<link rel=\\\"manifest\\\" href=\\\"manifest.webmanifest\\\">\". The root manifest.json that would be served if anyone \"fixed\" this by copying it reads \"\\\"name\\\": \\\"Chart Quest\\\", \\\"short_name\\\": \\\"Chart Quest\\\"\" \u2014 the two-word legacy form.",
+  "risk": "Two-part brand damage. Today: a tester who taps Add to Home Screen from inside the game gets no manifest, so the install falls back to page title and a bare icon rather than the designed ChartQuest name, theme colour and icon set \u2014 on the one page they actually spend their time. Tomorrow: the obvious-looking fix (copy the root manifest.json into website/) would install the app on testers' home screens branded \"Chart Quest\", permanently, with the wrong mark, on the most persistent surface the brand has.",
+  "fix": "Change game.html:18 to href=\"manifest.webmanifest\" so the game shares the correct, already-deployed, correctly-branded manifest at website/manifest.webmanifest. Separately, fix the two-word name in the non-deploying root manifest.json and deploy/manifest.json so the trap is defused rather than left loaded.",
+  "maintainabilityCost": "None. One href. Edit chart-quest.html and let cq.sh ship mirror it. Worth re-checking the sw.js precache list in the same commit since website/sw.js:19 pins CACHE='chartquest-site-v12' and must be bumped per the project's release rule.",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Two-word \"CHART QUEST\" in deployed file banners and one visible UI chip",
+  "severity": "Medium",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/courses.html",
+  "line": "50 (plus assets/config.js:2, assets/site.css:2, assets/site.js:2)",
+  "evidence": "courses.html:50 is rendered UI, not a comment: \"<span class=\\\"ticker reveal\\\"><span class=\\\"pulse\\\"></span>CHART QUEST ACADEMY \u00b7 LIFETIME ACCESS</span>\". The three asset banners are readable-source: config.js:2 \"   CHART QUEST \u2014 SITE SETTINGS\"; site.css:2 \"   CHART QUEST \u2014 \\\"Inside the Blockchain\\\" dark theme\"; site.js:2 \"   CHART QUEST \u2014 site engine (blockchain bg, mascot, nav, PWA)\". Not deployed but tracked and stale in the same way: root manifest.json and deploy/manifest.json (\"Chart Quest\"), and ChartQuest_Landing_Review/manifest.webmanifest, which still carries the fully pre-rename description \"A side-scrolling RPG starring Shell the turtle.\"",
+  "risk": "courses.html:50 is the one two-word instance that a human eye will actually see, the moment showCoursesPage is flipped to true \u2014 a paid-product page headed with the wrong brand. The asset banners are lower stakes but they are the first three lines of three files any curious tester or copier opens (site.js and site.css are plain <link>/<script> away), so they set the impression that the brand is unsettled. The stale review-folder manifest matters because it preserves the old mascot name in a file a future contributor might copy forward.",
+  "fix": "courses.html:50 \u2192 \"CHARTQUEST ACADEMY \u00b7 LIFETIME ACCESS\". Change the three banner comments to ChartQuest. Fix name/short_name in manifest.json, deploy/manifest.json, and ChartQuest_Landing_Review/manifest.webmanifest (including its \"starring Shell the turtle\" description) so no stale copy is left to be resurrected.",
+  "maintainabilityCost": "None. Comment text and one visible string; no selectors, ids or behaviour touched.",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Internal capture checklist deploys publicly and admits the landing screenshots are placeholders",
+  "severity": "Medium",
+  "timing": "QUICK_WIN",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/assets/SCREENSHOTS.md",
+  "line": "3-5",
+  "evidence": "Tracked under website/, therefore live at https://playchartquest.com/assets/SCREENSHOTS.md. Opens: \"The landing page (`website/index.html`) uses these files as **placeholders**. They're real gameplay from an earlier build. To refresh them: capture the screens below on the **current build**, then hand them to me \u2014 I'll drop each into the **same filename**\". Also line 24: \"I frame them in fake \\\"browser/phone\\\" chrome on the site anyway.\"",
+  "risk": "A public URL in the founder's own voice-of-the-team stating that the marketing screenshots are placeholders from an older build, and that the site frames them in \"fake\" chrome. The word \"fake\" next to \"placeholders\" is the exact pairing a sceptical tester or competitor would screenshot. It is also written in an AI assistant's first person (\"hand them to me \u2014 I'll drop each into\u2026\"), which discloses how the site is produced. Nothing here is a security issue; it is purely a credibility one, and it is free to remove.",
+  "fix": "Move the file out of the deploy path \u2014 /Users/owl/Claude/Projects/Shell Trade/docs/SCREENSHOTS.md \u2014 and delete website/assets/SCREENSHOTS.md. The content stays useful; it just stops being a public URL.",
+  "maintainabilityCost": "None. It is documentation with no referrer; nothing loads it. Confirm no <link>/<a> points at it before moving (none found).",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Dead-code canvas wordmarks render \"CHART QUEST\" as two words",
+  "severity": "Low",
+  "timing": "BEFORE_FULL_RELEASE",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/game.html",
+  "line": "19612 and 21809",
+  "evidence": "Line 19612, inside drawCandleAcademy card 0: \"ctx.fillText('CHART QUEST', cx, H * 0.68);\" followed by \"ctx.fillText('Learn crypto. One candle at a time.', cx, H * 0.74);\". Line 21809, inside the opening cinematic's drawTitle(): \"ctx.fillText('CHART QUEST', W / 2, H * 0.40);\" then \"ctx.fillText('LOST IN THE BLOCKCHAIN', W / 2, H * 0.40 + 28);\". I verified BOTH are currently unreachable for a fresh player: candleAcademy is constructed active at line 6222 (\"active: !localStorage.getItem('cq_played')\") but the first-play branch immediately disables it at line 2016 \u2014 \"candleAcademy.active = false;   // cinematic's title card replaces the greeting\"; and the only route into drawTitle is setPhase('title') at 21087, reached solely from advanceValidator, whose phase is marked at 21244 \"case 'validator':   // (retained but no longer entered \u2014 kept for safety)\".",
+  "risk": "No screenshot risk today \u2014 I confirmed neither path executes in the fresh-player flow, so I am NOT reporting these as live. The risk is latent and specific: both sit one boolean away from rendering. Re-enabling the Candle Academy greeting, or restoring the validator beat, would put a two-word wordmark full-screen on the game's title card \u2014 the most brand-critical pixel in the product. They also carry two more taglines (\"Learn crypto. One candle at a time.\", \"LOST IN THE BLOCKCHAIN\") that no longer match the shipped positioning, \"The World's First Trading RPG\".",
+  "fix": "Change both string literals to 'CHARTQUEST' now, while they are inert and the edit carries zero regression risk. Decide separately whether the dead validator/academy paths should be deleted \u2014 that is a cleanup call, not a branding one, and deleting code in this file is riskier than editing two strings.",
+  "maintainabilityCost": "None for the string change \u2014 two literals inside existing fillText calls, no layout or state touched. I am explicitly not recommending the dead-code deletion, which would be a real regression risk in a 28,000-line single file for no branding benefit.",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Stale infrastructure hostnames and pre-rename storage keys in readable deployed source",
+  "severity": "Low",
+  "timing": "OPTIONAL_LONG_TERM",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/game.html",
+  "line": "1727-1728, 8136, 8380, 11955",
+  "evidence": "Line 1727: \"const _ALLOWED_HOSTS = ['chart-quest-game.netlify.app', 'localhost', '127.0.0.1', 'shelltrader.github.io'];\" and 1728: \"const _ALLOWED_HOST_SUFFIXES = ['--chart-quest-game.netlify.app'];\" \u2014 the adjacent comment confirms these are inert: \"(allowlist kept for reference / future analytics; it no longer blocks anything)\". Legacy storage keys: 8136 \"const JOURNAL_KEY = 'shellTradeJournal_v1';\", 8380 \"const NOTES_KEY = 'shellTradeNotes_v1';\", 11955 \"const DAILY_KEY = 'shellTradeDaily_v1';\", with the reset path at 1686 matching both eras: \"if (/^(cq_|shellTrade)/.test(k)) localStorage.removeItem(k);\"",
+  "risk": "Minor and mostly informational. The dead allowlist discloses two prior hosting identities (a Netlify site and the shelltrader GitHub org) in the readable source of the deployed game, which quietly confirms the project's former name to anyone reading. The storage keys surface the pre-rename name in DevTools \u2192 Application \u2192 Local Storage, where any technical tester will see \"shellTradeJournal_v1\" sitting under a product called ChartQuest. Neither leaks anything sensitive; both are brand-consistency papercuts.",
+  "fix": "Delete the two dead allowlist constants at 1727-1728 (nothing reads them; the comment says so). DO NOT rename the three storage keys \u2014 see cost below.",
+  "maintainabilityCost": "Deleting the allowlist: none, they are unreferenced. Renaming the storage keys: this is where I am recommending AGAINST the change. The keys hold the Trading Journal, Notes and Daily-streak state; renaming them either orphans every existing tester's journal and streak or requires a read-old/write-new migration path plus the reset regex at line 1686. That is exactly the save-data change the founder ruled out, and it buys only a cosmetic improvement in a DevTools panel. Leave them. If the naming ever genuinely matters, do it at a planned save-schema version bump, not as branding cleanup.",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Unsubstantiated superlative \"The World's First Trading RPG\" in title, OG, Twitter and manifest",
+  "severity": "Low",
+  "timing": "BEFORE_FULL_RELEASE",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/index.html",
+  "line": "6, 82, 93 (and website/manifest.webmanifest name)",
+  "evidence": "index.html:6 \"<title>ChartQuest \u2014 The World's First Trading RPG</title>\"; :82 \"<meta property=\\\"og:title\\\" content=\\\"ChartQuest \u2014 The World's First Trading RPG\\\">\"; :93 twitter:title identical; website/manifest.webmanifest \"\\\"name\\\": \\\"ChartQuest \u2014 The World's First Trading RPG\\\"\". Four occurrences, all consistent \u2014 this is a deliberate positioning line, not drift.",
+  "risk": "\"The World's First\" is a factual, falsifiable claim rather than puffery, and trading/market RPGs and stock-market games predate this product. It sits in the PWA manifest name, so it also becomes the installed app's name on a tester's home screen. Low risk while the beta is closed and invited; it becomes an advertising-substantiation question at public launch, and it is the kind of claim a competitor points at. Flagging it because the founder has already run an overclaims pass (build 328) and this one survived \u2014 worth a conscious decision rather than an oversight.",
+  "fix": "Founder's call, not an automatic fix. If he can substantiate it, keep it and be ready to. If not, a defensible alternative that keeps the punch: \"ChartQuest \u2014 Learn to trade inside the chart\" or \"ChartQuest \u2014 The Trading RPG\". Whatever is chosen, change all four places together so the brand line stays consistent.",
+  "maintainabilityCost": "None. Four static strings. The only caution is to update the manifest name in the same commit and bump website/sw.js:19 CACHE, or installed testers keep the old name from cache.",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "bosses.html share card omits the brand and promises eleven Guardians",
+  "severity": "Low",
+  "timing": "QUICK_WIN",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/bosses.html",
+  "line": "19",
+  "evidence": "Line 19: \"<meta property=\\\"og:title\\\" content=\\\"The 11 Guardians of the Blockchain Ocean\\\">\" \u2014 contradicting its own line 11: \"<title>ChartQuest \u2014 The Guardians (coming later)</title>\". Every other deployed page leads its og:title with the brand (courses.html:19 \"ChartQuest \u2014 Courses (coming later)\", index.html:82 \"ChartQuest \u2014 The World's First Trading RPG\").",
+  "risk": "Same class as the courses.html finding but milder: meta tags are outside the JS gate, so a shared link to a switched-off page unfurls a brandless card advertising eleven Guardians when one exists. Also a small missed branding opportunity \u2014 it is the only deployed og:title that never says ChartQuest, so a shared link carries no brand at all.",
+  "fix": "Align line 19 with the page's own honest title: content=\"ChartQuest \u2014 The Guardians (coming later)\". Restore the fuller line when showBossesPage is flipped on.",
+  "maintainabilityCost": "None. One attribute value.",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ },
+ {
+  "title": "Privacy and Terms pages have no footer, no copyright line and no navigation",
+  "severity": "Low",
+  "timing": "BEFORE_PUBLIC_BETA",
+  "file": "/Users/owl/Claude/Projects/Shell Trade/website/privacy.html",
+  "line": "n/a \u2014 absent (same for website/terms.html)",
+  "evidence": "grep for '<footer' returns nothing in privacy.html, terms.html, courses.html, bosses.html or play.html; only survey.html:277 has one \u2014 \"<footer>ChartQuest closed beta \u00b7 <a href=\\\"index.html\\\">playchartquest.com</a></footer>\" \u2014 and only index.html:1512 carries a copyright line at all. privacy.html and terms.html end with a bare mailto: privacy.html:75 \"emailing <a href=\\\"mailto:habitsimulator@gmail.com\\\">habitsimulator@gmail.com</a>\".",
+  "risk": "The two legal documents are the pages a cautious tester or a parent (privacy.html:80 addresses them directly) will read most carefully, and they are the only pages with no brand footer, no copyright notice, no last-updated date and no way back to the site. That reads as boilerplate pasted in rather than a considered policy, which undercuts the trust those pages exist to build \u2014 and, per finding 2, they are also where the ownership claim should live.",
+  "fix": "Add the survey.html footer pattern to privacy.html and terms.html, extended with the entity and a date: \"\u00a9 2024-2026 Dream Home Spotlight \u00b7 ChartQuest \u00b7 <a href=\\\"index.html\\\">playchartquest.com</a> \u00b7 Last updated 4 August 2026\". This closes finding 2's copyright gap at the same time.",
+  "maintainabilityCost": "None, with one ongoing habit: the \"Last updated\" date must be touched whenever the policy text changes. That is a normal obligation for a legal page, not new overhead. Do not use the auto-year JS from index.html:1581 here \u2014 a policy date must be the real revision date, not today's.",
+  "effort": "S",
+  "area": "Branding, Legal & Legacy Naming (deployed surface: website/ output dir)",
+  "verified": {
+   "real": true,
+   "reason": "lower severity, not independently verified"
+  }
+ }
+]

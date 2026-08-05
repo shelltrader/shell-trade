@@ -93,12 +93,30 @@ def fetch(table, key, since_iso):
 
 # Player ids that are the team's own testing, not beta testers. Excluded from every number,
 # and the exclusion is PRINTED, so a suspiciously small cohort is never a silent mystery.
-EXCLUDE_PREFIXES = ('CERT-TEST', 'e2e-', 'selftest', 'browsertest', 'QA-', 'DEV-')
+#
+# CANONICAL LIST — docs/beta-qa/BETA_MODEL_CONTRACT.md §0. Three implementations must agree:
+#   this file · beta-qa/beta-model.js (TEST_PREFIXES) · automation/migrations/0011 (cfg.test_prefixes)
+# If you add a prefix, add it to all three. They are checked against each other by
+# scripts/check_test_prefixes.py.
+#
+# VERIFY- and GATE- were missing here until 2026-08-05, and both exist in the live data.
+# The cost was not theoretical: GATE-B-003 carries a 9/10 survey response, so every report
+# generated before this fix showed an average rating of 8.0 (n=2) when the truth was
+# 7.0 (n=1) — a full point of phantom approval on the headline number, from a row the team
+# wrote itself. VERIFY-335-DEPLOY was likewise counted as a real tester in the funnel.
+EXCLUDE_PREFIXES = ('CERT-TEST', 'e2e-', 'selftest', 'browsertest', 'QA-', 'DEV-',
+                    'VERIFY-', 'GATE-', 'SMOKE-', 'TEST-')
 
 
 def is_test_player(pid):
-    p = str(pid or '')
-    return any(p.startswith(x) for x in EXCLUDE_PREFIXES)
+    # CASE-INSENSITIVE, matching the SQL engine (`lower(player_id) like 'gate-%'`). A
+    # case-sensitive match here would let `Gate-B-003` through while the live dashboard
+    # excluded it, and the founder would get two different averages depending on which
+    # tool they opened — the precise drift the BetaModel contract exists to prevent.
+    # Safe against false positives: real ids are 'p-' + base36 (cq-track.js pid()), so no
+    # genuine tester id can begin with any of these.
+    p = str(pid or '').lower()
+    return any(p.startswith(x.lower()) for x in EXCLUDE_PREFIXES)
 
 
 def load(args):

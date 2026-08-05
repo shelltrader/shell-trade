@@ -267,6 +267,7 @@
 </header>
 
 <nav class="tabs">
+  <button class="tab-btn" data-tab="beta">🧪 Beta Test QA</button>
   <button class="tab-btn active" data-tab="stats">📊 Statistics</button>
   <button class="tab-btn" data-tab="growth">📈 Growth Backlog</button>
   <button class="tab-btn" data-tab="issues">🛠 Issues</button>
@@ -278,6 +279,29 @@
 </nav>
 
 <main>
+
+  <!-- ============ BETA TEST QA ============
+       The beta command centre lives in its own self-contained page (beta-qa.html + the
+       three engines in beta-qa/). It is embedded rather than inlined so the two dashboards
+       stay independently deployable and this file keeps merging cleanly while other
+       sessions edit it — the whole integration is this panel, one nav button and one line
+       in the tab handler.
+
+       Lazy: the iframe src is only set on first visit to the tab, so opening this dashboard
+       does not pull the beta snapshot (or hit the RPCs) for someone who came here to read
+       the Growth Backlog. Same-origin, so it shares the sessionStorage admin token — sign
+       in once, both dashboards are live. -->
+  <section class="panel" id="panel-beta">
+    <div class="section-head">
+      <h2>Beta Test QA</h2>
+      <span class="meta">
+        Funnel, testers, surveys and recommendations from the closed beta ·
+        <a href="beta-qa.html" target="_blank" rel="noopener">open full screen ↗</a>
+      </span>
+    </div>
+    <iframe id="betaFrame" title="Beta Test QA"
+            style="width:100%;height:calc(100vh - 190px);min-height:600px;border:1px solid var(--border);border-radius:10px;background:#080b12"></iframe>
+  </section>
 
   <!-- ============ STATISTICS ============ -->
   <section class="panel active" id="panel-stats">
@@ -824,6 +848,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'minigames') drawMGTiles();
     if (btn.dataset.tab === 'qa') initQA();
     if (btn.dataset.tab === 'content') initContent();
+    // Load the beta dashboard on first visit only — see the panel comment above.
+    if (btn.dataset.tab === 'beta') {
+      var bf = document.getElementById('betaFrame');
+      if (bf && !bf.src) bf.src = 'beta-qa.html';
+    }
   });
 });
 

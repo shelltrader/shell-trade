@@ -1,0 +1,2904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Internal tool. Never indexed: this page renders unreleased build data and tester free text. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Chart Quest — Beta Test QA</title>
+<style>
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   CHART QUEST — BETA TEST QA
+   Palette inherits dashboard.html so the two founder tools feel like one product, then tightens
+   the surfaces (Linear/Stripe/Vercel: 1px borders, flat panels, mono numerals, restrained ink).
+
+   The --cq-* block is NOT decoration: beta-charts.js draws every pixel of data ink through those
+   custom properties and hardcodes no colour at all. A missing token there is an invisible chart,
+   which is the worst possible failure on a dashboard — it looks like "no data".
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#080b12;
+  --panel:#0f141d;
+  --panel-2:#0b0f17;
+  --panel-3:#141b27;
+  --border:#1e2634;
+  --border-hi:#2b3648;
+  --text:#c9d4e2;
+  --text-hi:#f2f6fb;
+  --muted:#78849a;
+  --muted-2:#5b6579;
+  --green:#3ddc6a;
+  --amber:#ffb454;
+  --red:#ff5c5c;
+  --blue:#5ab0ff;
+  --violet:#b794f6;
+  --green-bg:#0d2016;
+  --amber-bg:#241d10;
+  --red-bg:#241315;
+  --blue-bg:#0e1c2c;
+  --violet-bg:#1a1430;
+  --radius:12px;
+  --radius-sm:8px;
+  --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"SF Mono",ui-monospace,Menlo,Consolas,"Liberation Mono",monospace;
+
+  /* ── tokens beta-charts.js reads (BetaCharts.TOKENS) ── */
+  --cq-green:var(--green);
+  --cq-red:var(--red);
+  --cq-amber:var(--amber);
+  --cq-blue:var(--blue);
+  --cq-muted:var(--muted);
+  --cq-border:var(--border);
+  --cq-text:var(--text);
+  --cq-panel:var(--panel);
+  --cq-shadow:rgba(0,0,0,.55);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:var(--font-ui); font-size:13px; line-height:1.5;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  overflow-wrap:anywhere;
+}
+a{color:var(--blue); text-decoration:none;}
+a:hover{text-decoration:underline;}
+button,input,select,textarea{font-family:inherit; font-size:inherit; color:inherit;}
+:focus-visible{outline:2px solid var(--blue); outline-offset:2px; border-radius:4px;}
+code,kbd,.mono{font-family:var(--font-mono);}
+code{background:var(--panel-2); border:1px solid var(--border); border-radius:5px; padding:1px 5px; font-size:11.5px; color:var(--text-hi);}
+kbd{background:var(--panel-3); border:1px solid var(--border-hi); border-bottom-width:2px; border-radius:5px; padding:1px 5px; font-size:10.5px; color:var(--muted);}
+h1,h2,h3,h4{margin:0; color:var(--text-hi); font-weight:650; letter-spacing:-.01em;}
+
+/* ─────────────────────────── header ─────────────────────────── */
+header{
+  position:sticky; top:0; z-index:60;
+  background:linear-gradient(180deg,#0c111a 0%,rgba(8,11,18,.94) 100%);
+  backdrop-filter:saturate(140%) blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.hdr-row{
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  max-width:1440px; margin:0 auto; padding:11px 20px;
+}
+.brand{display:flex; align-items:center; gap:10px; min-width:0;}
+.brand .mark{
+  width:28px; height:28px; border-radius:8px; flex:0 0 auto;
+  background:linear-gradient(140deg,var(--green),#1e9c8f);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:800; color:#06210f;
+}
+.brand h1{font-size:14px; white-space:nowrap;}
+.brand .sub{font-size:10.5px; color:var(--muted); white-space:nowrap;}
+
+.spacer{flex:1 1 auto;}
+
+/* source pill — always visible, always says which engine produced the numbers on screen */
+.srcpill{
+  display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
+  border-radius:999px; padding:5px 11px 5px 9px;
+  font-size:10.5px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
+  border:1px solid var(--border-hi); background:var(--panel-2); color:var(--muted);
+}
+.srcpill .dot{width:7px; height:7px; border-radius:50%; background:currentColor; flex:0 0 auto;}
+.srcpill.live{color:var(--green); border-color:#1f5233; background:var(--green-bg);}
+.srcpill.live .dot{animation:pulse 2.4s ease-in-out infinite;}
+.srcpill.snapshot{color:var(--blue); border-color:#26425e; background:var(--blue-bg);}
+.srcpill.none{color:var(--red); border-color:#4d2328; background:var(--red-bg);}
+.srcpill small{font-weight:600; text-transform:none; letter-spacing:0; color:inherit; opacity:.8;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+.hdr-meta{font-size:10.5px; color:var(--muted); white-space:nowrap; font-family:var(--font-mono);}
+
+.btn{
+  background:var(--panel-2); border:1px solid var(--border-hi); color:var(--text);
+  border-radius:var(--radius-sm); padding:6px 11px; font-size:11.5px; font-weight:600;
+  cursor:pointer; transition:border-color .15s,background .15s,color .15s; white-space:nowrap;
+}
+.btn:hover{border-color:var(--muted-2); background:var(--panel-3); color:var(--text-hi);}
+.btn:disabled{opacity:.45; cursor:default;}
+.btn.primary{background:#123255; border-color:#2a6096; color:#cfe6ff;}
+.btn.primary:hover{background:#17406c;}
+.btn.ghost{background:transparent;}
+.btn.sm{padding:4px 8px; font-size:10.5px;}
+.btn.on{border-color:#1f5233; background:var(--green-bg); color:var(--green);}
+
+/* segmented window control */
+.seg{display:inline-flex; background:var(--panel-2); border:1px solid var(--border); border-radius:9px; padding:2px; gap:2px;}
+.seg button{
+  background:none; border:none; color:var(--muted); font-size:11px; font-weight:650;
+  padding:5px 10px; border-radius:7px; cursor:pointer; transition:background .15s,color .15s;
+}
+.seg button:hover{color:var(--text);}
+.seg button.active{background:var(--panel-3); color:var(--text-hi); box-shadow:0 1px 0 rgba(255,255,255,.04) inset;}
+
+select.ctl{
+  background:var(--panel-2); border:1px solid var(--border-hi); color:var(--text);
+  border-radius:var(--radius-sm); padding:6px 9px; font-size:11.5px; cursor:pointer;
+}
+input.ctl{
+  background:var(--panel-2); border:1px solid var(--border-hi); color:var(--text);
+  border-radius:var(--radius-sm); padding:6px 10px; font-size:12px;
+}
+input.ctl::placeholder{color:var(--muted-2);}
+
+.searchbox{position:relative; flex:0 1 260px; min-width:150px;}
+.searchbox input{width:100%; padding-left:28px; padding-right:34px;}
+.searchbox .icon{position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--muted-2); font-size:12px; pointer-events:none;}
+.searchbox kbd{position:absolute; right:7px; top:50%; transform:translateY(-50%); pointer-events:none;}
+
+/* ─────────────────────────── tabs ─────────────────────────── */
+nav.tabs{
+  border-bottom:1px solid var(--border); background:var(--panel-2);
+  position:sticky; top:52px; z-index:55;
+}
+nav.tabs .inner{
+  display:flex; gap:2px; max-width:1440px; margin:0 auto; padding:0 14px;
+  overflow-x:auto; scrollbar-width:none;
+}
+nav.tabs .inner::-webkit-scrollbar{display:none;}
+nav.tabs button{
+  background:none; border:none; color:var(--muted); font-size:12.5px; font-weight:600;
+  padding:11px 13px; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap;
+  transition:color .15s;
+}
+nav.tabs button:hover{color:var(--text);}
+nav.tabs button.active{color:var(--text-hi); border-bottom-color:var(--green);}
+nav.tabs button .pip{
+  display:inline-block; min-width:16px; margin-left:6px; padding:0 4px; border-radius:20px;
+  background:var(--panel-3); color:var(--muted); font-size:9.5px; font-weight:700; text-align:center;
+}
+nav.tabs button .pip.crit{background:var(--red-bg); color:var(--red);}
+
+main{max-width:1440px; margin:0 auto; padding:20px 20px 80px;}
+.panel{display:none; animation:fadein .18s ease;}
+.panel.active{display:block;}
+@keyframes fadein{from{opacity:0; transform:translateY(3px);}to{opacity:1; transform:none;}}
+
+/* ─────────────────────────── generic surfaces ─────────────────────────── */
+.card{
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+  padding:15px 16px;
+}
+.card.tight{padding:12px 13px;}
+.card.flush{padding:0; overflow:hidden;}
+.card-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+.card-head h3{font-size:13px;}
+.card-head .hint{font-size:10.5px; color:var(--muted);}
+.grid{display:grid; gap:12px;}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr));}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr));}
+@media(max-width:900px){.g2,.g3{grid-template-columns:1fr;}}
+
+.sec-title{
+  display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+  margin:26px 0 12px; padding-bottom:0;
+}
+.sec-title:first-child{margin-top:0;}
+.sec-title h2{font-size:15px;}
+.sec-title .desc{font-size:11.5px; color:var(--muted); line-height:1.45;}
+
+.note{
+  background:var(--panel-2); border:1px dashed var(--border-hi); border-radius:var(--radius-sm);
+  padding:11px 13px; font-size:11.5px; color:var(--muted); line-height:1.6;
+}
+.note b, .note strong{color:var(--text);}
+.note.warn{border-color:#4a3a1c; background:#181206; color:#d8bd8a;}
+.note.warn b{color:var(--amber);}
+
+.tag{
+  display:inline-block; font-size:9.5px; font-weight:700; letter-spacing:.35px;
+  text-transform:uppercase; padding:2px 7px; border-radius:5px;
+  background:var(--panel-3); color:var(--muted); white-space:nowrap;
+}
+.tag.green{background:var(--green-bg); color:var(--green);}
+.tag.amber{background:var(--amber-bg); color:var(--amber);}
+.tag.red{background:var(--red-bg); color:var(--red);}
+.tag.blue{background:var(--blue-bg); color:var(--blue);}
+.tag.violet{background:var(--violet-bg); color:var(--violet);}
+
+.muted{color:var(--muted);}
+.dim{color:var(--muted-2);}
+.nowrap{white-space:nowrap;}
+.num{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+
+/* a tooltip that carries our own copy — never model text, so no injection surface */
+.tip{position:relative; cursor:help; border-bottom:1px dotted var(--muted-2);}
+.tip::after{
+  content:attr(data-tip); position:absolute; left:0; top:calc(100% + 7px); z-index:40;
+  width:max-content; max-width:300px; padding:9px 11px;
+  background:var(--panel-3); border:1px solid var(--border-hi); border-radius:var(--radius-sm);
+  box-shadow:0 10px 30px -10px rgba(0,0,0,.85);
+  font-size:11px; font-weight:400; line-height:1.5; color:var(--text); letter-spacing:0;
+  text-transform:none; white-space:normal;
+  opacity:0; visibility:hidden; transform:translateY(-3px); transition:opacity .14s,transform .14s,visibility .14s;
+  pointer-events:none;
+}
+.tip:hover::after,.tip:focus-visible::after{opacity:1; visibility:visible; transform:none;}
+
+/* ─────────────────────────── skeletons ─────────────────────────── */
+.sk{
+  background:linear-gradient(90deg,var(--panel-2) 25%,var(--panel-3) 37%,var(--panel-2) 63%);
+  background-size:400% 100%; animation:shimmer 1.4s ease infinite; border-radius:6px;
+}
+@keyframes shimmer{from{background-position:100% 0;}to{background-position:0 0;}}
+.sk.line{height:10px; margin:7px 0;}
+.sk.big{height:26px; width:60%; margin:10px 0;}
+.sk.block{height:180px; border-radius:var(--radius);}
+
+/* ─────────────────────────── alerts ─────────────────────────── */
+#alertStrip{display:flex; flex-direction:column; gap:8px; margin-bottom:18px;}
+#alertStrip:empty{display:none;}
+.alert{
+  border:1px solid var(--border); border-left-width:3px; border-radius:var(--radius-sm);
+  background:var(--panel); overflow:hidden;
+}
+.alert.critical{border-left-color:var(--red);}
+.alert.warn{border-left-color:var(--amber);}
+.alert.info{border-left-color:var(--blue);}
+.alert > summary{
+  list-style:none; cursor:pointer; padding:10px 13px;
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.alert > summary::-webkit-details-marker{display:none;}
+.alert > summary:hover{background:var(--panel-3);}
+.alert .lvl{font-size:9.5px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; padding:2px 7px; border-radius:5px;}
+.alert.critical .lvl{background:var(--red-bg); color:var(--red);}
+.alert.warn .lvl{background:var(--amber-bg); color:var(--amber);}
+.alert.info .lvl{background:var(--blue-bg); color:var(--blue);}
+.alert .atitle{font-size:12.5px; font-weight:650; color:var(--text-hi); flex:1 1 auto; min-width:0;}
+.alert .affected{font-size:10.5px; color:var(--muted); font-family:var(--font-mono); white-space:nowrap;}
+.alert .chev{color:var(--muted-2); font-size:10px; transition:transform .15s;}
+.alert[open] .chev{transform:rotate(90deg);}
+.alert .body{padding:0 13px 13px 13px; font-size:12px; line-height:1.65; color:var(--text);}
+.alert .body ul{margin:9px 0 0; padding-left:16px; color:var(--muted); font-size:11.5px;}
+.alert .body li{margin:3px 0;}
+
+/* ─────────────────────────── KPI cards ─────────────────────────── */
+.kpi-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(196px,1fr)); gap:11px;}
+.kpi{
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+  padding:13px 14px 11px; position:relative; transition:border-color .15s;
+  display:flex; flex-direction:column; min-height:112px;
+}
+.kpi:hover{border-color:var(--border-hi);}
+.kpi .k-label{
+  font-size:10px; font-weight:700; letter-spacing:.45px; text-transform:uppercase;
+  color:var(--muted); margin-bottom:9px; display:flex; align-items:center; gap:5px;
+}
+.kpi .k-value{font-family:var(--font-mono); font-size:25px; font-weight:700; color:var(--text-hi); line-height:1; font-variant-numeric:tabular-nums;}
+.kpi .k-value.na{font-size:15px; color:var(--muted-2); font-weight:600;}
+.kpi .k-row{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+.kpi .k-trend{font-size:11px; font-weight:700; font-family:var(--font-mono); white-space:nowrap;}
+.kpi .k-trend.up{color:var(--green);} .kpi .k-trend.down{color:var(--red);}
+.kpi .k-trend.bad-up{color:var(--red);} .kpi .k-trend.good-down{color:var(--green);}
+.kpi .k-trend.flat,.kpi .k-trend.neutral{color:var(--muted);}
+.kpi .k-prev{font-size:10px; color:var(--muted-2); font-family:var(--font-mono);}
+.kpi .k-spark{margin-top:auto; padding-top:9px;}
+.kpi .k-foot{margin-top:auto; padding-top:9px; font-size:10px; color:var(--muted-2); line-height:1.45;}
+
+/* health */
+.health{display:grid; grid-template-columns:180px minmax(0,1fr); gap:18px; align-items:center;}
+@media(max-width:700px){.health{grid-template-columns:1fr;}}
+.health .score{text-align:center;}
+.health .score .n{font-family:var(--font-mono); font-size:52px; font-weight:800; line-height:1; color:var(--text-hi);}
+.health .score .n.na{font-size:20px; color:var(--muted-2); font-weight:650;}
+.health .score .of{font-size:11px; color:var(--muted); margin-top:5px;}
+.hbar{height:7px; border-radius:4px; background:var(--panel-2); overflow:hidden; display:flex; margin-top:9px;}
+.hbar i{display:block; height:100%;}
+.hcomp{width:100%; border-collapse:collapse; font-size:11.5px; margin-top:11px;}
+.hcomp th{text-align:left; font-size:9.5px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); padding:6px 8px; border-bottom:1px solid var(--border); font-weight:700;}
+.hcomp td{padding:7px 8px; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:middle;}
+.hcomp tr.dropped td{color:var(--muted-2);}
+.hcomp td.r{text-align:right; font-family:var(--font-mono);}
+
+details.expand{border-top:1px solid var(--border); margin-top:13px; padding-top:11px;}
+details.expand > summary{cursor:pointer; font-size:11.5px; font-weight:650; color:var(--blue); list-style:none;}
+details.expand > summary::-webkit-details-marker{display:none;}
+details.expand > summary::before{content:'▸ '; color:var(--muted);}
+details.expand[open] > summary::before{content:'▾ ';}
+
+/* ─────────────────────────── tables ─────────────────────────── */
+.tbl-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); background:var(--panel);}
+table.tbl{width:100%; border-collapse:collapse; font-size:12px; min-width:620px;}
+table.tbl th{
+  position:sticky; top:0; z-index:2; background:var(--panel-2); text-align:left;
+  font-size:9.5px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--muted);
+  padding:9px 11px; border-bottom:1px solid var(--border); white-space:nowrap;
+}
+table.tbl th.sortable{cursor:pointer; user-select:none;}
+table.tbl th.sortable:hover{color:var(--text);}
+table.tbl th .arrow{color:var(--green); font-size:8px; margin-left:3px;}
+table.tbl td{padding:9px 11px; border-bottom:1px solid rgba(255,255,255,.045); vertical-align:middle;}
+table.tbl tbody tr:last-child td{border-bottom:none;}
+table.tbl tbody tr.clickable{cursor:pointer;}
+table.tbl tbody tr.clickable:hover td{background:rgba(90,176,255,.06);}
+table.tbl td.r,table.tbl th.r{text-align:right;}
+table.tbl td.num{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+table.tbl tr.greyed td{opacity:.55;}
+table.tbl tr.bottleneck td{background:rgba(255,92,92,.07);}
+
+.empty{
+  border:1px dashed var(--border-hi); border-radius:var(--radius); padding:26px 18px;
+  text-align:center; color:var(--muted); font-size:12px; line-height:1.65;
+}
+.empty .big{font-size:22px; margin-bottom:8px;}
+.empty h3{font-size:13.5px; margin-bottom:6px;}
+
+/* ─────────────────────────── funnel ─────────────────────────── */
+.funnel-legend{display:flex; gap:14px; flex-wrap:wrap; font-size:10.5px; color:var(--muted); margin-top:10px;}
+.funnel-legend i{display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; vertical-align:-1px;}
+
+/* ─────────────────────────── drawer ─────────────────────────── */
+#drawerBack{
+  position:fixed; inset:0; background:rgba(4,6,11,.66); z-index:80;
+  opacity:0; visibility:hidden; transition:opacity .18s,visibility .18s;
+}
+#drawerBack.open{opacity:1; visibility:visible;}
+#drawer{
+  position:fixed; top:0; right:0; bottom:0; width:min(560px,100%); z-index:81;
+  background:var(--panel-2); border-left:1px solid var(--border-hi);
+  transform:translateX(102%); transition:transform .22s cubic-bezier(.4,0,.2,1);
+  display:flex; flex-direction:column; box-shadow:-24px 0 60px -30px #000;
+}
+#drawer.open{transform:none;}
+#drawer .dhead{
+  padding:14px 16px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--panel);
+}
+#drawer .dhead h3{font-size:13.5px; font-family:var(--font-mono); flex:1 1 auto; min-width:0;}
+#drawer .dbody{overflow-y:auto; padding:16px; flex:1 1 auto;}
+.kv{display:grid; grid-template-columns:auto minmax(0,1fr); gap:5px 12px; font-size:11.5px;}
+.kv dt{color:var(--muted); white-space:nowrap;}
+.kv dd{margin:0; color:var(--text); font-family:var(--font-mono); word-break:break-word;}
+
+/* vertical journey timeline */
+.tl{list-style:none; margin:10px 0 0; padding:0; position:relative;}
+.tl::before{content:''; position:absolute; left:53px; top:6px; bottom:6px; width:1px; background:var(--border);}
+.tl li{position:relative; display:grid; grid-template-columns:46px 1fr; gap:14px; padding:5px 0;}
+.tl .t{font-family:var(--font-mono); font-size:10.5px; color:var(--muted); text-align:right; padding-top:2px; white-space:nowrap;}
+.tl .c{position:relative; padding-left:14px;}
+.tl .c::before{
+  content:''; position:absolute; left:-3.5px; top:6px; width:8px; height:8px; border-radius:50%;
+  background:var(--muted-2); border:2px solid var(--panel-2);
+}
+.tl li.milestone .c::before{background:var(--green);}
+.tl li.crash .c::before{background:var(--red);}
+.tl li.session .c::before{background:var(--blue);}
+.tl .lbl{font-size:12px; color:var(--text); line-height:1.45;}
+.tl li.crash .lbl{color:#ffb2b2;}
+.tl .meta{font-size:10px; color:var(--muted-2); font-family:var(--font-mono); margin-top:2px;}
+
+/* ─────────────────────────── clusters / quotes ─────────────────────────── */
+.cluster{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:13px 14px;}
+.cluster h4{font-size:12.5px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.cluster .caveat{font-size:10.5px; color:var(--amber); background:var(--amber-bg); border:1px solid #4a3a1c; border-radius:6px; padding:7px 9px; margin:9px 0 0; line-height:1.55;}
+.quotes{list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:8px;}
+.quotes li{
+  border-left:2px solid var(--border-hi); padding:5px 0 5px 11px;
+  font-size:12px; line-height:1.6; color:var(--text);
+}
+.quotes li .who{display:block; margin-top:4px; font-size:10px; color:var(--muted-2); font-family:var(--font-mono);}
+.quotes li.pos{border-left-color:var(--green);}
+.quotes li.neg{border-left-color:var(--red);}
+
+/* ─────────────────────────── recommendations ─────────────────────────── */
+.rec{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:14px 15px;}
+.rec.HIGH{border-left:3px solid var(--red);}
+.rec.MEDIUM{border-left:3px solid var(--amber);}
+.rec.LOW{border-left:3px solid var(--muted-2);}
+.rec .rhead{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:7px;}
+.rec h4{font-size:13px; flex:1 1 auto; min-width:0;}
+.rec p{margin:0 0 9px; font-size:12px; line-height:1.6;}
+.rec .facts{display:flex; gap:16px; flex-wrap:wrap; font-size:10.5px; color:var(--muted); border-top:1px solid var(--border); padding-top:9px; margin-top:9px;}
+.rec .facts b{color:var(--text); font-weight:650;}
+.rec ul.ev{margin:0; padding-left:16px; font-size:11.5px; color:var(--muted); line-height:1.6;}
+.rec ul.ev li{margin:2px 0;}
+
+/* ─────────────────────────── builds compare ─────────────────────────── */
+.cmp-pick{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:13px;}
+table.cmp td.delta{font-family:var(--font-mono); font-weight:650; white-space:nowrap;}
+table.cmp td.delta.good{color:var(--green);}
+table.cmp td.delta.bad{color:var(--red);}
+table.cmp td.delta.flat{color:var(--muted);}
+table.cmp td.delta.ungated{color:var(--muted-2); font-weight:400;}
+
+/* ─────────────────────────── report ─────────────────────────── */
+.report{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px 26px;}
+.report h1{font-size:19px; margin-bottom:4px;}
+.report h2{font-size:14px; margin:24px 0 9px; padding-bottom:6px; border-bottom:1px solid var(--border);}
+.report h3{font-size:12.5px; margin:16px 0 6px; color:var(--text);}
+.report p{margin:0 0 9px; font-size:12.5px; line-height:1.7;}
+.report ul{margin:0 0 10px; padding-left:18px; font-size:12.5px; line-height:1.7;}
+.report table{width:100%; border-collapse:collapse; font-size:11.5px; margin:0 0 12px;}
+.report th{text-align:left; padding:6px 9px; border-bottom:1px solid var(--border-hi); color:var(--muted); font-size:9.5px; text-transform:uppercase; letter-spacing:.4px;}
+.report td{padding:6px 9px; border-bottom:1px solid rgba(255,255,255,.05);}
+.report td.r,.report th.r{text-align:right; font-family:var(--font-mono);}
+.report blockquote{margin:0 0 8px; border-left:2px solid var(--border-hi); padding:3px 0 3px 12px; font-size:12px; color:var(--text); line-height:1.6;}
+.report blockquote cite{display:block; font-style:normal; font-size:10px; color:var(--muted-2); font-family:var(--font-mono); margin-top:4px;}
+.report .rnote{background:var(--panel-2); border:1px dashed var(--border-hi); border-radius:var(--radius-sm); padding:10px 12px; font-size:11.5px; color:var(--muted); line-height:1.65; margin:0 0 12px;}
+
+/* ─────────────────────────── search overlay ─────────────────────────── */
+#searchBack{
+  position:fixed; inset:0; z-index:90; background:rgba(4,6,11,.72);
+  display:flex; align-items:flex-start; justify-content:center; padding:12vh 16px 16px;
+  opacity:0; visibility:hidden; transition:opacity .15s,visibility .15s;
+}
+#searchBack.open{opacity:1; visibility:visible;}
+#searchPanel{
+  width:min(640px,100%); background:var(--panel); border:1px solid var(--border-hi);
+  border-radius:var(--radius); box-shadow:0 30px 80px -30px #000; overflow:hidden;
+  display:flex; flex-direction:column; max-height:74vh;
+}
+#searchPanel .sinput{display:flex; align-items:center; gap:10px; padding:13px 15px; border-bottom:1px solid var(--border);}
+#searchPanel .sinput input{flex:1 1 auto; background:none; border:none; font-size:15px; padding:0;}
+#searchPanel .sinput input:focus{outline:none;}
+#searchResults{overflow-y:auto; padding:6px;}
+.sres{
+  display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:var(--radius-sm);
+  cursor:pointer; border:1px solid transparent;
+}
+.sres:hover,.sres.sel{background:var(--panel-3); border-color:var(--border-hi);}
+.sres .stype{font-size:9px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; padding:2px 6px; border-radius:4px; flex:0 0 auto; width:62px; text-align:center;}
+.sres .stitle{font-size:12.5px; color:var(--text-hi); font-family:var(--font-mono); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.sres .ssub{font-size:10.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.sres .scol{min-width:0; flex:1 1 auto;}
+#searchFoot{border-top:1px solid var(--border); padding:8px 14px; font-size:10.5px; color:var(--muted-2); line-height:1.6;}
+
+/* ─────────────────────────── sign-in card ─────────────────────────── */
+#signinBack{
+  position:fixed; inset:0; z-index:95; background:rgba(4,6,11,.8);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  opacity:0; visibility:hidden; transition:opacity .15s,visibility .15s;
+}
+#signinBack.open{opacity:1; visibility:visible;}
+#signinCard{width:330px; max-width:100%; background:var(--panel); border:1px solid var(--border-hi); border-radius:var(--radius); padding:24px;}
+#signinCard h3{font-size:15px; margin-bottom:4px;}
+#signinCard p.s{font-size:11.5px; color:var(--muted); margin:0 0 15px; line-height:1.55;}
+#signinCard input{width:100%; margin-bottom:9px; padding:9px 11px;}
+#signinCard button{width:100%; padding:9px;}
+#signinErr{color:var(--red); font-size:11.5px; min-height:17px; margin-top:9px; line-height:1.45;}
+
+footer{
+  max-width:1440px; margin:0 auto; padding:0 20px 40px;
+  font-size:10.5px; color:var(--muted-2); line-height:1.7;
+}
+
+/* ─────────────────────────── motion / responsive ─────────────────────────── */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;}
+}
+@media(max-width:760px){
+  .hdr-row{padding:9px 13px; gap:9px;}
+  nav.tabs{top:auto; position:static;}
+  main{padding:15px 13px 60px;}
+  .searchbox{flex:1 1 100%;}
+  .report{padding:16px;}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   PRINT — "Print / Save as PDF". This is a real stylesheet, not a gesture: the browser's own
+   PDF engine is the generator, so the job here is to hand it a clean light-on-white document.
+   Every screen chrome element is removed, the dark theme is inverted (a dark dashboard prints
+   as a solid black rectangle and eats a cartridge), and details/summary blocks are forced open
+   because a collapsed <details> prints as a one-line stub.
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+@media print{
+  @page{margin:14mm 12mm;}
+  :root{
+    --bg:#fff; --panel:#fff; --panel-2:#fff; --panel-3:#f4f6f9;
+    --border:#d5dae2; --border-hi:#b9c1cc;
+    --text:#12161d; --text-hi:#000; --muted:#525c6b; --muted-2:#6b7482;
+    --green:#0a7d38; --amber:#8a5b00; --red:#b31d1d; --blue:#12467f;
+    --green-bg:#eef8f1; --amber-bg:#fdf5e6; --red-bg:#fdeeee; --blue-bg:#eef3fa;
+  }
+  body{background:#fff !important; color:#12161d !important; font-size:10.5pt;}
+  header,nav.tabs,#drawerBack,#drawer,#searchBack,#signinBack,footer,
+  .no-print,#alertStrip .chev{display:none !important;}
+  main{max-width:none; padding:0;}
+  .panel{display:none !important;}
+  .panel.active{display:block !important;}
+  .card,.report,.tbl-wrap,.cluster,.rec,.kpi{
+    border-color:#d5dae2 !important; background:#fff !important;
+    box-shadow:none !important; break-inside:avoid;
+  }
+  details,details[open]{display:block !important;}
+  details > *{display:revert !important;}
+  .report h1{font-size:17pt;} .report h2{font-size:12.5pt; break-after:avoid;}
+  .report h2,.report h3,.sec-title{break-after:avoid;}
+  .report table,.report blockquote,table.tbl{break-inside:auto;}
+  .report tr,.tl li{break-inside:avoid;}
+  a{color:#12467f !important; text-decoration:none;}
+  .sk{animation:none !important; background:#eef1f5 !important;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-row">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">CQ</div>
+      <div>
+        <h1>Beta Test QA</h1>
+        <div class="sub">Chart Quest closed beta</div>
+      </div>
+    </div>
+
+    <span class="srcpill none" id="srcPill" title="Where the numbers on this page come from">
+      <span class="dot"></span><span id="srcPillText">connecting…</span>
+    </span>
+
+    <div class="spacer"></div>
+
+    <div class="searchbox no-print">
+      <span class="icon" aria-hidden="true">⌕</span>
+      <input class="ctl" id="searchInput" type="search" placeholder="Search everything…"
+             aria-label="Search players, comments, crashes, builds and ids" autocomplete="off">
+      <kbd>⌘K</kbd>
+    </div>
+
+    <div class="seg no-print" id="windowSeg" role="group" aria-label="Time window">
+      <button data-days="1">24h</button>
+      <button data-days="7">7d</button>
+      <button data-days="30">30d</button>
+      <button data-days="0">All</button>
+    </div>
+
+    <select class="ctl no-print" id="buildFilter" aria-label="Build filter">
+      <option value="">All builds</option>
+    </select>
+
+    <span class="hdr-meta" id="lastUpdated">—</span>
+    <button class="btn sm no-print" id="pauseBtn" title="Pause the 60-second auto-refresh">⏸ Auto</button>
+    <button class="btn sm no-print" id="refreshBtn">↻ Refresh</button>
+  </div>
+</header>
+
+<nav class="tabs no-print">
+  <div class="inner" id="tabBar">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="funnel">Funnel</button>
+    <button data-tab="players">Players<span class="pip" id="pipPlayers">0</span></button>
+    <button data-tab="surveys">Surveys<span class="pip" id="pipSurveys">0</span></button>
+    <button data-tab="intel">Intelligence</button>
+    <button data-tab="recs">Recommendations<span class="pip" id="pipRecs">0</span></button>
+    <button data-tab="trends">Trends</button>
+    <button data-tab="builds">Builds</button>
+    <button data-tab="report">Report</button>
+  </div>
+</nav>
+
+<main>
+  <div id="alertStrip"></div>
+  <div id="panel-overview" class="panel active"></div>
+  <div id="panel-funnel"   class="panel"></div>
+  <div id="panel-players"  class="panel"></div>
+  <div id="panel-surveys"  class="panel"></div>
+  <div id="panel-intel"    class="panel"></div>
+  <div id="panel-recs"     class="panel"></div>
+  <div id="panel-trends"   class="panel"></div>
+  <div id="panel-builds"   class="panel"></div>
+  <div id="panel-report"   class="panel"></div>
+</main>
+
+<footer class="no-print">
+  Internal founder tool — not linked from the game, never indexed.
+  Country and language are deliberately not collected (no cookies, no IP storage, no third
+  parties), so they appear nowhere on this page.
+</footer>
+
+<!-- player drill-down -->
+<div id="drawerBack" class="no-print"></div>
+<aside id="drawer" class="no-print" aria-hidden="true" aria-label="Player detail">
+  <div class="dhead">
+    <h3 id="drawerTitle">—</h3>
+    <button class="btn sm" id="drawerClose">✕ Close</button>
+  </div>
+  <div class="dbody" id="drawerBody"></div>
+</aside>
+
+<!-- global search -->
+<div id="searchBack" class="no-print">
+  <div id="searchPanel" role="dialog" aria-label="Search">
+    <div class="sinput">
+      <span class="dim" aria-hidden="true">⌕</span>
+      <input id="searchOverlayInput" type="search" placeholder="Players, comments, crashes, builds, ids…" autocomplete="off">
+      <kbd>Esc</kbd>
+    </div>
+    <div id="searchResults"></div>
+    <div id="searchFoot"></div>
+  </div>
+</div>
+
+<!-- sign-in: appears OVER the page, never replaces it -->
+<div id="signinBack" class="no-print">
+  <form id="signinCard">
+    <h3>Chart Quest — Admin</h3>
+    <p class="s">Live mode needs an admin account. The session is shared with the founder
+      dashboard, so signing in here signs you in there too.</p>
+    <input id="signinEmail" type="email" class="ctl" placeholder="Email" autocomplete="username">
+    <input id="signinPass" type="password" class="ctl" placeholder="Password" autocomplete="current-password">
+    <button class="btn primary" id="signinBtn" type="submit">Sign in</button>
+    <button class="btn ghost" id="signinCancel" type="button" style="margin-top:8px;">Stay on snapshot data</button>
+    <div id="signinErr"></div>
+  </form>
+</div>
+
+<script src="beta-qa/beta-model.js"></script>
+<script src="beta-qa/beta-insight.js"></script>
+<script src="beta-qa/beta-charts.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   CHART QUEST — BETA TEST QA DASHBOARD
+   ------------------------------------------------------------------------------------------
+   Renders docs/beta-qa/BETA_MODEL_CONTRACT.md §2 and NOTHING ELSE. Every view in this file
+   reads `S.model`; no render function fetches. That is what makes the source toggle safe: the
+   SQL engine and the JS engine emit the same shape, so swapping between them cannot change a
+   number on screen, only where it was computed.
+
+   THREE RULES THIS FILE DOES NOT BEND
+   1. esc() on every interpolated value. Survey free text and crash messages are untrusted
+      strings written by whoever was holding the phone, and they land in innerHTML. This is the
+      one security bug this page could plausibly ship.
+   2. Never render a zero we did not measure. null means "we don't know" and prints as "—" with
+      the reason attached. A confidently wrong number sends the founder at the wrong problem
+      for a week; a dash costs an afternoon.
+   3. No metric the event stream cannot support. If it is not in the model, it is not on screen.
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+'use strict';
+
+/* ── Supabase. Same project and same publishable key as dashboard.html, and the same
+   sessionStorage slot for the admin JWT so the two founder tools share one sign-in. ── */
+const SUPA_URL  = 'https://ymxppzhczvmiuoncuqqu.supabase.co';
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
+const TOKEN_KEY = 'cq_admin_tok';
+const SNAPSHOT_URL = 'beta-qa/beta-data.json';
+
+/* Identical to dashboard.html's helper, deliberately: one escaping rule across both tools.
+   Applied to EVERY value that reaches innerHTML — including ones that "cannot" contain markup,
+   because the day a build tag or a stage key can is the day this page ships an XSS. */
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* PostgREST returns `numeric` as a JSON STRING, so the same percentage is 38 from the snapshot
+   engine and "38.0" from the live RPC. Everything numeric goes through here before it is
+   formatted or compared, or a threshold silently stops firing when the founder flips source. */
+function n(v){
+  if (typeof v === 'number') return isFinite(v) ? v : null;
+  if (typeof v === 'string' && v.trim() !== '' && isFinite(Number(v))) return Number(v);
+  return null;
+}
+const arr = v => Array.isArray(v) ? v : [];
+const obj = v => (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+
+/* Formatting comes from BetaCharts so a number in a KPI tile and the same number inside a
+   chart tooltip can never disagree about how many decimals it has. */
+const F = (window.BetaCharts && window.BetaCharts.format) || {
+  num: v => String(v), pct: v => v + '%', duration: v => v + 's',
+  day: v => String(v), dateTime: v => String(v), clip: v => String(v)
+};
+
+function fmtUnit(v, unit){
+  const x = n(v);
+  if (x == null) return '—';
+  switch (unit){
+    case 'seconds': return F.duration(x);
+    case 'percent': return F.pct(x);
+    case 'rating':  return (Math.round(x * 10) / 10).toFixed(1);
+    case 'score':   return String(Math.round(x));
+    default:        return F.num(x);
+  }
+}
+
+/* mm:ss (hh:mm:ss past an hour) — the founder-facing clock on a journey timeline. */
+function clock(sec){
+  const s0 = n(sec);
+  if (s0 == null) return '--:--';
+  const s = Math.max(0, Math.round(s0));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  const mm = String(m).padStart(2, '0'), sss = String(ss).padStart(2, '0');
+  return h ? `${h}:${mm}:${sss}` : `${mm}:${sss}`;
+}
+
+function ago(iso){
+  const t = window.BetaModel ? BetaModel.util.parseTs(iso) : Date.parse(iso);
+  if (t == null || !isFinite(t)) return '—';
+  const d = Math.max(0, Date.now() - t) / 1000;
+  if (d < 45) return 'just now';
+  if (d < 3600) return Math.round(d / 60) + 'm ago';
+  if (d < 86400) return Math.round(d / 3600) + 'h ago';
+  return Math.round(d / 86400) + 'd ago';
+}
+function staleHours(iso){
+  const t = window.BetaModel ? BetaModel.util.parseTs(iso) : Date.parse(iso);
+  return (t == null || !isFinite(t)) ? null : (Date.now() - t) / 3600000;
+}
+
+/* ══ STATE ════════════════════════════════════════════════════════════════════════════════
+   One object, read by every render function, written only by the loaders. */
+const S = {
+  source: null,          // 'live' | 'snapshot' | null
+  model: null,
+  prevModel: null,       // snapshot mode only — the live RPC has no previous-window call
+  insight: null,         // { alerts, recommendations, clusters, index }
+  raw: null,             // { events, surveys, pulled_at } — snapshot mode only
+  days: 7,
+  build: '',
+  buildOptions: [],
+  tab: 'overview',
+  loading: false,
+  loadError: null,
+  lastUpdated: null,
+  autoRefresh: true,
+  needsAuth: false,
+  selected: null,        // player_id whose drawer is open
+  timeline: null,
+  sessionOwner: {},      // session_id -> player_id (snapshot only; live has no session roster)
+  sort: { key: 'last_seen', dir: -1 },
+  filters: { player: '', stage: '', device: '' },
+  surveyQuery: '',
+  surveyContinue: '',
+  cmpA: '', cmpB: '',
+  charts: {}
+};
+
+/* ── tiny persisted-preference helpers. A dashboard that forgets the window you were looking
+   at makes you re-pick it every morning; a dashboard that throws when localStorage is
+   unavailable (Safari private browsing) is worse. Both are handled here, once. ── */
+function lsGet(k, dflt){ try { const v = localStorage.getItem(k); return v == null ? dflt : v; } catch(e){ return dflt; } }
+function lsSet(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+
+S.days   = parseInt(lsGet('cq_betaqa_days', '7'), 10);
+if (![0,1,7,30].includes(S.days)) S.days = 7;
+S.build  = lsGet('cq_betaqa_build', '');
+S.tab    = lsGet('cq_betaqa_tab', 'overview');
+S.autoRefresh = lsGet('cq_betaqa_auto', '1') === '1';
+try { S.buildOptions = JSON.parse(lsGet('cq_betaqa_buildopts', '[]')) || []; } catch(e){ S.buildOptions = []; }
+
+/* ══ AUTH ═════════════════════════════════════════════════════════════════════════════════ */
+
+let ADMIN_TOKEN = null;
+try { ADMIN_TOKEN = sessionStorage.getItem(TOKEN_KEY) || null; } catch(e){}
+const authBearer = () => `Bearer ${ADMIN_TOKEN || SUPA_ANON}`;
+
+/* A non-2xx from any RPC means "not an admin" — the four beta_* functions are security definer
+   and revoked from anon in the same migration that created them, so the publishable key that
+   ships inside the game gets 403 here and always will. The status travels on the error so the
+   caller can tell an auth problem (drop to sign-in) from an outage (say so and keep the data
+   already on screen). */
+async function rpc(name, body){
+  const res = await fetch(`${SUPA_URL}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: { apikey: SUPA_ANON, Authorization: authBearer(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {})
+  });
+  if (!res.ok){
+    const err = new Error(`${name} returned ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+async function adminSignIn(email, password){
+  const r = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { apikey: SUPA_ANON, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  if (!r.ok) throw new Error('Wrong email or password.');
+  const d = await r.json();
+  ADMIN_TOKEN = d.access_token;
+  /* Signing in is not the same as being an admin. Prove it against the RPC this page actually
+     needs rather than against a different function that might be granted more widely. */
+  try {
+    await rpc('beta_model', { p_days: 1, p_build: null });
+  } catch (e){
+    ADMIN_TOKEN = null;
+    throw new Error('That account is not an admin.');
+  }
+  try { sessionStorage.setItem(TOKEN_KEY, ADMIN_TOKEN); } catch(e){}
+}
+
+function dropToken(){
+  ADMIN_TOKEN = null;
+  try { sessionStorage.removeItem(TOKEN_KEY); } catch(e){}
+}
+
+/* ══ LOADERS ══════════════════════════════════════════════════════════════════════════════ */
+
+const DAY_MS = 86400000;
+
+/* LIVE — contract §6. Two round trips: the whole dashboard, then the roster (paginated
+   server-side so this scales past a few thousand testers without shipping a row per event).
+   `timeline` stays null: build() has no selection and inventing one would ship a random
+   tester's session as "the" timeline. */
+async function loadLive(){
+  const days = S.days, build = S.build || null;
+  const model = await rpc('beta_model', { p_days: days, p_build: build });
+  const roster = await rpc('beta_players', {
+    p_days: days, p_build: build, p_limit: 500, p_offset: 0, p_search: null, p_stage: null
+  });
+  model.players = arr(roster && roster.rows);
+  model.players_total = n(roster && roster.total) ?? model.players.length;
+  model.timeline = null;
+  /* The live RPC computes the previous window internally (kpis carry `prev`), but there is no
+     call that returns the previous window's full model — so alerts get null and the two rules
+     that need a previous SAMPLE SIZE correctly decline to fire rather than guessing at one. */
+  return { model, prevModel: null };
+}
+
+/* SNAPSHOT — the path that works today, and a first-class citizen: identical shape, identical
+   numbers, produced by the JS twin of the SQL engine. */
+async function loadSnapshot(){
+  const res = await fetch(SNAPSHOT_URL + '?t=' + Date.now(), { cache: 'no-store' });
+  if (!res.ok) { const e = new Error('snapshot ' + res.status); e.status = res.status; throw e; }
+  const raw = await res.json();
+  const events = arr(raw.events), surveys = arr(raw.surveys);
+  const opts = { days: S.days, build: S.build || null, source: 'snapshot' };
+  const model = BetaModel.build(events, surveys, opts);
+
+  /* The previous window, built by the same function with the clock wound back one window
+     length. That is what lets the rating-collapse rule see a previous n instead of a bare
+     mean — firing a "collapse" off a one-response window is exactly the false alarm the
+     contract's n-gates exist to prevent. All-time has no previous window at all. */
+  let prevModel = null;
+  if (S.days > 0){
+    prevModel = BetaModel.build(events, surveys,
+      Object.assign({}, opts, { now: Date.now() - S.days * DAY_MS }));
+  }
+
+  /* Session ids exist only in the raw rows — the contract carries no session roster. Harvest
+     them here so global search can find one, and keep the owner map so clicking a session hit
+     opens the player it belongs to. */
+  const owner = {}, sessions = [];
+  for (const e of events){
+    if (!e || !e.session_id || owner[e.session_id]) continue;
+    owner[e.session_id] = e.player_id || '';
+    sessions.push({ session_id: e.session_id, player_id: e.player_id || '', first_seen: e.ts || e.created_at || '' });
+  }
+  return { model, prevModel, raw: { events, surveys, pulled_at: raw.pulled_at || null }, owner, sessions };
+}
+
+/* Auto-detect, in contract order: live if an admin session exists, else the snapshot, else an
+   empty state that says exactly how to get data. A failed live attempt NEVER blocks the
+   snapshot — the founder should still see numbers when their JWT has simply expired. */
+async function load(reason){
+  if (S.loading) return;
+  S.loading = true;
+  S.loadError = null;
+  renderChrome();
+
+  let out = null, liveErr = null;
+
+  if (ADMIN_TOKEN){
+    try {
+      out = await loadLive();
+      S.source = 'live';
+      S.raw = null;
+      S.sessionOwner = {};
+      S.needsAuth = false;
+    } catch (e){
+      liveErr = e;
+      if (e && (e.status === 401 || e.status === 403)){
+        /* Expired or non-admin: forget the token so the next tick does not retry it, and offer
+           the sign-in card — over the page, never instead of it. */
+        dropToken();
+        S.needsAuth = true;
+      }
+    }
+  }
+
+  if (!out){
+    try {
+      const snap = await loadSnapshot();
+      out = { model: snap.model, prevModel: snap.prevModel };
+      S.source = 'snapshot';
+      S.raw = snap.raw;
+      S.sessionOwner = snap.owner;
+      S.snapshotSessions = snap.sessions;
+    } catch (e){
+      S.source = null;
+      S.model = null;
+      S.loadError = describeLoadFailure(e, liveErr);
+    }
+  }
+
+  if (out){
+    S.model = out.model;
+    S.prevModel = out.prevModel;
+    S.insight = buildInsight(out.model, out.prevModel);
+    S.lastUpdated = Date.now();
+    rememberBuildOptions(out.model);
+  }
+
+  S.loading = false;
+  renderAll();
+  void reason;
+}
+
+/* The empty state is only useful if it names the actual failure. A file:// page cannot fetch
+   its own sibling JSON — Chrome and Safari both treat it as a cross-origin read — and that
+   error is indistinguishable from "the file is missing" unless someone says so out loud. */
+function describeLoadFailure(snapErr, liveErr){
+  const isFile = location.protocol === 'file:';
+  return {
+    file_protocol: isFile,
+    snapshot: snapErr && snapErr.status ? ('HTTP ' + snapErr.status)
+            : (snapErr && snapErr.message) || 'could not be read',
+    live: liveErr ? ((liveErr.status ? 'HTTP ' + liveErr.status + ' — ' : '') + (liveErr.message || 'failed'))
+                  : (ADMIN_TOKEN ? 'not attempted' : 'no admin session in this browser')
+  };
+}
+
+/* Insight is derived, never fetched, and never allowed to take the page down with it: a throw
+   inside one clustering rule must not cost the founder the funnel. */
+function buildInsight(model, prevModel){
+  const safe = (label, fn, dflt) => {
+    try { return fn(); } catch (e){ console.warn('[beta-qa] ' + label + ' failed', e); return dflt; }
+  };
+  /* searchIndex reads `m.sessions` if it is there. Decorate a COPY — the model itself is the
+     parity artefact and must stay byte-comparable with the SQL engine's output. */
+  const idxModel = S.snapshotSessions && S.snapshotSessions.length
+    ? Object.assign({}, model, { sessions: S.snapshotSessions })
+    : model;
+  return {
+    alerts: safe('alerts', () => BetaInsight.alerts(model, prevModel), []),
+    recommendations: safe('recommendations', () => BetaInsight.recommendations(model), []),
+    clusters: safe('clusterSurveys', () => BetaInsight.clusterSurveys(model), null),
+    index: safe('searchIndex', () => BetaInsight.searchIndex(idxModel), null)
+  };
+}
+
+/* The build dropdown must not collapse to a single option the moment a filter is applied — the
+   filtered model only knows about its own cohort. Options are remembered across reloads and
+   only ever replaced from an UNFILTERED load, which is the only view that can see them all. */
+function rememberBuildOptions(model){
+  if (S.build) return;
+  const ids = arr(model.builds).map(b => String(obj(b).build || '')).filter(Boolean);
+  if (!ids.length) return;
+  S.buildOptions = ids;
+  lsSet('cq_betaqa_buildopts', JSON.stringify(ids));
+}
+
+/* ══ CHART MOUNTING ═══════════════════════════════════════════════════════════════════════
+   Charts measure their container, so one mounted into a display:none panel would bake a
+   zero-width viewBox. beta-charts.js already waits for the ResizeObserver, but the panel is
+   also re-rendered on every tab switch, which is simpler to reason about and guarantees a
+   chart is always built against a laid-out container. Old controllers are destroyed first —
+   each one holds a ResizeObserver, and leaking those across a 60-second refresh loop is how a
+   dashboard left open all day ends up pegging a core. */
+function mount(kind, id, data, opts){
+  const el = document.getElementById(id);
+  if (!el || !window.BetaCharts || typeof BetaCharts[kind] !== 'function') return;
+  if (S.charts[id]) { try { S.charts[id].destroy(); } catch(e){} }
+  S.charts[id] = BetaCharts[kind](el, data, opts || {});
+}
+function destroyChartsIn(panelId){
+  const root = document.getElementById(panelId);
+  if (!root) return;
+  Object.keys(S.charts).forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || root.contains(el)){
+      /* Also covers ids whose element has already been dropped by an innerHTML rewrite —
+         those controllers can never repaint again and exist only to hold observers open. */
+      try { S.charts[id].destroy(); } catch(e){}
+      delete S.charts[id];
+    }
+  });
+}
+
+/* ══ RENDER ═══════════════════════════════════════════════════════════════════════════════ */
+
+const PANELS = {
+  overview: renderOverview, funnel: renderFunnel, players: renderPlayers,
+  surveys: renderSurveys, intel: renderIntel, recs: renderRecs,
+  trends: renderTrends, builds: renderBuilds, report: renderReport
+};
+
+function renderAll(){
+  renderChrome();
+  renderAlerts();
+  renderPanel(S.tab);
+}
+
+function renderPanel(tab){
+  const id = 'panel-' + tab;
+  const el = document.getElementById(id);
+  if (!el) return;
+  destroyChartsIn(id);
+
+  if (S.loading && !S.model){ el.innerHTML = skeletonFor(tab); return; }
+  if (!S.model){ el.innerHTML = renderEmptyState(); wireEmptyState(); return; }
+
+  try {
+    (PANELS[tab] || renderOverview)(el);
+  } catch (e){
+    console.error('[beta-qa] render ' + tab + ' failed', e);
+    /* A panel that throws must say so. Rendering nothing looks exactly like "no data", and the
+       founder would act on the absence instead of reporting the bug. */
+    el.innerHTML = `<div class="empty"><div class="big">⚠</div><h3>This view failed to render</h3>
+      <div>The data is fine — the bug is in the dashboard. Details are in the browser console.</div>
+      <div class="mono dim" style="margin-top:8px;">${esc(e && e.message ? e.message : String(e))}</div></div>`;
+  }
+}
+
+function renderChrome(){
+  /* source pill — the founder must never have to guess which engine produced a number */
+  const pill = document.getElementById('srcPill');
+  const txt  = document.getElementById('srcPillText');
+  pill.className = 'srcpill ' + (S.source || 'none');
+  if (S.source === 'live'){
+    txt.innerHTML = 'Live<small> · admin session</small>';
+    pill.title = 'Numbers computed server-side by the beta_model RPC (contract §6).';
+  } else if (S.source === 'snapshot'){
+    const pulled = S.raw && S.raw.pulled_at;
+    const hrs = staleHours(pulled);
+    const stale = hrs != null && hrs > 24;
+    txt.innerHTML = 'Snapshot<small> · ' + esc(pulled ? ago(pulled) : 'age unknown') + '</small>';
+    pill.title = pulled
+      ? 'beta-qa/beta-data.json pulled ' + pulled + (stale ? ' — over a day old. Re-run scripts/beta_pull.py for fresh numbers.' : '')
+      : 'beta-qa/beta-data.json — no pulled_at stamp in the file.';
+    if (stale) pill.classList.add('none');
+  } else {
+    txt.textContent = S.loading ? 'connecting…' : 'no data';
+    pill.title = 'Neither a live admin session nor a snapshot file could be read.';
+  }
+
+  /* window + build controls */
+  document.querySelectorAll('#windowSeg button').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.days, 10) === S.days);
+  });
+  const sel = document.getElementById('buildFilter');
+  const opts = ['<option value="">All builds</option>'].concat(
+    S.buildOptions.map(b => `<option value="${esc(b)}"${b === S.build ? ' selected' : ''}>Build ${esc(b)}</option>`)
+  );
+  /* A persisted filter for a build that is not in the remembered list must still be selectable,
+     or the control would silently show "All builds" while the data behind it was filtered. */
+  if (S.build && !S.buildOptions.includes(S.build)){
+    opts.push(`<option value="${esc(S.build)}" selected>Build ${esc(S.build)}</option>`);
+  }
+  sel.innerHTML = opts.join('');
+
+  document.getElementById('refreshBtn').disabled = S.loading;
+  document.getElementById('refreshBtn').textContent = S.loading ? '↻ Loading…' : '↻ Refresh';
+  const pause = document.getElementById('pauseBtn');
+  pause.textContent = S.autoRefresh ? '⏸ Auto' : '▶ Paused';
+  pause.classList.toggle('on', S.autoRefresh);
+  pause.style.display = S.source === 'live' ? '' : 'none';
+
+  tickClock();
+
+  /* tab pips */
+  const setPip = (id, v, crit) => {
+    const e = document.getElementById(id);
+    if (!e) return;
+    e.textContent = v == null ? '0' : String(v);
+    e.classList.toggle('crit', !!crit);
+    e.style.display = (v == null || v === 0) ? 'none' : '';
+  };
+  const m = S.model;
+  setPip('pipPlayers', m ? arr(m.players).length : 0);
+  setPip('pipSurveys', m ? n(obj(m.surveys).n) : 0);
+  const recs = S.insight ? arr(S.insight.recommendations) : [];
+  setPip('pipRecs', recs.length, recs.some(r => r.priority === 'HIGH'));
+}
+
+function tickClock(){
+  const el = document.getElementById('lastUpdated');
+  if (!el) return;
+  if (!S.lastUpdated){ el.textContent = S.loading ? 'loading…' : '—'; return; }
+  const secs = Math.round((Date.now() - S.lastUpdated) / 1000);
+  const when = secs < 5 ? 'just now' : secs < 60 ? secs + 's ago' : Math.round(secs / 60) + 'm ago';
+  el.textContent = 'updated ' + when;
+}
+
+/* "1 surveys" in a document the founder forwards reads as a bug in the pipeline, not a typo. */
+function countLabel(v, one){ return `${v} ${v === 1 ? one : one + 's'}`; }
+
+function windowLabel(){
+  const d = n(S.model && S.model.meta && S.model.meta.window_days);
+  const days = d == null ? S.days : d;
+  return days === 0 ? 'all time' : days === 1 ? 'last 24 hours' : 'last ' + days + ' days';
+}
+
+/* ══ EMPTY + SKELETON ═════════════════════════════════════════════════════════════════════ */
+
+function skeletonFor(tab){
+  const card = h => `<div class="card" style="margin-bottom:12px;"><div class="sk line" style="width:35%;"></div><div class="sk" style="height:${h}px;margin-top:12px;"></div></div>`;
+  if (tab === 'overview'){
+    return `<div class="kpi-grid">${Array.from({length:8}).map(() =>
+      `<div class="kpi"><div class="sk line" style="width:60%;height:8px;"></div>
+       <div class="sk big" style="width:45%;"></div><div class="sk line" style="width:80%;"></div></div>`).join('')}</div>
+      <div style="height:18px;"></div>${card(120)}`;
+  }
+  return card(280) + card(180);
+}
+
+/* NEVER zeros. A dashboard that renders 0 players / 0% completion when it simply could not
+   read anything is indistinguishable from a beta nobody played — and that is a conclusion the
+   founder would act on. This state says what failed and exactly how to fix it. */
+function renderEmptyState(){
+  const e = S.loadError || {};
+  return `
+  <div class="card" style="max-width:760px;margin:0 auto;">
+    <div class="card-head"><h3>No data loaded</h3><span class="hint">nothing below is a measurement</span></div>
+    <div class="note" style="margin-bottom:14px;">
+      This page found <b>neither a live admin session nor a snapshot file</b>, so it is showing
+      nothing rather than zeros. An empty funnel and a broken pipe look identical in a chart;
+      only one of them is worth your morning.
+    </div>
+
+    ${e.file_protocol ? `<div class="note warn" style="margin-bottom:14px;">
+      <b>You opened this file directly (file://).</b> Browsers block <code>fetch()</code> between
+      local files, so the snapshot can never load this way. Serve the folder instead:
+      <div style="margin-top:7px;"><code>cd "$(git rev-parse --show-toplevel)" &amp;&amp; python3 -m http.server 8000</code></div>
+      <div style="margin-top:5px;">then open <code>http://localhost:8000/beta-qa.html</code></div>
+    </div>` : ''}
+
+    <h4 style="font-size:12.5px;margin-bottom:7px;">Option 1 — pull a snapshot (works with no admin account)</h4>
+    <div class="note" style="margin-bottom:14px;">
+      <div><code>export SUPABASE_SERVICE_KEY=…</code></div>
+      <div style="margin-top:5px;"><code>python3 scripts/beta_pull.py --days 0</code></div>
+      <div style="margin-top:7px;">Writes <code>beta-qa/beta-data.json</code>, which this page reads
+      directly. Same shape, same numbers, computed in the browser by the JS twin of the SQL engine.</div>
+      <div style="margin-top:7px;" class="dim">Snapshot read failed with: ${esc(e.snapshot || 'unknown')}</div>
+    </div>
+
+    <h4 style="font-size:12.5px;margin-bottom:7px;">Option 2 — live mode</h4>
+    <div class="note" style="margin-bottom:14px;">
+      Live mode calls the <code>beta_model</code> RPCs, which are admin-only and revoked from the
+      publishable key — so it needs a signed-in <b>admin</b> account, not just any account.
+      <div style="margin-top:7px;" class="dim">Live: ${esc(e.live || 'not attempted')}</div>
+    </div>
+
+    <div style="display:flex;gap:9px;flex-wrap:wrap;">
+      <button class="btn primary" id="emptySignIn">Sign in for live data</button>
+      <button class="btn" id="emptyRetry">Try again</button>
+    </div>
+  </div>`;
+}
+function wireEmptyState(){
+  const a = document.getElementById('emptySignIn');
+  const b = document.getElementById('emptyRetry');
+  if (a) a.onclick = () => openSignin();
+  if (b) b.onclick = () => load('retry');
+}
+
+/* ══ ALERTS (contract §4) ═════════════════════════════════════════════════════════════════ */
+
+function renderAlerts(){
+  const strip = document.getElementById('alertStrip');
+  const list = S.insight ? arr(S.insight.alerts) : [];
+  if (!S.model || !list.length){ strip.innerHTML = ''; return; }
+
+  strip.innerHTML = list.map(a => {
+    const lvl = ['critical','warn','info'].includes(a.level) ? a.level : 'info';
+    const ev = arr(a.evidence);
+    return `<details class="alert ${lvl}">
+      <summary>
+        <span class="chev">▸</span>
+        <span class="lvl">${esc(lvl)}</span>
+        <span class="atitle">${esc(a.title)}</span>
+        <span class="affected">${esc(n(a.players_affected) ?? 0)} ${n(a.players_affected) === 1 ? 'player' : 'players'}</span>
+      </summary>
+      <div class="body">
+        ${esc(a.detail)}
+        ${ev.length ? `<ul>${ev.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+      </div>
+    </details>`;
+  }).join('');
+}
+
+/* ══ OVERVIEW ═════════════════════════════════════════════════════════════════════════════ */
+
+/* `good` says which direction is an improvement, and it is editorial — so where the honest
+   answer is "it depends", it is 0 and the arrow renders grey. A longer time-to-completion can
+   mean deeper engagement or a worse grind; colouring it green would be an opinion dressed as a
+   measurement. */
+const KPI_DEFS = [
+  { key:'players_total',      label:'Testers',                good: 1, spark:'players' },
+  { key:'players_new',        label:'New testers',            good: 1, spark:'new_players' },
+  { key:'players_returning',  label:'Returning testers',      good: 1 },
+  { key:'sessions',           label:'Sessions',               good: 1, spark:'sessions' },
+  { key:'completed_runs',     label:'Finished the beta',      good: 1, spark:'completions' },
+  { key:'median_session_seconds', label:'Median session',     good: 1 },
+  { key:'avg_session_seconds',    label:'Average session',    good: 1, spark:'avg_session_seconds' },
+  { key:'avg_rating',         label:'Average rating',         good: 1, spark:'avg_rating' },
+  { key:'intro_completion_pct', label:'Intro chain completed', good: 1 },
+  { key:'boss_completion_pct',  label:'Beat the boss',        good: 1 },
+  { key:'journal_completion_pct', label:'Journal Discovery',  good: 1 },
+  { key:'survey_completion_pct',  label:'Survey handoff',     good: 1 },
+  { key:'avg_time_to_boss_seconds', label:'Avg time to boss', good: 0 },
+  { key:'median_time_to_completion_seconds', label:'Median time to finish', good: 0 },
+  { key:'crash_players',      label:'Players who crashed',    good:-1 }
+];
+
+function trendHtml(k, good){
+  const val = n(k.value), prev = n(k.prev), t = k.trend || 'flat';
+  if (prev == null){
+    return `<span class="k-prev">no previous window</span>`;
+  }
+  const glyph = t === 'up' ? '▲' : t === 'down' ? '▼' : '—';
+  let cls = 'flat';
+  if (t === 'up')   cls = good === 1 ? 'up' : good === -1 ? 'bad-up' : 'neutral';
+  if (t === 'down') cls = good === 1 ? 'down' : good === -1 ? 'good-down' : 'neutral';
+  const d = n(k.delta_pct);
+  const delta = d == null ? '' : ' ' + (d > 0 ? '+' : '') + d + '%';
+  const prevTxt = fmtUnit(prev, k.unit);
+  return `<span class="k-trend ${cls}">${glyph}${esc(delta)}</span>
+          <span class="k-prev" title="previous window of equal length">was ${esc(prevTxt)}</span>`
+       + (t === 'flat' && val != null && prev != null && val !== prev
+          ? `<span class="k-prev tip" data-tip="The window is too small to call a direction — under five samples one tester arriving is a 100% swing, so the trend is reported flat.">n too small to call</span>` : '');
+}
+
+function renderOverview(el){
+  const m = S.model, k = obj(m.kpis), meta = obj(m.meta);
+  const ts = arr(m.timeseries);
+  const sparkOf = field => ts.map(r => ({ x: r.day, y: n(r[field]) }));
+
+  const cards = KPI_DEFS.map(def => {
+    const kp = obj(k[def.key]);
+    const val = n(kp.value);
+    const display = val == null ? 'not measured' : fmtUnit(val, kp.unit);
+    const sparkId = def.spark ? 'spark_' + def.key : null;
+    return `<div class="kpi">
+      <div class="k-label">
+        <span${kp.note ? ` class="tip" data-tip="${esc(kp.note)}"` : ''}>${esc(def.label)}</span>
+      </div>
+      <div class="k-row">
+        <div class="k-value${val == null ? ' na' : ''}">${esc(display)}</div>
+      </div>
+      <div class="k-row" style="margin-top:7px;">${trendHtml(kp, def.good)}</div>
+      ${sparkId ? `<div class="k-spark" id="${sparkId}"></div>`
+                : `<div class="k-foot">${esc(n(kp.n) != null ? 'n = ' + n(kp.n) : '')}</div>`}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="sec-title"><h2>Overview</h2>
+      <span class="desc">${esc(windowLabel())}${S.build ? ' · build ' + esc(S.build) : ''} ·
+      ${esc(countLabel(n(meta.event_count) ?? 0, 'event'))} ·
+      ${esc(countLabel(n(meta.survey_count) ?? 0, 'survey'))}</span></div>
+    <div class="kpi-grid">${cards}</div>
+
+    <div class="sec-title"><h2>Health score</h2>
+      <span class="desc">One number, printed with its own breakdown — a composite nobody can decompose is a number nobody trusts.</span></div>
+    ${healthCard()}
+
+    <div class="sec-title"><h2>Cohort</h2></div>
+    ${cohortCard()}
+  `;
+
+  KPI_DEFS.forEach(def => {
+    if (!def.spark) return;
+    mount('sparkline', 'spark_' + def.key, sparkOf(def.spark), {
+      height: 30, trendColor: true, label: def.label
+    });
+  });
+}
+
+/* The two engines describe a health component with different field names — the SQL side reports
+   `included`/`full_marks`, the JS side `dropped`/`target`. Normalising here (rather than
+   teaching the renderer both dialects) keeps the difference in one place and stops a live/
+   snapshot switch from silently rendering every component as "dropped". */
+function normHealthComponent(c){
+  const o = obj(c);
+  return {
+    key: String(o.key || ''),
+    label: String(o.label || o.key || ''),
+    weight: n(o.weight),
+    weight_used: n(o.weight_used),
+    actual: n(o.actual),
+    target: n(o.target != null ? o.target : o.full_marks),
+    points: n(o.points),
+    n: n(o.n),
+    reason: o.reason || null,
+    dropped: o.dropped != null ? !!o.dropped : (o.included != null ? !o.included : false)
+  };
+}
+
+function healthOf(model){
+  const kp = obj(obj(model.kpis).health_score);
+  let comps = arr(kp.components);
+  let score = n(kp.value);
+  if (!comps.length && window.BetaModel){
+    /* Snapshot mode: the KPI carries only the number. healthScore() recomputes the breakdown
+       from the rendered model through the exact same function that produced the number, so the
+       two can never drift apart. */
+    const h = BetaModel.healthScore(model);
+    comps = arr(h.components);
+    if (score == null) score = n(h.score);
+  }
+  return { score, note: kp.note || null, components: comps.map(normHealthComponent) };
+}
+
+function healthCard(){
+  const h = healthOf(S.model);
+  const kept = h.components.filter(c => !c.dropped);
+  const bar = kept.map(c => {
+    const w = c.weight_used != null ? c.weight_used : (c.weight || 0);
+    const ratio = (c.actual != null && c.target) ? Math.min(1, c.actual / c.target) : 0;
+    const col = ratio >= .8 ? 'var(--green)' : ratio >= .45 ? 'var(--amber)' : 'var(--red)';
+    return `<i style="width:${(w * ratio).toFixed(2)}%;background:${col};"></i>`;
+  }).join('');
+
+  const rows = h.components.map(c => {
+    const pct = (c.actual != null && c.target) ? Math.min(100, (c.actual / c.target) * 100) : null;
+    /* Ratios are fractions on four components and a 0-10 rating on the fifth. Printing 0.42 as
+       "0.42" next to "8.5" would read as a broken cell, so each is shown in its own units. */
+    const isRating = c.key === 'enjoyment';
+    const actTxt = c.actual == null ? '—'
+      : isRating ? (Math.round(c.actual * 10) / 10).toFixed(1) + '/10'
+      : F.pct(c.actual * 100);
+    const tgtTxt = c.target == null ? '—'
+      : isRating ? (Math.round(c.target * 10) / 10).toFixed(1) + '/10'
+      : F.pct(c.target * 100);
+    return `<tr class="${c.dropped ? 'dropped' : ''}">
+      <td>${esc(c.label)}${c.dropped ? ` <span class="tag">dropped${c.reason ? ' · ' + esc(c.reason) : ' · n&lt;3'}</span>` : ''}</td>
+      <td class="r">${esc(actTxt)}</td>
+      <td class="r dim">${esc(tgtTxt)}</td>
+      <td class="r">${c.dropped ? '—' : esc(F.pct(pct))}</td>
+      <td class="r">${c.points == null ? '—' : esc((Math.round(c.points * 10) / 10).toFixed(1))}
+        <span class="dim">/ ${esc(c.weight_used != null ? (Math.round(c.weight_used*10)/10) : c.weight)}</span></td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="card">
+    <div class="health">
+      <div class="score">
+        <div class="n${h.score == null ? ' na' : ''}">${h.score == null ? 'not scoreable' : esc(h.score)}</div>
+        <div class="of">${h.score == null ? 'every component below n = 3' : 'out of 100'}</div>
+      </div>
+      <div>
+        <div class="hbar">${bar || '<i style="width:100%;background:var(--panel-3);"></i>'}</div>
+        <div style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:10px;">
+          ${esc(h.note || '')}
+        </div>
+      </div>
+    </div>
+    <details class="expand">
+      <summary>Component breakdown</summary>
+      <table class="hcomp">
+        <thead><tr><th>Component</th><th class="r">Actual</th><th class="r">Full marks</th><th class="r">Of target</th><th class="r">Points</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="note" style="margin-top:11px;">
+        Each component scores <b>min(1, actual ÷ full marks) × weight</b>. Components with fewer
+        than three samples are dropped and the surviving weights renormalised to 100 — otherwise
+        a normal week-one beta with two survey responses would look like a 20-point decline that
+        never happened.
+      </div>
+    </details>
+  </div>`;
+}
+
+function cohortCard(){
+  const meta = obj(S.model.meta);
+  const tech = obj(S.model.tech);
+  const line = o => {
+    const keys = Object.keys(obj(o));
+    return keys.length ? keys.map(k2 => `${esc(k2)} <b class="num">${esc(n(o[k2]) ?? 0)}</b>`).join(' · ') : '<span class="dim">none recorded</span>';
+  };
+  const excluded = n(meta.excluded_players) ?? 0;
+  return `<div class="grid g2">
+    <div class="card">
+      <div class="card-head"><h3>Who is in these numbers</h3></div>
+      <dl class="kv">
+        <dt>Window</dt><dd>${esc(windowLabel())}${meta.window_from ? ' · from ' + esc(F.dateTime(meta.window_from)) : ''}</dd>
+        <dt>Build filter</dt><dd>${meta.build_filter ? esc(meta.build_filter) : 'none — all builds'}</dd>
+        <dt>Events</dt><dd>${esc(n(meta.event_count) ?? 0)}</dd>
+        <dt>Surveys</dt><dd>${esc(n(meta.survey_count) ?? 0)}</dd>
+        <dt>Testers</dt><dd>${esc(arr(S.model.players).length)}${n(S.model.players_total) != null && n(S.model.players_total) !== arr(S.model.players).length ? ' of ' + esc(n(S.model.players_total)) : ''}</dd>
+        <dt>Generated</dt><dd>${esc(F.dateTime(meta.generated_at))}</dd>
+      </dl>
+      <div class="note" style="margin-top:12px;">
+        <b>${esc(excluded)} test ${excluded === 1 ? 'id' : 'ids'} removed</b>
+        (${esc(n(meta.excluded_events) ?? 0)} events) — <span class="mono">${esc((window.BetaModel ? BetaModel.TEST_PREFIXES : []).join(' · '))}</span>.
+        Exclusions are always shown, never silent: a suspiciously small cohort must never be a mystery.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Devices</h3><span class="hint">counted per player, not per event</span></div>
+      <dl class="kv">
+        <dt>Device</dt><dd>${line(tech.device)}</dd>
+        <dt>Browser</dt><dd>${line(tech.browser)}</dd>
+        <dt>OS</dt><dd>${line(tech.os)}</dd>
+        <dt>Viewport</dt><dd>${line(tech.viewport)}</dd>
+      </dl>
+      <div class="note" style="margin-top:12px;">
+        <b>Country and language are not collected, by design</b> — no cookies, no IP storage, no
+        third parties. There is no hidden column here; the data does not exist.
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ══ FUNNEL ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Why each greyed stage is greyed. These are OUR strings, not model text, but they still go
+   through esc() on the way out — the day one of them is generated from data is the day the
+   exception becomes a hole. */
+const NOT_INSTRUMENTED = {
+  play_click: 'No event exists for this step. The session id is minted once per visit and shared by every page in the tab (index → play → the game iframe → survey), so only the first document fires session_start — clicking Play fires nothing at all. A session_start carrying page="play" means the tester arrived directly at play.html, not that they clicked through. This stage takes no part in the drop-off maths; if it did it would manufacture a 100% loss on a funnel where nothing is wrong.',
+  movement: 'Never instrumented. There is no movement-tutorial event in cq-track.js, so this row is a placeholder for a step we cannot yet see. Excluded from the drop-off maths.'
+};
+
+function renderFunnel(el){
+  const rows = arr(S.model.funnel);
+  const instrumented = rows.filter(r => r.instrumented);
+  const zeroStages = instrumented.filter(r => n(r.players) === 0);
+  const bottleneck = rows.find(r => r.is_bottleneck);
+
+  const body = rows.map(r => {
+    if (!r.instrumented){
+      return `<tr class="greyed">
+        <td><span class="tip" data-tip="${esc(NOT_INSTRUMENTED[r.key] || 'No event backs this stage.')}">${esc(r.label)}</span>
+            <span class="tag">not instrumented</span></td>
+        <td class="r num dim">—</td><td class="r num dim">—</td><td class="r num dim">—</td>
+        <td class="r num dim">—</td><td class="r num dim">—</td>
+      </tr>`;
+    }
+    const players = n(r.players);
+    const isZero = players === 0;
+    return `<tr class="${r.is_bottleneck ? 'bottleneck' : ''}">
+      <td>${esc(r.label)}
+        ${r.is_bottleneck ? '<span class="tag red">bottleneck</span>' : ''}
+        ${isZero ? '<span class="tag amber tip" data-tip="A 0% stage is more often broken instrumentation than a broken game. tutorial_started is detected by polling introFlow.active, so a tester who skips the intro never fires it — and every event below session_start dies silently if the beta-ingest origin allowlist misses the domain being played on. Verify the event before changing anything in the game.">check instrumentation</span>' : ''}
+      </td>
+      <td class="r num">${esc(players ?? '—')}</td>
+      <td class="r num">${esc(F.pct(n(r.pct_of_top)))}</td>
+      <td class="r num">${n(r.kept_from_prev_pct) == null ? '<span class="dim">—</span>' : esc(F.pct(n(r.kept_from_prev_pct)))}</td>
+      <td class="r num">${n(r.drop_players) ? '<span style="color:var(--red)">−' + esc(n(r.drop_players)) + '</span> <span class="dim">' + esc(F.pct(n(r.drop_pct))) + '</span>' : '<span class="dim">0</span>'}</td>
+      <td class="r num">${n(r.median_seconds_from_start) == null ? '<span class="dim">—</span>' : esc(F.duration(n(r.median_seconds_from_start)))}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="sec-title"><h2>Funnel</h2>
+      <span class="desc">13 stages, ${esc(windowLabel())}. Monotonic: each player is credited with
+      their furthest stage and every stage before it, so the funnel can never go up.</span></div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div id="funnelChart"></div>
+      <div class="funnel-legend">
+        <span><i style="background:var(--blue)"></i>reached this stage</span>
+        <span><i style="background:var(--red);opacity:.5"></i>lost since the previous stage</span>
+        <span><i style="background:var(--border);"></i>not instrumented — excluded from drop-off maths</span>
+      </div>
+    </div>
+
+    ${bottleneck ? `<div class="note warn" style="margin-bottom:14px;">
+      <b>Bottleneck: ${esc(bottleneck.label)}.</b> It loses ${esc(n(bottleneck.drop_players))} players
+      (${esc(F.pct(n(bottleneck.drop_pct)))} of the stage above it) — the largest absolute loss in the
+      funnel with at least five players in the stage above. Ranking these by <i>rate</i> instead
+      would let a 1-of-1 loss outrank a 7-of-13 one, which is the single most expensive misread
+      available in this dataset.
+    </div>` : ''}
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr>
+          <th>Stage</th><th class="r">Players</th><th class="r">% of landing</th>
+          <th class="r">Kept from previous</th><th class="r">Drop-off</th>
+          <th class="r"><span class="tip" data-tip="Median time from the player's first event to this stage, measured only on players who actually fired the stage event. A player credited by the monotonic pass has no timestamp for the stage we lost, and inventing one would be fiction.">Median time</span></th>
+        </tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+
+    ${zeroStages.length ? `<div class="note" style="margin-top:14px;">
+      <b>${esc(zeroStages.length)} stage${zeroStages.length === 1 ? '' : 's'} read exactly zero.</b>
+      Verify the event fires before treating that as a gameplay problem — an exact zero after a
+      healthy stage is usually the instrument.
+    </div>` : ''}
+
+    <div class="note" style="margin-top:14px;">
+      <b>“Intro chain completed” is not tutorial completion.</b> <code>tutorial_completed</code> is
+      wired to <code>introComplete()</code>, which the game calls from <code>bossFinish()</code>
+      when level == 1 — so it fires <i>after</i> Guardian 1. “0% finished the tutorial” and
+      “0% beat the first boss” are completely different emergencies.
+    </div>`;
+
+  mount('funnel', 'funnelChart', rows, {
+    showTime: true,
+    onSelect: stage => {
+      /* Clicking a stage is a question about people, so it answers with people. */
+      if (!stage || !stage.instrumented) return;
+      S.filters.stage = stage.key;
+      switchTab('players');
+    }
+  });
+}
+
+/* ══ PLAYERS ══════════════════════════════════════════════════════════════════════════════ */
+
+const PLAYER_COLS = [
+  { key:'player_id',   label:'Player',      sort:'player_id' },
+  { key:'last_seen',   label:'Last seen',   sort:'last_seen', r:true },
+  { key:'furthest',    label:'Furthest stage', sort:'furthest_stage' },
+  { key:'sessions',    label:'Sess',        sort:'sessions', r:true },
+  { key:'total_seconds', label:'Time',      sort:'total_seconds', r:true },
+  { key:'device',      label:'Device',      sort:'device' },
+  { key:'builds',      label:'Build',       sort:'builds' },
+  { key:'results',     label:'Trade / Boss / Journal' },
+  { key:'survey_rating', label:'Rating',    sort:'survey_rating', r:true },
+  { key:'crashes',     label:'Crashes',     sort:'crashes', r:true }
+];
+
+function filteredPlayers(){
+  const q = S.filters.player.trim().toLowerCase();
+  const stage = S.filters.stage, device = S.filters.device;
+  let rows = arr(S.model.players).slice();
+
+  if (q) rows = rows.filter(p => {
+    const hay = [p.player_id, p.furthest_label, p.exit_stage, p.device, p.browser, p.os,
+                 arr(p.builds).join(' '), p.trade_result, p.boss_result, p.journal_result,
+                 p.survey_continue].filter(Boolean).join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+  if (stage) rows = rows.filter(p => String(p.furthest_stage || '') === stage);
+  if (device) rows = rows.filter(p => String(p.device || '') === device);
+
+  const { key, dir } = S.sort;
+  rows.sort((a, b) => {
+    const av = a[key], bv = b[key];
+    const an = n(av), bn = n(bv);
+    /* Nulls always sink, in both directions. A column sorted "worst first" that opens with a
+       screen of unknowns is a column nobody uses twice. */
+    if (an != null && bn != null) return (an - bn) * dir || cmpId(a, b);
+    if (an != null) return -1;
+    if (bn != null) return 1;
+    const as = av == null ? '' : String(av), bs = bv == null ? '' : String(bv);
+    if (!as && bs) return 1;
+    if (as && !bs) return -1;
+    return (as < bs ? -1 : as > bs ? 1 : 0) * dir || cmpId(a, b);
+  });
+  return rows;
+}
+function cmpId(a, b){ return String(a.player_id) < String(b.player_id) ? -1 : 1; }
+
+function renderPlayers(el){
+  const all = arr(S.model.players);
+  const rows = filteredPlayers();
+  const stages = (window.BetaModel ? BetaModel.FUNNEL : []).filter(s => s.instrumented);
+  const devices = Object.keys(obj(obj(S.model.tech).device));
+
+  const head = PLAYER_COLS.map(c => {
+    const active = c.sort && S.sort.key === c.sort;
+    return `<th class="${c.r ? 'r ' : ''}${c.sort ? 'sortable' : ''}"${c.sort ? ` data-sort="${esc(c.sort)}"` : ''}>
+      ${esc(c.label)}${active ? `<span class="arrow">${S.sort.dir === 1 ? '▲' : '▼'}</span>` : ''}</th>`;
+  }).join('');
+
+  const resultTag = (v, map) => v == null ? '<span class="dim">—</span>'
+    : `<span class="tag ${map[v] || ''}">${esc(v)}</span>`;
+
+  const body = rows.map(p => `
+    <tr class="clickable" data-player="${esc(p.player_id)}">
+      <td class="num">${esc(p.player_id)}${p.is_test ? ' <span class="tag amber">test id</span>' : ''}</td>
+      <td class="r num dim">${esc(p.last_seen ? ago(p.last_seen) : '—')}</td>
+      <td>${p.furthest_label ? esc(p.furthest_label) : '<span class="dim">—</span>'}</td>
+      <td class="r num">${esc(n(p.sessions) ?? '—')}</td>
+      <td class="r num">${n(p.total_seconds) == null
+          ? '<span class="dim tip" data-tip="This tester never sent a session_end — their tab closed in a way that lost the flush, so we do not know how long they stayed. Not zero.">unknown</span>'
+          : esc(F.duration(n(p.total_seconds)))}</td>
+      <td class="dim">${esc([p.device, p.browser].filter(Boolean).join(' · ') || '—')}</td>
+      <td class="num dim">${esc(arr(p.builds).join(', ') || '—')}</td>
+      <td>${resultTag(p.trade_result, {won:'green', lost:'red', started:'blue'})}
+          ${resultTag(p.boss_result, {defeated:'green', started:'blue'})}
+          ${resultTag(p.journal_result, {completed:'green', skipped:'amber', started:'blue', unlocked:'violet'})}</td>
+      <td class="r num">${n(p.survey_rating) == null ? '<span class="dim">—</span>' : esc(n(p.survey_rating) + '/10')}</td>
+      <td class="r num">${n(p.crashes) ? '<span style="color:var(--red)">' + esc(n(p.crashes)) + '</span>' : '<span class="dim">0</span>'}</td>
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <div class="sec-title"><h2>Players</h2>
+      <span class="desc">${esc(rows.length)} of ${esc(all.length)} testers${
+        n(S.model.players_total) != null && n(S.model.players_total) > all.length
+          ? ' · roster capped at ' + esc(all.length) + ' of ' + esc(n(S.model.players_total)) + ' server-side' : ''
+      } · click a row for their whole journey</span></div>
+
+    <div class="card tight" style="margin-bottom:12px;display:flex;gap:9px;flex-wrap:wrap;align-items:center;">
+      <input class="ctl" id="pFilter" placeholder="Filter by id, stage, device, build…" value="${esc(S.filters.player)}" style="flex:1 1 220px;">
+      <select class="ctl" id="pStage">
+        <option value="">Any furthest stage</option>
+        ${stages.map(s => `<option value="${esc(s.key)}"${S.filters.stage === s.key ? ' selected' : ''}>${esc(s.label)}</option>`).join('')}
+      </select>
+      <select class="ctl" id="pDevice">
+        <option value="">Any device</option>
+        ${devices.map(d => `<option value="${esc(d)}"${S.filters.device === d ? ' selected' : ''}>${esc(d)}</option>`).join('')}
+      </select>
+      ${(S.filters.player || S.filters.stage || S.filters.device) ? '<button class="btn sm" id="pClear">Clear</button>' : ''}
+    </div>
+
+    ${rows.length ? `<div class="tbl-wrap"><table class="tbl">
+      <thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`
+      : `<div class="empty"><h3>No testers match that filter</h3>
+         <div>${all.length ? 'Loosen the filter above.' : 'No players in this window — try a longer window before concluding nobody played.'}</div></div>`}
+
+    <div class="note" style="margin-top:14px;">
+      <b>Visits can exceed sessions.</b> The visit counter comes from the player's own device and
+      survives the window boundary: a tester on visit 6 whose first five visits fall outside a
+      7-day window is still on visit 6, and reporting “1 visit” would hide the most engaged
+      person in the beta.
+    </div>`;
+
+  el.querySelectorAll('th.sortable').forEach(th => {
+    th.onclick = () => {
+      const key = th.dataset.sort;
+      S.sort = (S.sort.key === key) ? { key, dir: -S.sort.dir } : { key, dir: key === 'player_id' ? 1 : -1 };
+      renderPanel('players');
+    };
+  });
+  el.querySelectorAll('tr[data-player]').forEach(tr => {
+    tr.onclick = () => openPlayer(tr.dataset.player);
+  });
+  const f = el.querySelector('#pFilter');
+  if (f) f.oninput = debounce(() => { S.filters.player = f.value; renderPanel('players'); }, 160);
+  const st = el.querySelector('#pStage');
+  if (st) st.onchange = () => { S.filters.stage = st.value; renderPanel('players'); };
+  const dv = el.querySelector('#pDevice');
+  if (dv) dv.onchange = () => { S.filters.device = dv.value; renderPanel('players'); };
+  const cl = el.querySelector('#pClear');
+  if (cl) cl.onclick = () => { S.filters = { player:'', stage:'', device:'' }; renderPanel('players'); };
+}
+
+function debounce(fn, ms){
+  let t = 0;
+  return function(){ clearTimeout(t); t = setTimeout(fn, ms); };
+}
+
+/* ══ PLAYER DRAWER ════════════════════════════════════════════════════════════════════════ */
+
+async function openPlayer(pid){
+  S.selected = pid;
+  S.timeline = null;
+  document.getElementById('drawerTitle').textContent = pid;
+  document.getElementById('drawerBody').innerHTML =
+    '<div class="sk line" style="width:45%"></div><div class="sk block" style="margin-top:12px;"></div>';
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer').setAttribute('aria-hidden', 'false');
+  document.getElementById('drawerBack').classList.add('open');
+
+  try {
+    /* The timeline is deliberately NOT window-filtered in either engine: it is a drill-down on
+       one person, and truncating at the 7-day boundary hides the visit that explains the exit. */
+    if (S.source === 'live'){
+      S.timeline = await rpc('beta_player_detail', { p_player_id: pid });
+    } else if (S.raw){
+      S.timeline = BetaModel.playerTimeline(S.raw.events, S.raw.surveys, pid);
+    }
+  } catch (e){
+    S.timeline = { error: (e && e.message) || 'could not load' };
+  }
+  if (S.selected === pid) renderDrawer();
+}
+
+function closeDrawer(){
+  S.selected = null;
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer').setAttribute('aria-hidden', 'true');
+  document.getElementById('drawerBack').classList.remove('open');
+}
+
+function renderDrawer(){
+  const body = document.getElementById('drawerBody');
+  const pid = S.selected;
+  const p = arr(S.model.players).find(x => String(x.player_id) === String(pid)) || {};
+  const tl = obj(S.timeline);
+
+  if (tl.error){
+    body.innerHTML = `<div class="empty"><h3>Could not load this journey</h3>
+      <div class="mono dim">${esc(tl.error)}</div></div>`;
+    return;
+  }
+
+  const events = arr(tl.events);
+  const survey = tl.survey ? obj(tl.survey) : null;
+
+  const items = events.map(e => {
+    const kind = ['crash','session','milestone'].includes(e.kind) ? e.kind : 'milestone';
+    const pr = obj(e.props);
+    const bits = [];
+    if (pr.page) bits.push('page ' + pr.page);
+    if (pr.build) bits.push('build ' + pr.build);
+    if (pr.level != null) bits.push('level ' + pr.level);
+    if (pr.attempts != null) bits.push('attempt ' + pr.attempts);
+    return `<li class="${kind}">
+      <span class="t">${esc(clock(e.offset_seconds))}</span>
+      <span class="c">
+        <span class="lbl">${esc(e.label || e.name)}</span>
+        ${bits.length ? `<span class="meta">${esc(bits.join(' · '))}</span>` : ''}
+      </span>
+    </li>`;
+  }).join('');
+
+  const answer = (q, label) => {
+    const v = survey ? survey[q] : null;
+    const txt = v == null ? '' : String(v).trim();
+    return `<div style="margin-bottom:10px;">
+      <div class="dim" style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">${esc(label)}</div>
+      <div style="font-size:12px;line-height:1.6;">${txt ? esc(txt) : '<span class="dim">left blank</span>'}</div>
+    </div>`;
+  };
+
+  body.innerHTML = `
+    <div class="card tight" style="margin-bottom:13px;">
+      <dl class="kv">
+        <dt>First seen</dt><dd>${esc(p.first_seen ? F.dateTime(p.first_seen) : '—')}</dd>
+        <dt>Last seen</dt><dd>${esc(p.last_seen ? F.dateTime(p.last_seen) : '—')}</dd>
+        <dt>Sessions</dt><dd>${esc(n(p.sessions) ?? '—')}${n(p.visits) != null ? ' · visit ' + esc(n(p.visits)) : ''}</dd>
+        <dt>Time on site</dt><dd>${n(p.total_seconds) == null ? '<span class="dim">unknown — no session_end</span>' : esc(F.duration(n(p.total_seconds)))}</dd>
+        <dt>Device</dt><dd>${esc([p.device, p.os, p.browser].filter(Boolean).join(' · ') || '—')}</dd>
+        <dt>Screen</dt><dd>${esc(p.screen || '—')}${p.viewport ? ' · viewport ' + esc(p.viewport) : ''}</dd>
+        <dt>Builds</dt><dd>${esc(arr(p.builds).join(', ') || '—')}</dd>
+        <dt>Furthest</dt><dd>${esc(p.furthest_label || '—')}</dd>
+        <dt>Exit stage</dt><dd>${esc(p.exit_stage || '—')}</dd>
+        <dt>Results</dt><dd>${esc(['trade ' + (p.trade_result || '—'), 'boss ' + (p.boss_result || '—'), 'journal ' + (p.journal_result || '—')].join(' · '))}</dd>
+        <dt>Finished in</dt><dd>${n(p.completion_seconds) == null ? '—' : esc(F.duration(n(p.completion_seconds)))}</dd>
+        <dt>Crashes</dt><dd>${esc(n(p.crashes) ?? 0)}</dd>
+      </dl>
+    </div>
+
+    <div class="card tight" style="margin-bottom:13px;">
+      <div class="card-head"><h3>Journey</h3><span class="hint">${esc(events.length)} events · all time</span></div>
+      ${events.length ? `<ul class="tl">${items}</ul>`
+        : '<div class="empty" style="padding:16px;">No events recorded for this player.</div>'}
+    </div>
+
+    <div class="card tight">
+      <div class="card-head"><h3>Survey</h3>
+        <span class="hint">${survey ? esc((n(survey.q1_rating) ?? '—') + '/10 · ' + (survey.q4_continue || 'no answer')) : 'not submitted'}</span></div>
+      ${survey ? `
+        ${answer('q2_hook', 'When it clicked')}
+        ${answer('q3_improvement', 'One thing to change')}
+        ${answer('q5_anything', 'Anything else')}
+        <div class="dim" style="font-size:10.5px;">Sent ${esc(F.dateTime(survey.created_at))}${
+          n(survey.seconds_taken) != null ? ' · took ' + esc(F.duration(n(survey.seconds_taken))) : ''}</div>`
+        : '<div class="dim" style="font-size:11.5px;">This tester did not submit the survey.</div>'}
+    </div>`;
+}
+
+/* ══ QUOTES + CLUSTERS (shared by Surveys and Intelligence) ═══════════════════════════════
+   The raw text ALWAYS travels with the count. A bare number beside a keyword tally is exactly
+   the thing that turns "two people used the word boss" into "the boss is the problem". */
+function quoteList(quotes, tone){
+  const rows = arr(quotes);
+  if (!rows.length) return '<div class="dim" style="font-size:11.5px;">No answers matched.</div>';
+  return `<ul class="quotes">${rows.map(q => {
+    const who = [q.player_id || 'anonymous', q.question_label,
+                 n(q.rating) != null ? n(q.rating) + '/10' : null,
+                 q.continue_intent].filter(Boolean).join(' · ');
+    return `<li class="${tone || ''}">${esc(q.text)}<span class="who">${esc(who)}</span></li>`;
+  }).join('')}</ul>`;
+}
+
+function clusterCard(c, tone){
+  if (!c) return '';
+  const count = n(c.count) ?? 0, players = n(c.players) ?? 0;
+  const quotes = arr(c.quotes);
+  return `<div class="cluster">
+    <h4>${esc(c.label || c.theme)}
+      <span class="tag ${count ? 'blue' : ''}">${esc(count)} ${count === 1 ? 'quote' : 'quotes'}</span>
+      <span class="tag ${players >= 3 ? 'green' : players === 2 ? 'amber' : 'red'}">${esc(players)} ${players === 1 ? 'tester' : 'testers'}</span>
+      <span class="tag amber">candidate</span>
+    </h4>
+    ${c.note ? `<div class="dim" style="font-size:11px;margin-top:6px;line-height:1.55;">${esc(c.note)}</div>` : ''}
+    ${arr(c.matched_words).length ? `<div class="dim" style="font-size:10.5px;margin-top:6px;">matched on <span class="mono">${esc(arr(c.matched_words).join(', '))}</span></div>` : ''}
+    ${quotes.length ? (quotes.length > 4
+        ? `<details class="expand" style="border:none;margin-top:4px;padding-top:4px;">
+             <summary>${esc(quotes.length)} quotes</summary>${quoteList(quotes, tone)}</details>`
+        : quoteList(quotes, tone))
+      : ''}
+    <div class="caveat">${esc(c.caveat || 'Keyword match, not sentiment analysis — candidate only.')}</div>
+  </div>`;
+}
+
+/* ══ SURVEYS ══════════════════════════════════════════════════════════════════════════════ */
+
+function renderSurveys(el){
+  const sv = obj(S.model.surveys);
+  const cl = obj(S.insight && S.insight.clusters);
+  const responses = arr(sv.responses);
+  const total = n(sv.n) ?? 0;
+  const contDist = obj(sv.continue_dist);
+  const ratingsN = Object.values(obj(sv.rating_dist)).reduce((a, b) => a + (n(b) || 0), 0);
+
+  if (!total){
+    el.innerHTML = `<div class="sec-title"><h2>Surveys</h2></div>
+      <div class="empty"><div class="big">✍</div><h3>No survey responses in this window</h3>
+      <div>That is a measurement, not a gap: try a longer window, and check the
+      <b>survey handoff</b> KPI — the completion ceremony hands off to survey.html, and that
+      handoff is where responses are usually lost.</div></div>`;
+    return;
+  }
+
+  const q = S.surveyQuery.trim().toLowerCase();
+  const cont = S.surveyContinue;
+  const shown = responses.filter(r => {
+    if (cont && String(r.q4_continue || '') !== cont) return false;
+    if (!q) return true;
+    return [r.player_id, r.q2_hook, r.q3_improvement, r.q5_anything, r.q4_continue]
+      .filter(Boolean).join(' ').toLowerCase().includes(q);
+  });
+
+  const answerBlock = (label, v) => {
+    const t = v == null ? '' : String(v).trim();
+    if (!t) return '';
+    return `<div style="margin-top:8px;">
+      <div class="dim" style="font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;">${esc(label)}</div>
+      <div style="font-size:12px;line-height:1.6;">${esc(t)}</div></div>`;
+  };
+
+  el.innerHTML = `
+    <div class="sec-title"><h2>Surveys</h2>
+      <span class="desc">${esc(total)} response${total === 1 ? '' : 's'} · ${esc(windowLabel())}</span></div>
+
+    <div class="grid g2" style="margin-bottom:14px;">
+      <div class="card">
+        <div class="card-head"><h3>Q1 — how was it, out of 10</h3>
+          <span class="hint">${esc(sv.avg_rating == null ? 'no ratings' : 'mean ' + fmtUnit(sv.avg_rating, 'rating') + ' · n = ' + ratingsN)}</span></div>
+        <div id="ratingHist"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Q4 — would you keep playing</h3>
+          <span class="hint">retention intent</span></div>
+        <div id="continueDonut"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-head"><h3>Rating over time</h3>
+        <span class="hint">one point per day that had a response — gaps are days nobody answered</span></div>
+      <div id="ratingTrend"></div>
+    </div>
+
+    <div class="sec-title"><h2>Q2 — when it clicked</h2>
+      <span class="desc">Hook clusters. Empty buckets are kept on purpose: “nobody named the
+      Journal as the moment it got fun” is a finding about the Journal.</span></div>
+    <div class="grid g2">${arr(cl.hooks).map(c => clusterCard(c, 'pos')).join('') || '<div class="empty">No Q2 answers.</div>'}</div>
+
+    <div class="sec-title"><h2>Q3 — one thing to change</h2>
+      <span class="desc">Improvement categories.</span></div>
+    <div class="grid g2">${arr(cl.improvements).map(c => clusterCard(c, 'neg')).join('') || '<div class="empty">No Q3 answers.</div>'}</div>
+
+    <div class="sec-title"><h2>Q5 — everything testers wrote</h2>
+      <span class="desc">Newest first.</span></div>
+    <div class="card tight" style="margin-bottom:12px;display:flex;gap:9px;flex-wrap:wrap;align-items:center;">
+      <input class="ctl" id="svQ" placeholder="Search survey text…" value="${esc(S.surveyQuery)}" style="flex:1 1 220px;">
+      <select class="ctl" id="svCont">
+        <option value="">Any answer to Q4</option>
+        ${['immediately','later','not_interested'].map(c2 =>
+          `<option value="${esc(c2)}"${cont === c2 ? ' selected' : ''}>${esc(c2)} (${esc(n(contDist[c2]) ?? 0)})</option>`).join('')}
+      </select>
+      <span class="dim" style="font-size:11px;">${esc(shown.length)} of ${esc(responses.length)}</span>
+    </div>
+
+    ${shown.length ? shown.map(r => `
+      <div class="card" style="margin-bottom:9px;">
+        <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;">
+          <span class="tag ${n(r.q1_rating) >= 8 ? 'green' : n(r.q1_rating) >= 5 ? 'amber' : 'red'}">${esc(n(r.q1_rating) ?? '—')}/10</span>
+          <span class="tag ${r.q4_continue === 'immediately' ? 'green' : r.q4_continue === 'later' ? 'blue' : 'red'}">${esc(r.q4_continue || 'no answer')}</span>
+          <span class="mono dim" style="font-size:11px;cursor:pointer;" data-openplayer="${esc(r.player_id || '')}">${esc(r.player_id || 'anonymous')}</span>
+          <span class="spacer"></span>
+          <span class="dim" style="font-size:10.5px;">${esc(F.dateTime(r.created_at))}${n(r.seconds_taken) != null ? ' · took ' + esc(F.duration(n(r.seconds_taken))) : ''}</span>
+        </div>
+        ${answerBlock('When it clicked', r.q2_hook)}
+        ${answerBlock('One thing to change', r.q3_improvement)}
+        ${answerBlock('Anything else', r.q5_anything)}
+      </div>`).join('')
+      : '<div class="empty"><h3>No responses match</h3><div>Loosen the filter above.</div></div>'}
+  `;
+
+  mount('histogram', 'ratingHist', sv.rating_dist, {
+    min: 1, max: 10, mean: n(sv.avg_rating), height: 160, label: 'Q1 rating'
+  });
+  mount('donut', 'continueDonut', [
+    { label: 'immediately',    value: n(contDist.immediately) || 0,    color: 'var(--cq-green)' },
+    { label: 'later',          value: n(contDist.later) || 0,          color: 'var(--cq-blue)' },
+    { label: 'not interested', value: n(contDist.not_interested) || 0, color: 'var(--cq-red)' }
+  ], { size: 140, centerLabel: 'answered', centerValue: F.num(
+        (n(contDist.immediately) || 0) + (n(contDist.later) || 0) + (n(contDist.not_interested) || 0)) });
+  mount('line', 'ratingTrend',
+    [{ name: 'Average rating', points: arr(sv.rating_trend).map(p => ({ x: p.day, y: n(p.avg) })) }],
+    { height: 180, yZero: false, empty: 'No ratings yet' });
+
+  const q1 = el.querySelector('#svQ');
+  if (q1) q1.oninput = debounce(() => { S.surveyQuery = q1.value; renderPanel('surveys'); }, 160);
+  const c1 = el.querySelector('#svCont');
+  if (c1) c1.onchange = () => { S.surveyContinue = c1.value; renderPanel('surveys'); };
+  el.querySelectorAll('[data-openplayer]').forEach(x => {
+    if (x.dataset.openplayer) x.onclick = () => openPlayer(x.dataset.openplayer);
+  });
+}
+
+/* ══ INTELLIGENCE ═════════════════════════════════════════════════════════════════════════ */
+
+function renderIntel(el){
+  const cl = obj(S.insight && S.insight.clusters);
+  const buckets = obj(cl.buckets);
+  const crashes = arr(S.model.crashes);
+  const repeats = crashes.filter(c => (n(c.players) ?? 0) >= 2);
+  const oneOffs = crashes.filter(c => (n(c.players) ?? 0) < 2);
+
+  const bucketOrder = [
+    ['praise',    'Most common praise',     'pos'],
+    ['criticism', 'Most common criticism',  'neg'],
+    ['confusion', 'Most common confusion',  'neg'],
+    ['requests',  'Most requested',         ''],
+    ['bugs',      'Bugs testers mentioned', 'neg']
+  ];
+
+  el.innerHTML = `
+    <div class="sec-title"><h2>Intelligence</h2>
+      <span class="desc">Keyword clustering over free text — ${esc(n(cl.n_quotes) ?? 0)} answers from
+      ${esc(n(cl.players) ?? 0)} testers.</span></div>
+
+    <div class="note warn" style="margin-bottom:16px;">
+      <b>Candidates, not conclusions.</b> ${esc(cl.caveat || '')}
+    </div>
+
+    <div class="grid g2">
+      ${bucketOrder.map(([key, label, tone]) => {
+        const b = obj(buckets[key]);
+        return `<div>${clusterCard(Object.assign({}, b, { label }), tone)}</div>`;
+      }).join('')}
+    </div>
+
+    <div class="sec-title"><h2>Repeated bugs</h2>
+      <span class="desc">Crash signatures grouped by normalised message. The same message on two
+      or more testers is reproducible, whatever the cohort size.</span></div>
+
+    ${repeats.length ? `<div class="grid" style="gap:9px;">${repeats.map(crashCard).join('')}</div>`
+      : `<div class="note">
+          <b>No crash hits more than one tester in this window.</b> That is a real negative result
+          and worth reading as one: every crash below is a single device, so the next step is the
+          device, not the code path.
+        </div>`}
+
+    ${oneOffs.length ? `<div class="sec-title"><h2>One-off crashes</h2>
+        <span class="desc">${esc(oneOffs.length)} signature${oneOffs.length === 1 ? '' : 's'}, each on a single tester.</span></div>
+      <div class="grid" style="gap:9px;">${oneOffs.map(crashCard).join('')}</div>` : ''}
+
+    <div class="note" style="margin-top:16px;">
+      The client caps crash reporting at three per session, so these counts are a <b>floor</b>,
+      not a ceiling. Messages are normalised (urls, line numbers, hashes and long digit runs are
+      stripped) so a cache-busted stack trace does not present as a brand-new bug on every deploy.
+    </div>`;
+}
+
+function crashCard(c){
+  const players = n(c.players) ?? 0;
+  return `<div class="card tight">
+    <div style="display:flex;gap:9px;align-items:flex-start;flex-wrap:wrap;">
+      <span class="tag ${players >= 2 ? 'red' : 'amber'}">${esc(players)} ${players === 1 ? 'player' : 'players'}</span>
+      <span class="tag">${esc(n(c.count) ?? 0)} events</span>
+      ${c.kind ? `<span class="tag violet">${esc(c.kind)}</span>` : ''}
+      ${c.build ? `<span class="tag blue">build ${esc(c.build)}</span>` : ''}
+      <span class="spacer"></span>
+      <span class="dim" style="font-size:10px;">${esc(c.last_seen ? ago(c.last_seen) : '')}</span>
+    </div>
+    <div class="mono" style="font-size:11.5px;line-height:1.55;margin-top:8px;color:#ffb2b2;">${esc(c.message || '(no message)')}</div>
+    ${c.where ? `<div class="dim mono" style="font-size:10px;margin-top:5px;">at ${esc(c.where)}</div>` : ''}
+    <div class="dim" style="font-size:10px;margin-top:6px;">first seen ${esc(c.first_seen ? F.dateTime(c.first_seen) : 'unknown')} · last seen ${esc(c.last_seen ? F.dateTime(c.last_seen) : 'unknown')}</div>
+  </div>`;
+}
+
+/* ══ RECOMMENDATIONS (contract §5) ════════════════════════════════════════════════════════ */
+
+function renderRecs(el){
+  /* Ranked by players lost, never by how loudly something was said. The engine already sorts
+     this way; re-sorting here makes the guarantee visible at the point of render and survives
+     any future change on either side of the seam. */
+  const recs = arr(S.insight && S.insight.recommendations)
+    .slice()
+    .sort((a, b) => (n(b.players_affected) || 0) - (n(a.players_affected) || 0));
+
+  if (!recs.length){
+    el.innerHTML = `<div class="sec-title"><h2>Recommendations</h2></div>
+      <div class="empty"><div class="big">✓</div><h3>Nothing clears the bar right now</h3>
+      <div>No funnel leak, crash or survey theme has enough people behind it to rank. That is the
+      honest answer on a small cohort — the alternative is a list of things one tester said once.</div></div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="sec-title"><h2>Recommendations</h2>
+      <span class="desc">${esc(recs.length)} items, ranked by players affected. The funnel is the
+      arbiter; the quotes explain why.</span></div>
+
+    <div class="grid" style="gap:11px;">
+      ${recs.map((r, i) => `
+        <div class="rec ${esc(r.priority || 'LOW')}">
+          <div class="rhead">
+            <span class="tag ${r.priority === 'HIGH' ? 'red' : r.priority === 'MEDIUM' ? 'amber' : ''}">${esc(r.priority || 'LOW')}</span>
+            <h4>${esc(i + 1)}. ${esc(r.title)}</h4>
+            <span class="tag ${r.source === 'funnel' ? 'blue' : r.source === 'crash' ? 'red' : 'violet'}">${esc(r.source || '')}</span>
+          </div>
+          <p>${esc(r.reason)}</p>
+          ${arr(r.evidence).length ? `<ul class="ev">${arr(r.evidence).map(e => `<li>${esc(e)}</li>`).join('')}</ul>` : ''}
+          <div class="facts">
+            <span>Players affected <b>${esc(n(r.players_affected) ?? 0)}</b></span>
+            <span>Confidence <b>${esc(r.confidence || '—')}</b></span>
+            <span>Effort <b>${esc(r.estimated_effort || '—')}</b></span>
+          </div>
+          ${r.estimated_impact ? `<div class="dim" style="font-size:11.5px;margin-top:8px;line-height:1.6;">${esc(r.estimated_impact)}</div>` : ''}
+        </div>`).join('')}
+    </div>
+
+    <div class="note" style="margin-top:16px;">
+      <b>Confidence is a count of people, not of certainty.</b> Below three distinct testers it is
+      Low, three to four Medium, five or more High. On a ten-person beta one tester saying
+      something twice is one data point; two independent people are a signal; three are a priority.
+    </div>`;
+}
+
+/* ══ TRENDS ═══════════════════════════════════════════════════════════════════════════════ */
+
+function renderTrends(el){
+  const ts = arr(S.model.timeseries);
+  const funnel = arr(S.model.funnel).filter(r => r.instrumented);
+  const sv = obj(S.model.surveys);
+  const finishers = arr(S.model.players)
+    .filter(p => n(p.completion_seconds) != null)
+    .sort((a, b) => n(a.completion_seconds) - n(b.completion_seconds));
+
+  if (!ts.length){
+    el.innerHTML = `<div class="sec-title"><h2>Trends</h2></div>
+      <div class="empty"><h3>No days in this window</h3><div>Nothing was recorded in ${esc(windowLabel())}.</div></div>`;
+    return;
+  }
+
+  const card = (title, hint, id, extra) => `<div class="card">
+    <div class="card-head"><h3>${title}</h3>${hint ? `<span class="hint">${hint}</span>` : ''}</div>
+    <div id="${id}"></div>${extra || ''}</div>`;
+
+  el.innerHTML = `
+    <div class="sec-title"><h2>Trends</h2>
+      <span class="desc">${esc(ts.length)} day${ts.length === 1 ? '' : 's'}, gap-free — a day with no
+      activity is drawn as a real zero, because a chart that omits a dead day draws a straight
+      line through the outage that caused it.</span></div>
+
+    ${card('Drop-off by stage', 'players lost entering each stage', 'dropBars')}
+
+    <div class="grid g2" style="margin-top:12px;">
+      ${card('Daily active testers', 'distinct players per UTC day', 'activeLine',
+        `<div class="note" style="margin-top:10px;">
+           <b>There is no weekly-active line here on purpose.</b> Summing daily actives would count
+           anyone who played on two days twice. The honest weekly number is the window's distinct
+           tester count on the Overview tab.
+         </div>`)}
+      ${card('New vs returning', 'returning = active that day, not first seen that day', 'retentionBars')}
+      ${card('Session length', 'average of session_end on game pages only', 'sessionLine',
+        `<div class="note" style="margin-top:10px;">
+           Game pages only (<span class="mono">game · chart-quest · play</span>). Pooling a
+           6-second landing view with a 15-minute play session made this read 0.2 min against a
+           real 44s+.
+         </div>`)}
+      ${card('Crashes per day', 'crash events, not players', 'crashLine')}
+      ${card('Ratings over time', 'mean q1_rating per day', 'trendRating')}
+      ${card('Reached trade / boss', 'distinct players per day', 'reachLine')}
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="card-head"><h3>Funnel by day</h3><span class="hint">intensity = players</span></div>
+      <div id="funnelHeat"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="card-head"><h3>Completion time</h3>
+        <span class="hint">${esc(finishers.length)} finisher${finishers.length === 1 ? '' : 's'} · one value per player</span></div>
+      <div id="completionBars"></div>
+      <div class="note" style="margin-top:10px;">
+        One value per player, not per row: <span class="mono">completion_seconds</span> is
+        recomputed and re-sent on every later <span class="mono">session_end</span>, so counting
+        rows let a single finisher who kept the tab open own the median outright.
+      </div>
+    </div>`;
+
+  /* drop-off by stage — absolute players lost, which is the ranking that matters */
+  mount('bars', 'dropBars', funnel.slice(1).map(r => ({
+    label: r.label, value: n(r.drop_players) || 0,
+    color: r.is_bottleneck ? 'var(--cq-red)' : 'var(--cq-amber)'
+  })), { horizontal: true, format: F.num, labelChars: 30, empty: 'No drop-off recorded' });
+
+  mount('line', 'activeLine', [
+    { name: 'Active', points: ts.map(r => ({ x: r.day, y: n(r.players) })) },
+    { name: 'New',    points: ts.map(r => ({ x: r.day, y: n(r.new_players) })) },
+    { name: 'Sessions', points: ts.map(r => ({ x: r.day, y: n(r.sessions) })), dashed: true }
+  ], { height: 200 });
+
+  mount('bars', 'retentionBars', ts.map(r => {
+    const players = n(r.players) || 0, fresh = n(r.new_players) || 0;
+    return {
+      label: F.day(r.day),
+      /* Returning is derived, and derived honestly: active minus first-seen-in-window. It can
+         never go negative because new_players is a subset of the same day's actives. */
+      values: { 'new': fresh, returning: Math.max(0, players - fresh) }
+    };
+  }), { stacked: true, height: 200, colors: { 'new': 'var(--cq-blue)', returning: 'var(--cq-green)' } });
+
+  mount('line', 'sessionLine',
+    [{ name: 'Avg session', points: ts.map(r => ({ x: r.day, y: n(r.avg_session_seconds) })) }],
+    { height: 200, format: F.duration, yZero: true, empty: 'No session_end on a game page yet' });
+
+  mount('line', 'crashLine',
+    [{ name: 'Crash events', points: ts.map(r => ({ x: r.day, y: n(r.crashes) })), color: 'var(--cq-red)' }],
+    { height: 200 });
+
+  mount('line', 'trendRating',
+    [{ name: 'Mean rating', points: arr(sv.rating_trend).map(p => ({ x: p.day, y: n(p.avg) })) }],
+    { height: 200, yZero: false, empty: 'No ratings yet' });
+
+  mount('line', 'reachLine', [
+    { name: 'Reached trade', points: ts.map(r => ({ x: r.day, y: n(r.reached_trade) })) },
+    { name: 'Reached boss',  points: ts.map(r => ({ x: r.day, y: n(r.reached_boss) })) },
+    { name: 'Completed',     points: ts.map(r => ({ x: r.day, y: n(r.completions) })) }
+  ], { height: 200 });
+
+  mount('heatmap', 'funnelHeat', {
+    rows: ['Active', 'Reached trade', 'Reached boss', 'Completed', 'Surveys'],
+    cols: ts.map(r => r.day),
+    values: [
+      ts.map(r => n(r.players)),
+      ts.map(r => n(r.reached_trade)),
+      ts.map(r => n(r.reached_boss)),
+      ts.map(r => n(r.completions)),
+      ts.map(r => n(r.surveys))
+    ]
+  }, { colFormat: F.day, cellHeight: 24 });
+
+  mount('bars', 'completionBars', finishers.map(p => ({
+    label: p.player_id, value: n(p.completion_seconds)
+  })), { horizontal: true, format: F.duration, labelChars: 16, empty: 'Nobody has finished the beta yet' });
+}
+
+/* ══ BUILDS ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* good: 1 higher-is-better, -1 lower-is-better, 0 no opinion. Median time to finish is
+   deliberately 0 — faster can mean tighter pacing or a shorter game, and colouring it would be
+   an opinion dressed as a measurement. */
+const BUILD_METRICS = [
+  { key:'players',                   label:'Players in cohort',     unit:'players', good: 0 },
+  { key:'completion_pct',            label:'Finished the beta',     unit:'percent', good: 1 },
+  { key:'boss_pct',                  label:'Beat the boss',         unit:'percent', good: 1 },
+  { key:'journal_pct',               label:'Journal Discovery',     unit:'percent', good: 1 },
+  { key:'survey_pct',                label:'Submitted the survey',  unit:'percent', good: 1 },
+  { key:'avg_rating',                label:'Average rating',        unit:'rating',  good: 1 },
+  { key:'median_completion_seconds', label:'Median time to finish', unit:'seconds', good: 0 },
+  { key:'crashes',                   label:'Crash events',          unit:'players', good:-1 },
+  { key:'crash_players',             label:'Players who crashed',   unit:'players', good:-1 }
+];
+const CMP_MIN_N = 5;
+
+function renderBuilds(el){
+  const builds = arr(S.model.builds);
+  if (!builds.length){
+    el.innerHTML = `<div class="sec-title"><h2>Builds</h2></div>
+      <div class="empty"><h3>No builds in this window</h3></div>`;
+    return;
+  }
+
+  const real = builds.filter(b => String(b.build) !== '(unknown)');
+  /* Default to the two newest real builds — the newest is the one that just shipped and the one
+     a regression would be hiding in. */
+  if (!S.cmpA || !builds.some(b => String(b.build) === S.cmpA)) S.cmpA = String((real[1] || real[0] || builds[0]).build);
+  if (!S.cmpB || !builds.some(b => String(b.build) === S.cmpB)) S.cmpB = String((real[0] || builds[0]).build);
+
+  const A = builds.find(b => String(b.build) === S.cmpA) || {};
+  const B = builds.find(b => String(b.build) === S.cmpB) || {};
+  const gated = (n(A.players) || 0) >= CMP_MIN_N && (n(B.players) || 0) >= CMP_MIN_N;
+
+  const cmpRows = BUILD_METRICS.map(m => {
+    const a = n(A[m.key]), b = n(B[m.key]);
+    let cell = '<span class="dim">—</span>', cls = 'flat';
+    if (a != null && b != null){
+      const d = b - a;
+      const txt = m.unit === 'percent' ? (d > 0 ? '+' : '') + Math.round(d) + ' pts'
+                : m.unit === 'seconds' ? (d > 0 ? '+' : '') + F.duration(d)
+                : m.unit === 'rating'  ? (d > 0 ? '+' : '') + (Math.round(d * 10) / 10).toFixed(1)
+                : (d > 0 ? '+' : '') + F.num(d);
+      if (d === 0){ cls = 'flat'; }
+      else if (!gated || m.good === 0){ cls = 'ungated'; }
+      else { cls = (d > 0 ? m.good === 1 : m.good === -1) ? 'good' : 'bad'; }
+      cell = `<span>${esc(txt)}</span>`;
+    }
+    return `<tr>
+      <td>${esc(m.label)}</td>
+      <td class="r num">${esc(fmtUnit(a, m.unit))}</td>
+      <td class="r num">${esc(fmtUnit(b, m.unit))}</td>
+      <td class="r delta ${cls}">${cell}</td>
+    </tr>`;
+  }).join('');
+
+  const tableRows = builds.map(b => `
+    <tr>
+      <td class="num">${esc(b.build)}${String(b.build) === '(unknown)' ? ' <span class="tag tip" data-tip="These players never sent an event carrying a build tag, so they cannot be attributed to a release. They are shown rather than dropped — hiding them would make every cohort percentage look cleaner than it is.">unattributed</span>' : ''}</td>
+      <td class="r num">${esc(n(b.players) ?? 0)}</td>
+      <td class="r num">${esc(n(b.sessions) ?? 0)}</td>
+      <td class="r num">${esc(F.pct(n(b.completion_pct)))}</td>
+      <td class="r num">${esc(F.pct(n(b.boss_pct)))}</td>
+      <td class="r num">${esc(F.pct(n(b.journal_pct)))}</td>
+      <td class="r num">${esc(F.pct(n(b.survey_pct)))}</td>
+      <td class="r num">${esc(fmtUnit(b.avg_rating, 'rating'))}</td>
+      <td class="r num">${n(b.median_completion_seconds) == null ? '<span class="dim">—</span>' : esc(F.duration(n(b.median_completion_seconds)))}</td>
+      <td class="r num">${n(b.crashes) ? '<span style="color:var(--red)">' + esc(n(b.crashes)) + '</span>' : '<span class="dim">0</span>'}
+          <span class="dim">/ ${esc(n(b.crash_players) ?? 0)}p</span></td>
+      <td class="dim num" style="font-size:10.5px;">${esc(b.last_seen ? ago(b.last_seen) : '—')}</td>
+    </tr>`).join('');
+
+  const opt = sel => builds.map(b =>
+    `<option value="${esc(b.build)}"${String(b.build) === sel ? ' selected' : ''}>Build ${esc(b.build)} · ${esc(n(b.players) ?? 0)}p</option>`).join('');
+
+  el.innerHTML = `
+    <div class="sec-title"><h2>Builds</h2>
+      <span class="desc">Entry cohorts: a player belongs to the build of their first event in the
+      window that carried one, so a tester who spanned two releases is not counted as a completion
+      for both.</span></div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="cmp-pick">
+        <span class="dim">Compare</span>
+        <select class="ctl" id="cmpA">${opt(S.cmpA)}</select>
+        <span class="dim">→</span>
+        <select class="ctl" id="cmpB">${opt(S.cmpB)}</select>
+        ${gated ? '' : `<span class="tag amber tip" data-tip="Both cohorts need at least ${CMP_MIN_N} players before a difference is coloured as an improvement or a regression. Below that, one tester is worth 20 percentage points and every release looks like a catastrophe or a triumph.">not enough players to call</span>`}
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl cmp" style="min-width:520px;">
+          <thead><tr><th>Metric</th>
+            <th class="r">Build ${esc(S.cmpA)}</th>
+            <th class="r">Build ${esc(S.cmpB)}</th>
+            <th class="r">Change</th></tr></thead>
+          <tbody>${cmpRows}</tbody>
+        </table>
+      </div>
+      <div class="note" style="margin-top:12px;">
+        ${gated
+          ? `Green is an improvement, red a regression. A drop of 15 points or more in boss
+             completion between consecutive builds raises a critical alert — diff the boss code
+             between the two builds before reading anything else.`
+          : `<b>Changes are shown but not coloured.</b> One of these cohorts has fewer than
+             ${CMP_MIN_N} players, and at that size a single tester swings a percentage by twenty
+             points. The numbers are real; the <i>direction</i> is not yet a finding.`}
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr>
+          <th>Build</th><th class="r">Players</th><th class="r">Sessions</th>
+          <th class="r">Finished</th><th class="r">Boss</th><th class="r">Journal</th>
+          <th class="r">Survey</th><th class="r">Rating</th><th class="r">Median finish</th>
+          <th class="r">Crashes</th><th class="r">Last seen</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>`;
+
+  const a = el.querySelector('#cmpA'), b = el.querySelector('#cmpB');
+  if (a) a.onchange = () => { S.cmpA = a.value; renderPanel('builds'); };
+  if (b) b.onchange = () => { S.cmpB = b.value; renderPanel('builds'); };
+}
+
+/* ══ FOUNDER REPORT ═══════════════════════════════════════════════════════════════════════
+   Built ONCE as a structure, then rendered twice — to HTML for the screen and the print
+   stylesheet, and to Markdown for the clipboard and the .md export. Two hand-written copies of
+   the same document is how the exported file quietly stops matching what the founder read. */
+
+function transitionsOf(model){
+  const rows = arr(model.funnel).filter(r => r.instrumented);
+  const out = [];
+  for (let i = 1; i < rows.length; i++){
+    const from = rows[i - 1], to = rows[i];
+    out.push({
+      from: from.label, to: to.label,
+      from_players: n(from.players) ?? 0, to_players: n(to.players) ?? 0,
+      lost: n(to.drop_players) ?? 0, drop_pct: n(to.drop_pct),
+      gated: (n(from.players) ?? 0) >= 5
+    });
+  }
+  return out;
+}
+
+function reportSections(){
+  const m = S.model, meta = obj(m.meta), k = obj(m.kpis);
+  const ins = obj(S.insight);
+  const cl = obj(ins.clusters);
+  const sec = [];
+  const P = (t, x) => sec.push(Object.assign({ t }, x));
+
+  P('h1', { text: 'Chart Quest — Closed Beta Founder Report' });
+  const plural = (v, one) => `${v} ${v === 1 ? one : one + 's'}`;
+  P('p', { text: `${windowLabel()}${meta.build_filter ? ` · build ${meta.build_filter}` : ''} · ` +
+                 `${plural(n(meta.event_count) ?? 0, 'event')} · ${plural(n(meta.survey_count) ?? 0, 'survey')} · ` +
+                 `source: ${meta.source || 'unknown'} · generated ${F.dateTime(meta.generated_at)}` });
+  P('note', { text:
+    `${n(meta.excluded_players) ?? 0} team-testing ids were removed (${n(meta.excluded_events) ?? 0} events). ` +
+    `Every number below is measured; anything the event stream cannot support is printed as “—” ` +
+    `rather than a plausible zero. The theme clusters are keyword matches, not sentiment analysis — ` +
+    `the quotes are the finding, the counts only decide what order you read them in.` });
+
+  /* ── headline ── */
+  P('h2', { text: 'Headline numbers' });
+  P('table', {
+    head: ['Metric', 'Now', 'Previous window', 'Trend', 'n'],
+    align: ['l', 'r', 'r', 'l', 'r'],
+    rows: KPI_DEFS.map(d => {
+      const kp = obj(k[d.key]);
+      const trend = n(kp.prev) == null ? 'no previous window'
+        : (kp.trend === 'up' ? 'up' : kp.trend === 'down' ? 'down' : 'flat') +
+          (n(kp.delta_pct) != null ? ` ${n(kp.delta_pct) > 0 ? '+' : ''}${n(kp.delta_pct)}%` : '');
+      return [d.label, fmtUnit(kp.value, kp.unit), fmtUnit(kp.prev, kp.unit), trend, n(kp.n) ?? '—'];
+    })
+  });
+
+  /* ── health ── */
+  const h = healthOf(m);
+  P('h2', { text: 'Health score' });
+  P('p', { text: h.score == null
+    ? 'Not scoreable yet — every component is below the three-sample minimum. A health score driven by one survey response is worse than no score.'
+    : `${h.score} / 100. ${h.note || ''}` });
+  P('table', {
+    head: ['Component', 'Actual', 'Full marks', 'Points', 'Status'],
+    align: ['l', 'r', 'r', 'r', 'l'],
+    rows: h.components.map(c => {
+      const isRating = c.key === 'enjoyment';
+      const f = v => v == null ? '—' : isRating ? (Math.round(v * 10) / 10).toFixed(1) + '/10' : F.pct(v * 100);
+      return [c.label, f(c.actual), f(c.target),
+              c.points == null ? '—' : (Math.round(c.points * 10) / 10).toFixed(1),
+              c.dropped ? ('dropped · ' + (c.reason || 'n<3')) : 'scored'];
+    })
+  });
+
+  /* ── funnel ── */
+  P('h2', { text: 'Funnel' });
+  P('table', {
+    head: ['Stage', 'Players', '% of landing', 'Kept', 'Lost'],
+    align: ['l', 'r', 'r', 'r', 'r'],
+    rows: arr(m.funnel).map(r => r.instrumented
+      ? [r.label + (r.is_bottleneck ? '  ← bottleneck' : '') + (n(r.players) === 0 ? '  ← check instrumentation' : ''),
+         n(r.players) ?? '—', F.pct(n(r.pct_of_top)),
+         n(r.kept_from_prev_pct) == null ? '—' : F.pct(n(r.kept_from_prev_pct)),
+         n(r.drop_players) ? '−' + n(r.drop_players) + ' (' + F.pct(n(r.drop_pct)) + ')' : '0']
+      : [r.label + '  (not instrumented)', '—', '—', '—', '—'])
+  });
+
+  const leaks = transitionsOf(m).filter(t => t.lost > 0)
+    .sort((a, b) => b.lost - a.lost).slice(0, 3);
+  if (leaks.length){
+    P('h3', { text: 'Biggest leaks, by players lost' });
+    P('list', { items: leaks.map((t, i) =>
+      `${i + 1}. ${t.from} → ${t.to}: −${t.lost} players (${F.pct(t.drop_pct)} of ${t.from_players})` +
+      (t.gated ? '' : ' — below the five-player bar, so a candidate rather than a conclusion')) });
+  }
+  P('note', { text:
+    '“Intro chain completed” is not tutorial completion. tutorial_completed fires from ' +
+    'introComplete(), which the game calls after Guardian 1 — “0% finished the tutorial” and ' +
+    '“0% beat the first boss” are completely different emergencies.' });
+
+  /* ── alerts ── */
+  const alerts = arr(ins.alerts);
+  P('h2', { text: 'Alerts' });
+  if (!alerts.length) P('p', { text: 'Nothing fired. Every rule carries a minimum sample size, so silence here means no problem cleared the bar — not that no problem exists.' });
+  else P('list', { items: alerts.map(a =>
+    `[${String(a.level).toUpperCase()}] ${a.title} — ${a.detail} (${n(a.players_affected) ?? 0} players)`) });
+
+  /* ── what testers said ── */
+  P('h2', { text: 'What testers said' });
+  const sv = obj(m.surveys);
+  P('p', { text: `${n(sv.n) ?? 0} responses, mean rating ${fmtUnit(sv.avg_rating, 'rating')}. ` +
+                 `Would keep playing: ${['immediately','later','not_interested']
+                    .map(c => `${c} ${n(obj(sv.continue_dist)[c]) ?? 0}`).join(' · ')}.` });
+
+  [['praise','Most common praise'], ['criticism','Most common criticism'],
+   ['confusion','Most common confusion'], ['requests','Most requested'],
+   ['bugs','Bugs testers mentioned']].forEach(([key, label]) => {
+    const b = obj(obj(cl.buckets)[key]);
+    const quotes = arr(b.quotes);
+    P('h3', { text: `${label} — ${n(b.count) ?? 0} quotes from ${n(b.players) ?? 0} testers` });
+    if (!quotes.length){ P('p', { text: 'No answers matched.' }); return; }
+    P('quotes', { items: quotes.slice(0, 6).map(q => ({
+      text: q.text, who: [q.player_id || 'anonymous', q.question_label,
+                          n(q.rating) != null ? n(q.rating) + '/10' : null].filter(Boolean).join(' · ')
+    })) });
+    P('note', { text: b.caveat || '' });
+  });
+
+  /* ── priorities ── */
+  P('h2', { text: 'What to build next' });
+  const recs = arr(ins.recommendations).slice()
+    .sort((a, b) => (n(b.players_affected) || 0) - (n(a.players_affected) || 0)).slice(0, 5);
+  if (!recs.length) P('p', { text: 'Nothing clears the bar. No funnel leak, crash or survey theme has enough distinct people behind it to rank.' });
+  recs.forEach((r, i) => {
+    P('h3', { text: `${i + 1}. [${r.priority}] ${r.title}` });
+    P('p', { text: r.reason });
+    if (arr(r.evidence).length) P('list', { items: arr(r.evidence) });
+    P('p', { text: `Players affected: ${n(r.players_affected) ?? 0} · confidence ${r.confidence} · ` +
+                   `effort ${r.estimated_effort} · source ${r.source}. ${r.estimated_impact || ''}` });
+  });
+
+  /* ── crashes ── */
+  const crashes = arr(m.crashes);
+  P('h2', { text: 'Crashes' });
+  if (!crashes.length) P('p', { text: 'None recorded in this window.' });
+  else {
+    P('table', {
+      head: ['Message', 'Players', 'Events', 'Build', 'Last seen'],
+      align: ['l', 'r', 'r', 'l', 'l'],
+      rows: crashes.map(c => [c.message || '(no message)', n(c.players) ?? 0, n(c.count) ?? 0,
+                              c.build || '—', c.last_seen ? F.dateTime(c.last_seen) : '—'])
+    });
+    P('note', { text: 'The client caps crash reporting at three per session, so these counts are a floor. Messages are normalised so a cache-busted stack trace does not present as a new bug on every deploy.' });
+  }
+
+  /* ── builds + tech ── */
+  const builds = arr(m.builds);
+  if (builds.length){
+    P('h2', { text: 'Builds' });
+    P('table', {
+      head: ['Build', 'Players', 'Finished', 'Boss', 'Survey', 'Rating', 'Crashes'],
+      align: ['l', 'r', 'r', 'r', 'r', 'r', 'r'],
+      rows: builds.map(b => [b.build, n(b.players) ?? 0, F.pct(n(b.completion_pct)),
+                             F.pct(n(b.boss_pct)), F.pct(n(b.survey_pct)),
+                             fmtUnit(b.avg_rating, 'rating'), n(b.crashes) ?? 0])
+    });
+  }
+
+  const tech = obj(m.tech);
+  P('h2', { text: 'Devices' });
+  P('list', { items: ['device', 'browser', 'os'].map(kk => {
+    const o = obj(tech[kk]);
+    const keys = Object.keys(o);
+    return `${kk}: ` + (keys.length ? keys.map(x => `${x} ${o[x]}`).join(' · ') : 'none recorded');
+  }) });
+  P('note', { text: 'Country and language are deliberately not collected — no cookies, no IP storage, no third parties.' });
+
+  /* ── method ── */
+  P('h2', { text: 'How to read this' });
+  P('list', { items: [
+    'The funnel is monotonic: each player is credited with their furthest stage and every stage before it, so it can never go up.',
+    'Milestones are once-per-player forever (localStorage), so every stage is a distinct-player count, never a row count.',
+    'Session length counts session_end on game pages only — pooling a landing-page view with a play session made the median meaningless.',
+    'A stage reading exactly zero is more often broken instrumentation than a broken game; verify the event before changing anything.',
+    'Rules that rank problems require at least five players in the stage above, so a 1-of-1 loss can never outrank a 7-of-13 loss.',
+    'Theme counts are keyword matches over free text. They are candidates. Read the quotes.'
+  ] });
+
+  return sec;
+}
+
+function reportToHtml(sec){
+  return sec.map(s => {
+    switch (s.t){
+      case 'h1': return `<h1>${esc(s.text)}</h1>`;
+      case 'h2': return `<h2>${esc(s.text)}</h2>`;
+      case 'h3': return `<h3>${esc(s.text)}</h3>`;
+      case 'p':  return `<p>${esc(s.text)}</p>`;
+      case 'note': return `<div class="rnote">${esc(s.text)}</div>`;
+      case 'list': return `<ul>${arr(s.items).map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
+      case 'quotes': return arr(s.items).map(q =>
+        `<blockquote>${esc(q.text)}<cite>${esc(q.who)}</cite></blockquote>`).join('');
+      case 'table': {
+        const al = arr(s.align);
+        return `<table><thead><tr>${arr(s.head).map((hh, i) =>
+          `<th class="${al[i] === 'r' ? 'r' : ''}">${esc(hh)}</th>`).join('')}</tr></thead>
+          <tbody>${arr(s.rows).map(r => `<tr>${r.map((c, i) =>
+            `<td class="${al[i] === 'r' ? 'r' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      }
+      default: return '';
+    }
+  }).join('');
+}
+
+/* A pipe inside a cell splits a Markdown table one column early and silently corrupts every
+   row after it — and crash messages and tester free text both contain pipes in the wild. */
+function mdCell(v){ return String(v ?? '').replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' '); }
+
+function reportToMarkdown(sec){
+  const out = [];
+  sec.forEach(s => {
+    switch (s.t){
+      case 'h1': out.push('# ' + s.text, ''); break;
+      case 'h2': out.push('', '## ' + s.text, ''); break;
+      case 'h3': out.push('', '### ' + s.text, ''); break;
+      case 'p':  out.push(String(s.text ?? '').trim(), ''); break;
+      case 'note': out.push('> ' + String(s.text ?? '').replace(/\n/g, ' '), ''); break;
+      case 'list': arr(s.items).forEach(i => out.push('- ' + String(i).replace(/\n/g, ' '))); out.push(''); break;
+      case 'quotes': arr(s.items).forEach(q => {
+        out.push('> ' + mdCell(q.text));
+        out.push('> — ' + mdCell(q.who));
+        out.push('');
+      }); break;
+      case 'table': {
+        const al = arr(s.align);
+        out.push('| ' + arr(s.head).map(mdCell).join(' | ') + ' |');
+        out.push('|' + arr(s.head).map((_, i) => al[i] === 'r' ? '---:' : '---').join('|') + '|');
+        arr(s.rows).forEach(r => out.push('| ' + r.map(mdCell).join(' | ') + ' |'));
+        out.push('');
+        break;
+      }
+    }
+  });
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+}
+
+function renderReport(el){
+  const sec = reportSections();
+  const meta = obj(S.model.meta);
+  const stamp = String(meta.generated_at || new Date().toISOString()).slice(0, 10);
+
+  el.innerHTML = `
+    <div class="sec-title no-print"><h2>Weekly Founder Report</h2>
+      <span class="desc">Generated from the model on screen — the same numbers, in the shape you
+      read on a Monday.</span></div>
+
+    <div class="card tight no-print" style="margin-bottom:14px;display:flex;gap:9px;flex-wrap:wrap;align-items:center;">
+      <button class="btn primary" id="repPrint">🖨 Print / Save as PDF</button>
+      <button class="btn" id="repMd">⤓ Markdown</button>
+      <button class="btn" id="repJson">⤓ JSON</button>
+      <button class="btn" id="repCopy">⧉ Copy Markdown</button>
+      <span class="spacer"></span>
+      <span class="dim" style="font-size:11px;">
+        “Print / Save as PDF” hands the page to the browser's own PDF engine with a light print
+        stylesheet — this page does not fake a PDF generator.
+      </span>
+    </div>
+
+    <div class="report" id="reportBody">${reportToHtml(sec)}</div>`;
+
+  const md = () => reportToMarkdown(sec);
+  el.querySelector('#repPrint').onclick = () => window.print();
+  el.querySelector('#repMd').onclick = () =>
+    download(`CHARTQUEST_FOUNDER_REPORT_${stamp}.md`, md(), 'text/markdown');
+  el.querySelector('#repJson').onclick = () => download(
+    `CHARTQUEST_BETA_MODEL_${stamp}.json`,
+    JSON.stringify({
+      contract: 'docs/beta-qa/BETA_MODEL_CONTRACT.md §2',
+      exported_at: new Date().toISOString(),
+      model: S.model,
+      alerts: arr(S.insight && S.insight.alerts),
+      recommendations: arr(S.insight && S.insight.recommendations),
+      /* The search index is a UI artefact, not part of the contract, so it is deliberately not
+         exported — a consumer diffing this file against the RPC output should see the model. */
+      clusters: S.insight ? S.insight.clusters : null
+    }, null, 2), 'application/json');
+  el.querySelector('#repCopy').onclick = async (ev) => {
+    const btn = ev.currentTarget;
+    try {
+      await navigator.clipboard.writeText(md());
+      btn.textContent = '✓ Copied';
+    } catch (e){
+      btn.textContent = '✕ Clipboard blocked';
+    }
+    setTimeout(() => { btn.textContent = '⧉ Copy Markdown'; }, 1800);
+  };
+}
+
+/* Client-side only. No server, no temp file, and the object URL is revoked so a founder who
+   exports twenty reports in a session does not leak twenty blobs. */
+function download(filename, text, mime){
+  const blob = new Blob([text], { type: (mime || 'text/plain') + ';charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ══ GLOBAL SEARCH ════════════════════════════════════════════════════════════════════════ */
+
+const TYPE_STYLE = {
+  player: 'blue', survey: 'violet', crash: 'red', build: 'green', session: ''
+};
+let searchSeq = 0;          // guards against a slow server response overwriting a newer query
+let searchResults = [];
+let searchCursor = -1;
+
+function openSearch(seed){
+  const back = document.getElementById('searchBack');
+  const input = document.getElementById('searchOverlayInput');
+  back.classList.add('open');
+  if (seed != null) input.value = seed;
+  input.focus();
+  input.select();
+  runSearch(input.value);
+}
+function closeSearch(){
+  document.getElementById('searchBack').classList.remove('open');
+  searchCursor = -1;
+}
+
+async function runSearch(q){
+  const seq = ++searchSeq;
+  const box = document.getElementById('searchResults');
+  const foot = document.getElementById('searchFoot');
+  const query = String(q || '').trim();
+
+  if (!S.insight || !S.insight.index){
+    box.innerHTML = `<div class="empty" style="border:none;">Nothing indexed yet.</div>`;
+    foot.textContent = '';
+    return;
+  }
+  if (query.length < 1){
+    box.innerHTML = `<div class="empty" style="border:none;">
+      Search players, survey text, crash messages, builds, player ids and session ids.<br>
+      Filter with <span class="mono">type:player</span>, <span class="mono">device:mobile</span>,
+      <span class="mono">build:335</span>, <span class="mono">stage:boss</span>.</div>`;
+    foot.innerHTML = searchFootText(0);
+    searchResults = [];
+    return;
+  }
+
+  let hits = [];
+  try { hits = BetaInsight.search(S.insight.index, query, { limit: 40 }); }
+  catch (e){ console.warn('[beta-qa] search failed', e); }
+
+  paintSearch(hits, query);
+
+  /* Live mode only: the client index holds the current window, but beta_search is all-time and
+     is the only way to find a tester whose run predates it. Fired only when the local index
+     comes up short, so the common case stays instant and offline. */
+  if (S.source === 'live' && hits.length < 5 && query.length >= 3){
+    try {
+      const r = await rpc('beta_search', { p_q: query, p_limit: 20 });
+      if (seq !== searchSeq) return;                 // a newer keystroke already won
+      const extra = [];
+      const seen = new Set(hits.map(x => x.type + ':' + x.ref));
+      arr(r.players).forEach(p => {
+        const key = 'player:' + p.player_id;
+        if (seen.has(key)) return;
+        seen.add(key);
+        extra.push({ type: 'player', title: String(p.player_id),
+          subtitle: [p.furthest_label, p.is_test ? 'TEST ID' : '', 'all-time match']
+            .filter(Boolean).join(' · '), ref: String(p.player_id) });
+      });
+      arr(r.crashes).forEach(c => {
+        const key = 'crash:' + c.message;
+        if (seen.has(key)) return;
+        seen.add(key);
+        extra.push({ type: 'crash', title: String(c.message || '(no message)'),
+          subtitle: `${c.players} players · ${c.count} events · all-time match`, ref: String(c.message) });
+      });
+      if (extra.length) paintSearch(hits.concat(extra), query);
+    } catch (e){ /* an outage in the lookup must never break the instant local results */ }
+  }
+}
+
+function searchFootText(count){
+  const scope = S.source === 'live'
+    ? 'Local index covers the current window; ids and messages also hit the all-time server lookup.'
+    : 'Snapshot mode indexes players, survey text, crashes, builds and session ids.';
+  return `${count} result${count === 1 ? '' : 's'} · ${esc(scope)} · <kbd>↑</kbd><kbd>↓</kbd> to move, <kbd>↵</kbd> to open`;
+}
+
+function paintSearch(hits, query){
+  searchResults = hits;
+  searchCursor = hits.length ? 0 : -1;
+  const box = document.getElementById('searchResults');
+  document.getElementById('searchFoot').innerHTML = searchFootText(hits.length);
+
+  if (!hits.length){
+    box.innerHTML = `<div class="empty" style="border:none;">
+      No match for <span class="mono">${esc(query)}</span>.
+      ${S.source === 'snapshot' ? '<br>The snapshot only holds what beta_pull.py fetched — a wider <span class="mono">--days</span> may be needed.' : ''}
+    </div>`;
+    return;
+  }
+  box.innerHTML = hits.map((r, i) => `
+    <div class="sres${i === 0 ? ' sel' : ''}" data-i="${i}">
+      <span class="stype tag ${TYPE_STYLE[r.type] || ''}">${esc(r.type)}</span>
+      <span class="scol">
+        <span class="stitle">${esc(r.title)}</span>
+        <span class="ssub">${esc(r.subtitle || '')}</span>
+      </span>
+    </div>`).join('');
+  box.querySelectorAll('.sres').forEach(node => {
+    node.onclick = () => activateSearch(parseInt(node.dataset.i, 10));
+  });
+}
+
+function moveCursor(d){
+  if (!searchResults.length) return;
+  searchCursor = (searchCursor + d + searchResults.length) % searchResults.length;
+  const box = document.getElementById('searchResults');
+  box.querySelectorAll('.sres').forEach((el, i) => el.classList.toggle('sel', i === searchCursor));
+  const sel = box.querySelector('.sres.sel');
+  if (sel && sel.scrollIntoView) sel.scrollIntoView({ block: 'nearest' });
+}
+
+function activateSearch(i){
+  const r = searchResults[i];
+  if (!r) return;
+  closeSearch();
+  switch (r.type){
+    case 'player':  openPlayer(r.ref); break;
+    case 'survey':  S.surveyQuery = String(r.ref || ''); switchTab('surveys'); break;
+    case 'crash':   switchTab('intel'); break;
+    case 'build':   S.cmpB = String(r.ref || ''); switchTab('builds'); break;
+    case 'session': {
+      /* A session is only interesting because of who was in it. */
+      const owner = S.sessionOwner[r.ref];
+      if (owner) openPlayer(owner);
+      else switchTab('players');
+      break;
+    }
+    default: switchTab('overview');
+  }
+}
+
+/* ══ SIGN-IN ══════════════════════════════════════════════════════════════════════════════ */
+
+function openSignin(){
+  document.getElementById('signinBack').classList.add('open');
+  document.getElementById('signinErr').textContent = '';
+  document.getElementById('signinEmail').focus();
+}
+function closeSignin(){
+  S.needsAuth = false;
+  document.getElementById('signinBack').classList.remove('open');
+}
+
+/* ══ TABS ═════════════════════════════════════════════════════════════════════════════════ */
+
+function switchTab(tab){
+  if (!PANELS[tab]) tab = 'overview';
+  S.tab = tab;
+  lsSet('cq_betaqa_tab', tab);
+  document.querySelectorAll('#tabBar button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+  renderPanel(tab);
+  window.scrollTo({ top: 0, behavior: 'auto' });
+}
+
+/* ══ WIRING ═══════════════════════════════════════════════════════════════════════════════ */
+
+document.getElementById('tabBar').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tab]');
+  if (b) switchTab(b.dataset.tab);
+});
+
+document.getElementById('windowSeg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-days]');
+  if (!b) return;
+  S.days = parseInt(b.dataset.days, 10);
+  lsSet('cq_betaqa_days', String(S.days));
+  load('window');
+});
+
+document.getElementById('buildFilter').addEventListener('change', e => {
+  S.build = e.target.value;
+  lsSet('cq_betaqa_build', S.build);
+  load('build');
+});
+
+document.getElementById('refreshBtn').addEventListener('click', () => load('manual'));
+
+document.getElementById('pauseBtn').addEventListener('click', () => {
+  S.autoRefresh = !S.autoRefresh;
+  lsSet('cq_betaqa_auto', S.autoRefresh ? '1' : '0');
+  renderChrome();
+});
+
+document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+document.getElementById('drawerBack').addEventListener('click', closeDrawer);
+
+const headerSearch = document.getElementById('searchInput');
+headerSearch.addEventListener('focus', () => openSearch(headerSearch.value));
+headerSearch.addEventListener('input', () => openSearch(headerSearch.value));
+
+const overlayInput = document.getElementById('searchOverlayInput');
+overlayInput.addEventListener('input', debounce(() => runSearch(overlayInput.value), 90));
+overlayInput.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown'){ e.preventDefault(); moveCursor(1); }
+  else if (e.key === 'ArrowUp'){ e.preventDefault(); moveCursor(-1); }
+  else if (e.key === 'Enter'){ e.preventDefault(); activateSearch(searchCursor); }
+});
+document.getElementById('searchBack').addEventListener('click', e => {
+  if (e.target.id === 'searchBack') closeSearch();
+});
+
+document.addEventListener('keydown', e => {
+  const k = (e.key || '').toLowerCase();
+  if ((e.metaKey || e.ctrlKey) && k === 'k'){
+    e.preventDefault();
+    openSearch(document.getElementById('searchBack').classList.contains('open')
+      ? overlayInput.value : headerSearch.value);
+    return;
+  }
+  if (e.key === 'Escape'){
+    if (document.getElementById('searchBack').classList.contains('open')) closeSearch();
+    else if (document.getElementById('signinBack').classList.contains('open')) closeSignin();
+    else if (S.selected) closeDrawer();
+  }
+});
+
+document.getElementById('signinCard').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('signinBtn');
+  const err = document.getElementById('signinErr');
+  err.textContent = '';
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    await adminSignIn(
+      document.getElementById('signinEmail').value.trim(),
+      document.getElementById('signinPass').value
+    );
+    document.getElementById('signinPass').value = '';
+    closeSignin();
+    await load('signin');
+  } catch (ex){
+    err.textContent = (ex && ex.message) || 'Sign-in failed.';
+  }
+  btn.disabled = false; btn.textContent = 'Sign in';
+});
+document.getElementById('signinCancel').addEventListener('click', closeSignin);
+
+/* ══ AUTO-REFRESH ═════════════════════════════════════════════════════════════════════════ */
+
+setInterval(tickClock, 1000);
+
+setInterval(() => {
+  /* Live only: the snapshot file does not change under the page, and hammering it every minute
+     would only burn cache. Skipped while the tab is hidden — a dashboard left open overnight
+     should not spend the night calling the database. */
+  if (!S.autoRefresh || S.source !== 'live' || S.loading) return;
+  if (document.hidden) return;
+  load('auto');
+}, 60000);
+
+/* A refresh that landed while a panel was mid-render can leave the auth card owed. Show it once
+   the load settles rather than during, so the founder never loses the numbers already on screen. */
+const authWatcher = setInterval(() => {
+  if (S.needsAuth && !S.loading && !document.getElementById('signinBack').classList.contains('open')){
+    openSignin();
+  }
+}, 1500);
+void authWatcher;
+
+/* ══ BOOT ═════════════════════════════════════════════════════════════════════════════════ */
+
+(function boot(){
+  /* A missing engine is a blank page with a console error nobody reads. Say it on screen. */
+  const missing = ['BetaModel', 'BetaInsight', 'BetaCharts'].filter(k => !window[k]);
+  if (missing.length){
+    document.querySelector('main').innerHTML =
+      `<div class="empty"><div class="big">⚠</div><h3>Engine scripts did not load</h3>
+       <div>Missing: <span class="mono">${esc(missing.join(', '))}</span>.<br>
+       This page loads <span class="mono">beta-qa/beta-model.js</span>,
+       <span class="mono">beta-insight.js</span> and <span class="mono">beta-charts.js</span>
+       with relative paths, so it must be served from the project root.</div></div>`;
+    return;
+  }
+  switchTab(S.tab);
+  renderChrome();
+  load('boot');
+})();
+
+</script>
+</body>
+</html>

@@ -4,7 +4,12 @@
 // path, and `ingest` is the live route for player_mastery + the content
 // pipeline — a mistake in here must not be able to take that down.
 //
-// DEPLOYED: version 4.
+// DEPLOYED: version 7. v7 MERGES TWO CONCURRENT CHANGES that briefly collided:
+// the pages.dev origin fix (v6) and the two new funnel event names (v5). v6 was
+// built from a read of v4 and so silently DROPPED v5's event names for a few
+// minutes. Both are present below. LESSON: this function is edited by more than
+// one session at a time — re-read the DEPLOYED source immediately before
+// deploying, never build a new version from an earlier read.
 // ---------------------------------------------------------------------------
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -23,9 +28,19 @@ const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 // The sibling `ingest` function was migrated off prefix matching for this exact
 // reason during the Netlify->Cloudflare move; this one inherited the old shape
 // when it was written from that stale repo copy. Do not reintroduce startsWith.
+//
+// ADDS `https://chartquest.pages.dev` — the Cloudflare project APEX. It was
+// missing while the sibling `ingest` function has always had it, so a tester who
+// landed on the pages.dev URL (a live surface: it serves the real game) had
+// working mastery ingest and SILENTLY DROPPED beta telemetry. The failure was
+// invisible from curl, which does not enforce CORS: OPTIONS still answered 204,
+// but Access-Control-Allow-Origin echoed https://playchartquest.com, so the
+// browser blocked the POST and the funnel simply lost that player. Note this is
+// the APEX; PREVIEW_RE below requires a subdomain label and cannot match it.
 const ALLOWED_EXACT = new Set([
   'https://playchartquest.com',
   'https://www.playchartquest.com',
+  'https://chartquest.pages.dev',
   'https://chart-quest-game.netlify.app',
   'https://shelltrader.github.io',
 ]);
@@ -48,6 +63,13 @@ const RATE_WINDOW_S = 60;
 // Founder Report then fails to explain.
 const EVENT_NAMES = new Set([
   'session_start', 'session_end', 'return_visit',
+  // The two funnel stages that were blind until build 343. DEPLOY THIS BEFORE the client that
+  // emits them: an unknown name is dropped silently here, and the failure is not the obvious
+  // one. A stage whose event never arrives does NOT read 0% — the monotonic pass credits every
+  // stage below a player's furthest, so it reads exactly the count of the NEXT stage at 100%
+  // kept and 0 drop. A healthy-looking row measuring nothing, and the dashboard's
+  // "check instrumentation" affordance never fires because it is gated on players === 0.
+  'play_clicked', 'movement_tutorial_completed',
   'tutorial_started', 'tutorial_completed',
   'first_trade_started', 'first_trade_won', 'first_trade_lost',
   'boss_started', 'boss_defeated',

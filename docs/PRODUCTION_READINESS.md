@@ -154,9 +154,18 @@ confirm no anon-key automation writes them, then lock the same way.
 
 ### 4b. 🔴 NEW — `public.admins` is EMPTY, so every admin-gated RPC is closed to everyone
 
-Found 2026-08-05 while applying `0015`: `select count(*) from public.admins` returns **0**. The
-deploy-sequence section above states that `0008` seeded it with the founder's uid; it did not, or
-the row was later removed.
+Found 2026-08-05 while applying `0015`, and the cause is one level deeper than it first appeared:
+
+```
+auth.users 0 · auth.identities 0 · public.profiles 0 · public.admins 0
+```
+
+**There are no user accounts at all.** Not "the admin row is missing" — the project has zero
+registered users, so there is no uid for an admin row to reference. The deploy-sequence section
+above claims `0008` seeded `admins` with the founder's uid, and §1b claims the founder account was
+"email-confirmed directly in the DB". Neither can be true today. Whatever account existed is gone.
+
+This also means `get_dashboard_stats()` honestly reports `total_signups: 0`.
 
 Consequence, and it is live today: `is_admin()` returns false for **everybody**, so all six
 admin-gated functions refuse all callers. That is fail-closed and safe, but it means
@@ -167,7 +176,16 @@ admin-gated functions refuse all callers. That is fail-closed and safe, but it m
   `0015`; `0015` did not cause it.
 - `dashboard.html` would be equally blind, though it is not deployed.
 
-Seeding an admin is a deliberate privilege grant, so it is left for the founder:
+**The account has to exist first, and the obvious route is a trap.** Signing up inside the game
+fires a confirmation email that (a) may not send — the built-in mailer is dev-only, blocker 1 — and
+(b) links to `localhost:3000`, blocker 1b. So an in-game signup can strand itself.
+
+Create it in the dashboard instead, which bypasses email entirely:
+
+> **Authentication → Users → Add user** → enter the email and a password → tick
+> **Auto Confirm User** → Create.
+
+Then, and only then, the admin row:
 
 ```sql
 insert into public.admins (user_id)
@@ -175,7 +193,9 @@ select id from auth.users where email = '<founder email>'
 on conflict do nothing;
 ```
 
-Then confirm with `select public.is_admin();` while signed in as that account.
+Confirm with `select public.is_admin();` while signed in as that account — and note the insert
+above silently inserts NOTHING if the email does not match an existing user, which is one way this
+table can end up empty without anyone noticing.
 
 ---
 

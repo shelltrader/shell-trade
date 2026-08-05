@@ -62,6 +62,16 @@
 #   api.binance.com         live market prices (fallback source)
 #   fonts.googleapis.com    the webfont STYLESHEET
 #   fonts.gstatic.com       the webfont FILES the stylesheet then requests
+#   static.cloudflareinsights.com  +  cloudflareinsights.com
+#                           Cloudflare Web Analytics. INJECTED BY CLOUDFLARE AT THE EDGE, so it
+#                           appears in NO source file — grepping the repo can never find it. Found
+#                           only because the Report-Only round reported it from the live site.
+#
+# 'unsafe-eval' is required, and that is not decoration either. The CQBEAT block (event spacing)
+# makes 10 `(0, eval)('market._boxMade = …')` calls to reach the spawners' internal counters — its
+# documented runtime-patching design. Enforcing without 'unsafe-eval' would have silently disabled
+# CQBEAT's spawn enforcement in production while every local gate stayed green. Drop this directive
+# only if those eval calls are ever replaced with direct references.
 #
 # NOT allowlisted, deliberately — these are referenced but never loaded:
 #   www.tradingview.com     an attribution <a href> in index.html. A link is not a fetch.
@@ -93,4 +103,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com https://cloudflareinsights.com https://*.cloudflareinsights.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'

@@ -120,17 +120,23 @@ function run() {
   //
   // Scope is TRACKED files only, deliberately: Cloudflare Pages builds from the git repo, so an
   // untracked .js cannot reach production and is not this gate's business (the same reasoning
-  // gate #17 applies to assets). Four roots — the ones that ship or that gate:
+  // gate #17 applies to assets). Five roots — the ones that ship, that gate, or that the
+  // founder relies on:
   //   sw.js, website/**  → deployed
   //   ops/**             → canonical source spliced into the game
   //   scripts/**         → the gates themselves. A broken gate script currently degrades to
   //                        "WARN: gate not runnable", which passes a ship; this makes it FAIL.
+  //   beta-qa/**         → the Beta Test QA dashboard engines. Not deployed, but they are the
+  //                        only reading the founder has of where testers drop out, and they
+  //                        fail exactly like sw.js did: beta-qa.html loads them with <script
+  //                        src>, so a SyntaxError blanks a panel and logs to a console nobody
+  //                        has open. Same bug class, same gate.
   {
     try {
       const syn = require(path.join(__dirname, 'check_syntax.js'));
       const targets = (git("ls-files -- '*.js'") || '').split('\n')
         .filter(Boolean)
-        .filter(f => /^(sw\.js|website\/|ops\/|scripts\/)/.test(f))
+        .filter(f => /^(sw\.js|website\/|ops\/|scripts\/|beta-qa\/)/.test(f))
         .filter(f => !/node_modules|\.min\.js$/.test(f))
         .filter(exists);
       const bad = [];
@@ -138,7 +144,7 @@ function run() {
         const r = syn.checkFile(f);
         if (!r.ok) bad.push(syn.summary(r));   // carries file:line + the error sentence
       }
-      add('3c', 'Standalone JS parses (sw.js, website/, ops/, scripts/)', bad.length ? 'FAIL' : 'PASS',
+      add('3c', 'Standalone JS parses (sw.js, website/, ops/, scripts/, beta-qa/)', bad.length ? 'FAIL' : 'PASS',
         bad.length ? bad.join(' · ') : `${targets.length} tracked standalone .js file(s) parse clean`);
     } catch (e) {
       // FAIL, never WARN — see 3a.

@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 341 - CRASH ATTRIBUTION. window.onerror fires for EVERY script on the page, including ones we do not ship, and the crash cap did not care whose error it was. On 2026-08-04 one visitor produced two rows a second apart - t.entries.at is not a function and this.i.at is not a function - both thrown inside the Cloudflare analytics beacon on Windows/Chrome. In the Founder Report they were indistinguishable from a ChartQuest bug and were misdiagnosed as an iOS Safari incompatibility in our own code, on the strength of a minified stack we do not own. Nothing in this repo calls .at(). Two fixes: every crash now records origin (self | third_party) plus source_host, so a row you cannot fix is never confused with one you can; and the single shared cap of 3 is split into CAP_SELF=3 + CAP_THIRD=2, because those two foreign errors ate two thirds of the session budget and a third-party script throwing in a loop - exactly what a broken beacon does - would have silently discarded every real crash for that visit while the gap looked like a clean session. A missing filename (inline code, or a CORS-sanitized Script error.) counts as OURS: over-owning a crash is the safe direction. Canonical source is website/assets/cq-track.js, spliced by scripts/sync_track.py, guarded by verify gate #20.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 342 - CRASH ORIGIN: LOCAL. Build 341 split crash attribution into self vs third_party. It missed a third case that was already polluting the beta tables: a developer machine. A localhost build-tag syntax error from a concurrent coding session sat in beta_events counted as a real tester crash, and the test-player exclusion list structurally cannot catch it - that matches player-id PREFIXES, and a dev browser mints an ordinary p- id like anyone else. Crashes now carry origin = local when the PAGE is served from localhost, 127.0.0.1 or [::1], decided by the document host rather than by which script threw: on a dev machine nothing in the session is beta data, so local outranks third_party and source_host still records whose code it was. Its own cap (CAP_LOCAL=3) so dev noise cannot eat the real budget either. The host test is ANCHORED - localhost.evil.com is not a dev machine - the same lesson the beta-ingest origin allowlist learned when a prefix match accepted look-alike domains. Retroactive for rows collected earlier, with one stated limit: local can only be recovered from a crash whose where field carries a localhost URL, so a dev crash thrown by INLINE code stays self. Mirrored in beta-qa/beta-model.js and migration 0013, guarded by verify gate #20.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -28529,9 +28529,23 @@ window.SocialAgents = (function () {
           session's budget. A third-party script that throws in a loop — which is precisely
           what a broken beacon does — would silently discard every real ChartQuest crash for
           that visit, and the gap would look like a clean session. Third-party errors now have
-          their own small cap and can never consume the first-party one. */
-  var CAP_SELF = 3, CAP_THIRD = 2;
-  var crashesSelf = 0, crashesThird = 0;
+          their own small cap and can never consume the first-party one.
+       3. DEV TRAFFIC. A crash from a developer's own machine is not beta signal, and the beta
+          tables had no way to tell. A localhost build-tag syntax error from a concurrent
+          coding session sat in the dataset counted as a real tester crash, and the exclusion
+          list cannot catch it — that matches on player-id PREFIXES, and a dev browser mints an
+          ordinary `p-` id like anyone else. `local` is decided by the PAGE, not the script:
+          if the document is being served from localhost then the whole session is dev traffic,
+          whoever's code threw. It therefore outranks `third_party`. */
+  var CAP_SELF = 3, CAP_THIRD = 2, CAP_LOCAL = 3;
+  var crashesSelf = 0, crashesThird = 0, crashesLocal = 0;
+
+  /* Is this document itself being served from a dev machine? Anchored, not a substring test:
+     `localhost.evil.com` must not read as local — the same anchoring the beta-ingest origin
+     allowlist had to learn the hard way when a prefix match accepted look-alike domains. */
+  var IS_LOCAL_PAGE = safe(function () {
+    return /^(localhost|127\.0\.0\.1|\[::1\])(:\d{1,5})?$/.test(location.host || '');
+  }, false);
 
   /* '' (inline script / no filename) is OURS: window.onerror reports no filename for inline
      code, and the game is one big inline document. A cross-origin script that is not CORS-
@@ -28549,15 +28563,18 @@ window.SocialAgents = (function () {
 
   function crash(kind, msg, extra) {
     var host = originOf(extra);
-    var third = !!host;
-    if (third) { if (crashesThird >= CAP_THIRD) return; crashesThird++; }
-    else       { if (crashesSelf  >= CAP_SELF)  return; crashesSelf++;  }
+    /* Precedence: local > third_party > self. On a dev machine nothing in the session is beta
+       data, so which script threw is a detail — source_host still records it either way. */
+    var org = IS_LOCAL_PAGE ? 'local' : (host ? 'third_party' : 'self');
+    if (org === 'local')            { if (crashesLocal >= CAP_LOCAL) return; crashesLocal++; }
+    else if (org === 'third_party') { if (crashesThird >= CAP_THIRD) return; crashesThird++; }
+    else                            { if (crashesSelf  >= CAP_SELF)  return; crashesSelf++;  }
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'crash',
       ts: new Date().toISOString(),
       props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '',
                page: page(), build: BUILD,
-               origin: third ? 'third_party' : 'self', source_host: host || null },
+               origin: org, source_host: host || null },
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);

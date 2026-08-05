@@ -231,12 +231,32 @@
      "ours" is a wasted look, the cost of a false "theirs" is a real bug filed under someone
      else's name and never fixed. */
   var OUR_HOSTS = /(^|\.)playchartquest\.com$|(^|\.)chartquest\.pages\.dev$|^localhost(:\d+)?$|^127\.0\.0\.1(:\d+)?$|^\[::1\](:\d+)?$|(^|\.)chart-quest-game\.netlify\.app$|(^|\.)shelltrader\.github\.io$/;
-  function crashSourceHost(where) {
+  /* Anchored, never a substring test: `localhost.evil.com` must not read as a dev machine. */
+  var LOCAL_HOSTS = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
+  function crashHost(where) {
     var u = where == null ? '' : String(where);
     if (u.indexOf('http') !== 0) return null;              // inline / blob: / data: / empty
-    var host = u.split('/')[2] || '';
+    return (u.split('/')[2] || '') || null;
+  }
+  function crashSourceHost(where) {
+    var host = crashHost(where);
     if (!host) return null;
     return OUR_HOSTS.test(host) ? null : host;
+  }
+
+  /* Origin for rows collected BEFORE the client started stamping it (build 342). Precedence
+     matches cq-track.js: local > third_party > self.
+
+     RETROACTIVE LIMIT, stated rather than hidden: `local` can only be recovered from a crash
+     whose `where` carries a localhost URL. A dev-session crash thrown by INLINE code reports no
+     filename at all, so it is indistinguishable from a real tester's inline crash and stays
+     `self`. The live stamp does not have this problem — it decides from the PAGE's host, so
+     from build 342 every crash in a dev session is tagged whatever threw it. */
+  function crashOriginFrom(where) {
+    var host = crashHost(where);
+    if (!host) return 'self';
+    if (LOCAL_HOSTS.test(host)) return 'local';
+    return OUR_HOSTS.test(host) ? 'self' : 'third_party';
   }
 
   /* Group crash messages so "the same bug" is one row. Without this, a stack trace that carries
@@ -1168,9 +1188,9 @@
            script — and that is not hypothetical: two rows from Cloudflare's analytics beacon
            were read as an iOS Safari incompatibility in ChartQuest's own code and reported as
            a real finding. Nothing in this repo calls .at(). */
-        g.origin = pr.origin === 'third_party' || pr.origin === 'self'
+        g.origin = (pr.origin === 'third_party' || pr.origin === 'self' || pr.origin === 'local')
           ? pr.origin
-          : (crashSourceHost(pr.where) ? 'third_party' : 'self');
+          : crashOriginFrom(pr.where);
         g.source_host = pr.source_host != null ? pr.source_host : crashSourceHost(pr.where);
       }
     }
@@ -1186,12 +1206,14 @@
         origin: q.origin || 'self', source_host: q.source_host == null ? null : q.source_host
       });
     }
-    /* Ranked by PLAYERS hit, then occurrences — but OUR crashes always outrank third-party
-       ones, however many people a foreign script hit. A bug in someone else's beacon is not
-       the top of the founder's backlog, and letting it sort to the top of this table is how a
-       week gets spent on a stack trace nobody here can change. */
+    /* Ranked by PLAYERS hit, then occurrences — but real beta crashes always outrank the two
+       kinds that are not beta signal at all: someone else's script (nobody here can fix it) and
+       a developer's own machine (it is not a tester). Letting either sort to the top is how a
+       week gets spent on a stack trace that never mattered. Order: self, third_party, local. */
+    var rank = { self: 0, third_party: 1, local: 2 };
     out.sort(function (x, y) {
-      var xo = x.origin === 'third_party' ? 1 : 0, yo = y.origin === 'third_party' ? 1 : 0;
+      var xo = rank[x.origin] == null ? 0 : rank[x.origin];
+      var yo = rank[y.origin] == null ? 0 : rank[y.origin];
       return (xo - yo) || (y.players - x.players) || (y.count - x.count) ||
              (x.message < y.message ? -1 : x.message > y.message ? 1 : 0);
     });

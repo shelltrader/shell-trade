@@ -1943,8 +1943,9 @@ function renderIntel(el){
      a "repeated bug" in ChartQuest however many testers it hit, and listing it as one is exactly
      how it got misdiagnosed once already. It still gets shown — just last, and clearly labelled. */
   const allCrashes = arr(S.model.crashes);
-  const crashes = allCrashes.filter(c => c.origin !== 'third_party');
+  const crashes = allCrashes.filter(c => c.origin !== 'third_party' && c.origin !== 'local');
   const foreign = allCrashes.filter(c => c.origin === 'third_party');
+  const devOnly = allCrashes.filter(c => c.origin === 'local');
   const repeats = crashes.filter(c => (n(c.players) ?? 0) >= 2);
   const oneOffs = crashes.filter(c => (n(c.players) ?? 0) < 2);
 
@@ -1992,9 +1993,15 @@ function renderIntel(el){
         scripts ChartQuest does not ship. Shown for completeness — none of these are yours to fix.</span></div>
       <div class="grid" style="gap:9px;">${foreign.map(crashCard).join('')}</div>` : ''}
 
+    ${devOnly.length ? `<div class="sec-title"><h2>From a dev machine</h2>
+        <span class="desc">${esc(devOnly.length)} signature${devOnly.length === 1 ? '' : 's'} thrown on localhost —
+        someone on the team with the game open, not a beta tester. Not beta signal; shown so the
+        number is explained rather than missing.</span></div>
+      <div class="grid" style="gap:9px;">${devOnly.map(crashCard).join('')}</div>` : ''}
+
     <div class="note" style="margin-top:16px;">
       Crash reporting is capped <b>per origin</b> — three from our own code, two from third-party
-      scripts — so these counts are a <b>floor</b>, not a ceiling. The split matters: one shared
+      scripts, three from a dev machine — so these counts are a <b>floor</b>, not a ceiling. The split matters: one shared
       cap meant a foreign script throwing in a loop could consume the whole session budget and
       silently discard every real crash, and the gap looked like a clean session. Messages are
       normalised (urls, line numbers, hashes and long digit runs are stripped) so a cache-busted
@@ -2009,10 +2016,11 @@ function renderIntel(el){
    whose script it was, and carries the one sentence that stops the next misread. */
 function crashCard(c){
   const players = n(c.players) ?? 0;
-  const foreign = c.origin === 'third_party';
+  const isLocal = c.origin === 'local';
+  const foreign = c.origin === 'third_party' || isLocal;   // neither is beta signal
   return `<div class="card tight"${foreign ? ' style="opacity:.72;"' : ''}>
     <div style="display:flex;gap:9px;align-items:flex-start;flex-wrap:wrap;">
-      ${foreign ? `<span class="tag">not our code</span>` : ''}
+      ${isLocal ? `<span class="tag">dev machine</span>` : foreign ? `<span class="tag">not our code</span>` : ''}
       <span class="tag ${foreign ? '' : (players >= 2 ? 'red' : 'amber')}">${esc(players)} ${players === 1 ? 'player' : 'players'}</span>
       <span class="tag">${esc(n(c.count) ?? 0)} events</span>
       ${c.kind ? `<span class="tag violet">${esc(c.kind)}</span>` : ''}
@@ -2023,7 +2031,11 @@ function crashCard(c){
     </div>
     <div class="mono" style="font-size:11.5px;line-height:1.55;margin-top:8px;color:${foreign ? 'var(--cq-muted)' : '#ffb2b2'};">${esc(c.message || '(no message)')}</div>
     ${c.where ? `<div class="dim mono" style="font-size:10px;margin-top:5px;">at ${esc(c.where)}</div>` : ''}
-    ${foreign ? `<div class="dim" style="font-size:10.5px;margin-top:6px;">Thrown inside a script ChartQuest does not ship${c.source_host ? ' (' + esc(c.source_host) + ')' : ''}. Nothing here can fix it — do not read the stack trace as a game bug.</div>` : ''}
+    ${isLocal
+      ? `<div class="dim" style="font-size:10.5px;margin-top:6px;">Thrown on localhost — a developer with the game open, not a beta tester. Real if you are debugging; not a beta finding, and not something a tester hit.</div>`
+      : foreign
+      ? `<div class="dim" style="font-size:10.5px;margin-top:6px;">Thrown inside a script ChartQuest does not ship${c.source_host ? ' (' + esc(c.source_host) + ')' : ''}. Nothing here can fix it — do not read the stack trace as a game bug.</div>`
+      : ''}
     <div class="dim" style="font-size:10px;margin-top:6px;">first seen ${esc(c.first_seen ? F.dateTime(c.first_seen) : 'unknown')} · last seen ${esc(c.last_seen ? F.dateTime(c.last_seen) : 'unknown')}</div>
   </div>`;
 }

@@ -313,9 +313,23 @@
           session's budget. A third-party script that throws in a loop — which is precisely
           what a broken beacon does — would silently discard every real ChartQuest crash for
           that visit, and the gap would look like a clean session. Third-party errors now have
-          their own small cap and can never consume the first-party one. */
-  var CAP_SELF = 3, CAP_THIRD = 2;
-  var crashesSelf = 0, crashesThird = 0;
+          their own small cap and can never consume the first-party one.
+       3. DEV TRAFFIC. A crash from a developer's own machine is not beta signal, and the beta
+          tables had no way to tell. A localhost build-tag syntax error from a concurrent
+          coding session sat in the dataset counted as a real tester crash, and the exclusion
+          list cannot catch it — that matches on player-id PREFIXES, and a dev browser mints an
+          ordinary `p-` id like anyone else. `local` is decided by the PAGE, not the script:
+          if the document is being served from localhost then the whole session is dev traffic,
+          whoever's code threw. It therefore outranks `third_party`. */
+  var CAP_SELF = 3, CAP_THIRD = 2, CAP_LOCAL = 3;
+  var crashesSelf = 0, crashesThird = 0, crashesLocal = 0;
+
+  /* Is this document itself being served from a dev machine? Anchored, not a substring test:
+     `localhost.evil.com` must not read as local — the same anchoring the beta-ingest origin
+     allowlist had to learn the hard way when a prefix match accepted look-alike domains. */
+  var IS_LOCAL_PAGE = safe(function () {
+    return /^(localhost|127\.0\.0\.1|\[::1\])(:\d{1,5})?$/.test(location.host || '');
+  }, false);
 
   /* '' (inline script / no filename) is OURS: window.onerror reports no filename for inline
      code, and the game is one big inline document. A cross-origin script that is not CORS-
@@ -333,15 +347,18 @@
 
   function crash(kind, msg, extra) {
     var host = originOf(extra);
-    var third = !!host;
-    if (third) { if (crashesThird >= CAP_THIRD) return; crashesThird++; }
-    else       { if (crashesSelf  >= CAP_SELF)  return; crashesSelf++;  }
+    /* Precedence: local > third_party > self. On a dev machine nothing in the session is beta
+       data, so which script threw is a detail — source_host still records it either way. */
+    var org = IS_LOCAL_PAGE ? 'local' : (host ? 'third_party' : 'self');
+    if (org === 'local')            { if (crashesLocal >= CAP_LOCAL) return; crashesLocal++; }
+    else if (org === 'third_party') { if (crashesThird >= CAP_THIRD) return; crashesThird++; }
+    else                            { if (crashesSelf  >= CAP_SELF)  return; crashesSelf++;  }
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'crash',
       ts: new Date().toISOString(),
       props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '',
                page: page(), build: BUILD,
-               origin: third ? 'third_party' : 'self', source_host: host || null },
+               origin: org, source_host: host || null },
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);

@@ -5,8 +5,8 @@ they agree:
 
 | Engine | Where | Mode | Scales to |
 |---|---|---|---|
-| SQL | `automation/migrations/0011_beta_analytics_rpcs.sql` | **live** (admin JWT → PostgREST RPC) | thousands of testers — all aggregation server-side |
-| JS  | `website/assets/beta-model.js` | **snapshot** (`beta-data.json` from `scripts/beta_pull.py`) | a few thousand rows, in-browser |
+| SQL | `automation/migrations/0011…0013_*.sql` | **live** (admin JWT → PostgREST RPC) | thousands of testers — all aggregation server-side |
+| JS  | `beta-qa/beta-model.js` | **snapshot** (`beta-data.json` from `scripts/beta_pull.py`) | a few thousand rows, in-browser |
 
 The UI renders **only** this shape. It never touches `beta_events` rows directly, so swapping the
 source cannot change a number.
@@ -64,15 +64,28 @@ Read this before adding any metric. Every line here is a bug someone already shi
     including ones ChartQuest does not ship. Two rows thrown inside Cloudflare's analytics
     beacon (`t.entries.at is not a function`, Windows/Chrome) were read as an iOS Safari
     incompatibility in ChartQuest's own code and reported as a finding. **Nothing in this repo
-    calls `.at()`.** Every crash therefore carries `origin` (`self` | `third_party`) and
-    `source_host`, derived from `props.where` for rows collected before build 341, and *our*
-    crashes always sort above third-party ones however many people the foreign script hit.
+    calls `.at()`.** Every crash therefore carries `origin` (`self` | `third_party` | `local`)
+    and `source_host`, derived from `props.where` for rows collected before build 341, and *our*
+    crashes always sort above the other two however many people the foreign script hit.
 
     A crash with **no** http(s) filename — inline code, or a CORS-sanitized `Script error.` —
     counts as **ours**. Over-owning is the safe direction: a false "ours" costs a wasted look,
     a false "theirs" files a real bug under someone else's name and it never gets fixed.
 
-    The cap in `cq-track.js` is per-origin for the same reason (`CAP_SELF=3`, `CAP_THIRD=2`).
+    A third value, **`local`**, marks a crash thrown on `localhost` / `127.0.0.1` / `[::1]` —
+    someone on the team with the game open, not a beta tester. It exists because a dev
+    build-tag syntax error was already sitting in `beta_events` counted as a real tester crash,
+    and the test-player exclusion list *structurally cannot* catch it: that matches player-id
+    **prefixes**, and a dev browser mints an ordinary `p-` id like anyone else.
+
+    **Precedence: `local` > `third_party` > `self`.** On a dev machine nothing in the session is
+    beta data, so which script threw is a detail — `source_host` still records it. The live
+    stamp decides from the **page** host, not the script's; the retroactive derivation can only
+    use `props.where`, so a pre-342 dev crash thrown by *inline* code stays `self`. Host tests
+    are **anchored** — `localhost.evil.com` is not a dev machine.
+
+    The cap in `cq-track.js` is per-origin for the same reason
+    (`CAP_SELF=3`, `CAP_THIRD=2`, `CAP_LOCAL=3`).
     One shared cap of 3 meant two foreign errors ate two thirds of the session budget, so a
     third-party script throwing in a loop — exactly what a broken beacon does — would silently
     discard every real crash for that visit while the gap looked like a clean session.
@@ -229,7 +242,7 @@ from drop-off maths** — they must never manufacture a 100% loss.
   "crashes": [
     { "message":"…", "kind":"boot", "where":"…", "build":"335",
       "count":3, "players":2, "first_seen":"…", "last_seen":"…",
-      "origin":"self" | "third_party",     // whose script threw it
+      "origin":"self" | "third_party" | "local",   // see §0.10
       "source_host":"static.cloudflareinsights.com" | null }
   ],
 

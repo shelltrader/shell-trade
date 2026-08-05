@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 340 - OPERATIONAL FOUNDATION, PHASE 1. window.CQOPS is the new single owner of operational concerns: env (which world am I in, and what config that implies), build (build number + commit SHA + deploy timestamp, one source instead of four re-derivations), log (info/warn/error/critical to console + a bounded ring buffer + pluggable sinks, so remote logging and the Founder Dashboard arrive later WITHOUT touching gameplay code), err (guard/wrap/guardAsync/retry-with-jitter/a durable localStorage queue/10-year-old friendly messages), flags (URL > localStorage > environment > default, every product flag defaulting to the behaviour that ships today), and health (the six founder-observability counters behind one CQOPS.report()). THREE THINGS ARE COLLECTED PASSIVELY FROM DAY ONE because they need no call-site changes: runtime errors, MISSING ASSETS (a capture-phase listener - resource errors do not bubble, so the existing boot-crash capture structurally could not see the ~20 builds of 404ing boss cinematics), and failed API requests (a pass-through fetch observer that returns the original promise untouched and supplies BOTH handlers so it can never invent an unhandled rejection). PHASE 1 IS NOT A MIGRATION: analytics, survey and cinematics still work exactly as before, and the five product flags are DECLARED but UNWIRED - reported honestly as wired:false, because a flag that looks like it works and does nothing would destroy trust in the whole system. Loads FIRST, in <head>, right after the boot-crash capture: infrastructure that others log to must exist before they do, and the head is ~28,000 lines from the tail where concurrent sessions append. Merge-safe - one IIFE, zero top-level names, a single 758-line insertion that modifies no existing line, and deleting the block restores build 339 exactly. Canonical source is ops/cq-ops.js, spliced by scripts/sync_ops.py; guarded by verify gate #19.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 341 - CRASH ATTRIBUTION. window.onerror fires for EVERY script on the page, including ones we do not ship, and the crash cap did not care whose error it was. On 2026-08-04 one visitor produced two rows a second apart - t.entries.at is not a function and this.i.at is not a function - both thrown inside the Cloudflare analytics beacon on Windows/Chrome. In the Founder Report they were indistinguishable from a ChartQuest bug and were misdiagnosed as an iOS Safari incompatibility in our own code, on the strength of a minified stack we do not own. Nothing in this repo calls .at(). Two fixes: every crash now records origin (self | third_party) plus source_host, so a row you cannot fix is never confused with one you can; and the single shared cap of 3 is split into CAP_SELF=3 + CAP_THIRD=2, because those two foreign errors ate two thirds of the session budget and a third-party script throwing in a loop - exactly what a broken beacon does - would have silently discarded every real crash for that visit while the gap looked like a clean session. A missing filename (inline code, or a CORS-sanitized Script error.) counts as OURS: over-owning a crash is the safe direction. Canonical source is website/assets/cq-track.js, spliced by scripts/sync_track.py, guarded by verify gate #20.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -28510,15 +28510,54 @@ window.SocialAgents = (function () {
 
   /* ── crashes ───────────────────────────────────────────────────────────────────────────
      Capped hard: one broken frame can fire onerror hundreds of times a second, and the beta
-     budget is 120 requests/minute for the whole tester. */
-  var crashes = 0;
+     budget is 120 requests/minute for the whole tester.
+
+     THE CAP IS PER-ORIGIN, AND THAT IS THE POINT. window.onerror fires for EVERY script on
+     the page, including ones we do not ship. On 2026-08-04 a single visitor produced two
+     crash rows one second apart — `t.entries.at is not a function` and `this.i.at is not a
+     function` — both thrown inside Cloudflare's analytics beacon
+     (static.cloudflareinsights.com/beacon.min.js), on Windows/Chrome. They looked exactly
+     like a ChartQuest bug in the Founder Report and cost a real misdiagnosis: they were read
+     as an iOS Safari incompatibility in OUR code, on the strength of a minified stack we do
+     not own. Nothing in this repo calls .at().
+
+     Two consequences, both fixed here:
+       1. ATTRIBUTION. Every crash now records whether it came from our own origin or a third
+          party, plus the host. A row you cannot fix must never be indistinguishable from one
+          you can.
+       2. STARVATION. One shared cap of 3 meant those two foreign errors ate two thirds of the
+          session's budget. A third-party script that throws in a loop — which is precisely
+          what a broken beacon does — would silently discard every real ChartQuest crash for
+          that visit, and the gap would look like a clean session. Third-party errors now have
+          their own small cap and can never consume the first-party one. */
+  var CAP_SELF = 3, CAP_THIRD = 2;
+  var crashesSelf = 0, crashesThird = 0;
+
+  /* '' (inline script / no filename) is OURS: window.onerror reports no filename for inline
+     code, and the game is one big inline document. A cross-origin script that is not CORS-
+     enabled is sanitized by the browser to "Script error." with no filename either — that
+     lands as self, which is the safe direction: we would rather over-own a crash than
+     silently drop a real one. */
+  function originOf(url) {
+    return safe(function () {
+      var u = String(url || '');
+      if (!u || u.indexOf('http') !== 0) return null;         // inline, blob:, data: → ours
+      var host = u.split('/')[2] || '';
+      return host && host !== location.host ? host : null;
+    }, null);
+  }
+
   function crash(kind, msg, extra) {
-    if (crashes >= 3) return;
-    crashes++;
+    var host = originOf(extra);
+    var third = !!host;
+    if (third) { if (crashesThird >= CAP_THIRD) return; crashesThird++; }
+    else       { if (crashesSelf  >= CAP_SELF)  return; crashesSelf++;  }
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'crash',
       ts: new Date().toISOString(),
-      props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '', page: page(), build: BUILD },
+      props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '',
+               page: page(), build: BUILD,
+               origin: third ? 'third_party' : 'self', source_host: host || null },
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);

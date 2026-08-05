@@ -60,6 +60,23 @@ Read this before adding any metric. Every line here is a bug someone already shi
 9. **Country and language are not collected, by design** (no cookies, no IP storage, no third
    parties). The dashboard states this explicitly rather than rendering an empty column.
 
+10. **Not every crash is your crash.** `window.onerror` fires for every script on the page,
+    including ones ChartQuest does not ship. Two rows thrown inside Cloudflare's analytics
+    beacon (`t.entries.at is not a function`, Windows/Chrome) were read as an iOS Safari
+    incompatibility in ChartQuest's own code and reported as a finding. **Nothing in this repo
+    calls `.at()`.** Every crash therefore carries `origin` (`self` | `third_party`) and
+    `source_host`, derived from `props.where` for rows collected before build 341, and *our*
+    crashes always sort above third-party ones however many people the foreign script hit.
+
+    A crash with **no** http(s) filename — inline code, or a CORS-sanitized `Script error.` —
+    counts as **ours**. Over-owning is the safe direction: a false "ours" costs a wasted look,
+    a false "theirs" files a real bug under someone else's name and it never gets fixed.
+
+    The cap in `cq-track.js` is per-origin for the same reason (`CAP_SELF=3`, `CAP_THIRD=2`).
+    One shared cap of 3 meant two foreign errors ate two thirds of the session budget, so a
+    third-party script throwing in a loop — exactly what a broken beacon does — would silently
+    discard every real crash for that visit while the gap looked like a clean session.
+
 ### Canonical test-player prefixes
 
 ```
@@ -211,7 +228,9 @@ from drop-off maths** — they must never manufacture a 100% loss.
 
   "crashes": [
     { "message":"…", "kind":"boot", "where":"…", "build":"335",
-      "count":3, "players":2, "first_seen":"…", "last_seen":"…" }
+      "count":3, "players":2, "first_seen":"…", "last_seen":"…",
+      "origin":"self" | "third_party",     // whose script threw it
+      "source_host":"static.cloudflareinsights.com" | null }
   ],
 
   "tech": {

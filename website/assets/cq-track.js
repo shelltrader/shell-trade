@@ -294,15 +294,54 @@
 
   /* ── crashes ───────────────────────────────────────────────────────────────────────────
      Capped hard: one broken frame can fire onerror hundreds of times a second, and the beta
-     budget is 120 requests/minute for the whole tester. */
-  var crashes = 0;
+     budget is 120 requests/minute for the whole tester.
+
+     THE CAP IS PER-ORIGIN, AND THAT IS THE POINT. window.onerror fires for EVERY script on
+     the page, including ones we do not ship. On 2026-08-04 a single visitor produced two
+     crash rows one second apart — `t.entries.at is not a function` and `this.i.at is not a
+     function` — both thrown inside Cloudflare's analytics beacon
+     (static.cloudflareinsights.com/beacon.min.js), on Windows/Chrome. They looked exactly
+     like a ChartQuest bug in the Founder Report and cost a real misdiagnosis: they were read
+     as an iOS Safari incompatibility in OUR code, on the strength of a minified stack we do
+     not own. Nothing in this repo calls .at().
+
+     Two consequences, both fixed here:
+       1. ATTRIBUTION. Every crash now records whether it came from our own origin or a third
+          party, plus the host. A row you cannot fix must never be indistinguishable from one
+          you can.
+       2. STARVATION. One shared cap of 3 meant those two foreign errors ate two thirds of the
+          session's budget. A third-party script that throws in a loop — which is precisely
+          what a broken beacon does — would silently discard every real ChartQuest crash for
+          that visit, and the gap would look like a clean session. Third-party errors now have
+          their own small cap and can never consume the first-party one. */
+  var CAP_SELF = 3, CAP_THIRD = 2;
+  var crashesSelf = 0, crashesThird = 0;
+
+  /* '' (inline script / no filename) is OURS: window.onerror reports no filename for inline
+     code, and the game is one big inline document. A cross-origin script that is not CORS-
+     enabled is sanitized by the browser to "Script error." with no filename either — that
+     lands as self, which is the safe direction: we would rather over-own a crash than
+     silently drop a real one. */
+  function originOf(url) {
+    return safe(function () {
+      var u = String(url || '');
+      if (!u || u.indexOf('http') !== 0) return null;         // inline, blob:, data: → ours
+      var host = u.split('/')[2] || '';
+      return host && host !== location.host ? host : null;
+    }, null);
+  }
+
   function crash(kind, msg, extra) {
-    if (crashes >= 3) return;
-    crashes++;
+    var host = originOf(extra);
+    var third = !!host;
+    if (third) { if (crashesThird >= CAP_THIRD) return; crashesThird++; }
+    else       { if (crashesSelf  >= CAP_SELF)  return; crashesSelf++;  }
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'crash',
       ts: new Date().toISOString(),
-      props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '', page: page(), build: BUILD },
+      props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '',
+               page: page(), build: BUILD,
+               origin: third ? 'third_party' : 'self', source_host: host || null },
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);

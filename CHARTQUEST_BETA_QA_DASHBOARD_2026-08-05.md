@@ -104,8 +104,17 @@ Leaks 1 and 2 are entirely **pre-gameplay**. Nothing else in the dataset costs m
    see "Test-prefix fix" below. The report now reads 35 testers / 7.0 (n=1), matching the
    dashboard exactly; before the fix it read 37 / 8.0 (n=2) with no exclusion line at all.
 
-2. **Two testers hit `Array.prototype.at is not a function`** — unsupported on iOS Safari below
-   15.4, and **44% of events are mobile**. This is a real compatibility bug, not noise.
+2. ~~Two testers hit `Array.prototype.at is not a function` — an iOS Safari incompatibility.~~
+   **RETRACTED 2026-08-05 — this was wrong in every particular**, and it is the reason crash
+   attribution now exists. The full rows say `os=Windows`, `browser=Chrome`, and
+   `where=https://static.cloudflareinsights.com/beacon.min.js` — **Cloudflare's analytics
+   beacon**, not ChartQuest. It was **one** player (`p-gyuchomsze`), not two, firing twice one
+   second apart; that visitor loaded the landing page, threw both errors and left. There are
+   **zero** iOS or Safari crashes in the entire dataset, and **nothing in this repo calls
+   `.at()`**.
+
+   The claim was built from a minified stack trace in code we do not ship. That is precisely the
+   failure the dashboard now prevents: see "Crash attribution" below.
 
 ---
 
@@ -217,3 +226,52 @@ a fix applied to `beta_model` but forgotten in `beta_players` is caught too.
 | Report, before | 37 | 8.0 (n=2) | _no line printed_ |
 | Report, after | **35** | **7.0 (n=1)** | 2 players / 17 events |
 | Dashboard | **35** | **7.0 (n=1)** | 2 players / 17 events |
+
+---
+
+## Crash attribution (build 341, 2026-08-05)
+
+`window.onerror` fires for **every** script on the page, including ones ChartQuest does not
+ship, and the crash cap did not care whose error it was. Two consequences, both now fixed.
+
+**1 · Misattribution.** Two rows thrown inside Cloudflare's analytics beacon were
+indistinguishable from a game bug and were written up as an iOS Safari incompatibility in
+ChartQuest's own code (see the retraction above). Every crash now carries `origin`
+(`self` | `third_party`) and `source_host`. Third-party crashes render grey, not red, are held
+out of "Repeated bugs" entirely, sort below ours however many testers they hit, and carry the
+sentence *"Nothing here can fix it — do not read the stack trace as a game bug."*
+
+**2 · Starvation.** One shared cap of `3` meant those two foreign errors ate two thirds of the
+session budget. A third-party script throwing in a loop — exactly what a broken beacon does —
+would have silently discarded every real ChartQuest crash for that visit, and the gap would look
+like a clean session. The cap is now per-origin: `CAP_SELF=3`, `CAP_THIRD=2`.
+
+A crash with no http(s) filename — inline code, or a CORS-sanitized `Script error.` — counts as
+**ours**. Over-owning is the safe direction: a false "ours" costs a wasted look; a false "theirs"
+files a real bug under someone else's name and it never gets fixed.
+
+Retroactive: rows collected before build 341 have no `origin`, so both engines derive it from
+`props.where`. The two `.at()` rows already in the database reclassify correctly without a
+backfill.
+
+| Where | What changed |
+|---|---|
+| `website/assets/cq-track.js` | per-origin caps + `origin`/`source_host` on every crash |
+| `chart-quest.html` / `index.html` | re-synced via `scripts/sync_track.py`, build 341 |
+| `beta-qa/beta-model.js` | `crashSourceHost()`, retroactive derivation, ours-first sort |
+| `automation/migrations/0012_*.sql` | same logic in `beta_model()` — **applied**, parity preserved |
+| `beta-qa.html` | grey card, "not our code" badge, separate section, corrected cap note |
+| `docs/beta-qa/BETA_MODEL_CONTRACT.md` | §0.10 + `crashes[]` shape |
+
+Verified: a simulated 10-error third-party flood is capped at 2 and **all three** first-party
+crashes still get through afterwards — the starvation bug, demonstrated fixed. SQL and JS
+classify the live rows identically.
+
+### Still open
+
+A **localhost crash from a concurrent dev session is sitting in the beta dataset**
+(`http://localhost:8802/chart-quest.html…:3773`, a build-tag syntax error) and is counted as a
+real tester crash. `localhost` is correctly "ours" for *whose code*, but it is not *real beta
+play*. The exclusion list matches player-id prefixes only, so dev noise has no filter. A third
+`origin` value (`local`) would close it — not done here, because it changes the model shape again
+and would need another coordinated SQL+JS+contract change.

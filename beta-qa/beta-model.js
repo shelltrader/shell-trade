@@ -222,6 +222,23 @@
 
   function bump(map, k) { if (k == null || k === '') return; map[k] = (map[k] || 0) + 1; }
 
+  /* The foreign host a crash came from, or null when it is ours.
+     Mirrors originOf() in cq-track.js so a row classified live and the same row reclassified
+     from a snapshot can never disagree. OUR_HOSTS covers the production domain, the Pages
+     previews and local dev; anything else that carries an http(s) filename is someone else's
+     script. A row with no filename at all — inline code, or a CORS-sanitized "Script error." —
+     is treated as OURS, because over-owning a crash is the safe direction: the cost of a false
+     "ours" is a wasted look, the cost of a false "theirs" is a real bug filed under someone
+     else's name and never fixed. */
+  var OUR_HOSTS = /(^|\.)playchartquest\.com$|(^|\.)chartquest\.pages\.dev$|^localhost(:\d+)?$|^127\.0\.0\.1(:\d+)?$|^\[::1\](:\d+)?$|(^|\.)chart-quest-game\.netlify\.app$|(^|\.)shelltrader\.github\.io$/;
+  function crashSourceHost(where) {
+    var u = where == null ? '' : String(where);
+    if (u.indexOf('http') !== 0) return null;              // inline / blob: / data: / empty
+    var host = u.split('/')[2] || '';
+    if (!host) return null;
+    return OUR_HOSTS.test(host) ? null : host;
+  }
+
   /* Group crash messages so "the same bug" is one row. Without this, a stack trace that carries
      the file:line of a cache-busted URL produces a brand-new "unique" crash on every deploy and
      the repeat-crash alert (CONTRACT §4) never fires on the bug that is actually killing runs. */
@@ -1145,6 +1162,16 @@
         g.kind = pr.kind == null ? null : String(pr.kind);
         g.where = pr.where == null || pr.where === '' ? null : String(pr.where);
         g.build = buildOf(e);
+        /* WHOSE CRASH IS IT. cq-track.js has stamped props.origin since build 341; rows
+           collected before that carry only props.where, so derive it. Without this the
+           founder cannot tell a bug they can fix from one thrown inside somebody else's
+           script — and that is not hypothetical: two rows from Cloudflare's analytics beacon
+           were read as an iOS Safari incompatibility in ChartQuest's own code and reported as
+           a real finding. Nothing in this repo calls .at(). */
+        g.origin = pr.origin === 'third_party' || pr.origin === 'self'
+          ? pr.origin
+          : (crashSourceHost(pr.where) ? 'third_party' : 'self');
+        g.source_host = pr.source_host != null ? pr.source_host : crashSourceHost(pr.where);
       }
     }
 
@@ -1155,13 +1182,17 @@
       out.push({
         message: q.message, kind: q.kind, where: q.where, build: q.build,
         count: q.count, players: Object.keys(q.players).length,
-        first_seen: toIso(q.first_ms), last_seen: toIso(q.last_ms)
+        first_seen: toIso(q.first_ms), last_seen: toIso(q.last_ms),
+        origin: q.origin || 'self', source_host: q.source_host == null ? null : q.source_host
       });
     }
-    /* Ranked by PLAYERS hit, then occurrences. A crash loop that fires three times for one
-       tester matters less than a crash that stopped two different people. */
+    /* Ranked by PLAYERS hit, then occurrences — but OUR crashes always outrank third-party
+       ones, however many people a foreign script hit. A bug in someone else's beacon is not
+       the top of the founder's backlog, and letting it sort to the top of this table is how a
+       week gets spent on a stack trace nobody here can change. */
     out.sort(function (x, y) {
-      return (y.players - x.players) || (y.count - x.count) ||
+      var xo = x.origin === 'third_party' ? 1 : 0, yo = y.origin === 'third_party' ? 1 : 0;
+      return (xo - yo) || (y.players - x.players) || (y.count - x.count) ||
              (x.message < y.message ? -1 : x.message > y.message ? 1 : 0);
     });
     return out;

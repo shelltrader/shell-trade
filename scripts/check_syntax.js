@@ -29,7 +29,14 @@ const cp = require('child_process');
 const BLOCK_RE = /<script>([\s\S]*?)<\/script>/g;
 const MIN_BLOCK_CHARS = 20;
 
-/* Parse one chunk of JS the way node itself would, without executing it. */
+/* Parse one chunk of JS the way node itself would, without executing it.
+   node --check reports against the TEMPORARY file it was handed, e.g.
+       /var/folders/…/_cq_syntax_123_0.js:89
+        v10: the tracker itself changed
+            ^^^
+       SyntaxError: Unexpected identifier 'v10'
+   which is worse than useless to the reader. Pull out the line WITHIN the unit and the error
+   sentence so the caller can translate them into a real position in a real file. */
 function parseUnit(code, tag) {
   const tmp = path.join(os.tmpdir(), '_cq_syntax_' + process.pid + '_' + tag + '.js');
   try {
@@ -37,7 +44,16 @@ function parseUnit(code, tag) {
     cp.execSync('node --check "' + tmp + '"', { stdio: ['ignore', 'ignore', 'pipe'] });
     return { ok: true };
   } catch (e) {
-    return { ok: false, message: String((e && e.stderr) || e || '').trim() };
+    const raw = String((e && e.stderr) || e || '').trim();
+    const lines = raw.split('\n');
+    const lineInUnit = ((lines[0] || '').match(/:(\d+)\s*$/) || [])[1];
+    const errLine = lines.find(l => /^[A-Za-z]*Error\b/.test(l.trim()));
+    return {
+      ok: false,
+      raw,
+      lineInUnit: lineInUnit ? parseInt(lineInUnit, 10) : null,
+      message: (errLine || lines[0] || 'syntax error').trim(),
+    };
   } finally {
     try { fs.unlinkSync(tmp); } catch (_) {}
   }
@@ -68,7 +84,14 @@ function checkFile(file) {
   for (let i = 0; i < units.length; i++) {
     const r = parseUnit(units[i].code, i);
     if (!r.ok) {
-      return { ok: false, file, total: units.length, inline, index: i + 1, line: units[i].line, message: r.message };
+      /* Translate node's position inside the temporary unit into a real line in the real file.
+         For a whole-file check the unit starts at line 1, so this is the identity. */
+      const at = r.lineInUnit ? units[i].line + r.lineInUnit - 1 : null;
+      return {
+        ok: false, file, total: units.length, inline,
+        index: i + 1, blockLine: units[i].line, line: at,
+        message: r.message, raw: r.raw,
+      };
     }
   }
   return { ok: true, file, total: units.length, inline };
@@ -79,9 +102,10 @@ function summary(res) {
   if (res.ok) {
     return res.inline ? `${res.total} inline <script> blocks parse clean` : `${res.file} parses clean`;
   }
+  const at = res.line ? `${res.file}:${res.line}` : res.file;
   return res.inline
-    ? `syntax error in inline <script> block #${res.index} of ${res.total} (starts at ${res.file}:${res.line})`
-    : `syntax error in ${res.file}`;
+    ? `${res.message} — ${at} (inline <script> block #${res.index} of ${res.total}, block starts at line ${res.blockLine})`
+    : `${res.message} — ${at}`;
 }
 
 /* CLI: human output + a non-zero exit so `ship` and any caller stop. */
@@ -102,7 +126,7 @@ if (require.main === module) {
       console.log('✓ syntax OK — ' + summary(res));
     } else {
       console.error('✗ SYNTAX ERROR — ' + summary(res));
-      console.error(String(res.message || '').split('\n').slice(0, 6).join('\n'));
+      console.error(String(res.raw || '').split('\n').slice(0, 5).join('\n'));
       bad = 1;
     }
   }

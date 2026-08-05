@@ -111,6 +111,42 @@ function run() {
     }
   }
 
+  // 3c — STANDALONE JS PARSES. Same family as 3a (inline blocks) and 3b (headless boot); the
+  // piece that was missing. Nothing in this repo ever parsed a .js file that is not inside
+  // chart-quest.html, and it cost three builds: `website/sw.js` shipped as a JavaScript
+  // SyntaxError from build 332 to 335 — a comment appended after its closing delimiter — so the
+  // service worker never registered at all. No precache, no offline page, a console error on
+  // every load, and every gate green the whole time.
+  //
+  // Scope is TRACKED files only, deliberately: Cloudflare Pages builds from the git repo, so an
+  // untracked .js cannot reach production and is not this gate's business (the same reasoning
+  // gate #17 applies to assets). Four roots — the ones that ship or that gate:
+  //   sw.js, website/**  → deployed
+  //   ops/**             → canonical source spliced into the game
+  //   scripts/**         → the gates themselves. A broken gate script currently degrades to
+  //                        "WARN: gate not runnable", which passes a ship; this makes it FAIL.
+  {
+    try {
+      const syn = require(path.join(__dirname, 'check_syntax.js'));
+      const targets = (git("ls-files -- '*.js'") || '').split('\n')
+        .filter(Boolean)
+        .filter(f => /^(sw\.js|website\/|ops\/|scripts\/)/.test(f))
+        .filter(f => !/node_modules|\.min\.js$/.test(f))
+        .filter(exists);
+      const bad = [];
+      for (const f of targets) {
+        const r = syn.checkFile(f);
+        if (!r.ok) bad.push(syn.summary(r));   // carries file:line + the error sentence
+      }
+      add('3c', 'Standalone JS parses (sw.js, website/, ops/, scripts/)', bad.length ? 'FAIL' : 'PASS',
+        bad.length ? bad.join(' · ') : `${targets.length} tracked standalone .js file(s) parse clean`);
+    } catch (e) {
+      // FAIL, never WARN — see 3a.
+      add('3c', 'Standalone JS parses', 'FAIL',
+        'checker could not run: ' + String(e && e.message || e).slice(0, 110));
+    }
+  }
+
   // 4 — lessons load
   {
     const has = /const LESSONS = \{/.test(s), keys = lessonKeyCount(s);

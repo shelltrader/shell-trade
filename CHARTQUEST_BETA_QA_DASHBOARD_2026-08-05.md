@@ -9,6 +9,21 @@ what confuses them and what to build next — without anyone opening Supabase.
 
 ## How to open it
 
+**Double-click `ChartQuest Beta QA` on the Desktop.** It starts the local server if it is not
+already running, then opens the dashboard. Safe to double-click twice — it will not spawn a
+second server.
+
+Rebuild or relocate it with:
+
+```bash
+python3 scripts/make_beta_qa_app.py
+```
+
+Re-run that if the repo ever moves: an app on the Desktop has no relative route back to the
+project, so the path is baked in at build time.
+
+Manually, without the icon:
+
 ```bash
 python3 scripts/serve_nocache.py 8798
 ```

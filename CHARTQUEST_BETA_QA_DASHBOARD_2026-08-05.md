@@ -293,3 +293,36 @@ real tester crash. `localhost` is correctly "ours" for *whose code*, but it is n
 play*. The exclusion list matches player-id prefixes only, so dev noise has no filter. A third
 `origin` value (`local`) would close it — not done here, because it changes the model shape again
 and would need another coordinated SQL+JS+contract change.
+
+---
+
+## Data reset — 2026-08-05
+
+The closed-beta dataset was wiped so the next run starts clean on build 343, with `play_clicked`
+and `movement_tutorial_completed` recorded from event one.
+
+| Table | Before | After |
+|---|---:|---:|
+| `beta_events` | 272 | **0** |
+| `beta_surveys` | 2 | **0** |
+| `site_visits` | 1,125 | 1,125 — untouched |
+| `content_events` / `content_replays` / `content_briefs` | 711 / 87 / 21 | untouched |
+| `bug_reports` | 1 | 1 — untouched |
+
+**Backed up first**, so this is reversible: `backups/beta-dataset-2026-08-05.json` (272 events,
+2 surveys). The `backups/` directory is gitignored — it holds live tester telemetry including
+survey free text, which does not belong in git.
+
+`beta-qa/beta-data.json` was emptied to match, so the dashboard shows its real empty state rather
+than rendering 272 events that no longer exist. Verified: 0 players, `health_score: null` (it
+refuses to score rather than inventing a 0), no `NaN`/`Infinity` anywhere, one INFO alert reading
+"No events in this window", and all nine tabs render clean.
+
+### A bug the reset exposed
+
+The build filter was **unresettable**. `rememberBuildOptions()` carried an
+`if (!ids.length) return`, so an empty model could never clear the remembered list — after the
+wipe the dropdown still offered Build 340 … 334 from `localStorage`, and picking one showed an
+empty dashboard, which reads as "the tool is broken" rather than "that build has no data". The
+filtered case was already covered by the `S.build` guard above it; the second guard only ever hid
+the truth. An unfiltered empty load now replaces the list like any other result.

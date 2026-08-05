@@ -974,11 +974,17 @@ function buildInsight(model, prevModel){
 
 /* The build dropdown must not collapse to a single option the moment a filter is applied — the
    filtered model only knows about its own cohort. Options are remembered across reloads and
-   only ever replaced from an UNFILTERED load, which is the only view that can see them all. */
+   only ever replaced from an UNFILTERED load, which is the only view that can see them all.
+
+   An empty list from an UNFILTERED load is a real answer, not a failed one, so it REPLACES the
+   remembered options like any other. There used to be an `if (!ids.length) return` here to stop
+   the dropdown emptying, and it made the list unresettable: after the beta data was wiped, the
+   filter still offered Build 340 … 334 forever. Picking one showed an empty dashboard, which
+   reads as "the tool is broken" rather than "that build has no data". The filtered case is
+   already handled by the `S.build` guard above — this second guard only ever hid the truth. */
 function rememberBuildOptions(model){
   if (S.build) return;
   const ids = arr(model.builds).map(b => String(obj(b).build || '')).filter(Boolean);
-  if (!ids.length) return;
   S.buildOptions = ids;
   lsSet('cq_betaqa_buildopts', JSON.stringify(ids));
 }

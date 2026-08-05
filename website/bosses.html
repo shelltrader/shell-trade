@@ -124,6 +124,18 @@
   document.getElementById('bossGate').style.display    = on ? 'none' : 'block';
 })();
 </script>
+<!-- Closed-beta analytics. These two pages carried NO tracker until build 344, and the gap was
+     structural rather than a missed selector: every Play control on them — the static ones plus
+     the four assets/site.js injects into the nav and footer — was invisible, because the listener
+     was never installed on the page at all.
+     It cost two things. play_clicked could not fire here, and neither could session_start: one
+     session is minted per VISIT and shared via sessionStorage, so a tester arriving via Bosses or
+     Courses minted theirs on play.html instead and was recorded as a DIRECT arrival — the exact
+     mis-read BETA_MODEL_CONTRACT.md §0.4 warns about, from a second, independent cause.
+     Loaded WITHOUT defer, like index.html: the delegated click listener has to be installed
+     before a visitor can plausibly click, and these pages have a Play CTA above the fold.
+     CSP already allows it (script-src 'self', website/_headers). -->
+<script src="assets/cq-track.js"></script>
 <script src="assets/site.js" defer></script>
 </body>
 </html>

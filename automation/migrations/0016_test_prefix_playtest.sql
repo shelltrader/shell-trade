@@ -1,0 +1,25 @@
+-- Chart Quest — add 'playtest-%' to the test-player exclusion (BetaModel contract §0)
+-- APPLIED to ymxppzhczvmiuoncuqqu on 2026-08-05. Verified: beta_model / beta_players /
+-- beta_search all contain it, anon_can_call=false on all, is_admin() guards intact.
+-- ============================================================================
+-- A real playtest run wrote PLAYTEST-343-FULL into the live table and NONE of the existing ten
+-- prefixes caught it: 'test-%' does not prefix-match 'playtest-343-full'. Same class as the
+-- VERIFY-/GATE- miss, which silently moved the headline rating from a true 7.0 (n=1) to 8.0 (n=2).
+--
+-- ⚠ THE GAP THIS ALSO CLOSES: scripts/check_test_prefixes.py compares the python list, the JS
+-- list and the migration FILE. It does NOT read the installed function bodies. So editing the
+-- file alone leaves the deployed SQL behind while the checker still reports PASS — a green gate
+-- over a live disagreement. Patch the file and the functions in the same change, always.
+--
+-- beta_player_detail deliberately does NOT get this: it is a drill-down, not a metric, and
+-- refusing to show a QA id there would just look like the pipeline was broken.
+--
+-- Applied by iterating pg_proc and replacing the prefix array in each function that contains it,
+-- then re-asserting the lockdown — create-or-replace resets grants to EXECUTE-to-PUBLIC.
+-- The full statement is in the session record; the authority is pg_get_functiondef(oid).
+--
+-- Verify:
+--   select p.proname, pg_get_functiondef(p.oid) like '%playtest-%%' as has_playtest,
+--          has_function_privilege('anon', p.oid, 'execute') as anon_can_call
+--   from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+--   where n.nspname='public' and p.proname like 'beta\_%' order by 1;

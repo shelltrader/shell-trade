@@ -249,13 +249,13 @@ begin
       where e.created_at >= v_prev_from and e.created_at < v_cur_from
         and not (lower(coalesce(e.player_id,'')) like any (array[
               'cert-test%','e2e-%','selftest%','browsertest%','qa-%','dev-%',
-              'verify-%','gate-%','smoke-%','test-%']::text[]))
+              'verify-%','gate-%','smoke-%','test-%','playtest-%']::text[]))
     ) or exists (
       select 1 from public.beta_surveys s
       where s.created_at >= v_prev_from and s.created_at < v_cur_from
         and not (lower(coalesce(s.player_id,'')) like any (array[
               'cert-test%','e2e-%','selftest%','browsertest%','qa-%','dev-%',
-              'verify-%','gate-%','smoke-%','test-%']::text[]))
+              'verify-%','gate-%','smoke-%','test-%','playtest-%']::text[]))
     ) into v_has_prev;
   end if;
 
@@ -267,7 +267,7 @@ begin
   -- be a silent mystery.
   cfg as (
     select array['cert-test%','e2e-%','selftest%','browsertest%','qa-%','dev-%',
-                 'verify-%','gate-%','smoke-%','test-%']::text[] as test_prefixes
+                 'verify-%','gate-%','smoke-%','test-%','playtest-%']::text[] as test_prefixes
   ),
   stages as (select * from public.beta_funnel_stages),
 
@@ -987,7 +987,7 @@ begin
   with
   cfg as (
     select array['cert-test%','e2e-%','selftest%','browsertest%','qa-%','dev-%',
-                 'verify-%','gate-%','smoke-%','test-%']::text[] as test_prefixes
+                 'verify-%','gate-%','smoke-%','test-%','playtest-%']::text[] as test_prefixes
   ),
   stages as (select * from public.beta_funnel_stages),
   raw as (
@@ -1263,7 +1263,7 @@ begin
   with
   cfg as (
     select array['cert-test%','e2e-%','selftest%','browsertest%','qa-%','dev-%',
-                 'verify-%','gate-%','smoke-%','test-%']::text[] as test_prefixes
+                 'verify-%','gate-%','smoke-%','test-%','playtest-%']::text[] as test_prefixes
   ),
   stages as (select * from public.beta_funnel_stages),
   pm as (

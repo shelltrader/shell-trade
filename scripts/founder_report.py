@@ -118,7 +118,7 @@ def fetch(table, key, since_iso):
 # 7.0 (n=1) — a full point of phantom approval on the headline number, from a row the team
 # wrote itself. VERIFY-335-DEPLOY was likewise counted as a real tester in the funnel.
 EXCLUDE_PREFIXES = ('CERT-TEST', 'e2e-', 'selftest', 'browsertest', 'QA-', 'DEV-',
-                    'VERIFY-', 'GATE-', 'SMOKE-', 'TEST-')
+                    'VERIFY-', 'GATE-', 'SMOKE-', 'TEST-', 'PLAYTEST-')
 
 
 def is_test_player(pid):

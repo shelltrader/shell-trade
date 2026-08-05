@@ -86,8 +86,11 @@
      Canonical list — CONTRACT §0. Three implementations must agree: this file ·
      scripts/founder_report.py · automation/migrations/0011. Checked by
      scripts/check_test_prefixes.py. */
+  /* PLAYTEST- added build 344: a real playtest run wrote PLAYTEST-343-FULL into the live table
+     and NONE of the other ten caught it — 'TEST-' does not prefix-match 'playtest-'. It is the
+     same lesson as VERIFY-/GATE-, which also slipped through and moved a headline number. */
   var TEST_PREFIXES = ['CERT-TEST', 'e2e-', 'selftest', 'browsertest', 'QA-', 'DEV-',
-                       'VERIFY-', 'GATE-', 'SMOKE-', 'TEST-'];
+                       'VERIFY-', 'GATE-', 'SMOKE-', 'TEST-', 'PLAYTEST-'];
 
   /* CONTRACT §1 — the funnel, in order.
      `event: null` marks a stage that has NO event behind it. Those stages render greyed with a

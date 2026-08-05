@@ -1,157 +1,114 @@
-# The two blind funnel stages — and the exact patch to close them
+# The two blind funnel stages — CLOSED in build 343
 
-The Beta Test QA dashboard renders 13 funnel stages. Eleven have data. **Two have never been
-instrumented**, and the dashboard shows them greyed with a "not instrumented" badge rather than a
-0%, because a 0% that is really a reporting failure is how a week gets spent on the wrong problem.
-
-This document is the patch, ready to apply when no other session is editing the files.
+**Status: APPLIED.** `play_clicked` and `movement_tutorial_completed` ship in build 343. This
+document is now the record of what was done and, more usefully, of what the first version of it
+got wrong.
 
 ---
 
-## Gap 1 — "Play clicked" (`play_click`)
+## ⚠ Two things the first version of this document asserted, both false
 
-### Why it reads nothing today
+**1. "There is no movement tutorial system to hook."** Wrong. It was concluded from
+`grep "movementTutorial\|movement_tutorial"` — camelCase and underscore only. The phrase
+**"movement tutorial"** with a space appears ten times in `chart-quest.html` and names a real,
+merged, first-play-mandatory system.
 
-It is not a missing `track()` call. It is structural:
+**2. "The repo copy of `beta-ingest` is stale; patch from the deployed source."** Wrong, and
+wrong in the dangerous direction — it would have sent someone hand-editing a live function to
+create the very drift it warned about. `diff` of the repo file against `get_edge_function` is
+empty. **Patch the repo file and deploy it.**
 
-`cq-track.js` mints **one session per visit, not one per document**, deliberately —
-
-```js
-var s = sessionStorage.getItem('cq_bt_sid');
-if (s) return { id: s, isNew: false };
-```
-
-A tester's journey loads the script four times (`index.html` → `play.html` → the game iframe →
-`survey.html`), all same-origin, all sharing that one `sessionStorage` id. Only the document that
-*mints* it fires `session_start`. So clicking Play navigates to a document that stays deliberately
-silent — **no event is emitted at all**.
-
-This was the right fix for a worse bug: minting per document produced four "sessions" per visit and
-bumped the shared visit counter four times, so every first-time tester was reported as RETURNING
-and "new testers" read zero. Do not undo it.
-
-Consequence for reading the data: `session_start` with `props.page = 'play'` means the tester
-**arrived directly** at `play.html` (a shared link), *not* that they clicked through from the
-landing page. The dashboard says exactly this in the stage tooltip.
-
-### Complication worth knowing before you patch
-
-`website/index.html` also embeds the game inline (`<section class="section gamestart" id="play">`).
-A tester can play **without ever clicking a Play link**. So `play_click` will always undercount
-"reached the game" — it measures the link, not the intent. If what you actually want is "started
-playing", that is better derived from `tutorial_started`, which already exists.
-
-Recommend instrumenting it anyway, because the *gap* between landing and play-click is the single
-most valuable unknown in the funnel right now — but label it "Play link clicked", not "reached the
-game".
-
-### The patch
-
-**1 · `website/assets/cq-track.js`** — add the name to both lists:
-
-```js
-var NAMES = ['session_start','session_end','return_visit','play_clicked','movement_tutorial_completed',
-  'tutorial_started', /* …unchanged… */ ];
-
-var ONCE = ['play_clicked','movement_tutorial_completed','tutorial_started', /* …unchanged… */ ];
-```
-
-**2 · `website/assets/cq-track.js`** — inside `boot()`, after the existing listeners. Delegated, so
-it survives any markup change and covers all six Play links at once:
-
-```js
-/* PLAY LINK — the one funnel stage the per-visit session model cannot infer. Clicking Play
-   navigates to a document that deliberately stays silent (it shares the session id), so
-   without this listener the landing → play transition is invisible. Delegated on document
-   because index.html has six separate Play links and gains more with every landing revision. */
-safe(function () {
-  document.addEventListener('click', function (e) {
-    var a = e.target && e.target.closest && e.target.closest('a[href*="play.html"]');
-    if (!a) return;
-    event('play_clicked', { from: page(), target: a.getAttribute('href') || '' });
-    flush(true);            // they are navigating away this instant — do not buffer it
-  }, true);                 // capture: a stopPropagation() in a CTA handler must not eat it
-});
-```
-
-**3 · the DEPLOYED `beta-ingest` edge function** — add both names to `EVENT_NAMES`. Anything not on
-that list is dropped silently by design.
-
-> ⚠ `supabase/functions/beta-ingest/index.ts` **in this repo is stale**. The deployed v4 already
-> has `journal_discovery_skipped` and exact-match origin checking; the repo copy has neither and
-> still uses the `startsWith()` prefix match that was fixed for a real vulnerability. Patch from
-> the deployed source (`get_edge_function`), never from the repo file, or you will silently
-> re-ship the prefix-match hole.
-
-**4 · re-sync the inlined copy** — the game carries its own inlined `cq-track.js`:
-
-```bash
-python3 scripts/sync_track.py
-```
-
-**5 · verify** — `python3 scripts/sync_track.py --check` must pass, then confirm a real row lands:
-
-```bash
-python3 scripts/beta_pull.py --days 1 && grep -c play_clicked beta-qa/beta-data.json
-```
+A third error was caught before it shipped: the proposed movement watcher keyed on
+`introFlow.phase` leaving `'run'`. `armExplore()` resets `phase = 'run'` between *every* lesson,
+so it is the general free-play state — the watcher would have fired seconds in and meant nothing.
 
 ---
 
-## Gap 2 — "Movement tutorial" (`movement`)
+## What `movement_tutorial_completed` actually watches
 
-### Why it reads nothing today
-
-There is no movement tutorial *system* to hook. `grep -n "movementTutorial\|movement_tutorial"
-chart-quest.html` returns nothing. What the founder's spec calls the movement tutorial is the
-opening phase of the intro state machine at [chart-quest.html:6259](chart-quest.html:6259):
+`window.BlockchainJourney` — "Journey Through the Blockchain" — which every first-play tester
+runs between the cinematic and chart selection. `chart-quest.html:2804` says so outright:
 
 ```js
-const introFlow = {
-  active: !localStorage.getItem('cq_played'),
-  phase: 'run',        // 'run' | 'quiz' | 'bet' | 'done'
+// THE FUNNEL: cinematic → MOVEMENT TUTORIAL → chart selection → gameplay.
+IntroCinematic.start(function (key) { _runMovementTutorial(key); });
 ```
 
-`phase: 'run'` **is** the movement segment — Finn traverses, the player learns to move. It ends
-when the phase advances to `'quiz'`. So the stage is "finished the traversal segment and reached
-the first quiz card".
+Its curriculum is three jumps, three boosts, three smashes (`TEACH_STAGES`), on `_S.tStage`.
 
-### The patch
+**`_S.tCelebDone` alone is a lie.** `teachSkipToPortal()` sets it with **zero reps performed**
+when a player merely walks to the end of the world, so a walker is indistinguishable from
+someone who mastered every verb. Two guards, both required:
 
-Same philosophy as the existing `watchTutorialStart()`: **poll for the state, never edit the game's
-call sites**, so this merges cleanly against other sessions editing `chart-quest.html`. Add to
-`website/assets/cq-track.js` next to `watchTutorialStart`:
+1. **`tStage` seen at 1 or 2 while `tCelebDone` is false.** `teachCredit()` advances one stage at
+   a time; the skip jumps straight to 3 and can never leave it at 1 or 2. Not `=== 2` exactly —
+   that samples a single transient state and would silently miss a player who cleared boost
+   between two 500 ms polls.
+2. **`tCelebDone` true while `phase === 'grow'`.** The phase machine is forward-only
+   (wake → grow → reveal → done) and the retirement fires at `reveal`.
 
-```js
-/* The "movement tutorial" is not a function, it is introFlow.phase === 'run' — the traversal
-   segment before the first quiz card. Watch for it ADVANCING rather than for the quiz starting,
-   so a player who is sent straight to 'bet' by a future flow change still counts. Polling (not a
-   hook) keeps this merge-safe: no call site in the 1.9 MB game file is touched. */
-function watchMovementTutorial() {
-  if (get('cq_bt_movement_tutorial_completed')) return;
-  var n = 0, sawRun = false;
-  var iv = setInterval(function () {
-    if (++n > 480) { clearInterval(iv); return; }        // ~4 min, then give up quietly
-    var ph = safe(function () {
-      return (typeof introFlow !== 'undefined' && introFlow && introFlow.active) ? introFlow.phase : null;
-    }, null);
-    if (ph === 'run') { sawRun = true; return; }
-    /* Only counts if we actually WATCHED them do it. Firing on a late attach — a veteran whose
-       phase is already 'quiz' — would credit a stage they never played. */
-    if (sawRun && ph && ph !== 'run') { clearInterval(iv); event('movement_tutorial_completed', {}); }
-  }, 500);
-}
-```
+The Skip button and the 160 s watchdog both reach `done` without touching `tCelebDone`, so
+neither qualifies. Verified against all four paths plus a fast player: **10/10 checks**.
 
-Call it from `boot()` alongside `watchTutorialStart()`. Steps 1, 3, 4 and 5 above apply unchanged
-(the name is already added to `NAMES`/`ONCE` in step 1).
+## What `play_clicked` can and cannot see
+
+Delegated, **capture phase**, over `a[href*="play.html"], [data-game]` — plus `auxclick`,
+because middle-click does not fire `click`.
+
+`[data-game]` matters: the headline control at `index.html:1403` is a `<button>`, not an anchor,
+and the site's own internal links point at it. An anchor-only selector would have missed the one
+route the landing page actually funnels people through.
+
+**Blind by construction** to `bosses.html` and `courses.html` (neither loads `cq-track.js`), to
+the installed-PWA "Play now" shortcut, and to anyone opening `/play` directly. Those testers
+appear from a later stage. The number is a floor.
 
 ---
 
-## After applying
+## Why both stages are NON-GATING
 
-The dashboard needs no change. `beta-qa/beta-model.js` and the SQL `beta_model()` both key the
-funnel off `BetaModel.FUNNEL`, where these two stages are already present with
-`instrumented: false`. Flip that flag to `true` in **both** engines and the stages light up with
-real data; the parity harness will confirm the two engines still agree.
+This is the part that is easy to get wrong and produces a confident, useless number.
 
-Until then the dashboard is telling the truth: it does not know.
+The monotonic pass credits every stage **below** a player's furthest. So a *gating* `play_click`
+would be credited to everyone who reached the tutorial — reading as an exact clone of the
+tutorial count, at 100% kept and 0 drop, **concealing the landing→play gap it was added to
+measure**. And it would not look broken: the dashboard's "check instrumentation" affordance only
+fires at `players === 0`, which would never be true.
+
+`movement` is non-gating for a second, independent reason: the Journey is **skippable**, so
+monotonic credit would hand completions to players who skipped it.
+
+Non-gating stages therefore report the **raw** count of testers who fired the event, show a share
+of landing, and claim **no** transition (`kept_from_prev_pct`, `drop_players`, `drop_pct` are all
+null). The gating chain closes over them, so `landing → tutorial` is still measured end to end.
+
+---
+
+## Deploy order — the gateway must go first
+
+`beta-ingest` drops unknown names **silently**. Deploy it before the client, or every emitted row
+is discarded while the stage reads as a healthy clone of its neighbour.
+
+| # | Change | Where |
+|---|---|---|
+| 1 | `EVENT_NAMES` += both names, **deploy** | `supabase/functions/beta-ingest/index.ts` → v5 ✅ |
+| 2 | `NAMES`, `ONCE`, `STAGES` += both | `website/assets/cq-track.js` ✅ |
+| 3 | play listener + `watchMovementTutorial()` | `website/assets/cq-track.js` ✅ |
+| 4 | `sync_track.py` → `cq.sh mirror` → **`cq.sh site`** | build 343 ✅ |
+| 5 | FUNNEL: `instrumented: true, gating: false` | `beta-qa/beta-model.js` ✅ |
+| 6 | non-gating rendering | `beta-qa.html` ✅ |
+| 7 | gating-aware invariants + fixture coverage | `beta-qa/parity.js` ✅ |
+
+Step 4's `cq.sh site` is easy to forget — `website/game.html` was left a build behind at 342,
+so the deployed game silently lacked that build's work until this pass caught it.
+
+## Known lag — the SQL engine
+
+`beta_funnel_stages` still marks both stages `instrumented = false`, so **live mode continues to
+render them as "not instrumented"**. That is deliberate: teaching the SQL engine non-gating needs
+six coordinated changes to `beta_model()`'s funnel CTEs, and half-applying it (the flag without
+the logic) would produce exactly the clone bug in live mode. Snapshot mode — the only mode usable
+until an admin account exists — is fully correct.
+
+Verified after the change: the gateway accepts both names and still rejects an unknown one
+(`{"error":"No valid rows"}`).

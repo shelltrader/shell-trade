@@ -124,12 +124,37 @@ migration's repeated copies agree with each other). Run it after touching any of
 `instrumented: false` stages render greyed with a "not instrumented" badge and are **excluded
 from drop-off maths** — they must never manufacture a 100% loss.
 
+**`gating: false` is a different thing and must not be confused with it.** A non-gating stage IS
+measured: it reports the **raw** number of players who fired its event and a share of landing.
+But it is not a gate anyone must pass through, so it takes no part in the monotonic chain and
+claims no transition (`kept_from_prev_pct`, `drop_players`, `drop_pct` are null). The gating
+chain closes over it, so `landing → tutorial` is still measured end to end.
+
+Both build-343 stages are non-gating, for different reasons, and getting this wrong produces a
+confident useless number rather than an obvious break:
+
+- **`play_click`** — the monotonic pass credits every stage below a player's furthest, so a
+  gating `play_click` would be credited to everyone who reached the tutorial: an exact clone of
+  the tutorial count at 100% kept and 0 drop, **concealing the landing→play gap it exists to
+  measure**. It would not even look broken — the "check instrumentation" affordance only fires
+  at `players === 0`. It is also blind by construction to `bosses.html` / `courses.html` (no
+  tracker), the PWA shortcut and direct `/play` arrivals, so it can legitimately read *lower*
+  than the stage after it.
+- **`movement`** — the Journey Through the Blockchain is **skippable**. A player can skip it and
+  still reach the first trade, so monotonic credit would hand them a completion they never
+  earned. As a raw count it answers a real question: how many testers actually learned to move.
+
+> ⚠ **SQL lag.** `beta_funnel_stages` still marks both `instrumented = false`, so live mode
+> renders them as "not instrumented". Teaching the SQL engine non-gating needs six coordinated
+> changes to `beta_model()`'s funnel CTEs; half-applying it would reproduce the clone bug in
+> live mode. Snapshot mode is fully correct.
+
 | # | key | label | event | instrumented |
 |---|---|---|---|---|
 | 1 | `landing` | Landing page | `session_start` | ✅ |
-| 2 | `play_click` | Play clicked | — | ❌ no event exists (see §0.4) |
+| 2 | `play_click` | Play clicked | `play_clicked` | ✅ **non-gating** (build 343) |
 | 3 | `tutorial` | Tutorial started | `tutorial_started` | ✅ |
-| 4 | `movement` | Movement tutorial | — | ❌ never instrumented |
+| 4 | `movement` | Movement tutorial completed | `movement_tutorial_completed` | ✅ **non-gating** (build 343) |
 | 5 | `intro_done` | Intro chain completed (ends after Guardian 1) | `tutorial_completed` | ✅ |
 | 6 | `trade` | First trade | `first_trade_started` | ✅ |
 | 7 | `boss` | Boss started | `boss_started` | ✅ |

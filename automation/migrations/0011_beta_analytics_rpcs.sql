@@ -162,9 +162,12 @@ select * from (values
   ('journal_unlocked',                  'Journal unlocked',                             'milestone'),
   ('journal_discovery_started',         'Journal Discovery started',                    'milestone'),
   ('journal_discovery_completed',       'Journal Discovery completed',                  'milestone'),
-  -- Accepted by the DEPLOYED beta-ingest (v4) but absent from the repo copy of that
-  -- function, which is stale — verified against the live source, not the file. No row
-  -- carries this name yet; it is listed so the first one renders correctly.
+  -- Accepted by beta-ingest. An earlier version of this comment said the repo copy of that
+  -- function was STALE and must be patched from the deployed source — that was wrong, and it
+  -- was wrong in the dangerous direction: it would have sent the next engineer hand-editing a
+  -- deployed function, creating the drift it warned about. `diff` of the repo file against
+  -- get_edge_function is empty. Patch the repo file and deploy it. No row carries this name
+  -- yet; it is listed so the first one renders correctly.
   ('journal_discovery_skipped',         'Journal Discovery skipped',                    'milestone'),
   ('beta_completed',                    'Beta completed',                               'milestone'),
   ('survey_started',                    'Survey started',                               'milestone'),

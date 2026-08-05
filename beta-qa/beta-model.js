@@ -97,9 +97,19 @@
      session id is minted once per visit and every later document in the tab stays silent). */
   var FUNNEL = [
     { key: 'landing',        label: 'Landing page',                                    event: 'session_start',               instrumented: true  },
-    { key: 'play_click',     label: 'Play clicked',                                    event: null,                          instrumented: false },
+    /* NON-GATING (gating:false). Instrumented from build 343, but deliberately OUTSIDE the
+       monotonic chain. The monotonic pass credits every stage BELOW a player's furthest, so a
+       gating play_click would be silently credited to everyone who reached the tutorial — it
+       would read as an exact clone of the tutorial count at 100% kept, concealing the very
+       landing-to-play gap it was added to measure. Non-gating stages report the RAW number of
+       players who actually fired the event, and take no part in drop-off arithmetic. */
+    { key: 'play_click',     label: 'Play clicked',                                    event: 'play_clicked',                instrumented: true, gating: false },
     { key: 'tutorial',       label: 'Tutorial started',                                event: 'tutorial_started',            instrumented: true  },
-    { key: 'movement',       label: 'Movement tutorial',                               event: null,                          instrumented: false },
+    /* NON-GATING for a second, independent reason: the Journey is SKIPPABLE. A player can skip
+       it and still reach first_trade, so monotonic credit would hand them a movement-tutorial
+       completion they never earned. As a raw count it answers a real question — how many
+       testers actually learned to move — which is a mastery metric, not a funnel gate. */
+    { key: 'movement',       label: 'Movement tutorial completed',                     event: 'movement_tutorial_completed', instrumented: true, gating: false },
     /* NOT "tutorial completed". CONTRACT §0.3: tutorial_completed is wired to introComplete(),
        which the game calls from bossFinish() when level == 1 — i.e. AFTER Guardian 1. Labelling
        it tutorial completion invites exactly the wrong diagnosis, because "0% finished the
@@ -346,7 +356,11 @@
     var eventToIndex = {};
     var i;
     for (i = 0; i < FUNNEL.length; i++) {
-      if (!FUNNEL[i].instrumented) continue;      // uninstrumented stages take no part at all
+      /* Uninstrumented stages take no part at all — and neither do NON-GATING ones. A
+         non-gating stage is measured, but it is not a gate a player must pass through, so
+         letting it into the chain would both credit it to people who never did it and shift
+         every later stage's "kept from previous". */
+      if (!FUNNEL[i].instrumented || FUNNEL[i].gating === false) continue;
       eventToIndex[FUNNEL[i].event] = order.length;
       order.push(FUNNEL[i].key);
     }
@@ -623,8 +637,22 @@
       if (m[e.player_id] == null || ms < m[e.player_id]) m[e.player_id] = ms;
     }
 
+    /* Offsets from each player's first event to their first hit of this stage. Shared by the
+       gating and non-gating branches so both report the same kind of number. */
+    function stageOffsets(all, key, sl) {
+      var out = [], m = all[key];
+      for (var pid in m) {
+        if (!Object.prototype.hasOwnProperty.call(m, pid)) continue;
+        var start = sl.first_ms[pid];
+        if (start == null) continue;
+        var d = (m[pid] - start) / 1000;
+        if (d >= 0) out.push(d);
+      }
+      return out;
+    }
+
     var rows = [];
-    var prevInstrumented = null;            // the last INSTRUMENTED row, not the last row
+    var prevInstrumented = null;            // the last GATING row, not the last row
 
     for (i = 0; i < FUNNEL.length; i++) {
       var st = FUNNEL[i];
@@ -638,6 +666,29 @@
           players: null, pct_of_top: null, kept_from_prev_pct: null,
           drop_players: null, drop_pct: null,
           median_seconds_from_start: null, is_bottleneck: false
+        });
+        continue;
+      }
+
+      /* NON-GATING: measured, but not a gate. `sets` only holds gating stages (the monotonic
+         pass skips these), so the count comes from who ACTUALLY fired the event — which is the
+         honest number for both of them: play_clicked cannot see the Bosses/Courses pages, the
+         PWA shortcut or a direct /play link, and the movement tutorial is skippable. Drop-off
+         is null, not zero: these sit between gating stages and do not gate anything, so a
+         "kept from previous" here would invent a transition that does not exist. `prevInstrumented`
+         is deliberately NOT advanced, so the next real stage still compares against the last
+         real gate. */
+      if (st.gating === false) {
+        var fired = stageFirstMs[st.key];
+        var nFired = 0;
+        for (var fp in fired) if (Object.prototype.hasOwnProperty.call(fired, fp)) nFired++;
+        rows.push({
+          key: st.key, label: st.label, instrumented: true, gating: false,
+          players: nFired,
+          pct_of_top: top > 0 ? Math.round((nFired / top) * 100) : null,
+          kept_from_prev_pct: null, drop_players: null, drop_pct: null,
+          median_seconds_from_start: medianDisc(stageOffsets(stageFirstMs, st.key, slice)),
+          is_bottleneck: false
         });
         continue;
       }

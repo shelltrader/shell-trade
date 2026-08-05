@@ -867,6 +867,29 @@ function makeFixture(count, opts) {
         });
       }
 
+      /* THE TWO NON-GATING STAGES. Emitted independently of the furthest-stage walk above,
+         because neither is a gate — and the fixture has to reproduce exactly that, or the
+         non-gating invariant is untested.
+           play_clicked            only a tester who arrived on index CAN click a Play control;
+                                   someone who landed straight on play.html never sees one, and
+                                   bosses/courses do not load the tracker at all. So it is
+                                   structurally capped below the stage after it, which is the
+                                   whole reason it must not sit in the monotonic chain.
+           movement_tutorial_completed  the Journey is SKIPPABLE: plenty of players reach the
+                                   first trade having skipped it, so this can be far lower than
+                                   every stage around it without anything being wrong. */
+      if (v === 1) {
+        if (entryPage === 'index' && chance(0.72)) {
+          emit({ player_id: pid, session_id: sessionId, name: 'play_clicked', tsMs: visitStart + 900, env,
+                 props: { from: 'index', target: 'play.html', mode: chance(0.25) ? 'embed' : 'nav', button: 'main' } });
+        }
+        if (furthest >= 1 && chance(0.55)) {
+          emit({ player_id: pid, session_id: sessionId, name: 'movement_tutorial_completed',
+                 tsMs: visitStart + int(30, 180) * 1000, env,
+                 props: { shells: int(0, 14), gems: int(0, 4) } });
+        }
+      }
+
       for (const s of stagesHere) {
         if (s === 0) continue;                    // stage 0 IS session_start, already emitted
         const name = FIXTURE_STAGE_EVENTS[s];
@@ -1030,6 +1053,16 @@ function expectationsFor(events, surveys) {
     for (const v of furthest.values()) if (v >= i) n++;
     funnel[k] = n;
   });
+  /* Non-gating stages are counted RAW — the players who actually fired the event — never by
+     the monotonic walk above. Crediting them from a later stage is exactly the bug that would
+     make play_click a silent clone of tutorial. */
+  const rawStage = (evName) => {
+    const seen = new Set();
+    for (const e of real) if (e.name === evName && e.player_id) seen.add(e.player_id);
+    return seen.size;
+  };
+  funnel.play_click = rawStage('play_clicked');
+  funnel.movement   = rawStage('movement_tutorial_completed');
 
   /* CONTRACT §0.5 — game pages only. */
   const GAME_PAGES = ['game', 'chart-quest', 'play'];
@@ -1147,6 +1180,12 @@ function selfTest(opts) {
   });
 
   /* ── 2 · structural invariants the contract demands of ANY model ────────────────────── */
+  /* The monotonic law binds the GATING chain only. A non-gating stage (play_click, movement)
+     is measured but is not a gate: its count is the raw number of players who fired the event,
+     which can legitimately be LOWER than the stage after it — play_clicked is blind to the
+     Bosses/Courses pages and to direct /play arrivals, and the movement tutorial is skippable.
+     Walking those rows as part of the chain would report a false "rose" on a model that is
+     behaving exactly as the contract requires. They are still checked, harder, below. */
   t('funnel is monotonic and never keeps >100% (CONTRACT §0.2)', () => {
     let prev = null, bad = [];
     for (const row of model.funnel) {
@@ -1154,17 +1193,38 @@ function selfTest(opts) {
         if (row.players !== null) bad.push(row.key + ' is uninstrumented but reports players');
         continue;
       }
+      if (row.gating === false) continue;                       // measured, but not a gate
       if (prev != null && row.players > prev) bad.push(row.key + ' rose ' + prev + '→' + row.players);
       if (row.kept_from_prev_pct != null && row.kept_from_prev_pct > 100) bad.push(row.key + ' kept ' + row.kept_from_prev_pct + '%');
       prev = row.players;
     }
-    return { ok: !bad.length, detail: bad.length ? bad.join('; ') : model.funnel.filter(r => r.instrumented).map(r => r.players).join(' ≥ ') };
+    const chain = model.funnel.filter(r => r.instrumented && r.gating !== false);
+    return { ok: !bad.length, detail: bad.length ? bad.join('; ') : chain.map(r => r.players).join(' ≥ ') };
   });
 
   t('uninstrumented stages manufacture no loss (CONTRACT §1)', () => {
     const bad = model.funnel.filter(r => !r.instrumented)
       .filter(r => r.drop_players !== null || r.drop_pct !== null || r.pct_of_top !== null || r.is_bottleneck);
-    return { ok: !bad.length, detail: bad.length ? bad.map(r => r.key).join(', ') + ' took part in the drop-off maths' : 'play_click + movement are null all the way down' };
+    return { ok: !bad.length, detail: bad.length ? bad.map(r => r.key).join(', ') + ' took part in the drop-off maths' : 'no uninstrumented stage takes part in the maths' };
+  });
+
+  /* Non-gating stages get their OWN invariant rather than a waiver: they must report a real
+     count, must never claim a transition, and must never be nominated as the bottleneck —
+     "the biggest leak is a stage nobody is required to pass through" is meaningless. */
+  t('non-gating stages are measured but claim no transition (CONTRACT §1)', () => {
+    const ng = model.funnel.filter(r => r.gating === false);
+    if (!ng.length) return { ok: false, detail: 'no non-gating stages found — play_click/movement missing' };
+    const bad = [];
+    for (const r of ng) {
+      if (!r.instrumented) bad.push(r.key + ' is non-gating but also uninstrumented');
+      if (typeof r.players !== 'number') bad.push(r.key + ' must report a real count, got ' + r.players);
+      if (r.kept_from_prev_pct !== null) bad.push(r.key + ' claims kept_from_prev_pct');
+      if (r.drop_players !== null || r.drop_pct !== null) bad.push(r.key + ' claims a drop');
+      if (r.is_bottleneck) bad.push(r.key + ' was nominated bottleneck');
+    }
+    return { ok: !bad.length,
+             detail: bad.length ? bad.join('; ')
+                                : ng.map(r => r.key + '=' + r.players).join(' · ') + ' — counted, no transition claimed' };
   });
 
   t('at most one bottleneck, and only above n≥5 (CONTRACT §4)', () => {
@@ -1207,6 +1267,7 @@ function selfTest(opts) {
     let prev = null, bad = [];
     for (const row of m7.funnel) {
       if (!row.instrumented) continue;
+      if (row.gating === false) continue;        // measured, not a gate — same rule as §0.2 above
       if (prev != null && row.players > prev) bad.push(row.key);
       prev = row.players;
     }

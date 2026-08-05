@@ -1446,6 +1446,17 @@ const NOT_INSTRUMENTED = {
   movement: 'Never instrumented. There is no movement-tutorial event in cq-track.js, so this row is a placeholder for a step we cannot yet see. Excluded from the drop-off maths.'
 };
 
+/* NON-GATING (instrumented from build 343, but not a gate anyone must pass through). These
+   report the RAW number of testers who fired the event and claim no transition, so they show a
+   count and a share of landing but a dash for kept/drop. Reading them as gates is the trap:
+   the monotonic pass credits every stage below a player's furthest, so a gating play_click
+   would be an exact clone of the tutorial count and would hide the landing→play gap it exists
+   to measure. */
+const NON_GATING = {
+  play_click: 'Counts a click on any Play control on the landing page, including the "Enter the Chart" embed button. Blind by construction to the Bosses and Courses pages (they load no analytics), to the installed-app "Play now" shortcut, and to anyone opening /play directly — those testers simply appear from a later stage. So this can legitimately read LOWER than the stage below it, and it is deliberately not a gate: no drop-off is calculated from it.',
+  movement: 'The "Journey Through the Blockchain" — three jumps, three boosts, three smashes — which every first-play tester is offered between the cinematic and chart selection. It is SKIPPABLE, so a tester can miss it and still reach the first trade. That makes it a mastery number (did they actually learn to move?), not a funnel gate, and it takes no part in the drop-off maths. Only genuinely earned completions count: walking to the end of the world, pressing Skip, or hitting the 160s timeout do not.'
+};
+
 function renderFunnel(el){
   const rows = arr(S.model.funnel);
   const instrumented = rows.filter(r => r.instrumented);
@@ -1462,16 +1473,22 @@ function renderFunnel(el){
       </tr>`;
     }
     const players = n(r.players);
-    const isZero = players === 0;
+    const nonGating = r.gating === false;
+    /* A non-gating 0 is not a wipeout — the event may simply be blind to how these testers
+       arrived. Never show it the amber "check instrumentation" warning that a gating 0 earns. */
+    const isZero = players === 0 && !nonGating;
     return `<tr class="${r.is_bottleneck ? 'bottleneck' : ''}">
       <td>${esc(r.label)}
+        ${nonGating ? `<span class="tag tip" data-tip="${esc(NON_GATING[r.key] || 'Measured, but not a gate.')}">not a gate</span>` : ''}
         ${r.is_bottleneck ? '<span class="tag red">bottleneck</span>' : ''}
         ${isZero ? '<span class="tag amber tip" data-tip="A 0% stage is more often broken instrumentation than a broken game. tutorial_started is detected by polling introFlow.active, so a tester who skips the intro never fires it — and every event below session_start dies silently if the beta-ingest origin allowlist misses the domain being played on. Verify the event before changing anything in the game.">check instrumentation</span>' : ''}
       </td>
       <td class="r num">${esc(players ?? '—')}</td>
       <td class="r num">${esc(F.pct(n(r.pct_of_top)))}</td>
       <td class="r num">${n(r.kept_from_prev_pct) == null ? '<span class="dim">—</span>' : esc(F.pct(n(r.kept_from_prev_pct)))}</td>
-      <td class="r num">${n(r.drop_players) ? '<span style="color:var(--red)">−' + esc(n(r.drop_players)) + '</span> <span class="dim">' + esc(F.pct(n(r.drop_pct))) + '</span>' : '<span class="dim">0</span>'}</td>
+      <td class="r num">${n(r.drop_players) == null ? '<span class="dim">—</span>'
+        : n(r.drop_players) ? '<span style="color:var(--red)">−' + esc(n(r.drop_players)) + '</span> <span class="dim">' + esc(F.pct(n(r.drop_pct))) + '</span>'
+        : '<span class="dim">0</span>'}</td>
       <td class="r num">${n(r.median_seconds_from_start) == null ? '<span class="dim">—</span>' : esc(F.duration(n(r.median_seconds_from_start)))}</td>
     </tr>`;
   }).join('');

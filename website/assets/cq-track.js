@@ -44,13 +44,15 @@
   var MAX_BATCH = 40;
 
   /* The closed set. Must stay identical to EVENT_NAMES in supabase/functions/beta-ingest. */
-  var NAMES = ['session_start','session_end','return_visit','tutorial_started','tutorial_completed',
+  var NAMES = ['session_start','session_end','return_visit','play_clicked','movement_tutorial_completed',
+    'tutorial_started','tutorial_completed',
     'first_trade_started','first_trade_won','first_trade_lost','boss_started','boss_defeated',
     'journal_unlocked','journal_discovery_started','journal_discovery_completed','journal_discovery_skipped','beta_completed',
     'survey_started','survey_submitted','crash'];
 
   /* Stages that describe a player's furthest progress — recorded once, ever. */
-  var ONCE = ['tutorial_started','tutorial_completed','first_trade_started','first_trade_won',
+  var ONCE = ['play_clicked','movement_tutorial_completed',
+    'tutorial_started','tutorial_completed','first_trade_started','first_trade_won',
     'first_trade_lost','boss_started','boss_defeated','journal_unlocked',
     'journal_discovery_started','journal_discovery_completed','journal_discovery_skipped','beta_completed','survey_submitted'];
 
@@ -264,7 +266,8 @@
 
   /* Furthest stage this player ever reached — the "Exit Point" the beta spec asks for.
      Read straight off the once-per-player flags, so it survives across documents and visits. */
-  var STAGES = ['session_start','tutorial_started','first_trade_started','boss_started',
+  var STAGES = ['session_start','play_clicked','movement_tutorial_completed',
+                'tutorial_started','first_trade_started','boss_started',
                 'journal_discovery_started','journal_discovery_completed','beta_completed','survey_submitted'];
   function exitStage() {
     var far = 'landing';
@@ -429,8 +432,101 @@
     }, 500);
   }
 
+  /* ── PLAY CONTROLS ─────────────────────────────────────────────────────────────────────
+     The landing→game gap is the largest hole in the funnel and nothing measured it, because
+     the per-visit session model makes it structurally invisible: clicking Play navigates to a
+     document that SHARES the session id and therefore stays silent (see the _sess comment).
+
+     Delegated + capture phase, so it survives a markup change and cannot be eaten by a CTA
+     handler that calls stopPropagation. The selector is deliberately wider than anchors:
+       a[href*="play.html"]  the seven Play links on the landing page
+       [data-game]           the "Enter the Chart" BUTTON at index.html:1403 — the headline
+                             control, which is not an anchor at all and which the site's own
+                             internal links point at. data-game is the same attribute the
+                             embed mount reads, so it outlives an id rename.
+     auxclick too: middle-click does not fire click. Cmd/Ctrl-click does, and is caught.
+
+     WHAT IT CANNOT SEE, stated so the number is never over-read: bosses.html and courses.html
+     do not load this file at all, the installed-PWA "Play now" shortcut involves no page, and
+     a direct /play link involves no click. Those testers simply appear from a later stage. */
+  var PLAY_SEL = 'a[href*="play.html"], [data-game]';
+  function onPlayControl(e) {
+    safe(function () {
+      var t = e.target && e.target.closest && e.target.closest(PLAY_SEL);
+      if (!t) return;
+      event('play_clicked', {
+        from: page(),
+        target: t.getAttribute('href') || t.getAttribute('data-game') || '',
+        mode: t.tagName === 'A' ? 'nav' : 'embed',
+        button: e.type === 'auxclick' ? 'aux' : 'main'
+      });
+      flush(true);            // they are navigating away this instant — never buffer it
+    });
+  }
+
+  /* ── MOVEMENT TUTORIAL ─────────────────────────────────────────────────────────────────
+     This is a REAL authored system, not a phase flag: window.BlockchainJourney, the "Journey
+     Through the Blockchain", which every first-play player runs between the cinematic and
+     chart selection (chart-quest.html:2807 — the comment there literally reads
+     "cinematic → MOVEMENT TUTORIAL → chart selection"). Its curriculum is three jumps, three
+     boosts, three box-smashes (TEACH_STAGES), tracked on _S.tStage / _S.tCount.
+
+     _S.tCelebDone ALONE IS A LIE. teachSkipToPortal() sets it with ZERO reps performed when a
+     player simply walks to the end of the world, so a pure walker is indistinguishable from
+     someone who mastered every verb. Two guards, both required:
+
+       1. tStage seen at 1 OR 2 while tCelebDone is still false. teachCredit() advances ONE
+          stage at a time; teachSkipToPortal() jumps STRAIGHT to 3 and can never leave it at 1
+          or 2. So any mid-curriculum reading is unforgeable proof that reps were really earned.
+          NOT "=== 2 exactly": that samples a single transient state, and a player who clears
+          boost and starts smashing between two 500ms polls would be missed entirely — the
+          event would silently never fire for someone who genuinely did the work. Two
+          observable stages, each lasting the seconds it takes to perform three reps, instead
+          of one instant.
+       2. tCelebDone === true observed while phase === 'grow'. The phase machine is strictly
+          forward (wake → grow → reveal → done) and the retirement only fires at 'reveal', so a
+          retired curriculum can never be seen at 'grow'.
+
+     The SKIP button and the 160s watchdog both call finishJourney() → phase 'done' without
+     touching tCelebDone, so neither can satisfy guard 2. A returning player never runs the
+     Journey at all (gated on cq_played), so _S stays untouched and neither guard is ever met.
+
+     Read off window.BlockchainJourney — a real window PROPERTY, so unlike introFlow and coach
+     (top-level consts, which live in the global LEXICAL scope) there is no TDZ hazard here.
+     Polling, never a hook: no call site in the 1.9 MB game file is touched, so this merges
+     cleanly against other sessions. */
+  function watchMovementTutorial() {
+    if (get('cq_bt_movement_tutorial_completed')) return;
+    var n = 0, provedVerbs = false;
+    var iv = setInterval(function () {
+      if (++n > 1200) { clearInterval(iv); return; }   // ~10 min: auth + cinematic + the 160s cap
+      var s = safe(function () {
+        var J = window.BlockchainJourney;
+        return (J && J._S) ? J._S : null;
+      }, null);
+      if (!s) return;                                  // website page, or module not parsed yet
+
+      if (!provedVerbs && (s.tStage === 1 || s.tStage === 2) && !s.tCelebDone) provedVerbs = true;
+
+      if (provedVerbs && s.tCelebDone === true && s.phase === 'grow') {
+        clearInterval(iv);
+        event('movement_tutorial_completed', { shells: s.shellCount || 0, gems: s.gemCount || 0 });
+        return;
+      }
+
+      /* The Journey is over and they never earned it (skipped, timed out, or walked to the
+         portal unfinished). The answer cannot change — stop burning a timer for 10 minutes. */
+      if (s._ended) clearInterval(iv);
+    }, 500);
+  }
+
   function boot() {
     startSession();
+
+    safe(function () {
+      document.addEventListener('click',    onPlayControl, true);
+      document.addEventListener('auxclick', onPlayControl, true);
+    });
 
     safe(function () {
       window.addEventListener('error', function (e) {
@@ -466,6 +562,7 @@
     var iv = setInterval(function () { if (++tries > 40) clearInterval(iv); hookGame(); }, 250);
     hookGame();
     watchTutorialStart();
+    watchMovementTutorial();
   }
 
   window.CQTrack = {

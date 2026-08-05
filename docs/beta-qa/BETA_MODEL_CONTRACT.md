@@ -144,10 +144,8 @@ confident useless number rather than an obvious break:
   still reach the first trade, so monotonic credit would hand them a completion they never
   earned. As a raw count it answers a real question: how many testers actually learned to move.
 
-> ⚠ **SQL lag.** `beta_funnel_stages` still marks both `instrumented = false`, so live mode
-> renders them as "not instrumented". Teaching the SQL engine non-gating needs six coordinated
-> changes to `beta_model()`'s funnel CTEs; half-applying it would reproduce the clone bug in
-> live mode. Snapshot mode is fully correct.
+Both engines implement this. Verified by diffing the SQL funnel against `beta-model.js`
+over the same rows: **0 mismatches across all 13 stages**, drop-off included.
 
 | # | key | label | event | instrumented |
 |---|---|---|---|---|

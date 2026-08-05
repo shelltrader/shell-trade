@@ -1,0 +1,46 @@
+-- Chart Quest — NON-GATING funnel stages (BetaModel contract §1)
+-- APPLIED to ymxppzhczvmiuoncuqqu on 2026-08-05. Verified after applying:
+--   anon_can_call=false on beta_model + beta_players · is_admin() guards intact
+--   stage_raw CTE present · chain partitions on (instrumented AND gating)
+--   SQL funnel diffed against beta-qa/beta-model.js over the same 272 rows: 0 mismatches
+-- ============================================================================
+-- play_clicked and movement_tutorial_completed ship in build 343. Both are MEASURED but
+-- neither is a GATE, and that distinction is the whole point.
+--
+--   * The monotonic pass credits every stage BELOW a player\'s furthest. A gating play_click
+--     would be credited to everyone who reached the tutorial — an exact clone of the tutorial
+--     count at 100% kept and 0 drop, CONCEALING the landing→play gap it exists to measure. It
+--     would not even look broken: the dashboard\'s "check instrumentation" hint only fires at
+--     players = 0, which would never be true.
+--   * play_clicked is blind by construction to bosses.html / courses.html (no tracker), to the
+--     PWA shortcut and to direct /play arrivals, so it can legitimately read LOWER than the
+--     stage after it — which a monotonic chain treats as a violation.
+--   * movement_tutorial_completed watches a SKIPPABLE system, so monotonic credit would hand
+--     completions to players who skipped it.
+--
+-- Non-gating stages therefore report the RAW count of players who fired the event, show a
+-- share of landing, and claim NO transition (kept/drop null, never 0 — zero reads as
+-- "measured, nobody lost"). The gating chain closes OVER them, so landing→tutorial is still
+-- measured end to end.
+--
+-- HOW: pg_get_functiondef + seven individually CHECKED replacements, every anchor deliberately
+-- free of backslashes (the host allowlist regex round-trips ambiguously and a replacement
+-- keyed on it could silently no-op, leaving the two engines disagreeing). A drifted function
+-- raises instead.
+--
+-- ⚠ create-or-replace RESETS grants to EXECUTE-to-PUBLIC. The re-assert at the bottom is not
+-- optional — the trap that once made prune_beta_events(0) anon-callable.
+--
+-- The applied statement is reproduced in the session record; the authoritative current
+-- definition is always `select pg_get_functiondef(oid)`. Objects changed:
+--   view public.beta_funnel_stages   + gating column; play_click/movement instrumented, non-gating
+--   public.beta_model(int,text)      furthest/stage_counts gated · stage_raw added · funnel_base,
+--                                    lag partition, funnel_out, bottleneck, funnel_json updated
+--   public.beta_players(...)         furthest restricted to gating stages so the roster label
+--                                    cannot name a stage the funnel does not treat as a gate
+-- ============================================================================
+-- Verify:
+--   select stage_key, instrumented, gating from public.beta_funnel_stages where not gating;
+--   select has_function_privilege(\'anon\', p.oid, \'execute\')
+--   from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+--   where n.nspname=\'public\' and p.proname in (\'beta_model\',\'beta_players\');

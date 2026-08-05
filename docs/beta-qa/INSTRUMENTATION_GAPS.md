@@ -102,13 +102,17 @@ is discarded while the stage reads as a healthy clone of its neighbour.
 Step 4's `cq.sh site` is easy to forget — `website/game.html` was left a build behind at 342,
 so the deployed game silently lacked that build's work until this pass caught it.
 
-## Known lag — the SQL engine
+## SQL engine — CLOSED (migration 0014)
 
-`beta_funnel_stages` still marks both stages `instrumented = false`, so **live mode continues to
-render them as "not instrumented"**. That is deliberate: teaching the SQL engine non-gating needs
-six coordinated changes to `beta_model()`'s funnel CTEs, and half-applying it (the flag without
-the logic) would produce exactly the clone bug in live mode. Snapshot mode — the only mode usable
-until an admin account exists — is fully correct.
+`beta_funnel_stages` now carries a `gating` column and `beta_model()` implements the rule:
+`furthest` and `stage_counts` walk gating stages only, a `stage_raw` CTE supplies the raw counts,
+the `lag()` chain partitions on `(instrumented AND gating)` so a non-gating row cannot shift the
+next real stage, and kept/drop are null rather than zero. `beta_players` was restricted the same
+way so the roster label cannot name a stage the funnel does not treat as a gate.
 
-Verified after the change: the gateway accepts both names and still rejects an unknown one
-(`{"error":"No valid rows"}`).
+Diffed against `beta-qa/beta-model.js` over the same 272 rows: **0 mismatches across all 13
+stages**, drop-off included. Live and snapshot mode now agree.
+
+Verified after applying: `anon` cannot call either function and both `is_admin()` guards survived
+the re-create — a create-or-replace resets grants to PUBLIC, so the re-assert is part of the
+migration.

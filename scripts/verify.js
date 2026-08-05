@@ -442,6 +442,70 @@ function run() {
       add('18', 'Event spacing owner', 'FAIL', 'gate could not run (treated as FAIL by design): ' + String(e).slice(0, 90));
     }
   }
+
+  // 20 — CQTrack SOURCE-OF-TRUTH DRIFT GATE. The same failure class #19 closes for window.CQOPS,
+  // and the one #19's own comment flagged as STILL OPEN: scripts/sync_track.py documents its
+  // `--check` as being "for the ship gate", but nothing had ever called it — not cq.sh, not this
+  // file. A drift detector that no gate runs is a comment, not a guarantee.
+  //
+  // window.CQTrack (the closed-beta analytics client) has to exist TWICE, because the game is one
+  // self-contained document that cannot <script src> a sibling file:
+  //   • website/assets/cq-track.js — the canonical source. website/index.html, play.html and
+  //     survey.html load it with a real <script src>, and sw.js precaches it.
+  //   • the copy inlined into chart-quest.html between CQTRACK:BEGIN / CQTRACK:END.
+  // Drift between them is uniquely nasty because it CORRUPTS THE EVIDENCE rather than breaking
+  // the product: the game and the site would emit the same event names from two different
+  // clients, so the Founder Report funnel would silently be comparing two instrumentations and
+  // would read as a change in player behaviour. Nothing on screen looks wrong. That is exactly
+  // why this needs a build invariant and not a habit.
+  //
+  // Three distinct failure shapes, deliberately reported apart — they have different fixes:
+  //   • DRIFTED — the two copies disagree. Fix: re-run the splice.
+  //   • MARKER ALTERED / DUPLICATED — sync_track.py locates the block by its EXACT begin marker,
+  //     so a hand-edited marker makes the script think there is no block and INSERT A SECOND ONE.
+  //     Two CQTrack copies in one document is a worse state than drift, and "just run the fix
+  //     command" is the wrong advice there — so the gate says so instead.
+  //   • LITERAL </script> IN THE SOURCE — sync_track.py refuses to write this (it would terminate
+  //     the block early and truncate the whole game). The gate must refuse to PASS it too, or a
+  //     hand-edited block could ship the state the tool exists to prevent.
+  {
+    try {
+      const canon = 'website/assets/cq-track.js';
+      // the exact marker sync_track.py matches on — not a loose prefix, see MARKER ALTERED above
+      const BEGIN = '/* CQTRACK:BEGIN — generated from website/assets/cq-track.js by scripts/sync_track.py — DO NOT EDIT HERE */';
+      const END = '/* CQTRACK:END */';
+      let ok = false, note = '', size = 0;
+      if (!exists(canon)) {
+        note = `canonical source missing: ${canon} — the game's inlined copy has nothing to be checked against`;
+      } else {
+        const js = read(canon).replace(/\s+$/, '');
+        const i = s.indexOf(BEGIN), j = s.indexOf(END, i + 1);
+        const loose = count(s, /CQTRACK:BEGIN/g);
+        if (loose > 1) {
+          note = `${loose} CQTRACK:BEGIN markers in ${SRC} — the block has been duplicated; delete the extras, do NOT re-run the splice`;
+        } else if (i < 0 && loose === 1) {
+          note = `the CQTRACK:BEGIN marker text has been ALTERED — restore it verbatim first; scripts/sync_track.py would not recognise it and would insert a SECOND copy`;
+        } else if (i < 0 || j < i) {
+          note = `no CQTrack block in ${SRC} — run: python3 scripts/sync_track.py`;
+        } else if (/<\/script>/i.test(js)) {
+          note = `${canon} contains a literal </script> — it would end the inlined block early and truncate the game (sync_track.py refuses to write this)`;
+        } else {
+          // the inlined JS is everything between the end of the BEGIN marker line and the END
+          // marker — byte for byte what sync_track.py writes there (the source, rstripped).
+          const inlined = s.slice(s.indexOf('\n', i) + 1, j).replace(/\s+$/, '');
+          ok = inlined === js;
+          size = js.length;
+          note = ok ? '' : `inlined CQTrack has DRIFTED from ${canon} (inlined ${inlined.length}B vs canonical ${js.length}B) — run: python3 scripts/sync_track.py`;
+        }
+      }
+      add('20', 'CQTrack in sync (inlined copy == website/assets/cq-track.js)',
+        ok ? 'PASS' : 'FAIL',
+        ok ? `inlined copy byte-identical to ${canon} (${size}B) · single intact marker pair · no literal </script>`
+           : note);
+    } catch (e) {
+      add('20', 'CQTrack in sync', 'FAIL', 'gate could not run (treated as FAIL by design): ' + String(e).slice(0, 90));
+    }
+  }
 }
 
 // 3b — optional real headless boot (only if puppeteer is installed)

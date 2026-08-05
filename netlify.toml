@@ -4,8 +4,13 @@
 # ── Build pipeline ──────────────────────────────────────────────────────────
 # No build step — serve index.html directly from repo root.
 # (Obfuscation build disabled; re-enable once build.js targets chart-quest.html)
+#
+# ⚠ THIS DESCRIBES NETLIFY, NOT PRODUCTION. playchartquest.com is Cloudflare Pages, which ignores
+# this file entirely AND publishes `website/`, not `.`. Reading `publish = "."` as the production
+# layout is how the CSP came to be written into a repo-root `_headers` that Cloudflare never read,
+# leaving the live site with no CSP for the whole closed beta. The authority is website/_headers.
 [build]
-  publish = "."
+  publish = "."    # Netlify only — production publishes website/ (see website/_headers)
 
 [[headers]]
   for = "/*"

@@ -48,8 +48,10 @@ blocks framing even from the same origin. → `SAMEORIGIN` / `frame-ancestors 's
 
 **2. `font-src 'self'` would have blocked every webfont.**
 `game.html` loads `fonts.googleapis.com`, and *that stylesheet* then fetches the font files from
-`fonts.gstatic.com` — a host that appears **nowhere in the HTML**, so grepping the source cannot
-find it.
+`fonts.gstatic.com` — a host `game.html` itself never names. It is findable only because
+`index.html` and `survey.html` happen to `<link rel="preconnect">` it; had they not, no grep of the
+source would have turned it up. (Corrected: an earlier draft of this doc said it appeared nowhere
+in the HTML at all. Gate #21's mutation test disproved that.)
 
 ### Found only by the Report-Only round on the live site
 
@@ -123,18 +125,43 @@ file** — no `chart-quest.html`, no `scripts/` — and `cq.sh ship` was deliber
 because it rewrites `chart-quest.html`/`index.html`/`website/game.html` and would have swept in
 other sessions' in-flight work. Only `node scripts/verify.js` (read-only) was used: 18 pass, 0 fail.
 
-## 8. Still open
+## 8. Closed since this was written
 
-**A `verify.js` merge conflict, downstream of gate #19.** The CQTrack-drift branch
-(`claude/exciting-swanson-0f93e7`, `e62bbe1`, gate #20) was cut from `fd7108e` — before gates #19
-and #3c existed — so both sides appended at the same place in `run()`. That session is finished and
-its worktree is clean; the resolution is mechanically "keep both gates".
+**The `verify.js` merge conflict** — resolved in `6779c99`. Gates #19 and #20 now coexist; the
+branch had already claimed #20, so nothing was renumbered.
 
-**A gate for this bug class.** Nothing asserts that `website/_headers` exists or that its CSP names
-every external origin the served HTML references. Gate #17 is the model. Without it, this can
-regress exactly as silently as it arrived.
+**A gate for this bug class** — shipped as **gate #21**. It asserts `website/_headers` exists, is
+**git-tracked** (Cloudflare builds from git, so an untracked file never ships — the gate #17
+lesson), declares the CSP plus all five other headers, and that every `https://` origin referenced
+by tracked served files is covered by the CSP directive, with a by-name ignore list so it can never
+quietly become "allow everything". Two extra invariants come from the bugs actually found here:
+if any served page contains an `<iframe>`, `frame-ancestors 'none'` and `X-Frame-Options: DENY` are
+FAILs; and the repo-root `_headers` CSP must stay in step with the served one.
 
-**The root `sw.js` is a trap.** It says "bump per release" and is pinned at `v325` while builds are
-at 340 — because it is never served. The deployed service worker is `website/sw.js` (`v12`), whose
-precache list is marketing-only and which does not intercept online navigations, so it plays no
-part in game freshness.
+Report-Only **WARNs rather than FAILs**, so the observe-then-enforce workflow the fix depends on is
+never blocked by the gate that exists to protect it.
+
+Mutation-tested: 13 mutations, all caught — file missing · untracked · `X-Frame-Options: DENY` ·
+`frame-ancestors 'none'` · each of googleapis/gstatic/supabase/jsdelivr/coinbase dropped from the
+allowlist · HSTS removed · Referrer-Policy removed · CSP removed · root copy drifted.
+
+> **What the gate deliberately does NOT claim.** Source-derived coverage is a floor, not a proof.
+> `static.cloudflareinsights.com` is injected by Cloudflare *at the edge* and appears in no file at
+> all — nothing that reads this repo can ever find it. `fonts.gstatic.com` is only half-visible:
+> `index.html`/`survey.html` preconnect it so the gate does catch it, but `game.html` never names
+> it. **After any policy change, ship Report-Only and walk the live site.** A gate that implied
+> otherwise would rebuild the very trap it exists to close.
+
+**The root `sw.js` trap** — annotated. It now says plainly that it is not served, that its stuck
+`v325` is harmless, and that `website/sw.js` is the deployed worker. `netlify.toml`'s
+`publish = "."` is annotated too: reading that line as the production layout is precisely how the
+CSP came to be written into a file Cloudflare never reads.
+
+## 9. Genuinely still open
+
+- **HSTS `includeSubDomains`** — deliberately omitted on first application (a one-year, all-subdomain
+  one-way door). One-line change in `website/_headers` once every subdomain is confirmed HTTPS.
+- **`'unsafe-eval'`** — required only by CQBEAT's 10 `(0, eval)` spawner-counter calls. Droppable if
+  those are ever replaced with direct references.
+- **`'unsafe-inline'`** — unavoidable while `game.html` is one self-contained document with 18
+  inline `<script>` blocks and Cloudflare cannot nonce a static file.

@@ -1,5 +1,12 @@
-// Bump this version on every deploy so iOS/clients drop the old cache.
-const CACHE = 'chart-quest-v325';   /* bump per release (ReleaseChecklist §B) so returning users never get a stale build */
+// ⚠ THIS FILE IS NOT SERVED IN PRODUCTION. Cloudflare Pages builds from website/, so
+// https://playchartquest.com/sw.js is website/sw.js ('chartquest-site-v12'), not this file.
+// Verified 2026-08-05. The "bump per release" instruction below is therefore dead: this version
+// string has been stuck at v325 while builds reached 340, and nothing noticed, because nothing
+// depends on it. The DEPLOYED service worker is website/sw.js — bump THAT one, and note that its
+// precache list is marketing-only and it does not intercept navigations while online, so it plays
+// no part in whether players get a fresh build. Kept for the local/Netlify path only.
+// See website/_headers and docs/operations/CloudflareDeployment.md §2.
+const CACHE = 'chart-quest-v325';   /* not served; see the note above before "bumping per release" */
 const ASSETS = ['/', '/index.html', '/icon-192.png', '/icon-512.png', '/manifest.json'];
 
 self.addEventListener('install', e => {

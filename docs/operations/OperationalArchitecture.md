@@ -255,6 +255,8 @@ The Founder Dashboard is **not** built here. This is the seam it will read.
 
 ## 6. Change discipline
 
+- **Run `node ops/cq-ops.test.js` after any edit** (70 behavioural assertions). Gate #19 is
+  structural and never executes the module; this suite is the only thing that checks it *behaves*.
 - **Edit `ops/cq-ops.js`, never the inlined copy.** Then `scripts/cq.sh ops` (or
   `python3 scripts/sync_ops.py`). `scripts/cq.sh ship` does it automatically, first, before the
   mirror is taken — if it ran after, `index.html` and `website/game.html` would ship the previous

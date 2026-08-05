@@ -210,9 +210,10 @@ Steps 1–5 are behaviour-preserving. Steps 6–7 are product decisions and shou
 ## Checklist for any change that touches this layer
 
 1. Edit `ops/cq-ops.js` (never the inlined copy).
-2. `scripts/cq.sh ops` — splice + stamp.
-3. `scripts/cq.sh ship` — mirror, site, full gate. It STOPS on FAIL.
-4. Bump `BUILD_TAG`. **No apostrophes** — it is a single-quoted JS literal, and gate #3a is what
+2. `node ops/cq-ops.test.js` — 70 behavioural assertions. Gate #19 cannot catch a behaviour change.
+3. `scripts/cq.sh ops` — splice + stamp.
+4. `scripts/cq.sh ship` — mirror, site, full gate. It STOPS on FAIL.
+5. Bump `BUILD_TAG`. **No apostrophes** — it is a single-quoted JS literal, and gate #3a is what
    catches you.
-5. Verify in the browser: `?ops&mute=1`, check `CQOPS.report()` and a clean console.
-6. Stage by explicit path. Never `git add -A`.
+6. Verify in the browser: `?ops&mute=1`, check `CQOPS.report()` and a clean console.
+7. Stage by explicit path. Never `git add -A`.

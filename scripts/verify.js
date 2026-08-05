@@ -621,6 +621,109 @@ function run() {
       add('20', 'CQTrack in sync', 'FAIL', 'gate could not run (treated as FAIL by design): ' + String(e).slice(0, 90));
     }
   }
+
+  // 21 — DEPLOY SECURITY HEADERS. The gate this project did not have when it needed it: for the
+  // whole closed beta, playchartquest.com sent no CSP, no HSTS and no X-Frame-Options, because
+  // `_headers` sat at the REPO ROOT while Cloudflare Pages reads it from its BUILD OUTPUT
+  // DIRECTORY, which is website/. Nothing local could see it — a dev server sends no CSP at all,
+  // so every gate stayed green. Same bug class as #17 (assets present but untracked) and the boss
+  // cinematics that 404'd for ~20 builds: a correct file that never reaches production because of
+  // WHERE IT SITS relative to what is served.
+  //
+  // WHAT THIS GATE CAN AND CANNOT DO — read this before trusting it.
+  // It proves the policy EXISTS, SHIPS, and covers every origin discoverable in the source. It
+  // CANNOT prove the policy is complete, and pretending otherwise would rebuild the exact trap it
+  // exists to close. Of the four real defects found on 2026-08-05:
+  //   • static.cloudflareinsights.com is injected by Cloudflare AT THE EDGE and appears in no
+  //     file at all. NOTHING that reads this repository can ever find it.
+  //   • fonts.gstatic.com is only half-visible: index.html and survey.html <link preconnect> it,
+  //     so this gate does catch it — but game.html never names it, because the Google Fonts
+  //     STYLESHEET is what requests the font files. Had the marketing pages not happened to
+  //     preconnect, source analysis would have missed it entirely.
+  // Treat coverage here as a floor, never a proof. After ANY policy change, ship it as
+  // Content-Security-Policy-Report-Only, walk
+  // landing → play → game → survey with the console open, and only then re-enforce. This gate
+  // WARNs while Report-Only is in force so that state is visible but never blocks the workflow.
+  {
+    try {
+      const F = 'website/_headers';
+      const fails = [], warns = [];
+
+      if (!exists(F)) {
+        add('21', 'Deploy security headers', 'FAIL',
+          `${F} MISSING — Cloudflare reads _headers from website/, so production would send no CSP/HSTS/X-Frame-Options at all`);
+      } else {
+        const h = read(F);
+        // Cloudflare builds from git: a file present but untracked never reaches production.
+        const tracked = (git('ls-files -- ' + F) || '').trim() === F;
+        if (!tracked) fails.push(`${F} is NOT git-tracked — Cloudflare deploys from git, so it would never ship (git add it)`);
+
+        // the CSP DIRECTIVE line, never the file's prose — the comments name origins too
+        const cspLine = /^\s*Content-Security-Policy(-Report-Only)?:\s*(.+)$/m.exec(h);
+        if (!cspLine) fails.push('no Content-Security-Policy directive');
+        else if (cspLine[1]) warns.push('CSP is REPORT-ONLY — reporting, not blocking; re-enforce once a live round is clean');
+        const csp = cspLine ? cspLine[2] : '';
+
+        for (const need of ['X-Frame-Options', 'X-Content-Type-Options', 'Referrer-Policy',
+                            'Permissions-Policy', 'Strict-Transport-Security'])
+          if (!new RegExp('^\\s*' + need + ':', 'mi').test(h)) fails.push(`missing header: ${need}`);
+
+        // IFRAME INVARIANT. play.html embeds the game in a SAME-ORIGIN iframe, so a DENY /
+        // frame-ancestors 'none' policy renders a blank frame for every player. The root
+        // _headers declared exactly that for months; it was only never applied.
+        const served = (git("ls-files -- 'website/*.html' 'website/**/*.html'") || '').split('\n').filter(Boolean);
+        const framed = served.filter(f => exists(f) && /<iframe/i.test(read(f)));
+        if (framed.length) {
+          if (/frame-ancestors\s+'none'/i.test(csp))
+            fails.push(`frame-ancestors 'none' but ${framed[0]} embeds an iframe — use 'self'`);
+          if (/^\s*X-Frame-Options:\s*DENY/mi.test(h))
+            fails.push(`X-Frame-Options DENY but ${framed[0]} embeds an iframe — DENY blocks same-origin framing too; use SAMEORIGIN`);
+        }
+
+        // ORIGIN COVERAGE, source-derived. Non-fetch references are ignored BY NAME with a
+        // reason, so the ignore list can never quietly grow into "allow everything".
+        const IGNORE = {
+          'playchartquest.com':     "the site's own origin — covered by 'self'",
+          'www.playchartquest.com': "the site's own origin — covered by 'self'",
+          'www.tradingview.com':    'an attribution <a href> in index.html — a link is not a fetch',
+          'www.apache.org':         'a licence URL inside a comment in assets/lightweight-charts…js',
+          'www.w3.org':             'SVG/XML namespace URIs — never fetched'
+        };
+        const allow = (csp.match(/https?:\/\/[^\s;'"]+/g) || []).map(u => u.replace(/^https?:\/\//, ''));
+        const covers = host => allow.some(a =>
+          a === host || (a.startsWith('*.') && (host === a.slice(2) || host.endsWith(a.slice(1)))));
+
+        const srcFiles = (git("ls-files -- 'website/*.html' 'website/**/*.html' 'website/*.js' 'website/**/*.js'") || '')
+          .split('\n').filter(Boolean).filter(exists);
+        const refs = new Set();
+        for (const f of srcFiles)
+          for (const m of read(f).match(/https:\/\/[a-zA-Z0-9.*-]+\.[a-z]{2,}/g) || [])
+            refs.add(m.replace('https://', ''));
+        const uncovered = [...refs].filter(hst => !IGNORE[hst] && !covers(hst));
+        if (uncovered.length)
+          fails.push(`origin(s) referenced by served files but absent from the CSP: ${uncovered.join(', ')} — add them, or add an IGNORE entry saying why they are never fetched`);
+
+        // The root _headers and netlify.toml are NOT served, but the served file's own rule is to
+        // keep them in step, so that pointing the output directory at the root cannot silently
+        // regress the policy back to the version with the two bugs in it.
+        const norm = v => v.replace(/\s+/g, ' ').trim();
+        const rootLine = exists('_headers') ? /^\s*Content-Security-Policy(-Report-Only)?:\s*(.+)$/m.exec(read('_headers')) : null;
+        if (rootLine && csp && norm(rootLine[2]) !== norm(csp))
+          fails.push('repo-root _headers CSP has drifted from website/_headers — keep them in step (only the website/ copy ships)');
+
+        const nOrigins = [...refs].filter(hst => !IGNORE[hst]).length;
+        add('21', 'Deploy security headers (website/_headers ships · CSP covers every source origin)',
+          fails.length ? 'FAIL' : (warns.length ? 'WARN' : 'PASS'),
+          fails.length ? fails.join(' · ')
+            : `${F} tracked & shipping · CSP + 5 headers present · ${nOrigins} source origin(s) all allowlisted · iframe-safe (${framed.length} framed page) · root copy in step` +
+              (warns.length ? ' · ' + warns.join(' · ') : '') +
+              ' · NOTE: source analysis cannot see edge-injected or stylesheet-chained origins — verify a policy change live under Report-Only');
+      }
+    } catch (e) {
+      add('21', 'Deploy security headers', 'FAIL', 'gate could not run (treated as FAIL by design): ' + String(e).slice(0, 90));
+    }
+  }
+
 }
 
 // 3b — optional real headless boot (only if puppeteer is installed)

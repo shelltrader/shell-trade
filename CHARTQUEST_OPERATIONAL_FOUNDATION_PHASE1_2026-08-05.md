@@ -31,6 +31,7 @@ tool, a stamp step in the deploy pipeline, and a regression gate.
 |---|---|
 | `ops/cq-ops.js` | **new** — 750 lines, the canonical source |
 | `scripts/sync_ops.py` | **new** — splices it in, `--check` for drift, `--stamp` for the deploy stamp |
+| `ops/cq-ops.test.js` | **new** — the 70-assertion behavioural suite; `node ops/cq-ops.test.js` |
 | `chart-quest.html` | **+758 lines, 0 modified, 0 deleted** — one insertion at line 66, plus the `BUILD_TAG` bump |
 | `index.html` · `website/game.html` | mirrors, regenerated |
 | `scripts/verify.js` | **+gate #19** |
@@ -108,7 +109,7 @@ drift in the inlined copy · owner deleted · stamp reset to `unstamped` · a pr
 flipped off · fetch observer removed · missing-asset capture removed · fetch observer left with one
 promise handler · a public seam removed.
 
-### Module behaviour — 70/70 in a standalone harness
+### Module behaviour — 70/70 (`node ops/cq-ops.test.js`)
 
 Environment detection across 10 hostnames · flag precedence (URL > localStorage > env > default) ·
 ring-buffer bounding · a throwing sink cannot reach the caller · queue keeps items on an

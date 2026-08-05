@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 343 - THE TWO BLIND FUNNEL STAGES. play_clicked and movement_tutorial_completed are now instrumented, closing the only stages the dashboard had to render as NOT INSTRUMENTED. play_clicked is a delegated CAPTURE-phase listener over a[href*=play.html] plus [data-game] - the Enter the Chart BUTTON at index.html:1403 is the headline control and is not an anchor at all, so an anchor-only selector would have missed the one route the sites own internal links point at. It also listens for auxclick, because middle-click does not fire click. movement_tutorial_completed is NOT an introFlow phase: armExplore returns phase to run between every lesson, so the previously documented watcher would have fired seconds in and meant nothing. The real system is window.BlockchainJourney, the Journey Through the Blockchain, which every first-play player runs between the cinematic and chart selection - 3 jumps, 3 boosts, 3 smashes on _S.tStage. tCelebDone ALONE IS A LIE: teachSkipToPortal sets it with ZERO reps when a player merely walks to the end, so a walker looks identical to a master. Two guards: tStage seen at 1 or 2 while tCelebDone is false (teachCredit steps one at a time; the skip jumps straight to 3), AND tCelebDone seen while phase is grow (the phase machine is forward-only and the retirement fires at reveal). The SKIP button and the 160s watchdog both reach done without touching tCelebDone, so neither can qualify. Verified against all four paths plus a fast player. Both stages are NON-GATING in the funnel: the monotonic pass credits every stage below a players furthest, which would have made play_click a silent clone of tutorial and hidden the very gap it was added to measure.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 344 - THE TRAILING-SLASH TRAP. The survey handoff navigated to a RELATIVE survey.html, resolved against the top document base - and /play and /play/ resolve it to two different places: /survey.html (the survey) versus /play/survey.html (which does not exist). There is no 404 page, so the bad one answers HTTP 200 with the marketing homepage. A tester who finished the ENTIRE beta would be dumped on the front page instead of the survey, and the funnel would record reached the ceremony, never answered - indistinguishable from someone who chose not to. It costs exactly the testers worth the most. Fixed in BOTH navigation sites: website/play.html (the postMessage handler) and the 700ms self-navigation fallback in CQBeta.openSurvey. NOT fixed with a root-absolute /survey.html - the relative form is deliberate so a subpath deploy (shelltrader.github.io/shell-trade/...) still works, and a root path breaks it. Instead a trailing slash is stripped so the last segment is always treated as a FILE, making survey.html a SIBLING of play.html, which is what it is. Verified against every base a tester can land on - /play, /play/, /play.html, /, a genuine subdirectory, and both subpath-deploy forms - plus hostile surveyUrl values, which are contained to the origin.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -29072,7 +29072,27 @@ window.SocialAgents = (function () {
     var t = setTimeout(function () {
       try {
         var w = (window.top && window.top !== window) ? window.top : window;
-        w.location.href = url;
+        /* THE TRAILING-SLASH TRAP. `url` is relative and resolves against the TOP document's
+           base, which is play.html — and '/play' and '/play/' resolve it differently:
+               base /play   ->  /survey.html        the survey        ✅
+               base /play/  ->  /play/survey.html   the LANDING PAGE  ❌
+           There is no 404 page, so the bad one answers 200 with the marketing homepage: a
+           tester who finished the whole beta is dumped on the front page, and the funnel
+           records "reached the ceremony, never answered" — indistinguishable from choosing not
+           to. Stripping a trailing slash makes the last segment a FILE, so survey.html resolves
+           as a SIBLING of play.html, which is what it is. Deliberately not a root-absolute
+           '/survey.html': the relative form is what keeps a subpath deploy
+           (shelltrader.github.io/shell-trade/...) working. Same helper as website/play.html.
+           Wrapped in its own try: window.top is same-origin here, but if that ever stops being
+           true, reading its pathname throws and we fall back to the raw relative url. */
+        var nav = url;
+        try {
+          var tp = w.location.pathname;
+          if (tp.length > 1 && tp.charAt(tp.length - 1) === '/') tp = tp.slice(0, -1);
+          var abs = new URL(url, w.location.origin + tp);
+          if (abs.origin === w.location.origin) nav = abs.href;
+        } catch (e3) {}
+        w.location.href = nav;
       } catch (e) {
         try { window.location.href = url; } catch (e2) {}
       }

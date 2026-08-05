@@ -21,7 +21,7 @@
 |---|---|---|
 | **Framework preset** | `None` | Static. |
 | **Build command** | *(empty)* | No build step today. `build.js` (obfuscation) is **disabled**; if re-enabled it becomes `npm ci && node build.js`. |
-| **Build output directory** | `/` (repo root) | Matches current behavior. See §3 caveat. |
+| **Build output directory** | **`website/`** | **CORRECTED 2026-08-05.** This doc previously said `/ (repo root)`, and that error hid a live security gap for the whole closed beta — see §5. |
 | **Root directory** | `/` | — |
 | **Node version** | n/a | Only needed if the build step is re-enabled. |
 
@@ -47,7 +47,29 @@ bosses/      (webp art + intro mp4s the game references)
 - All backend secrets (service-role key, SMTP creds, Auth redirect URLs) live in the **Supabase dashboard**, never in Cloudflare and never in the repo.
 
 ## 5. Security headers → Cloudflare `_headers`
-Cloudflare Pages **ignores `netlify.toml`**; it reads a `_headers` file in the output root. Below is the exact translation of the current `netlify.toml` policy. **Create this only at cutover** (Netlify also reads `_headers`, so adding it now could change current behavior):
+
+> **⚠ CORRECTED 2026-08-05 — the live policy is [`website/_headers`](../../website/_headers).**
+>
+> Cloudflare Pages **ignores `netlify.toml`** and reads `_headers` **from the build output
+> directory**. Because this doc said the output directory was the repo root, `_headers` was
+> created there — and Cloudflare never read it. From the start of the closed beta until
+> 2026-08-05 the live site sent **no CSP, no HSTS and no X-Frame-Options**:
+>
+> ```
+> curl -sI https://playchartquest.com/game   → only `x-content-type-options: nosniff`
+> ```
+>
+> Production serves `website/` — `/sw.js` returns `chartquest-site-v12` (website/sw.js), `/` is
+> the marketing landing page, the game is `/game`. The repo-root `_headers` and `netlify.toml`
+> are kept in step with `website/_headers` but neither is served.
+>
+> Two bugs in the block below were only found when the policy was finally applied, because an
+> unapplied policy can never be falsified: `X-Frame-Options: DENY` would have broken the Play
+> button (play.html iframes game.html same-origin), and `font-src 'self'` would have blocked
+> every webfont (the Google Fonts stylesheet loads its files from `fonts.gstatic.com`). The
+> corrected policy lives in `website/_headers`; treat the snippet below as historical.
+
+Below is the ORIGINAL translation of the `netlify.toml` policy, kept for the record:
 
 ```
 /*

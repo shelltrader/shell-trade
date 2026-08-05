@@ -14,11 +14,19 @@
 #
 # RULE: any new outbound host must be added HERE and in netlify.toml in the same
 # commit. Keep the two policies identical.
+# ---------------------------------------------------------------------------#
+# NOT THE FILE THAT SHIPS. Cloudflare Pages reads `_headers` from its output directory, which is
+# `website/` — see website/_headers, which is the live policy and carries the full rationale.
+# This copy is kept in step so that pointing the output directory at the repo root could never
+# silently regress the policy. Two bugs were fixed here on 2026-08-05, both of which would have
+# broken the site had this file ever been applied:
+#   • X-Frame-Options DENY / frame-ancestors 'none' → play.html iframes game.html SAME-ORIGIN.
+#   • font-src 'self' → the Google Fonts stylesheet loads its font FILES from fonts.gstatic.com.
 # ---------------------------------------------------------------------------
 /*
-  X-Frame-Options: DENY
+  X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'

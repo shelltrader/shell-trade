@@ -1,0 +1,96 @@
+# ChartQuest — security headers for CLOUDFLARE PAGES  (the file that is ACTUALLY SERVED)
+# =============================================================================================
+# WHY THIS FILE IS HERE AND NOT AT THE REPO ROOT
+# ---------------------------------------------------------------------------------------------
+# Cloudflare Pages reads `_headers` from its BUILD OUTPUT DIRECTORY. For playchartquest.com that
+# directory is `website/` — NOT the repo root. The root `_headers` has therefore never been read
+# by Cloudflare, and from the start of the closed beta until 2026-08-05 the live site sent NO
+# Content-Security-Policy, NO HSTS and NO X-Frame-Options at all. Verified with:
+#
+#     curl -sI https://playchartquest.com/game      → only `x-content-type-options: nosniff`
+#
+# Proof that production serves website/ (docs/operations/CloudflareDeployment.md §2 says "/ (repo
+# root)" and is WRONG):
+#   • https://playchartquest.com/sw.js returns `chartquest-site-v12`, i.e. website/sw.js. The ROOT
+#     sw.js says 'chart-quest-v325' and is never served — despite its "bump per release" comment.
+#   • https://playchartquest.com/ is the marketing landing page (website/index.html), not the game.
+#   • The game is https://playchartquest.com/game = website/game.html.
+#   • verify.js gate #17 already encodes "production serves website/".
+#
+# This is the THIRD time one bug class has bitten this project: a correct file that never reaches
+# production because of WHERE IT SITS relative to what is actually served. The other two were the
+# untracked website/ assets and the boss cinematics that 404'd for ~20 builds. Every local gate was
+# green each time. A local check CANNOT see this class — the dev server sends no CSP at all.
+# Always verify with `curl -sI` against the live URL.
+#
+# ---------------------------------------------------------------------------------------------
+# TWO BUGS IN THE ROOT `_headers` THAT ARE DELIBERATELY *NOT* COPIED HERE
+# ---------------------------------------------------------------------------------------------
+# The root policy was never applied, so it was never falsified. Applying it verbatim would have
+# broken the site in two ways:
+#
+#   1. `X-Frame-Options: DENY` + `frame-ancestors 'none'`
+#      play.html embeds the game in a SAME-ORIGIN iframe (`#cqGame`, src = 'game.html'). DENY
+#      blocks framing even from the same origin, so the Play button would have rendered a blank
+#      frame for every player. → SAMEORIGIN / frame-ancestors 'self'.
+#
+#   2. `style-src 'self'` + `font-src 'self'`
+#      game.html loads https://fonts.googleapis.com/css2?family=Inter…, and THAT stylesheet fetches
+#      the actual font files from https://fonts.gstatic.com — a host that appears nowhere in the
+#      HTML, so it cannot be found by grepping the source. Both origins are required or every
+#      glyph falls back.
+#
+# ---------------------------------------------------------------------------------------------
+# WHY THE CSP SHIPS AS REPORT-ONLY FIRST
+# ---------------------------------------------------------------------------------------------
+# A wrong CSP breaks the game silently and in production only. The root file's own comments record
+# the precedent: omit api.coinbase.com from connect-src and every market falls back to its
+# build-time anchor WHILE THE HUD STILL SAYS "live".
+#
+# So this follows the same observe-then-enforce discipline CQBEAT used: `Content-Security-Policy-
+# Report-Only` reports violations to the browser console WITHOUT blocking anything, the live site
+# is then walked (landing → play → game → survey) with the console open, and only once that is
+# clean does the header get renamed to `Content-Security-Policy`.
+# The other five headers below are enforcing immediately — none of them can break this site.
+#
+# ---------------------------------------------------------------------------------------------
+# ORIGIN ALLOWLIST — every external host the SERVED pages actually load
+# ---------------------------------------------------------------------------------------------
+#   cdn.jsdelivr.net        the Supabase JS SDK (script)
+#   *.supabase.co           auth, the beta-ingest edge function, realtime (https + wss)
+#   api.coinbase.com        live market prices (Market Identity System)
+#   api.binance.com         live market prices (fallback source)
+#   fonts.googleapis.com    the webfont STYLESHEET
+#   fonts.gstatic.com       the webfont FILES the stylesheet then requests
+#
+# NOT allowlisted, deliberately — these are referenced but never loaded:
+#   www.tradingview.com     an attribution <a href> in index.html. A link is not a fetch.
+#   www.apache.org          a licence URL inside a comment in assets/lightweight-charts…js
+#   lightweight-charts is bundled LOCALLY under assets/, so it needs no external origin.
+#
+# 'unsafe-inline' is unavoidable: game.html is one self-contained document with 18 inline <script>
+# and 3 inline <style> blocks, and Cloudflare Pages cannot inject a per-response nonce into a
+# static file. Removing it would mean un-inlining the game, which is a much larger change.
+#
+# ---------------------------------------------------------------------------------------------
+# HSTS: `includeSubDomains` is deliberately OMITTED on this first application
+# ---------------------------------------------------------------------------------------------
+# The root file declares `max-age=31536000; includeSubDomains`. The max-age is kept; the
+# includeSubDomains is not, because this is the FIRST time HSTS has ever actually been sent, and
+# that directive is a one-way door: browsers cache it for a year and it forces HTTPS on EVERY
+# subdomain of playchartquest.com, including any that does not exist yet. The apex — which serves
+# the game — is fully protected either way.
+# To add it once every subdomain is confirmed HTTPS-only, it is a one-line change here:
+#     Strict-Transport-Security: max-age=31536000; includeSubDomains
+#
+# RULE: any new outbound host must be added HERE first — this is the policy that ships. Keep the
+# repo-root `_headers` and netlify.toml in step in the same commit so a future output-directory
+# change cannot silently regress the policy.
+# =============================================================================================
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'

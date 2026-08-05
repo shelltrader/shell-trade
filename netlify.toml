@@ -11,7 +11,7 @@
   for = "/*"
   [headers.values]
     # Prevent clickjacking
-    X-Frame-Options = "DENY"
+    X-Frame-Options = "SAMEORIGIN"
     # Prevent MIME-type sniffing
     X-Content-Type-Options = "nosniff"
     # Referrer policy — don't leak URL to third parties
@@ -29,7 +29,7 @@
     #   kills live pricing on the deployed site while the HUD still claims it is live.
     # - img-src data:               → canvas toDataURL() needs data: URIs
     # - frame-ancestors 'none'      → belt-and-suspenders clickjack protection
-    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
 
 # Redirect HTTP → HTTPS (Netlify handles this by default, but explicit is safer)
 [[redirects]]

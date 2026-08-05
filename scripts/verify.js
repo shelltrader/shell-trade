@@ -94,17 +94,21 @@ function run() {
          : `_rigOn=${rigOn} FINN_LEG_RIG=${legFlag} rigLegCalls=${rigLegCalls} rigTailCalls=${rigTailCalls} deprAssetRefs=${deprAssetRef} walkArrayRefs=${walkArrayRef} deprFilesPresent=[${deprFiles.join(', ')}]`);
   }
 
-  // 3a — syntax (boot proxy): parse every inline <script> block
+  // 3a — syntax (boot proxy): parse every inline <script> block.
+  // Shared with `cq.sh check` via scripts/check_syntax.js — one implementation, so the two can
+  // never drift into being different checks (they had, and the weaker one was the one trusted).
+  // The failure detail now carries the FILE LINE of the bad block, not just its ordinal.
   {
-    const blocks = [...s.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).filter(b => b.trim().length > 20);
-    let bad = 0, i = 0;
-    for (const b of blocks) {
-      i++; const tmp = path.join(os.tmpdir(), `_cq_blk${i}.js`); fs.writeFileSync(tmp, b);
-      try { cp.execSync(`node --check "${tmp}"`, { stdio: 'ignore' }); } catch { bad = i; } finally { try { fs.unlinkSync(tmp); } catch {} }
-      if (bad) break;
+    try {
+      const syn = require(path.join(__dirname, 'check_syntax.js'));
+      const res = syn.checkFile(SRC);
+      add('3a', 'Game script parses (syntax = boot proxy)', res.ok ? 'PASS' : 'FAIL', syn.summary(res));
+    } catch (e) {
+      // FAIL, never WARN: if the one syntax checker cannot run, nothing here knows whether the
+      // game parses, and "unknown" must not be able to pass a ship.
+      add('3a', 'Game script parses (syntax = boot proxy)', 'FAIL',
+        'syntax checker could not run: ' + String(e && e.message || e).slice(0, 110));
     }
-    add('3a', 'Game script parses (syntax = boot proxy)', bad ? 'FAIL' : 'PASS',
-      bad ? `syntax error in inline <script> block #${bad}` : `${blocks.length} inline <script> blocks parse clean`);
   }
 
   // 4 — lessons load

@@ -18,42 +18,10 @@ cd "$(dirname "$0")/.."
 
 case "${1:-}" in
   check)
-    # Parse EVERY inline <script> block, not just the first one.
-    #
-    # It used to do `h.indexOf("<script>")` and check that one block alone. That was survivable
-    # while the game block happened to be first — and then build 339 added window.CQOPS in <head>,
-    # ABOVE it. From that moment `check` was parsing a different block and reporting "✓ syntax OK"
-    # on a file whose 28,000-line game block did not parse at all: one unescaped apostrophe in a
-    # BUILD_TAG string ("today's") closed the literal and killed the entire MAIN block, so the game
-    # booted to nothing — no window.CQ, no CQREACH, not even BUILD_TAG. The only thing that caught
-    # it was verify.js gate #3a, which has always parsed every block.
-    #
-    # A green check on a broken build is worse than no check, so this now mirrors gate #3a exactly
-    # — same block regex, same filter — and reports the FILE LINE the bad block starts on plus
-    # node's own message, because "block #3" of ten is not where you want to start looking.
-    node -e '
-      const fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process");
-      const SRC = "chart-quest.html";
-      const s = fs.readFileSync(SRC, "utf8");
-      const blocks = [...s.matchAll(/<script>([\s\S]*?)<\/script>/g)].filter(m => m[1].trim().length > 20);
-      let bad = 0;
-      for (let i = 0; i < blocks.length; i++) {
-        const tmp = path.join(os.tmpdir(), "_cq_check" + i + ".js");
-        fs.writeFileSync(tmp, blocks[i][1]);
-        try {
-          cp.execSync("node --check \"" + tmp + "\"", { stdio: ["ignore", "ignore", "pipe"] });
-        } catch (e) {
-          const line = s.slice(0, blocks[i].index).split("\n").length;
-          console.error("✗ SYNTAX ERROR in inline <script> block #" + (i + 1) + " of " + blocks.length +
-                        " (starts at " + SRC + ":" + line + ")");
-          console.error(String((e.stderr || "")).trim().split("\n").slice(0, 6).join("\n"));
-          bad = i + 1;
-        } finally { try { fs.unlinkSync(tmp); } catch (_) {} }
-        if (bad) break;
-      }
-      if (bad) process.exit(1);
-      console.log("✓ syntax OK — " + blocks.length + " inline <script> blocks parse clean");
-    '
+    # Parses EVERY inline <script> block, not just the first — see scripts/check_syntax.js for why
+    # that distinction cost a build. THE one implementation, shared with verify.js gate #3a, so the
+    # two can never again drift into being different checks with the weaker one trusted.
+    node scripts/check_syntax.js chart-quest.html
     ;;
   mirror)
     cp chart-quest.html index.html

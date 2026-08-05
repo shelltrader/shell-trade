@@ -3012,7 +3012,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 338 - EVENT SPACING ENFORCED (T-005b phase 2). All eleven RULES categories are now REPORTED, not just configured, and CQBEAT is switched from observe to ENFORCE. Newly wired: openBoss (boss, 40), playBossIntroCinematic (bossIntro, 25-30), playBossOutroCinematic + IntroCinematic.start (cinematic, 25), HomeMarketCeremony.start (ceremony, 20-25), CQJournalTutorial.claimPostBoss (journalUnlock, 20) and MG.run (minigame, 15). Boss intros and cinematics carry the LARGEST radii in the table, and until now they were configured but reported by nothing - which reads as more complete than it is, the same failure shape as build 324. Gate #18 now names any category that is configured but unreported. TWO SAFETY LAWS: (1) a moment is a FACT, not a decision - a boss, cinematic, ceremony or journal unlock RECORDS and claims its exclusion zone but is NEVER vetoed; only a placeable thing (box, page, non-boss portal) can be deferred. (2) STARVATION GUARD - if any category is refused MAX_DEFER times in a row it is let through and logged, so the worst case of a mis-tuned rule table is a pacing violation, never a player stuck with no way forward. Progression outranks pacing, always. Verified in enforce on a real L1 run: 2 boxes (= BOXES_PER_LEVEL), 1 page, 4 trades, 0 starvation releases, progression intact. The 3 residual violations are ALL trade-vs-object and priority correctly lets the trade stand - a trade position is chosen by the PLAYER after the box was already placed, so a placement-reservation system structurally cannot fix them. The pre-trade zone is the next slice.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 339 - PRE-TRADE ZONE, MEASURED AND LEFT OFF (T-005c). CQBEAT can now reserve a trade BEFORE it happens, using the game own generation-side scheduler: genSetupIn is the count of filler candles before the next scripted setup sequence, and it lives in the same coordinate space as box/page placement, so it turns a trade from an unpredictable player action into a forward reservation. Only placeables (box/page/minigame) are ever held back; a trade, lesson or moment is never refused by a prediction. SHIPPED OFF, on measurement rather than instinct. A/B n=4 per arm on Level 1: OFF - 2.00 boxes, 2.50 trade violations, 1.75 collisions under 10 candles, worst gap 1. ON - 2.00 boxes, 2.00 trade violations, 1.50 under 10, worst gap 1. No progression cost either way, but a 20 percent reduction well inside the noise at this sample AND an unchanged worst case is not worth carrying as always-on complexity. The first tuning attempt was worse than useless: a 62-candle zone deleted BOTH of the level two boxes, so the zone is now 28 candles and MAX_DEFER dropped 40 to 3 (sized against how often a box actually asks - about 5 times a level, only at a confirmed valley - not against candles, where 40 could never fire inside a level and the starvation guard was decorative). WHY IT CANNOT DO BETTER: genSetupIn predicts when a setup begins GENERATING, but the trade commits when the player REACHES the armed setup and chooses to enter, and by then the conflicting box is already on screen (measured: box placed at 139, trade at 136 - three candles ahead of Finn), so relocation is a visible teleport and deletion removes a reward in plain sight. Second attempt at trade-vs-object spacing; stopped per the two-attempt rule with the blocker proven rather than trying a third variant. Mechanism kept and switchable via CQBEAT.setPretrade(true).';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -28418,7 +28418,11 @@ window.SocialAgents = (function () {
      category is refused MAX_DEFER times in a row it is let through and logged, so the worst case
      of a mis-tuned rule table is a pacing violation — never a player stuck with no way forward.
      Progression outranks pacing, always. */
-  var MAX_DEFER = 40;
+  /* Sized against how OFTEN a placeable actually asks, not against candles. A box only asks at a
+     confirmed valley — measured at ~5 attempts across a whole Level-1 run — so a 40-attempt
+     ceiling would never fire inside a level and the guard would be decorative. Three consecutive
+     refusals is a real nudge away from a trade while still guaranteeing the level's 2 boxes land. */
+  var MAX_DEFER = 3;
 
   function rule(kind) { return RULES[kind] || DEFAULT_RULE; }
   function rollGap(k) { var g = rule(k).gap; return g[0] + Math.floor(Math.random() * (g[1] - g[0] + 1)); }
@@ -28428,11 +28432,67 @@ window.SocialAgents = (function () {
      previous level's reservations would haunt the new one. */
   function syncLevel() { var L = lvl(); if (S.level !== L) { S.level = L; S.res = []; S.violations = []; } }
 
+  /* ── THE PRE-TRADE ZONE (build 339) ───────────────────────────────────────────────────────
+     Reservations alone can never separate an object from a TRADE, because a trade is not placed
+     — the PLAYER enters it, after the box already exists. Measured on Level 1 across builds
+     337-338: every residual violation was trade-vs-object, with the ordering box@139 placed
+     THEN trade recorded @136, behind it. Priority correctly let the trade stand, so enforcement
+     had nothing to veto and the numbers never improved.
+
+     The fix is to reserve the trade BEFORE it happens. The game already schedules it:
+     `genSetupIn` is the GENERATION-side counter — "filler candles to generate before the next
+     scripted setup sequence" (:7854, decremented :6090, fires :6107). It lives in exactly the
+     same coordinate space as box/page placement (the generation edge), so it converts a trade
+     from an unpredictable player action into a forward reservation we can honour.
+
+     zone = [ predicted - trade gap , predicted + SETUP_SPAN + trade gap ]
+
+     SETUP_SPAN covers momentum → pullback(s) → confirm → the trade itself. Deliberately a
+     configurable estimate, not a promise: over-reserving costs a box a few candles of delay
+     (and the starvation guard bounds even that), while under-reserving is the bug we are here
+     to fix. Only PLACEABLE things are held back — a moment is never refused. */
+  /* TUNING — measured, not guessed. First attempt used SETUP_SPAN 22 with the full trade gap (20)
+     as padding on BOTH sides: a 62-candle exclusion zone. On a Level-1 run whose trades land
+     40-60 candles apart that swallows the level — 5 vetoes, and ZERO of the 2 boxes placed. A
+     pacing rule that deletes the content it is pacing has failed, so the zone is deliberately
+     narrow: it exists to stop the 3-4 candle collisions actually observed, not to guarantee a
+     perfect 20. Under-reserving costs a near-miss; over-reserving costs the player a reward. */
+  var SETUP_SPAN = 12;          // candles a setup + its trade typically occupy
+  var PRETRADE_PAD = 8;         // padding each side of the predicted span
+  /* OFF BY DEFAULT — founder call, on the measurement below, not on a hunch.
+     A/B'd n=4 per arm, 120 chunks each, Level 1:
+         OFF  boxes 2.00 · trade violations 2.50 · collisions <10 candles 1.75 · worst gap 1
+         ON   boxes 2.00 · trade violations 2.00 · collisions <10 candles 1.50 · worst gap 1
+     No progression cost either way, but a 20% reduction well inside the noise at this sample AND
+     an unchanged worst case is not a result worth carrying as always-on complexity. The mechanism
+     is kept, wired and switchable — `CQBEAT.setPretrade(true)` — so re-testing it later costs
+     nothing, but it does not shape the shipped game on evidence this thin.
+     WHY IT CANNOT DO BETTER: genSetupIn predicts when a setup begins GENERATING; the trade commits
+     when the player REACHES the armed setup and chooses to enter — later, and player-dependent.
+     And by then the conflicting box is already on screen (measured: box placed @139, trade @136,
+     i.e. 3 candles ahead of Finn), so relocation is a visible teleport and deletion removes a
+     reward in plain sight. See CHARTQUEST_T-005c_PRETRADE_ZONE_2026-08-05.md. */
+  var PRETRADE_ON = false;      // one switch, so this is easy to A/B against 338
+
+  function predictedTradeZone() {
+    if (!PRETRADE_ON) return null;
+    try {
+      var gsi = (0, eval)('(typeof genSetupIn === "number") ? genSetupIn : null');
+      if (gsi == null || gsi < 0) return null;
+      var edge = (0, eval)('(typeof candles !== "undefined" && candles.length) ? candles[candles.length-1].id : null');
+      if (edge == null) return null;
+      /* A setup already developing is a CERTAINTY, not a prediction — reserve from here. */
+      var live = (0, eval)('!!(typeof setupFlow !== "undefined" && setupFlow) || !!(typeof pending !== "undefined" && pending) || !!(typeof tradeIncomingActive !== "undefined" && tradeIncomingActive)');
+      var start = live ? edge : edge + gsi;
+      return { from: start - PRETRADE_PAD, to: start + SETUP_SPAN + PRETRADE_PAD, predicted: start, live: !!live };
+    } catch (e) { return null; }
+  }
+
   /* THE CORE QUESTION. Is `candleId` outside every existing reservation's exclusion zone?
      Two events conflict when their separation is less than the LARGER of the two gaps — so a
      box (10) placed near a lesson (15..20) is judged by the lesson's radius, not the box's. */
   function conflictAt(candleId, kind) {
-    var want = rule(kind), g = rollGap(kind), i, r, need;
+    var want = rule(kind), g = rollGap(kind), i, r, need, z;
     if (typeof candleId !== 'number' || !isFinite(candleId)) return null;
     if (candleId < warmup()) return { reason: 'warmup', need: warmup(), got: candleId, other: null };
     for (i = 0; i < S.res.length; i++) {
@@ -28440,6 +28500,16 @@ window.SocialAgents = (function () {
       need = Math.max(g, r.gap);
       if (Math.abs(candleId - r.at) < need) {
         return { reason: 'spacing', need: need, got: Math.abs(candleId - r.at), other: r, wantPri: want.pri };
+      }
+    }
+    /* The pre-trade zone applies only to things we can actually hold back. A trade, a lesson or
+       any moment outranks it and is never refused by a prediction. */
+    if (want.pri >= rule('page').pri) {
+      z = predictedTradeZone();
+      if (z && candleId >= z.from && candleId <= z.to) {
+        return { reason: 'pretrade', need: SETUP_SPAN, got: Math.abs(candleId - z.predicted),
+                 other: { kind: 'trade', at: z.predicted, gap: rule('trade').gap[1], pri: rule('trade').pri, predicted: true },
+                 wantPri: want.pri };
       }
     }
     return null;
@@ -28723,6 +28793,10 @@ window.SocialAgents = (function () {
     RULES: RULES,
     get mode() { return MODE; },
     setMode: function (m) { if (m === 'observe' || m === 'enforce') { MODE = m; return true; } return false; },
+    /* A/B switch for the pre-trade zone, so its value can be MEASURED against build 338's
+       behaviour in the same session rather than argued about. */
+    setPretrade: function (on) { PRETRADE_ON = !!on; return PRETRADE_ON; },
+    get pretrade() { return { on: PRETRADE_ON, span: SETUP_SPAN, pad: PRETRADE_PAD, zone: predictedTradeZone() }; },
     /* audit() — the validation pass the brief asks for. Returns every reservation and every
        violation with distance vs required, for the gate, the overlay and a playtest report. */
     audit: function () {

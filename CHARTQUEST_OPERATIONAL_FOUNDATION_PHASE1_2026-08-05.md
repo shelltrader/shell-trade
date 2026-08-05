@@ -158,11 +158,13 @@ staged, because they belong to other sessions in flight: `dashboard.html`, `webs
 
 ## 6. Found in passing (not fixed — out of scope)
 
-**1. `sync_track.py --check` is wired into nothing.** It documents itself as *"for the ship gate"*
-but appears in neither `cq.sh` nor `verify.js`, so nothing detects drift between
-`website/assets/cq-track.js` and its copy inlined in `chart-quest.html` — the same failure class
-gate #19 now closes for CQOPS. Left alone per the guardrail against drive-by fixes; handed off as
-its own task instead.
+**1. `sync_track.py --check` was wired into nothing — NOW CLOSED by gate #20.** It documented
+itself as *"for the ship gate"* but appeared in neither `cq.sh` nor `verify.js`, so nothing
+detected drift between `website/assets/cq-track.js` and its copy inlined in `chart-quest.html` —
+the same failure class gate #19 closes for CQOPS. Handed off as its own task rather than
+drive-by fixed; that work landed as **gate #20**, which checks the two copies byte-for-byte and
+also catches an altered or duplicated marker pair (a duplicated CQTrack block being a worse state
+than drift, and one where "just re-run the splice" is the wrong advice).
 
 **2. A committed file briefly depended on an untracked one.** Commit `613c02d` made `cq.sh check`
 call `scripts/check_syntax.js` while that file was still untracked — a fresh clone would have had a

@@ -23,6 +23,36 @@ first click.
 > **empty** — so that gate cannot be passed by anyone today. Until the admin account exists, use
 > the standalone `beta-qa.html`, which needs no auth at all.
 
+### This dashboard is NOT deployed — do not "harden" it
+
+`beta-qa.html`, `beta-qa/**` and `dashboard.html` sit at the repo root and are **local-only
+tools**. Cloudflare Pages builds from `website/`, so nothing at the repo root reaches
+playchartquest.com. Verified against the live site:
+
+```
+/game                              HTTP 200  1991464B  sha=2c9a93685e   ← real page
+/                                  HTTP 200   148215B  sha=fe2cc3bbe0
+/definitely-not-a-real-path-xyz    HTTP 200   148215B  sha=fe2cc3bbe0   ← SPA fallback
+/beta-qa.html                      HTTP 200   148215B  sha=fe2cc3bbe0   ← does not exist
+/dashboard.html                    HTTP 200   148215B  sha=fe2cc3bbe0   ← does not exist
+```
+
+There is no 404 page, so **a missing path returns the landing page at HTTP 200** — a bare status
+code proves nothing here. Compare the body hash against a deliberately nonsense path.
+
+Two traps this closes:
+
+1. **`netlify.toml` says `publish = "."`, and it is stale.** Reading it and concluding the repo
+   root is served is wrong, and it is exactly the mistake made while writing this document. The
+   authority on what ships is `website/_headers`, which documents the whole thing.
+2. **The root `_headers` is never read by Cloudflare.** Adding `X-Robots-Tag` rules there for
+   these tools would be dead config, and would deepen a trap that has already cost this project
+   three separate bugs (the unshipped CSP, the untracked `website/` assets, the boss cinematics
+   that 404'd for ~20 builds).
+
+If these tools ever *do* need to ship, the rule goes in `website/_headers` — and they would need
+real access control, not a robots hint.
+
 ---
 
 ## What was built

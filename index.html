@@ -3012,7 +3012,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 337 - EVENT SPACING SYSTEM, PHASE 1 (T-005b). window.CQBEAT is now the canonical owner of gameplay pacing: one exclusion-zone map in CANDLE-ID space, a configurable rule table (boss 40, cinematic 25, bossIntro 25-30, lesson 15-20, portal 20, journalUnlock 20, ceremony 20-25, page 15, minigame 15, trade 15-20, box 10-15), priority so a box defers around a lesson and never the reverse, a ?beat debug overlay drawing every zone with actual-vs-required spacing, and audit() which lists every violation with both events, the distance and the requirement. WHY A NEW OWNER: markEvent() stamps eventLedger at maxSeenCandleId - Finn FRONTIER, when the player EXPERIENCES an event - while eventClearAt() judges the spawn candle generated ~15 candles AHEAD, so two events already placed but not yet reached were invisible to each other BY CONSTRUCTION. eventLedger is kept for what it is actually good at (the interruption guard: is a modal on screen). CQBEAT owns PLACEMENT. SHIPS IN OBSERVE MODE: it records and reports but vetoes nothing, because Level 1 is rated ~10/10 and the audit had to be MEASURED before anything moved. Measured on a real L1 run: 3 violations, all trade-vs-object (worst: a box 4 candles from a trade). Merge-safe - one trailing IIFE, zero top-level names, runtime-patches the spawners, and deleting the block restores build 336 exactly. Guarded by verify gate #18.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 338 - EVENT SPACING ENFORCED (T-005b phase 2). All eleven RULES categories are now REPORTED, not just configured, and CQBEAT is switched from observe to ENFORCE. Newly wired: openBoss (boss, 40), playBossIntroCinematic (bossIntro, 25-30), playBossOutroCinematic + IntroCinematic.start (cinematic, 25), HomeMarketCeremony.start (ceremony, 20-25), CQJournalTutorial.claimPostBoss (journalUnlock, 20) and MG.run (minigame, 15). Boss intros and cinematics carry the LARGEST radii in the table, and until now they were configured but reported by nothing - which reads as more complete than it is, the same failure shape as build 324. Gate #18 now names any category that is configured but unreported. TWO SAFETY LAWS: (1) a moment is a FACT, not a decision - a boss, cinematic, ceremony or journal unlock RECORDS and claims its exclusion zone but is NEVER vetoed; only a placeable thing (box, page, non-boss portal) can be deferred. (2) STARVATION GUARD - if any category is refused MAX_DEFER times in a row it is let through and logged, so the worst case of a mis-tuned rule table is a pacing violation, never a player stuck with no way forward. Progression outranks pacing, always. Verified in enforce on a real L1 run: 2 boxes (= BOXES_PER_LEVEL), 1 page, 4 trades, 0 starvation releases, progression intact. The 3 residual violations are ALL trade-vs-object and priority correctly lets the trade stand - a trade position is chosen by the PLAYER after the box was already placed, so a placement-reservation system structurally cannot fix them. The pre-trade zone is the next slice.';   // bump on each served change — lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -28411,8 +28411,14 @@ window.SocialAgents = (function () {
      Mirrors LEVEL_WARMUP_CANDLES rather than duplicating a second number. */
   function warmup() { try { return (typeof LEVEL_WARMUP_CANDLES === 'number') ? LEVEL_WARMUP_CANDLES : 14; } catch (e) { return 14; } }
 
-  var MODE = 'observe';                 // 'observe' | 'enforce'  (see L3)
-  var S = { level: null, res: [], violations: [], vetoes: 0, grants: 0 };
+  var MODE = 'enforce';                 // 'observe' | 'enforce'  (see L3)
+  var S = { level: null, res: [], violations: [], vetoes: 0, grants: 0, wired: [], starved: {} };
+
+  /* STARVATION GUARD (build 338). Enforcement must never be able to stall a level. If the same
+     category is refused MAX_DEFER times in a row it is let through and logged, so the worst case
+     of a mis-tuned rule table is a pacing violation — never a player stuck with no way forward.
+     Progression outranks pacing, always. */
+  var MAX_DEFER = 40;
 
   function rule(kind) { return RULES[kind] || DEFAULT_RULE; }
   function rollGap(k) { var g = rule(k).gap; return g[0] + Math.floor(Math.random() * (g[1] - g[0] + 1)); }
@@ -28474,7 +28480,14 @@ window.SocialAgents = (function () {
         /* L5 — priority. A HIGHER-priority event is allowed through and claims the space; the
            lower-priority one is the one that reschedules. Educational content is never moved by
            optional content. */
-        if (c.other && rule(kind).pri < c.other.pri) { record(candleId, kind); return true; }
+        if (c.other && rule(kind).pri < c.other.pri) { record(candleId, kind); S.starved[kind] = 0; return true; }
+        /* Starvation guard — progression outranks pacing. */
+        S.starved[kind] = (S.starved[kind] || 0) + 1;
+        if (S.starved[kind] > MAX_DEFER) {
+          try { console.warn('[CQBEAT] starvation release — ' + rule(kind).label + ' deferred ' +
+            S.starved[kind] + 'x, letting it through so the level cannot stall'); } catch (e) {}
+          S.starved[kind] = 0; record(candleId, kind); return true;
+        }
         S.vetoes++;
         return false;
       }
@@ -28585,6 +28598,49 @@ window.SocialAgents = (function () {
     } catch (e) { return false; }
   }
 
+  /* ── MOMENT WRAPPERS (build 338) ──────────────────────────────────────────────────────────
+     A boss, a cinematic, a boss introduction, the Journal unlock, the Home Market ceremony and a
+     mini-game entrance are not PLACEMENT DECISIONS — they are moments the game has already
+     committed to. So they RECORD (claiming their exclusion zone, which is the whole point: a
+     40-candle boss radius is what keeps a box off the boss approach) but they are NEVER vetoed.
+     Only a placeable thing — a box, a page, a non-boss portal — can be deferred.
+
+     Target may be a bare global (`IntroCinematic`), a window object (`HomeMarketCeremony`) or a
+     block-scoped const shared by lexical name across script blocks (`MG`). All three are reached
+     through a guarded eval and every wrap is individually try/caught, so an unreachable target
+     silently registers nothing rather than breaking boot. `audit().wired` reports what installed,
+     so "it is wired" is never taken on trust. */
+  function wrapMoment(objExpr, method, kind, guard) {
+    try {
+      var obj = (0, eval)('(typeof ' + objExpr + ' !== "undefined") ? ' + objExpr + ' : null');
+      if (!obj || typeof obj[method] !== 'function' || obj[method].__cqBeat) return false;
+      var orig = obj[method];
+      var wrapped = function () {
+        try {
+          if (typeof guard !== 'function' || guard()) {
+            syncLevel();
+            var id = currentCandleId(), c = conflictAt(id, kind);
+            if (c) violation(id, kind, c);
+            record(id, kind);                      // a moment always claims its space
+          }
+        } catch (e) {}
+        return orig.apply(this, arguments);
+      };
+      wrapped.__cqBeat = true;
+      obj[method] = wrapped;
+      S.wired.push(objExpr + '.' + method + '→' + kind);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  /* A boss round hands each question to MG.run, so inside a Guardian fight MG.run fires once per
+     round at effectively the same candle. Those are not separate world events — the boss already
+     owns that space with a 40-candle radius — so only a mini-game entered from the WORLD counts. */
+  function notInBossFight() {
+    try { return !(0, eval)('(typeof bfState !== "undefined" && bfState && (bfState.open || bfState.active || bfState.level != null))'); }
+    catch (e) { return true; }
+  }
+
   /* ── DEBUG OVERLAY (?beat) — same opt-in shape as ?reach ─────────────────────────────────── */
   var OVERLAY = (function () { try { return /[?&]beat(=|&|$)/.test(location.search); } catch (e) { return false; } })();
   function draw() {
@@ -28643,8 +28699,20 @@ window.SocialAgents = (function () {
       });
       wrapPortal();
       wrapMarkEvent();
+      /* The five categories that were configured in RULES but reported by nothing until now.
+         Boss introductions and major cinematics carry the LARGEST radii in the table (25+), so
+         leaving them unwired made the system look more complete than it was — the same failure
+         shape as build 324's rule that had never actually run on Level 1. */
+      wrapMoment('window', 'openBoss', 'boss');
+      wrapMoment('window', 'playBossIntroCinematic', 'bossIntro');
+      wrapMoment('window', 'playBossOutroCinematic', 'cinematic');
+      wrapMoment('IntroCinematic', 'start', 'cinematic');
+      wrapMoment('window.HomeMarketCeremony', 'start', 'ceremony');
+      wrapMoment('window.CQJournalTutorial', 'claimPostBoss', 'journalUnlock');
+      wrapMoment('MG', 'run', 'minigame', notInBossFight);
       if (OVERLAY) setInterval(draw, 200);
-      try { console.log('[CQBEAT] active — mode=' + MODE + (OVERLAY ? ' · ?beat overlay on' : '')); } catch (e) {}
+      try { console.log('[CQBEAT] active — mode=' + MODE + ' · wired: ' + S.wired.join(', ') +
+        (OVERLAY ? ' · ?beat overlay on' : '')); } catch (e) {}
     } catch (e) {}
   }
   if (document.readyState === 'loading') { try { document.addEventListener('DOMContentLoaded', boot); } catch (e) {} }
@@ -28661,7 +28729,7 @@ window.SocialAgents = (function () {
       syncLevel();
       return {
         level: S.level, mode: MODE, reservations: S.res.slice(), violations: S.violations.slice(),
-        grants: S.grants, vetoes: S.vetoes,
+        grants: S.grants, vetoes: S.vetoes, wired: S.wired.slice(), starved: S.starved,
         ok: S.violations.length === 0
       };
     },

@@ -411,16 +411,31 @@ function run() {
       // on one L1 run, because these spawners are polled on every candle and usually decline.
       const postHoc = /if \(len\(arrName\) <= before\) return out;/.test(s);
       const overlay = /\[?&\]beat|cqBeatOv/.test(s) || s.includes('cqBeatOv');
-      const ok = owner && iife && rules.length >= 9 && wraps.length === 4 && api.length === 4 && postHoc && overlay;
-      add('18', 'Event spacing owner (CQBEAT published · rules · spawners observed · post-hoc placement)',
+      // Every RULES category must actually be REPORTED by something. Boss introductions and major
+      // cinematics carry the largest radii in the table (25+), and for one build they were
+      // configured but wired to nothing — which reads as more complete than it is. That is the
+      // exact failure shape of build 324's rule that had never run on Level 1, so it is gated.
+      const moments = ['boss', 'bossIntro', 'cinematic', 'ceremony', 'journalUnlock', 'minigame']
+        .filter(k => new RegExp("wrapMoment\\([^)]*'" + k + "'").test(s));
+      // Enforcement must never be able to stall a level: progression outranks pacing.
+      const starve = /MAX_DEFER/.test(s) && /starvation release/.test(s);
+      // A moment is a fact, not a decision — it records but is never vetoed.
+      const momentsNeverVetoed = /a moment always claims its space/.test(s);
+      const mode = (s.match(/var MODE = '(observe|enforce)'/) || [])[1] || '?';
+      const ok = owner && iife && rules.length >= 9 && wraps.length === 4 && api.length === 4 &&
+                 postHoc && overlay && moments.length === 6 && starve && momentsNeverVetoed;
+      add('18', 'Event spacing owner (CQBEAT · rules · all categories reported · post-hoc · starvation-safe)',
         ok ? 'PASS' : 'FAIL',
-        ok ? `owner published · self-contained IIFE (0 top-level names) · ${rules.length} categories · ${wraps.length}/4 spawners observed · audit+setMode+RULES exposed · placement judged post-hoc · ?beat overlay`
+        ok ? `owner published · self-contained IIFE (0 top-level names) · ${rules.length} categories · ${wraps.length}/4 spawners + ${moments.length}/6 moments reported · mode=${mode} · placement post-hoc · moments never vetoed · starvation guard · ?beat overlay`
            : [!owner ? 'window.CQBEAT not published' : '',
               !iife ? 'not a self-contained trailing IIFE (top-level names would kill the block)' : '',
               rules.length < 9 ? `rule table incomplete (${rules.length}/9 categories)` : '',
               wraps.length !== 4 ? `spawners not observed: ${['maybeSpawnBox', 'maybeSpawnWisdomPage', 'spawnPortal', 'markEvent'].filter(f => !new RegExp("wrapSpawner\\('" + f + "'|window\\." + f + " = wrapped").test(s)).join(', ')}` : '',
+              moments.length !== 6 ? `RULES categories configured but reported by nothing: ${['boss', 'bossIntro', 'cinematic', 'ceremony', 'journalUnlock', 'minigame'].filter(k => !new RegExp("wrapMoment\\([^)]*'" + k + "'").test(s)).join(', ')}` : '',
               api.length !== 4 ? 'API incomplete (need may/audit/setMode/RULES)' : '',
               !postHoc ? 'placement is not judged post-hoc — a per-candle poll must not be pre-vetoed' : '',
+              !starve ? 'no starvation guard — enforcement could stall a level' : '',
+              !momentsNeverVetoed ? 'moments must record but never be vetoed' : '',
               !overlay ? '?beat debug overlay missing' : ''
              ].filter(Boolean).join(' · '));
     } catch (e) {

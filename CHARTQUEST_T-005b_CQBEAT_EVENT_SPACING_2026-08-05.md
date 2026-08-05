@@ -225,3 +225,88 @@ never run on Level 1.
 Third, an honest process note: I could not visually confirm the overlay, and I did not play the
 game — I frame-pumped it. Every number here is real and instrumented, but no human eye has seen a
 single exclusion zone drawn on a chart.
+
+---
+
+# ADDENDUM — Phase 2 (build 338): all categories reported, enforcement ON
+
+**Commit:** `e6f33ec` · production serving **build 338** · smoke **46/46** · gate **18 pass / 0 fail**
+
+## What changed
+
+The five categories that were configured in `RULES` but reported by nothing are now wired, and
+`MODE` is `'enforce'`.
+
+| Wired | Category | Radius |
+|---|---|---|
+| `openBoss` | boss | 40 |
+| `playBossIntroCinematic` | bossIntro | 25–30 |
+| `playBossOutroCinematic`, `IntroCinematic.start` | cinematic | 25 |
+| `HomeMarketCeremony.start` | ceremony | 20–25 |
+| `CQJournalTutorial.claimPostBoss` | journalUnlock | 20 |
+| `MG.run` (outside a boss fight) | minigame | 15 |
+
+`MG.run` is skipped inside a Guardian fight — a boss round hands each question to it, so those would
+register once per round at effectively the same candle, and the boss already owns that space with a
+40-candle radius. Only a mini-game entered from the **world** counts.
+
+## Two safety laws, both gated
+
+1. **A moment is a fact, not a decision.** A boss, cinematic, ceremony or journal unlock *records*
+   and claims its zone but is **never vetoed**. Only a placeable thing — box, page, non-boss portal
+   — can be deferred. You cannot reschedule a cinematic the game has already committed to.
+2. **Starvation guard.** Any category refused `MAX_DEFER` (40) times running is let through and
+   logged. The worst case of a mis-tuned rule table is then a pacing violation, never a player with
+   no way forward. **Progression outranks pacing, always.**
+
+## Verified in enforce, real L1 run
+
+```
+mode enforce · 7 moment wrappers + 4 spawner wrappers
+2 boxes (= BOXES_PER_LEVEL) · 1 page · 4 trades
+0 vetoes · 0 starvation releases · progression intact
+CQ · CQREACH · CQBEAT · CQBeta · CQTrack · CQJournalTutorial all live
+```
+
+Gate #18 extended to fail when a `RULES` category is configured but reported by nothing, and
+negative-tested — unwiring `playBossIntroCinematic` fails it **by name**:
+
+```
+✗ [18] RULES categories configured but reported by nothing: bossIntro
+```
+
+## A false alarm worth recording
+
+A long harness run reported **0 boxes in both modes**, which looked like enforcement suppressing
+content. Rather than trust it, I A/B'd against the committed build 337 — which reproduced it
+exactly. **It was the harness**: aggressive teleporting skips the valley detector's 3-candle climb
+window (`BOX_CLIMB_WAIT`). Not a regression, and worth remembering before anyone reads a long
+frame-pumped run as gameplay truth.
+
+## The residue — unchanged, and now confirmed twice
+
+All remaining violations are **trade-vs-object**, and priority correctly lets the trade stand. The
+ordering is the proof:
+
+```
+box@139 placed  →  trade recorded @136  (behind it)
+```
+
+The box was placed 3 candles ahead of where the player then traded. **A trade's position is chosen
+by the player, after the box already exists** — so a placement-reservation system structurally
+cannot fix these, no matter how complete it is. Boxes and pages must avoid the **pre-trade zone**;
+`setupFlow`, `pending` and `tradeIncomingActive` already exist for exactly that read.
+
+**Not started.** It is the next slice, and it is the one that will actually change what the founder
+feels.
+
+## Still not done
+
+- Only **Level 1** has been audited. L2–L11 remain unmeasured; the tooling exists.
+- **"Future systems automatically register here"** is still not true — a new spawner must be added
+  to the wrap list. Gate #18 now catches a category configured-but-unreported, but it cannot know
+  about a twelfth category nobody wrote down.
+- **`?beat` still has not been seen with human eyes.** The code runs and creates its canvas; the
+  browser pane cannot composite. 30 seconds on a real machine would confirm it.
+- **No level content moved.** With 0 vetoes on the measured run, build 338 changes nothing a player
+  can see — it makes the rules real and reports honestly when they are broken.

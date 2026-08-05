@@ -108,7 +108,8 @@ publishes `website/`, and these files sit at the repo root. Verified by body has
 privileges directly (`has_function_privilege`), not by an HTTP probe — a `401` from
 `/rest/v1/rpc/*` is NOT evidence of a revoke, since that key is rejected at the REST API anyway.
 
-🔴 **STILL OPEN, and narrower than described — `authenticated` reads every bug report.**
+✅ **RESOLVED 2026-08-05 by `0015_admin_gate_legacy_dashboard_rpcs.sql`** — was: `authenticated`
+reads every bug report.
 `get_dashboard_stats` and `get_recent_bug_reports` are `SECURITY DEFINER`, carry **no admin check
 of any kind**, and are executable by `authenticated`. In Supabase `authenticated` means **any
 registered player**, not an admin. `get_recent_bug_reports` is, in full:
@@ -123,10 +124,20 @@ No filter, no guard. `message` is user-typed free text — the PII risk this sec
 `beta_search` are also `authenticated`-executable, but every one of them carries an `is_admin`
 guard and raises. They are fine. Do not "fix" them.
 
-**Fix:** add the same `is_admin` guard to those two legacy functions — matching what the beta
-suite already does — or revoke `authenticated` and read them through a service-role edge function.
-The advisor lint `authenticated_security_definer_function_executable` will keep flagging all six
-either way; only the two without guards actually matter.
+**What was done:** both functions gained the same `is_admin()` guard the beta suite uses, and were
+converted from `language sql` to `plpgsql` (a SQL function cannot `raise`). Signatures and return
+types are unchanged, so callers are unaffected. Verified by impersonating a signed-in non-admin:
+
+```
+set local role authenticated; select … from public.get_recent_bug_reports(5);
+  → VERDICT >> PASS — non-admin refused: Forbidden
+```
+
+A revoke from `authenticated` was deliberately NOT used: admins are authenticated users, so that
+would have locked out the dashboard as well as the players.
+
+Note the advisor lint `authenticated_security_definer_function_executable` still flags all six
+functions, because it inspects the GRANT and cannot see an in-body guard. All six are now correct.
 
 ---
 
@@ -140,6 +151,33 @@ clamps values, forces `processed_status='new'`, per-IP rate limit). The anon
 write policies are dropped in `0009`. Still open: `content_assets`,
 `published_posts`, `performance_snapshots` retain their `0001` anon policies —
 confirm no anon-key automation writes them, then lock the same way.
+
+### 4b. 🔴 NEW — `public.admins` is EMPTY, so every admin-gated RPC is closed to everyone
+
+Found 2026-08-05 while applying `0015`: `select count(*) from public.admins` returns **0**. The
+deploy-sequence section above states that `0008` seeded it with the founder's uid; it did not, or
+the row was later removed.
+
+Consequence, and it is live today: `is_admin()` returns false for **everybody**, so all six
+admin-gated functions refuse all callers. That is fail-closed and safe, but it means
+
+- **`beta-qa.html` live mode cannot authenticate.** It signs in, then proves admin status against
+  a `beta_*` RPC and throws *"That account is not an admin."* — so the founder's Beta QA dashboard
+  silently falls back to its snapshot rather than reading live data. This was already true before
+  `0015`; `0015` did not cause it.
+- `dashboard.html` would be equally blind, though it is not deployed.
+
+Seeding an admin is a deliberate privilege grant, so it is left for the founder:
+
+```sql
+insert into public.admins (user_id)
+select id from auth.users where email = '<founder email>'
+on conflict do nothing;
+```
+
+Then confirm with `select public.is_admin();` while signed in as that account.
+
+---
 
 ### 5. ⚠️ CHANGED — review anon-executable SECURITY DEFINER RPCs
 The two named here are no longer anon-executable (see 3b). Re-verified 2026-08-05, the functions

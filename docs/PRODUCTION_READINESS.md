@@ -3,6 +3,13 @@
 Status of the security + scaling hardening pass, and what remains before a real
 public launch. Ordered by priority.
 
+> **Re-verified against the live project 2026-08-05.** Items below marked ✅ RESOLVED or
+> ⚠️ CHANGED were checked directly — Postgres grants and function bodies via SQL, HTTP surfaces
+> via `curl`, plan via the management API — not inferred from this document's own history. Two
+> entries had drifted far enough to be misleading; both are corrected in place with the evidence.
+> **Anything not marked was NOT re-verified** (Auth settings are dashboard-only and unreadable
+> from a session).
+
 ---
 
 ## ✅ Done (applied to production `ymxppzhczvmiuoncuqqu`)
@@ -58,12 +65,15 @@ will silently fail to send confirmation emails.
 ### 1b. Fix the Auth Site URL / Redirect URLs
 Currently set to `localhost:3000`, so confirmation & password-reset links point
 at a dead local address. In **Auth → URL Configuration**, set **Site URL** to
-`https://chart-quest-game.netlify.app` and add it to **Redirect URLs**. (Founder
+`https://playchartquest.com` and add it to **Redirect URLs**.
+**CORRECTED 2026-08-05:** this line used to say `https://chart-quest-game.netlify.app`. That is
+the pre-Cloudflare host; following it would have replaced one dead link with another. (Founder
 account was email-confirmed directly in the DB, so this didn't block admin login,
 but it will break every real user's email link once SMTP is on.)
 
-### 2. 🔴 Upgrade to Pro — CONFIRMED on Free plan
-Verified 2026-07-01: the project is on the **Free plan**. This is the hard gate
+### 2. 🔴 Upgrade to Pro — STILL ON FREE (re-verified 2026-08-05)
+Verified 2026-07-01 and again 2026-08-05 via the management API — organization `Shell Trade`
+reports `"plan": "free"`. The project is on the **Free plan**. This is the hard gate
 for scaling and for load testing:
 - Free pauses on inactivity, shares compute, and has strict Auth/email limits.
 - **Branching (needed to load-test safely) requires Pro** — confirmed by a
@@ -79,21 +89,44 @@ capped at Free-tier capacity.
 password length from 6 to 8 (client check in `doAuth`). *(Auth settings are
 dashboard-only — cannot be scripted via the DB.)*
 
-### 3b. ✅ Built — Lock down the public admin dashboard (pending deploy + 0009)
-`dashboard.html` is served publicly at `/dashboard.html` and has **no login**. It
-uses the public anon key to call `get_dashboard_stats` and
-`get_recent_bug_reports`, and to read `content_events` / `content_replays`.
-**Anyone who loads that URL — or just calls the RPCs with the anon key baked into
-the game's public source — can read your business analytics and every bug report**
-(bug reports contain user-typed text + context = possible PII). This is why those
-`SECURITY DEFINER` RPCs are anon-executable; the real problem is the dashboard
-has no auth. Fix options (pick one):
-- Put the dashboard behind Supabase Auth and an admin-role check; revoke anon
-  EXECUTE on the two RPCs and anon SELECT on the content tables, then have the
-  dashboard read with the signed-in admin's JWT (or a service-role Edge Function).
-- Short-term stopgap (obscurity only, NOT a real fix): block `/dashboard.html` at
-  the Netlify edge. The RPCs remain callable with the public anon key, so this
-  alone is insufficient.
+### 3b. ⚠️ CHANGED — the exposure is real but is NOT what this section used to say
+
+**Re-verified 2026-08-05. Two of the three claims here were out of date; the third is worse than
+it looks, because it survived a lockdown that was assumed to have covered it.**
+
+✅ **RESOLVED — the dashboard is not reachable.** `dashboard.html` is not deployed. Cloudflare
+publishes `website/`, and these files sit at the repo root. Verified by body hash, because with no
+404 page a missing path answers **HTTP 200** and a status code proves nothing:
+
+```
+/dashboard.html          200   body-sha 864339dc4d
+/beta-qa.html            200   body-sha 864339dc4d
+/definitely-not-real-xyz 200   body-sha 864339dc4d   ← identical: all three are the landing page
+```
+
+✅ **RESOLVED — `anon` can no longer execute the dashboard RPCs.** Confirmed against Postgres
+privileges directly (`has_function_privilege`), not by an HTTP probe — a `401` from
+`/rest/v1/rpc/*` is NOT evidence of a revoke, since that key is rejected at the REST API anyway.
+
+🔴 **STILL OPEN, and narrower than described — `authenticated` reads every bug report.**
+`get_dashboard_stats` and `get_recent_bug_reports` are `SECURITY DEFINER`, carry **no admin check
+of any kind**, and are executable by `authenticated`. In Supabase `authenticated` means **any
+registered player**, not an admin. `get_recent_bug_reports` is, in full:
+
+```sql
+select message, status, created_at from public.bug_reports order by created_at desc limit p_limit;
+```
+
+No filter, no guard. `message` is user-typed free text — the PII risk this section always meant.
+
+**The beta-QA suite is NOT affected.** `beta_model`, `beta_players`, `beta_player_detail` and
+`beta_search` are also `authenticated`-executable, but every one of them carries an `is_admin`
+guard and raises. They are fine. Do not "fix" them.
+
+**Fix:** add the same `is_admin` guard to those two legacy functions — matching what the beta
+suite already does — or revoke `authenticated` and read them through a service-role edge function.
+The advisor lint `authenticated_security_definer_function_executable` will keep flagging all six
+either way; only the two without guards actually matter.
 
 ---
 
@@ -108,10 +141,19 @@ write policies are dropped in `0009`. Still open: `content_assets`,
 `published_posts`, `performance_snapshots` retain their `0001` anon policies —
 confirm no anon-key automation writes them, then lock the same way.
 
-### 5. Review anon-executable SECURITY DEFINER RPCs
-`get_dashboard_stats` and `get_recent_bug_reports` are callable by anyone via
-`/rest/v1/rpc/*` and return data. Confirm that exposure is intended; otherwise
-revoke EXECUTE from `anon`/`authenticated`.
+### 5. ⚠️ CHANGED — review anon-executable SECURITY DEFINER RPCs
+The two named here are no longer anon-executable (see 3b). Re-verified 2026-08-05, the functions
+**`anon` can still execute** are:
+
+| Function | Verdict |
+|---|---|
+| `submit_bug_report(text, jsonb)` | **Intended** — players must be able to report bugs without an account |
+| `record_site_visit()` | **Intended** — anonymous visit counter |
+| `is_admin()` | **Review.** Returns a boolean about the caller, so it leaks little, but there is no reason for it to be anon-callable |
+
+`bump_ingest_throttle` and `prune_beta_events` are correctly closed to both `anon` and
+`authenticated` (the latter matters — see the Supabase-grants trap: Postgres grants EXECUTE to
+PUBLIC by default, so every new SECURITY DEFINER function is anon-callable until revoked).
 
 ### 6. Schedule the retention jobs
 Once comfortable, enable the pg_cron schedules documented at the bottom of

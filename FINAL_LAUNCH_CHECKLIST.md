@@ -1,5 +1,19 @@
 # ChartQuest — Beta Day Launch Checklist
 
+> ## ⚠️ HISTORICAL — do not follow this as a live checklist (marked 2026-08-05)
+>
+> This is a point-in-time artifact from the **closed-beta launch day**, kept for the record. It
+> reads like a live runbook and is not one:
+> - its rollback point `42afc77` and branch `site/beta-hardening` are long superseded;
+> - it predates the move to Cloudflare, so its deploy assumptions are wrong — production now
+>   publishes `website/`, not the repo root;
+> - the device/social checks in §3–4 are still *useful as a template*, but the mechanics around
+>   them are stale.
+>
+> **The live pre-launch list is [`docs/PRODUCTION_READINESS.md`](docs/PRODUCTION_READINESS.md).**
+> For the per-deploy routine use [`docs/operations/ReleaseChecklist.md`](docs/operations/ReleaseChecklist.md).
+
+
 One page. Top to bottom. Stop at any ❌.
 
 ---

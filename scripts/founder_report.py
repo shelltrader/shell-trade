@@ -50,6 +50,19 @@ FUNNEL = [
     ('survey',   'Survey submitted',   'survey_submitted'),
 ]
 
+# NON-GATING stages (build 343). Measured, but NOT gates anyone must pass through, so they are
+# reported as RAW counts and take no part in the monotonic chain above.
+#
+# Adding them to FUNNEL is the obvious move and produces a confidently useless number:
+# monotonic_stages() credits every stage before a player's furthest, so a gating play_click
+# would be credited to everyone who reached the tutorial — an exact clone of the tutorial count,
+# concealing the landing->play gap it exists to measure. movement is skippable, so credit would
+# hand completions to players who skipped it. Same rule as BETA_MODEL_CONTRACT.md section 1.
+NON_GATING = [
+    ('play_click', 'Play clicked',                'play_clicked'),
+    ('movement',   'Movement tutorial completed', 'movement_tutorial_completed'),
+]
+
 # Candidate themes for clustering free text. Deliberately ChartQuest-specific — generic
 # sentiment lexicons say nothing useful about whether the boss telegraph is readable.
 THEMES = {
@@ -117,6 +130,29 @@ def is_test_player(pid):
     # genuine tester id can begin with any of these.
     p = str(pid or '').lower()
     return any(p.startswith(x.lower()) for x in EXCLUDE_PREFIXES)
+
+
+def dev_finishers(events):
+    """Players whose beta_completed carries props.reason == 'dev'.
+
+    THE PREFIX LIST STRUCTURALLY CANNOT CATCH THESE. CQBeta.devFinish() is reachable only by
+    typing it into a console, but the browser doing the typing mints an ordinary 'p-' id like
+    any tester, so it lands in the middle of the real cohort.
+
+    Not hypothetical — it already manufactured a false finding. Three of the four beta_completed
+    rows in the pre-wipe dataset were reason='dev', two of them 129 ms and 124 ms after
+    session_start, which no human produces. That made the survey handoff read as a 75%
+    drop-off (4 finished, 1 answered) and it was reported as the third-largest leak in the
+    funnel. The real number is 1 of 1: the only human who finished filled the survey in.
+    """
+    out = set()
+    for e in events:
+        if e.get('name') != 'beta_completed':
+            continue
+        props = e.get('props') if isinstance(e.get('props'), dict) else {}
+        if str(props.get('reason', '')).lower() == 'dev' and e.get('player_id'):
+            out.add(e['player_id'])
+    return out
 
 
 def load(args):
@@ -210,10 +246,12 @@ def main():
     events, surveys, since = load(args)
     now = datetime.now(timezone.utc)
 
-    excluded_players = {e.get('player_id') for e in events if is_test_player(e.get('player_id'))}
-    excluded_events = len([e for e in events if is_test_player(e.get('player_id'))])
-    events = [e for e in events if not is_test_player(e.get('player_id'))]
-    surveys = [s_ for s_ in surveys if not is_test_player(s_.get('player_id'))]
+    dev_ids = dev_finishers(events)
+    drop = lambda pid_: is_test_player(pid_) or pid_ in dev_ids   # noqa: E731
+    excluded_players = {e.get('player_id') for e in events if drop(e.get('player_id'))}
+    excluded_events = len([e for e in events if drop(e.get('player_id'))])
+    events = [e for e in events if not drop(e.get('player_id'))]
+    surveys = [s_ for s_ in surveys if not drop(s_.get('player_id'))]
 
     out = []
     w = out.append
@@ -312,6 +350,15 @@ def main():
         w(f'| {label} | {n} | {pct(n, total)} | {keep} | `{bar(n / total if total else 0)}` |')
         prev_sizes[label] = stage[key]
         prev, prev_label = stage[key], label
+    w('')
+
+    for _k, _label, _ev in NON_GATING:
+        _n = len(players_with(events, _ev))
+        w(f'- _{_label}_ (not a gate): **{_n}** tester(s), {pct(_n, total)} of landing')
+    w('')
+    w('_Not gates: `play_clicked` is blind to the Bosses/Courses pages, the installed-app '
+      'shortcut and direct /play links; the movement tutorial is skippable. Both are floors, '
+      'and neither takes part in the drop-off maths._')
     w('')
 
     if drops:

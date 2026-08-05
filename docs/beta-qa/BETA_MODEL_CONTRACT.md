@@ -35,8 +35,14 @@ Read this before adding any metric. Every line here is a bug someone already shi
 4. **One session per visit, not one per document.** A tester's journey loads `cq-track.js` four
    times (index → play → game iframe → survey), all same-origin, all sharing one
    `sessionStorage` session id. Only the document that mints it fires `session_start`.
-   Consequence: **clicking Play fires no event at all.** `page='play'` on a `session_start` means
-   the tester *arrived directly* at play.html, not that they clicked through.
+   Consequence: **`session_start` cannot see a Play click.** `page='play'` on a `session_start`
+   means the tester *arrived directly* at play.html, not that they clicked through.
+
+   > Since build 343 a dedicated `play_clicked` event fills that gap — a delegated capture-phase
+   > listener in `cq-track.js`. It is **non-gating** (§1) and blind to the Bosses/Courses pages,
+   > the installed-app shortcut and direct `/play` links, so it is a floor, not a census. An
+   > earlier version of this line said "clicking Play fires no event at all"; that is no longer
+   > true and would send someone hunting for a stage that already exists.
 
 5. **Session length must be filtered to game pages.** Pooling a 6-second landing-page view with
    a 15-minute play session made the median meaningless (read 0.2 min against a real 44s+).

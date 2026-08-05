@@ -111,7 +111,7 @@ Three real leaks, ranked by testers lost — the funnel is the arbiter, the quot
 |---|---|---:|
 | 1 | Landing page → Tutorial started | **−13 of 30 (43%)** |
 | 2 | Tutorial started → Intro chain completed | **−11 of 17 (65%)** |
-| 3 | Survey started → Survey submitted | **−3 of 4 (75%)** |
+| 3 | ~~Survey started → Survey submitted (−3 of 4, 75%)~~ **RETRACTED — see below** | — |
 
 Leaks 1 and 2 are entirely **pre-gameplay**. Nothing else in the dataset costs more testers.
 
@@ -326,3 +326,39 @@ wipe the dropdown still offered Build 340 … 334 from `localStorage`, and picki
 empty dashboard, which reads as "the tool is broken" rather than "that build has no data". The
 filtered case was already covered by the `S.build` guard above it; the second guard only ever hid
 the truth. An unfiltered empty load now replaces the list like any other result.
+
+---
+
+## RETRACTION — the 75% survey leak was not real (2026-08-05)
+
+I reported "Survey started → submitted: −3 of 4 (75%)" as the third-largest leak. **It was a
+denominator artifact.** Three of the four `beta_completed` rows carried `props.reason = 'dev'`:
+
+| player | reason | session shape | submitted |
+|---|---|---|---|
+| `p-c226qtgl1u` | **dev** | `session_start` → `beta_completed` in **129 ms** | no |
+| `p-k42neotoh1` | **dev** | **124 ms** start → complete | no |
+| `p-13cz44nxxv` | **dev** | 20 visits, three index loads 1 s apart | no |
+| `p-hoawddiq56` | `journal_discovery_complete` | genuine 782 s playthrough, every stage in order | **yes** |
+
+`reason:'dev'` has exactly one source: `CQBeta.devFinish()` at `chart-quest.html:29246`, reachable
+only by typing it into a console. No tester can reach it through the UI.
+
+**Real conversion is 1 of 1 → 100%.** The only human who finished the game filled in the survey
+(rating 7, "later", 229 s). The handoff works end to end on production, and all four reached the
+survey page — the two dev profiles then logged `session_end` at *exactly* 40 s both times, the
+signature of an automated harness rather than a person deciding not to answer.
+
+### Why the exclusion list could not catch it
+
+`EXCLUDE_PREFIXES` matches player-id **prefixes**, and a console-driven browser mints an ordinary
+`p-` id like any tester — so dev finishes land in the middle of the real cohort, structurally
+invisible. Fixed: `founder_report.py` now also drops any player whose `beta_completed` carries
+`reason='dev'`. On the pre-wipe data that moves exclusions from 2 players / 17 events to
+**6 players / 88 events**, and the survey stage from 25% kept to **100%**.
+
+### Corrected biggest leak
+
+With the dev rows gone, the largest real loss is **Tutorial started → First trade: −13 of 16
+(81%)** — still entirely pre-trade, which is what every prior audit concluded. `play_clicked`
+will now split the landing end of that for the first time.

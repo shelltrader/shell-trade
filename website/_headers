@@ -89,15 +89,25 @@
 # static file. Removing it would mean un-inlining the game, which is a much larger change.
 #
 # ---------------------------------------------------------------------------------------------
-# HSTS: `includeSubDomains` is deliberately OMITTED on this first application
+# HSTS: `includeSubDomains` IS enabled — enabled on evidence, 2026-08-05
 # ---------------------------------------------------------------------------------------------
-# The root file declares `max-age=31536000; includeSubDomains`. The max-age is kept; the
-# includeSubDomains is not, because this is the FIRST time HSTS has ever actually been sent, and
-# that directive is a one-way door: browsers cache it for a year and it forces HTTPS on EVERY
-# subdomain of playchartquest.com, including any that does not exist yet. The apex — which serves
-# the game — is fully protected either way.
-# To add it once every subdomain is confirmed HTTPS-only, it is a one-line change here:
-#     Strict-Transport-Security: max-age=31536000; includeSubDomains
+# It was deliberately omitted when HSTS was first applied, because it is a ONE-WAY DOOR: browsers
+# cache it for a year and it forces HTTPS on EVERY subdomain, including ones that do not exist yet.
+# It was then enabled after checking what it would actually constrain:
+#     dig www|api|app|staging|dev|beta|test|qa|blog|docs|cdn|static|admin|dashboard|mail|
+#         smtp|webmail|shop|store|support|help .playchartquest.com   →  NOT ONE RESOLVES
+#     www.playchartquest.com has no A and no CNAME record at all.
+#     http://playchartquest.com already 301s to https://.
+# So today this directive constrains nothing that exists. What it commits to is the FUTURE: any
+# subdomain created in the next year must serve HTTPS from its first day, or browsers that have
+# seen this header will refuse to load it. On Cloudflare that is the default, so the commitment is
+# cheap — but it IS a commitment, and it cannot be withdrawn early. Reverting the header only stops
+# NEW visitors receiving it; every browser that already cached it keeps enforcing for up to a year.
+#
+# NOTE while you are here: docs/operations/CloudflareDeployment.md still claims `www` 301s to the
+# apex. There is no www DNS record, so that redirect cannot be reachable. The dead `www` entries in
+# the beta-ingest ALLOWED_ORIGINS and in ops/cq-ops.js's production host list are harmless, but
+# nothing is served on www today.
 #
 # RULE: any new outbound host must be added HERE first — this is the policy that ships. Keep the
 # repo-root `_headers` and netlify.toml in step in the same commit so a future output-directory
@@ -108,5 +118,5 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
-  Strict-Transport-Security: max-age=31536000
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com https://cloudflareinsights.com https://*.cloudflareinsights.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'

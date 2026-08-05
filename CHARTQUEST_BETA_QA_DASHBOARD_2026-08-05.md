@@ -13,10 +13,13 @@ what confuses them and what to build next — without anyone opening Supabase.
 already running, then opens the dashboard. Safe to double-click twice — it will not spawn a
 second server.
 
-Rebuild or relocate it with:
+`ChartQuest Dashboard` sits beside it and opens the original founder dashboard the same way.
+Both share one server on port 8798, so whichever you open first serves the other.
+
+Rebuild or relocate them with:
 
 ```bash
-python3 scripts/make_beta_qa_app.py
+python3 scripts/make_desktop_apps.py
 ```
 
 Re-run that if the repo ever moves: an app on the Desktop has no relative route back to the

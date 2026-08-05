@@ -1,13 +1,13 @@
 #!/bin/bash
-# ChartQuest — open the Beta Test QA dashboard.
+# ChartQuest — open a founder tool in the browser, starting the local server if needed.
 #
-# Invoked by the Desktop app bundle (scripts/make_beta_qa_app.py builds it), and safe to run
-# directly:  scripts/beta_qa_open.sh
+# TEMPLATE. scripts/make_desktop_apps.py substitutes __CQ_ROOT__ / __CQ_PAGE__ / __CQ_TITLE__ and
+# writes the result into each .app bundle. Safe to run directly after substitution.
 #
 # WHY THIS IS NOT JUST A .webloc / URL SHORTCUT
-# beta-qa.html loads its three engines with <script src> and fetches the snapshot, both of which
-# file:// blocks — so the page MUST come off an http server. A plain shortcut would open a blank
-# dashboard whenever the server happened not to be running, which is most of the time.
+# Both dashboards load scripts and fetch data relative to their origin, which file:// blocks, so
+# the page MUST come off an http server — and the server is usually not running. A plain shortcut
+# would open a blank dashboard most of the time, which is worse than no icon at all.
 #
 # WHY IT TALKS IN DIALOGS
 # It runs from an .app bundle, so there is no Terminal to print into. A silent failure would look
@@ -17,14 +17,17 @@ set -uo pipefail
 
 ROOT="__CQ_ROOT__"
 PORT=8798
-URL="http://localhost:${PORT}/beta-qa.html"
-LOG="${TMPDIR:-/tmp}/chartquest-beta-qa-server.log"
+PAGE="__CQ_PAGE__"
+TITLE="__CQ_TITLE__"
+URL="http://localhost:${PORT}/${PAGE}"
+# One shared server for every tool, so two icons never fight over the port.
+LOG="${TMPDIR:-/tmp}/chartquest-desktop-server.log"
 
 say() {  # a dialog, because there is no terminal
-  /usr/bin/osascript -e "display dialog \"$1\" with title \"ChartQuest — Beta Test QA\" buttons {\"OK\"} default button 1 with icon ${2:-note}" >/dev/null 2>&1 || true
+  /usr/bin/osascript -e "display dialog \"$1\" with title \"ChartQuest — ${TITLE}\" buttons {\"OK\"} default button 1 with icon ${2:-note}" >/dev/null 2>&1 || true
 }
 
-[ -d "$ROOT" ] || { say "The project folder has moved.\n\nExpected:\n$ROOT\n\nRe-run scripts/make_beta_qa_app.py from the repo to rebuild this icon." stop; exit 1; }
+[ -d "$ROOT" ] || { say "The project folder has moved.\n\nExpected:\n$ROOT\n\nRe-run scripts/make_desktop_apps.py from the repo to rebuild these icons." stop; exit 1; }
 cd "$ROOT" || exit 1
 
 # An .app launches with a minimal PATH — the user's shell profile is never sourced — so python3
@@ -55,7 +58,7 @@ fi
 # Refresh the snapshot only if a key is available. Without one this is a no-op by design: the
 # dashboard renders the snapshot's age in its header, so stale data announces itself rather than
 # silently pretending to be current. Never block opening the page on a network call.
-if [ -n "${SUPABASE_SERVICE_KEY:-}" ]; then
+if [ -n "${SUPABASE_SERVICE_KEY:-}" ] && [ "$PAGE" = "beta-qa.html" ]; then
   "$PY" scripts/beta_pull.py --days 0 >/dev/null 2>&1 || true
 fi
 

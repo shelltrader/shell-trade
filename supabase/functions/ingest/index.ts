@@ -1,33 +1,28 @@
 // Chart Quest — content + mastery ingest gateway
-// ---------------------------------------------------------------------------
-// The game used to POST directly to /rest/v1/content_events, content_replays,
-// content_briefs, content_exports, content_generated and player_mastery with
-// the public anon key. That let anyone write arbitrary columns (e.g. forge a
-// processed_status='published' event, or an absurd significance_score) and
-// flood the tables. This function is the single validated write path:
-//   • whitelists columns per table (unknown keys dropped)
-//   • clamps / forces server-controlled fields
-//   • caps row counts and payload sizes
-//   • rate-limits per IP
-//   • writes with the service role
-// After the updated client is deployed, drop the anon INSERT/UPDATE policies
-// (migration 0009) so this is the ONLY way in.
-// ---------------------------------------------------------------------------
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-const ALLOWED_ORIGINS = [
-  'https://chart-quest-game.netlify.app',
-  'https://shelltrader.github.io',
-  'http://localhost',
-  'http://127.0.0.1',
-];
+// Exact-origin allowlist. The previous version had no entry for the live Cloudflare
+// domain, so every event from playchartquest.com was rejected 403 (and the OPTIONS
+// preflight echoed the netlify host, so browsers never even sent the POST). It also
+// used a prefix match, which would have accepted https://playchartquest.com.evil.com.
+const ALLOWED_ORIGINS = new Set([
+  'https://playchartquest.com',
+  'https://www.playchartquest.com',
+  'https://chartquest.pages.dev',
+  'https://chart-quest-game.netlify.app',   // legacy, harmless to keep
+  'https://shelltrader.github.io',          // legacy, harmless to keep
+]);
+const PREVIEW_ORIGIN = /^https:\/\/[a-z0-9-]+\.chartquest\.pages\.dev$/;   // Cloudflare Pages branch previews
+const LOCAL_ORIGIN   = /^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/;
+const originAllowed = (o: string): boolean =>
+  !!o && (ALLOWED_ORIGINS.has(o) || PREVIEW_ORIGIN.test(o) || LOCAL_ORIGIN.test(o));
 
-const MAX_ROWS = 100;               // per request
-const RATE_LIMIT = 120;             // requests per window, per IP
+const MAX_ROWS = 100;
+const RATE_LIMIT = 120;
 const RATE_WINDOW_S = 60;
 
 const MASTERY_CATS = new Set([
@@ -47,7 +42,6 @@ const obj = (v: unknown, maxBytes: number): Record<string, unknown> => {
   return s.length > maxBytes ? {} : (v as Record<string, unknown>);
 };
 
-// Per-table sanitizers → return a clean row or null to reject it.
 const SHAPERS: Record<string, (r: Record<string, unknown>) => Record<string, unknown> | null> = {
   content_events: (r) => {
     if (!r.event_id || !r.event_type) return null;
@@ -59,7 +53,7 @@ const SHAPERS: Record<string, (r: Record<string, unknown>) => Record<string, unk
       payload: obj(r.payload, 8192), educational_metadata: obj(r.educational_metadata, 4096),
       content_flags: obj(r.content_flags, 4096),
       significance_score: clampInt(r.significance_score, 0, 100),
-      processed_status: 'new',   // server-controlled; clients can never publish
+      processed_status: 'new',
     };
   },
   content_replays: (r) => {
@@ -95,7 +89,6 @@ const SHAPERS: Record<string, (r: Record<string, unknown>) => Record<string, unk
   },
 };
 
-// How each table de-duplicates on insert.
 const CONFLICT: Record<string, { onConflict?: string; ignore?: boolean }> = {
   content_events:  { onConflict: 'event_id',  ignore: true },
   content_replays: { onConflict: 'replay_id', ignore: true },
@@ -104,11 +97,12 @@ const CONFLICT: Record<string, { onConflict?: string; ignore?: boolean }> = {
 
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get('origin') ?? '';
-  const allowedOrigin = ALLOWED_ORIGINS.find((o) => origin.startsWith(o)) ?? '';
+  const allowedOrigin = originAllowed(origin) ? origin : '';
   const cors = {
-    'Access-Control-Allow-Origin': allowedOrigin || ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Origin': allowedOrigin || 'https://playchartquest.com',
     'Access-Control-Allow-Headers': 'authorization, content-type, apikey',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
   };
   const json = (status: number, body: unknown) =>
     new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
@@ -128,7 +122,6 @@ Deno.serve(async (req: Request) => {
 
   const supa = createClient(SUPABASE_URL, SERVICE_KEY);
 
-  // --- Rate limit per IP (fixed window, atomic increment in one RPC) ---
   const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'unknown';
   const windowStart = new Date(Math.floor(Date.now() / (RATE_WINDOW_S * 1000)) * RATE_WINDOW_S * 1000).toISOString();
   const { data: count } = await supa.rpc('bump_ingest_throttle', { p_ip: ip, p_window: windowStart });
@@ -136,7 +129,6 @@ Deno.serve(async (req: Request) => {
     return json(429, { error: 'Rate limited' });
   }
 
-  // --- Shape + reject bad rows ---
   const clean: Record<string, unknown>[] = [];
   for (const raw of body.rows as Record<string, unknown>[]) {
     if (!raw || typeof raw !== 'object') continue;
@@ -145,7 +137,6 @@ Deno.serve(async (req: Request) => {
   }
   if (clean.length === 0) return json(400, { error: 'No valid rows' });
 
-  // --- Write with the service role ---
   const conf = CONFLICT[table];
   const q = conf
     ? supa.from(table).upsert(clean, { onConflict: conf.onConflict, ignoreDuplicates: !!conf.ignore })

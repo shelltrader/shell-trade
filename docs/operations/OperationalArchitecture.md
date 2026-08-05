@@ -70,9 +70,15 @@ playchartquest.com, with no build flags and no separate bundles.
 | Resolves to | When |
 |---|---|
 | `development` | `file:`, `localhost`, `127.0.0.1`, `*.local`, RFC1918 LAN (the QR test URL) |
-| `production` | `playchartquest.com`, `www.playchartquest.com`, `chartquest.pages.dev` |
+| `production` | `playchartquest.com`, `www.playchartquest.com`†, `chartquest.pages.dev` |
 | `staging` | any other `*.pages.dev` (branch/preview deploys), or a host containing `staging`/`preview` |
 | `production` | **anything unrecognised** — the conservative config is the safe default |
+
+> † **`www.playchartquest.com` has no DNS record** (verified 2026-08-05: no A, no CNAME), so that
+> clause is inert today — as is the matching entry in the beta-ingest allowlist. **Do not prune
+> them.** They cost one string comparison, and if a `www` record is ever added, a pruned allowlist
+> is how this project once 403'd every telemetry call for weeks. Dead-looking origin entries are
+> cheap insurance; deleting them is not a cleanup, it is a future outage.
 
 ```js
 CQOPS.env.name                          // 'development' | 'staging' | 'production'

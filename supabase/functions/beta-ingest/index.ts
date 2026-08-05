@@ -1,22 +1,10 @@
-// ChartQuest — CLOSED BETA analytics + survey write path  (ticket 3)
+// ChartQuest — CLOSED BETA analytics + survey write path
 // ---------------------------------------------------------------------------
 // Deliberately a SEPARATE function from `ingest`. The beta needs a new write
-// path, and `ingest` is the live route for player_mastery + the content pipeline
-// — a mistake in here must not be able to take that down.
+// path, and `ingest` is the live route for player_mastery + the content
+// pipeline — a mistake in here must not be able to take that down.
 //
-// Same posture as `ingest`, on purpose:
-//   • origin allowlist  • per-IP rate limit (shared bump_ingest_throttle RPC)
-//   • per-field whitelist + clamps (unknown keys are dropped, never stored)
-//   • service-role writes, so beta_events / beta_surveys keep RLS on with no
-//     anon policies at all
-//
-// ORIGIN NOTE: playchartquest.com is FIRST here on purpose. The Netlify->Cloudflare
-// move once 403'd every telemetry call for weeks because the allowlist still only
-// named Netlify. After any domain change, this list is the first thing to grep.
-//
-// DEPLOYED: version 2. Keep this file in step with production —
-// `supabase/functions/ingest/index.ts` is already stale against its deployed v3,
-// which is how the CORS bug below went unnoticed there.
+// DEPLOYED: version 4.
 // ---------------------------------------------------------------------------
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -24,31 +12,47 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-// Prefixes. A request from http://localhost:8798 matches the 'http://localhost'
-// entry — but see the CORS note below: we must echo the FULL request origin back,
-// never the prefix we matched against.
-const ALLOWED_ORIGINS = [
+// ORIGIN ALLOWLIST — EXACT MATCH, NOT PREFIX.
+//
+// v1-v3 used `ALLOWED.some(o => origin.startsWith(o))`, which accepts
+// `https://playchartquest.com.evil.com` — verified live before this fix: three
+// look-alike origins all returned {"ok":true,"written":1}. Any attacker page
+// could therefore write schema-valid rows into the closed-beta dataset and
+// quietly poison the founder's learning data.
+//
+// The sibling `ingest` function was migrated off prefix matching for this exact
+// reason during the Netlify->Cloudflare move; this one inherited the old shape
+// when it was written from that stale repo copy. Do not reintroduce startsWith.
+const ALLOWED_EXACT = new Set([
   'https://playchartquest.com',
   'https://www.playchartquest.com',
   'https://chart-quest-game.netlify.app',
   'https://shelltrader.github.io',
-  'http://localhost',
-  'http://127.0.0.1',
-];
+]);
+// Local dev needs an arbitrary port, so it gets an anchored pattern rather than
+// a prefix — `http://localhost.evil.com` must NOT match.
+const LOCAL_RE = /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d{1,5})?$/;
+// Cloudflare Pages preview deployments, e.g. https://a1b2c3d4.chartquest.pages.dev
+const PREVIEW_RE = /^https:\/\/[a-z0-9-]+\.chartquest\.pages\.dev$/;
 
-const MAX_ROWS      = 60;    // one flush carries a handful of milestones, not a firehose
-const RATE_LIMIT    = 120;   // requests per window, per IP
+function originAllowed(origin: string): boolean {
+  return ALLOWED_EXACT.has(origin) || LOCAL_RE.test(origin) || PREVIEW_RE.test(origin);
+}
+
+const MAX_ROWS      = 60;
+const RATE_LIMIT    = 120;
 const RATE_WINDOW_S = 60;
 
 // The complete set of milestones the beta records. Anything not on this list is
-// dropped: a typo in the client can never quietly create a new funnel stage that
-// the Founder Report then fails to explain.
+// dropped, so a typo in the client can never quietly create a funnel stage the
+// Founder Report then fails to explain.
 const EVENT_NAMES = new Set([
   'session_start', 'session_end', 'return_visit',
   'tutorial_started', 'tutorial_completed',
   'first_trade_started', 'first_trade_won', 'first_trade_lost',
   'boss_started', 'boss_defeated',
   'journal_unlocked', 'journal_discovery_started', 'journal_discovery_completed',
+  'journal_discovery_skipped',
   'beta_completed',
   'survey_started', 'survey_submitted',
   'crash',
@@ -107,14 +111,13 @@ function shapeSurvey(r: Record<string, unknown>) {
 
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get('origin') ?? '';
-  const isAllowed = ALLOWED_ORIGINS.some((o) => origin.startsWith(o));
+  const isAllowed = originAllowed(origin);
 
-  // CORS requires an EXACT origin echo. Returning the allowlist PREFIX we matched
-  // (e.g. 'http://localhost' for a request from 'http://localhost:8798') makes every
-  // browser call fail with an opaque "Failed to fetch", while curl still works
-  // happily — curl does not enforce CORS. Echo the request's own origin.
+  // CORS requires an EXACT origin echo. Returning a prefix makes every browser
+  // call fail with an opaque "Failed to fetch" while curl still succeeds, because
+  // curl does not enforce CORS.
   const cors: Record<string, string> = {
-    'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Origin': isAllowed ? origin : 'https://playchartquest.com',
     'Access-Control-Allow-Headers': 'authorization, content-type, apikey',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Vary': 'Origin',
@@ -152,11 +155,11 @@ Deno.serve(async (req: Request) => {
   }
   if (clean.length === 0) return json(400, { error: 'No valid rows' });
 
-  // Idempotent on the client-generated id, so a retry after a flaky connection can
-  // never double-count a funnel stage or a survey response.
+  // Idempotent on the client id. Surveys UPDATE on conflict (one row per player);
+  // events IGNORE duplicates so a retry cannot double-count a funnel stage.
   const table = kind === 'events' ? 'beta_events' : 'beta_surveys';
   const conflict = kind === 'events' ? 'event_id' : 'response_id';
-  const { error } = await supa.from(table).upsert(clean, { onConflict: conflict, ignoreDuplicates: true });
+  const { error } = await supa.from(table).upsert(clean, { onConflict: conflict, ignoreDuplicates: kind === 'events' });
   if (error) return json(500, { error: error.message });
 
   return json(200, { ok: true, written: clean.length });

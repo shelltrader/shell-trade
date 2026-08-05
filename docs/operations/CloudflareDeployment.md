@@ -3,7 +3,18 @@
 > **✅ LIVE as of 2026-07-09 (Phase 2).** Production is served by Cloudflare Pages.
 > - **Project:** `chartquest` (`chartquest.pages.dev`) · connected to `shelltrader/shell-trade`, production branch **`main`** → **auto-deploys on every push** (CD live).
 > - **Production URL:** https://playchartquest.com (Universal SSL, HTTPS enforced) · tagged **`v0.1.0-beta`** (commit `1eb1218`).
-> - **Redirect:** `chartquestgame.com` + `www` → **301** → `https://playchartquest.com` (proxied A `@`/`www` → 192.0.2.1 + Redirect Rule).
+> - **Redirect:** `chartquestgame.com` → **301** → `https://playchartquest.com`.
+> - **`www` DOES NOT EXIST** (corrected 2026-08-05). This line previously also claimed a `www`
+>   301. There is no `www.playchartquest.com` DNS record — no A, no CNAME — so nothing can
+>   reach it and no redirect rule can fire:
+> ```
+> dig +short www.playchartquest.com A       → (empty)
+> dig +short www.playchartquest.com CNAME   → (empty)
+> ```
+>   A visitor typing `www.` gets a DNS failure, not the site. Either add the record or stop
+>   documenting the redirect — but do not assume it works because it is written down here.
+>   The `www` entries in the edge-function allowlists and in `ops/cq-ops.js` are deliberately
+>   KEPT: they cost nothing and mean adding the record later cannot 403 telemetry.
 > - **Rollback:** Cloudflare Pages → Deployments → previous → *Rollback*; or redeploy tag `v0.1.0-beta`.
 > - **Retired:** the manual `netlify-direct-deploy.command`. Keep Netlify up until confident, then decommission.
 > - **Open follow-up:** add a `_headers` file for CSP/HSTS parity (Cloudflare ignores `netlify.toml`); see §5.

@@ -1,7 +1,8 @@
 #!/bin/bash
 # ChartQuest dev helper — automates the per-change loop so steps aren't missed.
-# Usage:  scripts/cq.sh <check | verify | smoke [url] | mirror | site | tag | ship | serve [port] | qr [port] | desktop-qr [port]>
+# Usage:  scripts/cq.sh <check | verify | smoke [url] | mirror | site | ops | tag | ship | serve [port] | qr [port] | desktop-qr [port]>
 #   check   syntax-check the inline game <script> (node --check)
+#   ops     splice ops/cq-ops.js (window.CQOPS) into the game + stamp the build's commit & time
 #   verify  run the full regression gate (scripts/verify.js) — prints PASS/FAIL
 #   smoke   POST-DEPLOY: probe the LIVE site (default playchartquest.com) — served BUILD_TAG +
 #           every referenced asset's content-type and byte length. Run it after `git push`.
@@ -96,13 +97,23 @@ case "${1:-}" in
     SITE="$(grep "BUILD_TAG =" website/game.html | grep -o "build [0-9][^']*" | head -1 || true)"
     if [ -n "$SRC" ] && [ "$SRC" = "$SITE" ]; then echo "✓ website embed synced → $SITE (+ finn, bosses, logo, cinematic)"; else echo "✗ site: build-tag mismatch (source='$SRC' site='$SITE')"; exit 1; fi
     ;;
+  ops)
+    # Splice ops/cq-ops.js (window.CQOPS — the operational foundation) into chart-quest.html,
+    # then refresh the deploy stamp the module reads for CQOPS.build.commit / .builtAt.
+    python3 scripts/sync_ops.py && python3 scripts/sync_ops.py --stamp
+    ;;
   ship)
     # ORDER (build 336): mirror → site → verify. `site` used to run AFTER the gate, so the gate
     # never observed the state that actually ships — which is precisely how the missing boss
     # media survived every ship for ~20 builds. Gate #17 checks website/ asset parity, so the
     # deploy folder must be built BEFORE verify runs. A FAIL still blocks the commit; it just
     # now leaves a refreshed website/ behind, which the next ship overwrites.
-    "$0" mirror && "$0" site && node scripts/verify.js && echo -n "build tag: " && "$0" tag && "$0" desktop-qr
+    #
+    # `ops` runs FIRST (build 340): it rewrites chart-quest.html — splicing the canonical ops
+    # module and stamping the build's base commit + timestamp — so it must happen before the
+    # mirror is taken, or index.html and website/game.html would carry the PREVIOUS stamp and
+    # every deploy would report the wrong commit. Gate #19 fails on that drift, by design.
+    "$0" ops && "$0" mirror && "$0" site && node scripts/verify.js && echo -n "build tag: " && "$0" tag && "$0" desktop-qr
     ;;
   desktop-qr)
     # Refresh the always-current test QR on the Desktop (labelled with the build + LAN URL).

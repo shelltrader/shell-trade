@@ -18,6 +18,8 @@ This folder answers four questions:
 | [CloudflareDeployment.md](CloudflareDeployment.md) | You're moving the game to Cloudflare Pages. Framework, build, headers, env. |
 | [BetaTestingChecklist.md](BetaTestingChecklist.md) | Before inviting external beta testers. Readiness gate + tester script. |
 | [FutureRepositoryStrategy.md](FutureRepositoryStrategy.md) | Planning the post-beta repo split. **Documentation only — do not execute yet.** |
+| [OperationalArchitecture.md](OperationalArchitecture.md) | You need errors, logging, config, feature flags or observability. The `window.CQOPS` reference. |
+| [IntegrationGuide.md](IntegrationGuide.md) | You are adopting `window.CQOPS` at a call site you were already editing. Recipes + what not to do. |
 
 ## How this relates to existing canon
 This folder is **release engineering**. The gameplay/change rules live in [`docs/canon/`](../canon/) and **override nothing here**:

@@ -446,6 +446,75 @@ function run() {
       add('18', 'Event spacing owner', 'FAIL', 'gate could not run (treated as FAIL by design): ' + String(e).slice(0, 90));
     }
   }
+
+  // 19 — OPERATIONAL FOUNDATION (build 340 · window.CQOPS). Same job as #13 for window.CQ and
+  // #14 for CQREACH: lock the OWNER so a future change cannot quietly delete it, fork it, or
+  // let the inlined copy drift from its canonical source.
+  //
+  // Four invariants, each earned from a real incident in this repo:
+  //   • PUBLISHED + SELF-CONTAINED — one IIFE, zero top-level names. A duplicate top-level
+  //     const across inline blocks is a parse-time SyntaxError that silently kills a whole
+  //     block; this one is in <head>, so that would be a white screen, not a missing feature.
+  //   • NO DRIFT — the game inlines ops/cq-ops.js because a single self-contained document
+  //     cannot <script src> it. Two copies drift. (CQTrack has the same shape and its
+  //     --check has never been wired into anything — see the note in the deliverable doc.)
+  //   • STAMPED — CQOPS.build reads <meta name="cq-build">. `cq.sh ship` writes it BEFORE the
+  //     mirror is taken; if it were written after, index.html and website/game.html would ship
+  //     the previous commit and every deploy would report the wrong source.
+  //   • FLAGS DEFAULT TO SHIPPED BEHAVIOUR — Phase 1 promised no player-facing change. A
+  //     product flag defaulting to false breaks that promise the moment it is wired, and the
+  //     break would look like a gameplay bug, not a config one.
+  {
+    try {
+      const s = read(SRC);
+      const canon = 'ops/cq-ops.js';
+      const owner = /window\.CQOPS = API;/.test(s) && /if \(window\.CQOPS\) return;/.test(s);
+      const iife  = /\(function \(\) \{\s*'use strict';\s*if \(window\.CQOPS\) return;/.test(s);
+      // the seven public seams, as they appear on the frozen API object literal
+      const api   = ['env:', 'build:', 'log:', 'err:', 'flags:', 'health:', 'report:']
+        .filter(k => s.includes('\n    ' + k));
+      // the inlined copy must equal the canonical source, byte for byte
+      let synced = false, syncNote = 'canonical source missing';
+      if (exists(canon)) {
+        const js = read(canon).replace(/\s+$/, '');
+        const i = s.indexOf('<!-- CQOPS:BEGIN');
+        const j = s.indexOf('<!-- CQOPS:END -->');
+        if (i > -1 && j > i) {
+          const inlined = s.slice(s.indexOf('<script>', i) + 9, s.lastIndexOf('</script>', j)).replace(/\s+$/, '');
+          synced = inlined === js;
+          syncNote = synced ? '' : 'inlined copy has DRIFTED — run: python3 scripts/sync_ops.py';
+        } else syncNote = 'no CQOPS block in the game — run: python3 scripts/sync_ops.py';
+      }
+      // the deploy stamp must be present, and must match in the mirror (mirror is checked by #8)
+      const stamp = /<meta name="cq-build" content="([^"]+)" data-built-at="([^"]*)">/.exec(s);
+      const stamped = !!(stamp && stamp[1] && stamp[1] !== 'unstamped' && stamp[2]);
+      // every declared product flag must default to today's shipped behaviour
+      const PRODUCT_ON = ['enableJournalDiscovery', 'enableBossCinematics', 'enableBetaSurvey', 'enableAnalytics'];
+      const badDefault = PRODUCT_ON.filter(f => !new RegExp(f + ':\\s*true').test(s));
+      // the passive collectors that make missing assets / failed APIs visible at all
+      const observers = [/addEventListener\('error', function \(e\) \{[\s\S]{0,400}?missing_asset/, /window\.fetch = wrapped;/]
+        .filter(re => re.test(s)).length;
+      // the fetch observer must supply BOTH promise handlers, or it manufactures the very
+      // unhandledrejection it exists to count
+      const bothHandlers = /p\.then\(function \(res\) \{[\s\S]{0,600}?\}, function \(e\) \{/.test(s);
+
+      const ok = owner && iife && api.length === 7 && synced && stamped && !badDefault.length && observers === 2 && bothHandlers;
+      add('19', 'Operational foundation (CQOPS published · in sync · stamped · flags default-safe)',
+        ok ? 'PASS' : 'FAIL',
+        ok ? `window.CQOPS published · self-contained IIFE (0 top-level names) · in sync with ${canon} · stamped ${stamp[1]} @ ${stamp[2]} · 7/7 seams (env/build/log/err/flags/health/report) · 4/4 product flags default ON · 2/2 passive observers · fetch observer handles both outcomes`
+           : [!owner ? 'window.CQOPS not published' : '',
+              !iife ? 'not a self-contained IIFE (top-level names in <head> would white-screen the game)' : '',
+              api.length !== 7 ? `public seam incomplete (${api.length}/7 — need env/build/log/err/flags/health/report)` : '',
+              !synced ? syncNote : '',
+              !stamped ? 'deploy stamp missing or unstamped — run: scripts/cq.sh ops' : '',
+              badDefault.length ? `product flag(s) no longer default to shipped behaviour: ${badDefault.join(', ')}` : '',
+              observers !== 2 ? `passive observers missing (${observers}/2 — missing-asset capture and/or fetch observer)` : '',
+              !bothHandlers ? 'fetch observer does not supply both promise handlers — it would create unhandled rejections' : ''
+             ].filter(Boolean).join(' · '));
+    } catch (e) {
+      add('19', 'Operational foundation', 'FAIL', 'gate could not run (treated as FAIL by design): ' + String(e).slice(0, 90));
+    }
+  }
 }
 
 // 3b — optional real headless boot (only if puppeteer is installed)

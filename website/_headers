@@ -41,17 +41,23 @@
 #      glyph falls back.
 #
 # ---------------------------------------------------------------------------------------------
-# WHY THE CSP SHIPS AS REPORT-ONLY FIRST
+# THE CSP IS NOW ENFORCING. It shipped Report-Only first, and that was not ceremony.
 # ---------------------------------------------------------------------------------------------
 # A wrong CSP breaks the game silently and in production only. The root file's own comments record
 # the precedent: omit api.coinbase.com from connect-src and every market falls back to its
-# build-time anchor WHILE THE HUD STILL SAYS "live".
+# build-time anchor WHILE THE HUD STILL SAYS "live". So this followed the same observe-then-enforce
+# discipline CQBEAT used.
 #
-# So this follows the same observe-then-enforce discipline CQBEAT used: `Content-Security-Policy-
-# Report-Only` reports violations to the browser console WITHOUT blocking anything, the live site
-# is then walked (landing → play → game → survey) with the console open, and only once that is
-# clean does the header get renamed to `Content-Security-Policy`.
-# The other five headers below are enforcing immediately — none of them can break this site.
+# The Report-Only round reported TWO sources that would have broken production, and NEITHER could
+# have been found by reading this repository:
+#   • static.cloudflareinsights.com — injected by Cloudflare at the edge, in no source file.
+#   • 'unsafe-eval'                 — CQBEAT's 10 (0, eval) spawner-counter calls.
+# Both are allowlisted above. A second Report-Only round then reported ZERO violations across
+# landing → play (game iframe) → survey, and only then was this renamed to the enforcing header.
+#
+# IF YOU EVER CHANGE THIS POLICY: rename it back to `Content-Security-Policy-Report-Only`, deploy,
+# walk those same pages with the console open, and only re-enforce on a clean round. Local checks
+# cannot see this — a dev server sends no CSP at all.
 #
 # ---------------------------------------------------------------------------------------------
 # ORIGIN ALLOWLIST — every external host the SERVED pages actually load
@@ -103,4 +109,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com https://cloudflareinsights.com https://*.cloudflareinsights.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com https://cloudflareinsights.com https://*.cloudflareinsights.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'

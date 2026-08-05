@@ -19,7 +19,16 @@
    v12: repairing this comment. v10's text was appended AFTER the block's closing delimiter, so
    from build 332 until now this file was a SyntaxError and the service worker never registered
    at all — no precache, no offline page, and a console error on every load. */
-const CACHE = 'chartquest-site-v12';
+/* BUMP THIS ON ANY CHANGE TO A PRECACHED FILE — assets/cq-track.js ESPECIALLY.
+   v12 → v13 (2026-08-05): build 343 added play_clicked + movement_tutorial_completed to
+   cq-track.js, but this version string did not move. The activate handler only purges caches
+   whose key differs from CACHE, so every returning visitor kept being served the v12 copy of
+   cq-track.js — 21,642 bytes, no new event names — while the network copy was 32,916 bytes.
+   CQTrack.event('play_clicked') simply returned false for them and the two stages recorded
+   NOTHING. Caught live, by testing the emit path in a browser that had visited before; a fresh
+   browser works fine, which is exactly why this class of bug survives local checking.
+   The precache list is not "just marketing assets" — it contains the ANALYTICS CLIENT. */
+const CACHE = 'chartquest-site-v13';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',

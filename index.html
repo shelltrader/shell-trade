@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="1d97884163" data-built-at="2026-08-06T09:19:50Z">
+<meta name="cq-build" content="b40ced88a7" data-built-at="2026-08-06T14:00:32Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 350 - SMASH ZONE IS ABOUT BOXES ONLY. Removed the four leftover air chains sitting inside or just past the box run, where they pulled the player UPWARD during the stage that asks them to dive DOWN: the double-boost chain between box 1 and box 2, the full double ladder after box 2, the celebration chain on the launch-landing candle, and the last chain between box 4 and the giant. Each was a reasonable reward back when the world was not zoned to the curriculum; now that the double boost has its own zone with its own three shells (build 348), these only competed with the verb being taught. Tutorial shells 30 to 17, and every remaining shell still has exactly one verb that reaches it - verified in-engine, ZERO unreachable, 46 candles, 4 boxes at c29/c33/c40/c42. ONE CHAIN DELIBERATELY KEPT: the wick liquidity chain at 210-630 on candle 37. It is not an extra - it is the ONLY reward for the spin-launch, which is its own teach moment (TAP to LAUNCH), so cutting it would leave a taught mechanic unrewarded and break the very rule this change serves. It does sit between box 2 and box 3; it can go too if the founder wants the box run absolutely clean.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 351 - THE BOX RUN IS NOW COMPLETELY CLEAN. Removed the wick liquidity chain, the last air shells left inside the smash stretch: a 5-shell ladder at 210/300/400/510/630 hung above the long wick on candle 37, between box 2 and box 3, pulling the eye UPWARD during the one stage that asks the player to dive DOWN. Verified in-engine: box run c29 to c42 now contains ZERO air shells, and the teach zones are untouched - BOOST at c16/300 and c18/340, DOUBLE at c20/560, c22/580 and c24/600, zero unreachable shells anywhere. Tutorial shells 17 to 12 (30 before build 350). STATED PLAINLY: the wick launch (TAP to LAUNCH) is now a taught mechanic with NO pickup reward. It keeps its spectacle and it still carries Finn onto the big candle, so it is not purposeless, but it no longer pays. I flagged this as the only reward for the spin-launch and the founder chose the clean box run anyway. If it reads hollow in a playtest the fix is ONE ground shell on the spinTo landing candle - it rewards the launch without hanging anything in the air to compete with the dive. Deliberately not added unasked.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -23121,8 +23121,18 @@ const BlockchainJourney = (() => {
                 crystal:!!sp.crystal, smashed:!sp.crystal, freeT:0, whipT:0 };
       S.candles.push(c);
       if (sp.shell){ for (let s=0;s<sp.shell;s++) S.shells.push({ cx:c, dx:(sp.shell>1?(s-0.5)*22:0), y0:34+s*4, r:8, got:false, bob:Math.random()*6.28 }); }
-      // LIQUIDITY: a high chain of shells above the long wick — only reachable by spinning UP off it
-      if (sp.wick){ [[210,4],[300,12],[400,22],[510,34],[630,46]].forEach(function(a){ S.shells.push({ cx:c, dx:a[1], y0:a[0], r:8, got:false, bob:Math.random()*6.28, hi:true }); }); }
+      /* LIQUIDITY CHAIN — REMOVED (build 351, founder call).
+         Was a 5-shell ladder at 210/300/400/510/630 above the long wick, reachable only by spinning
+         UP off it. It was the last air chain left inside the box run (candle 37, between box #2 and
+         box #3), and it pulled the eye upward during the one stage that asks the player to dive
+         DOWN. I flagged it as the sole reward for the spin-launch and the founder chose the clean
+         box run anyway; that is their call and it is now made.
+         CONSEQUENCE, STATED PLAINLY: the wick launch ("TAP to LAUNCH") is now a taught mechanic
+         with NO pickup reward. It still has its own spectacle and it still carries Finn onto the
+         big candle, so it is not purposeless — but it no longer pays. If that reads as hollow in a
+         playtest, the fix is ONE ground shell on the spinTo landing candle: it rewards the launch
+         without hanging anything in the air to compete with the dive. Deliberately not added
+         unasked. */
       // AIR CHAINS — shells hung along the actual jetpack arc, so the DOUBLE boost is taught by wanting the
       // shell instead of by a gauge. Heights are BROWSER-MEASURED, never derived: a plain hop peaks at 126,
       // one jetpack at 469, a well-timed double at 939 — and even a badly-timed double (second charge spent

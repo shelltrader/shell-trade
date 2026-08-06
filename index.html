@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="9165ec4788" data-built-at="2026-08-06T06:16:31Z">
+<meta name="cq-build" content="0ef410b64a" data-built-at="2026-08-06T06:33:13Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 346 - DOUBLE-BOOST PARITY + BOSS FLINCH SOUND BED + BANNER FIX. (1) The tutorial double boost now MATCHES THE REAL GAME. doBoost used CFG.jetpack1Velocity for BOTH charges while the live-game fireJetpack picks jetpack2Velocity for the second (-1242 vs -1518), so the tutorial was teaching a double boost 22 percent weaker than the one the player takes into Level 1 - the exact move it exists to teach, taught wrong. Same ternary, same boostsUsed convention. The air chains sit at 520-610px because that band is impossible on ONE boost, so a stronger second charge only clears them more comfortably; nothing taught becomes unreachable. (2) BOSS FLINCH SOUND BED fills the dead air. Measured with ffprobe: after the impact there is 1.02s (flinch-2) to 3.50s (flinch-4) of video left with NOTHING on it, and the music was ALSO ducked to 0.25 for all of it - quiet music and silence at once, which is why the hit felt like it ended before the picture did. flinch-1 additionally has a 0.47s hole between the roar ending and the impact. Three synthesised layers on the existing bus (no new assets, nothing to precache, obeys mute): a WIND-UP sub growl climbing into the hit so the impact is arrived at rather than sprung; sub WEIGHT plus a crack under the existing hit sting; and an AFTERMATH rumble decaying across the REAL tail length with dust settling behind it. All scheduled on the AUDIO clock in one call, so they cannot drift from the picture the way the old setTimeout roar did. New BOSS_FLINCH_DUR table (measured clip lengths) sizes the tail. The music duck now RELEASES across the tail instead of snapping at clip end, so the bed breathes back while he is still reeling. (3) TEACH BANNER was cutting off in frame. The pill was single-line and sized purely from its text, so the new double-boost label overflowed by 66px at a 320px viewport, 47px at 360 and 42px at 406 - cut off on every phone width. Stages may now carry a second line (action on top, benefit beneath, quieter), AND the font shrinks until the pill fits with a margin, so no future wording in any language can overflow it again. Verified at 320/360/406: every stage fits, including the smash line which was also at risk.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 347 - SMASH LABEL SPLIT TO TWO LINES. The smash prompt was the last single-line teach banner and it was living on the edge: at a 360px viewport its pill measured 333 of the 336 available - THREE pixels from overflowing - and at 320px the auto-shrink was already dropping it to 11px, noticeably smaller than every other stage. Split into BOOST, then SWIPE DOWN / SMASH the box open using the same two-line field added in 346 (action on top, benefit beneath and quieter). Measured after at 320/360/406/469: every stage fits with real margin, and the smash line now renders at the SAME font size as the other three at every width (13/14/16/19px) instead of shrinking on its own.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -23958,7 +23958,7 @@ const BlockchainJourney = (() => {
     { key:'jump',   need:3, g:'tap',  t:'TAP to JUMP' },
     { key:'boost',  need:3, g:'up',   t:'SWIPE UP to BOOST' },
     { key:'boost2', need:2, g:'up',   t:'SWIPE UP TWICE', t2:'DOUBLE BOOST — go higher' },
-    { key:'smash',  need:3, g:'down', t:'BOOST, then SWIPE DOWN to SMASH' },
+    { key:'smash',  need:3, g:'down', t:'BOOST, then SWIPE DOWN', t2:'SMASH the box open' },
   ];
   // Credit one rep of a verb. Only the ACTIVE stage counts, so practising ahead never skips a step.
   function teachCredit(key){

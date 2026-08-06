@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="eb59a91de9" data-built-at="2026-08-06T07:26:27Z">
+<meta name="cq-build" content="2a6d489e93" data-built-at="2026-08-06T08:25:50Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 348 - MOVEMENT TUTORIAL: EVERY MOVE NOW HAS A REASON. FOUNDER: after three jumps we ask for three boosts, but every shell was on the GROUND - so the player boosted over them and had to walk back. The teach list ran jump, boost, double, smash but the WORLD was never zoned to match it. The world is now zoned to the curriculum, one zone per stage, with the reward hung at the exact height that verb and ONLY that verb can reach. Measured ceilings, from the existing browser-measured note: a plain hop peaks at 126, ONE boost at 469, a badly-timed double still clears 642. JUMP - shells on the wall crowns. BOOST - the tower carries a shell ON its crown so the boost IS the reward, then two air shells at 300 and 340, both impossible at the 126 hop ceiling. DOUBLE BOOST - three shells at 560, 580 and 600, all above the 469 single-boost ceiling, so only a double reaches them. And NO ground shell is left inside the boost or double zones, so there is never anything underneath to fly over and come back for. boost2 need raised 2 to 3 (three shells, three double boosts). World grown 36 to 46 candles for the extra room. Verified in-engine: 46 candles, 30 shells, ZERO unreachable, boost shells at c16/c18 and double shells at c20/c22/c24 exactly as zoned. SMASH now says WHY: BOOST, then SWIPE DOWN / SMASH the box for a surprise. Double boost likewise: SWIPE UP TWICE / DOUBLE BOOST for the high shells. THE TIMEOUT THAT ENDED THE TUTORIAL EARLY IS FIXED. HARD_CAP was 160 seconds of TOTAL ELAPSED TIME ticked every frame regardless of what the player was doing, so pausing to read - or to type a message - dumped the player straight into Choose Your Home Market without ever reaching the portal. It is now an INACTIVITY timer: any jump, boost, dive or teach credit resets it. A player who steps away and returns finishes the tutorial; a genuinely stuck session is still rescued, which is all this was ever for. Deliberately NOT hooked to inputLive(), which update() polls every frame for the jump buffer and would have silently disabled the net. Measured: 90s idle, one tap, 90s more - 183s total, tutorial still alive, where the old build killed it at 160.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 349 - EXIT TRUTHFULNESS (P0a). A trade exit has THREE outcomes - win, loss, manual - but five render sites asked a two-state question and printed the opposite of what happened. The worst: a profitable self-close rendered in the Journal as \u0022STOPPED OUT  +42 shells\u0022, naming a stop that was never touched, contradicting itself inside one string, on the screen a player opens specifically to understand the trade they just made. Two sites (the Journal replay header and the full trade chart) inferred from result === win, so ANY manual close read as a loss; two more (the Journal replay badges) inferred from PROFIT, so a manual close claimed TAKE-PROFIT or STOP-LOSS - targets and stops that were never reached. All now read `result` and render a third state, CLOSED EARLY, coloured by the P&L so a green +42 is never printed in red. NOT NEW DESIGN: the correct three-state idiom already existed 190 lines away (exitIsWin / exitIsLoss / CLOSED EARLY on the chart exit tag) - these sites simply predate it, and now match it. Verified by driving the shipped renderers with a synthetic manual trade AND controls: a real stop-out still says STOPPED OUT, a real target still says TAKE PROFIT HIT, and a manual loss and manual profit both say CLOSED EARLY with the colour following the money. Text and colour only - no outcome, odds, R:R, entry, stop or target logic is read or written, and resolveTrade is untouched.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -9729,7 +9729,10 @@ function imStartReplay(){
     imDrawReplay(revealed);
     if(revealed>=total){
       if(!imRX.done){ imRX.done=true; imRX.tEnd=now; }
-      if(now-imRX.tEnd>250){ var o=$('imOutcome'); var win=(t.delta||0)>0; if(o){ o.textContent=win?'✓ TAKE-PROFIT':'✗ STOP-LOSS'; o.className='im-outcome show '+(win?'win':'loss'); } }
+      /* EXIT TRUTHFULNESS (P0a): this badge inferred the exit from PROFIT, so a manual close
+         claimed '✓ TAKE-PROFIT' (a target never reached) or '✗ STOP-LOSS' (a stop never hit).
+         Read t.result — 'win' | 'loss' | 'manual' — and colour a manual exit by its P&L. */
+      if(now-imRX.tEnd>250){ var o=$('imOutcome'); var win=(t.delta||0)>0, man=t.result==='manual'; if(o){ o.textContent=man?'● CLOSED EARLY':t.result==='win'?'✓ TAKE-PROFIT':'✗ STOP-LOSS'; o.className='im-outcome show '+((t.result==='win'||(man&&win))?'win':'loss'); } }
       if(now-imRX.tEnd<holdEnd) imRX.raf=requestAnimationFrame(tick); else { var rb2=$('imReplayBtn'); if(rb2) rb2.textContent='▶ REPLAY'; }
       return;
     }
@@ -9737,7 +9740,7 @@ function imStartReplay(){
   }
   imRX.raf=requestAnimationFrame(tick);
 }
-function imShowDetails(){ cancelAnimationFrame(imRX.raf); imRX.mode='details'; var t=imRX.trade; imDrawReplay(t.replay.candles.length); var o=$('imOutcome'),win=(t.delta||0)>0; if(o){ o.textContent=win?'✓ TAKE-PROFIT':'✗ STOP-LOSS'; o.className='im-outcome show '+(win?'win':'loss'); } var rb=$('imReplayBtn'); if(rb) rb.textContent='▶ REPLAY'; }
+function imShowDetails(){ cancelAnimationFrame(imRX.raf); imRX.mode='details'; var t=imRX.trade; imDrawReplay(t.replay.candles.length); var o=$('imOutcome'),win=(t.delta||0)>0,man=t.result==='manual'; if(o){ o.textContent=man?'● CLOSED EARLY':t.result==='win'?'✓ TAKE-PROFIT':'✗ STOP-LOSS'; o.className='im-outcome show '+((t.result==='win'||(man&&win))?'win':'loss'); }   /* EXIT TRUTHFULNESS (P0a) — three-state, see imStartReplay */ var rb=$('imReplayBtn'); if(rb) rb.textContent='▶ REPLAY'; }
 function imDrawReplay(n){
   var t=imRX.trade,cv=$('imChart'); if(!cv||!t) return; var x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);
   var W=cv.width/dpr,H=cv.height/dpr; x.clearRect(0,0,W,H);
@@ -11385,7 +11388,14 @@ function tradeChartSVGFull(t, opts) {
   const typeLabel = ({ momentum:'STRONG CLOSE', pullback:'PULLBACK', bos:'STRUCTURE BREAK',
                        trend_break:'BREAKOUT', vwap_bounce:'VWAP BOUNCE', ob:'ORDER BLOCK' })[sType]
                   || (isChoch ? 'CHANGE OF CHARACTER' : 'OPPORTUNITY');
-  const resultCol = isWin ? COLOR.greenBody : COLOR.redBody;
+  /* EXIT TRUTHFULNESS (P0a). `result` has THREE values — 'win' | 'loss' | 'manual' — but every
+     label below used the two-state `isWin`, so a MANUAL close was rendered as its opposite: a
+     profitable self-close read "✗ LOSS  +42 shells", contradicting itself inside one string.
+     The correct three-state idiom already existed 190 lines down (exitIsWin/exitIsLoss → 'CLOSED
+     EARLY'); these sites simply predate it. Colour follows the P&L for a manual exit, because a
+     green "+42" printed in red is the same lie in another channel. */
+  const isManual  = t.result === 'manual';
+  const resultCol = (isWin || (isManual && t.delta > 0)) ? COLOR.greenBody : COLOR.redBody;
   const dirLabel  = isLong ? '▲ LONG' : '▼ SHORT';
   const dSign     = t.delta > 0 ? '+' : '−';
 
@@ -11404,7 +11414,7 @@ function tradeChartSVGFull(t, opts) {
   // Result badge
   s += '<rect x="' + (VW/2 - 70) + '" y="27" width="140" height="25" rx="5" fill="' + resultCol + '22"/>';
   s += '<text x="' + (VW/2) + '" y="44" fill="' + resultCol + '" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">'
-     + (isWin ? '✓ WIN' : '✗ LOSS') + '  ' + dSign + fmt(Math.abs(t.delta)) + ' shells</text>';
+     + (isWin ? '✓ WIN' : isManual ? '● CLOSED EARLY' : '✗ LOSS') + '  ' + dSign + fmt(Math.abs(t.delta)) + ' shells</text>';
 
   // Chart area
   s += '<rect x="' + chartX + '" y="' + chartTop + '" width="' + chartW + '" height="' + chartH
@@ -11765,7 +11775,12 @@ function tradeReplaySVG(entry, n) {
   s += '<text x="' + (VW/2) + '" y="20" fill="#4cc3ff" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">▶ TRADE REPLAY — ' + (isLong ? '▲ LONG' : '▼ SHORT') + '</text>';
   let status, statusCol;
   if (!done) { status = 'In the trade… watching price'; statusCol = '#7d8aa0'; }
-  else { status = (isWin ? '✓ TAKE PROFIT HIT  ' : '✗ STOPPED OUT  ') + (entry.delta > 0 ? '+' : '−') + fmt(Math.abs(entry.delta)) + ' shells'; statusCol = isWin ? COLOR.greenBody : COLOR.redBody; }
+  /* EXIT TRUTHFULNESS (P0a) — see tradeChartSVGFull. This header was the worst of the set: a
+     profitable MANUAL close printed "✗ STOPPED OUT  +42 shells", naming a stop that was never
+     touched, next to a profit, in one line. `result` is 'win' | 'loss' | 'manual'. */
+  else { const _man = entry.result === 'manual', _up = entry.delta > 0;
+         status = (isWin ? '✓ TAKE PROFIT HIT  ' : _man ? '● CLOSED EARLY  ' : '✗ STOPPED OUT  ') + (_up ? '+' : '−') + fmt(Math.abs(entry.delta)) + ' shells';
+         statusCol = (isWin || (_man && _up)) ? COLOR.greenBody : COLOR.redBody; }
   s += '<text x="' + (VW/2) + '" y="42" fill="' + statusCol + '" font-size="12" font-weight="bold" font-family="monospace" text-anchor="middle">' + status + '</text>';
 
   // Chart frame + grid

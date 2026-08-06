@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="8f3bfca246" data-built-at="2026-08-05T06:18:04Z">
+<meta name="cq-build" content="37591e599f" data-built-at="2026-08-06T06:03:33Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 344 - THE TRAILING-SLASH TRAP. The survey handoff navigated to a RELATIVE survey.html, resolved against the top document base - and /play and /play/ resolve it to two different places: /survey.html (the survey) versus /play/survey.html (which does not exist). There is no 404 page, so the bad one answers HTTP 200 with the marketing homepage. A tester who finished the ENTIRE beta would be dumped on the front page instead of the survey, and the funnel would record reached the ceremony, never answered - indistinguishable from someone who chose not to. It costs exactly the testers worth the most. Fixed in BOTH navigation sites: website/play.html (the postMessage handler) and the 700ms self-navigation fallback in CQBeta.openSurvey. NOT fixed with a root-absolute /survey.html - the relative form is deliberate so a subpath deploy (shelltrader.github.io/shell-trade/...) still works, and a root path breaks it. Instead a trailing slash is stripped so the last segment is always treated as a FILE, making survey.html a SIBLING of play.html, which is what it is. Verified against every base a tester can land on - /play, /play/, /play.html, /, a genuine subdirectory, and both subpath-deploy forms - plus hostile surveyUrl values, which are contained to the origin.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 345 - PLAYTEST HOTFIXES (6). (1) MOVEMENT TUTORIAL: teaches the DOUBLE BOOST for the first time (S.taught.boost2 was being set and read NOWHERE - a dead flag), smash reworded JUMP+SWIPE DOWN to BOOST, then SWIPE DOWN (the mechanic always accepted any airborne dive; boost is the better move and buys the height), and SIX flat candles added for breathing room - approach room before every box and a beat between the last two, which were back-to-back. Flat is deliberate: every step delta in that world is authored against the measured 132px hop, so distance is added without changing a single jump. 30 candles to 36. (2) THE GIANT before the portal is no longer oversized - it was gw112/gh352 against a 54x200 neighbour and drawGiant inflated it further (body drawn 40px BELOW the shared baseline, 54px wick vs 36). Now DERIVED from the last real candle so it can never drift again. It was an intentional boost gate; the candle rule outranks the gate. (3) SHELLS: the tutorial no longer pays a bankroll. CORRECTION - the movement tutorial never paid anything (sealed IIFE, its own smashBox shadows the global one). The ~70 came from SIX-TO-SEVEN teaching reps paying +5 each during the L1 intro. Those are muted (XP, floaters and audio kept); the EARNED milestones (first trade win, Guardian) untouched. (4) HUD: badge, price and CURRENT LESSON were measured overlapping - the card top edge sat exactly on the price baseline (both y80), clipping the descenders. Spaced to ~11px and ~13px, with card padding and leading widened to match. (5) TRADE BREATHING ROOM - the big one. Build 314 added an R floor and it was being DESTROYED by the reachability clamp 25 lines later: at the L1 entry (~100, hard against the 80 floor) the honest band computed 66 and the band actually DRAWN was 12px, against a 22px candle body. One candle was 183 percent of the entire risk distance. Fixed by recentring the ENTRY instead of clamping the LINES - market.level is re-seeded from entryH and Finn is stood on it, so the chart and the character follow for free. Measured after: stop distance 12px to 132px, target 220px, and the clamp never fires at any entry. R floor 3 to 5 bodies, want 6 to 7. Volatility raised so the chart stops reading flat: DRIVE_EASE 0.10 to 0.15, step spread 0.7-2.4 to 0.55-3.0, counter-candle rate 0.42 to 0.50 and depth 0.05-0.16R to 0.10-0.28R. (6) BOSS SFX: the roar was 2.4s late because it was scheduled on the measured IMPACT PEAK. Re-measured the clips with the same method (tblend difference, signalstats YAVG per frame): peaks reproduced exactly, and the profile shows the Gambler is ALREADY MOVING from the first frames - flinch-1 carries motion at 0.13s, flinch-4 at 0.02s. There is no silent wind-up. Split them: the ROAR is a sustained vocalisation and now fires at clip start with the movement; the impact STING stays on the measured peak. Nested +80ms deleted. Roar pool pre-warmed at fight start so the first roar is not a cold fetch.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -5796,7 +5796,19 @@ function setupFlowCandle() {
      • LOSS → drift down, a false-hope bounce, then a telegraphed stop-out ("the market reversed").
    The stop is NEVER breached on a win (the dip stops ~28% short of it). A small per-phase candle
    cap keeps any beat from stalling; resolution still fires when Finn physically tags the line. */
-const DRIVE_EASE = 0.10;          // fraction of the remaining distance moved per candle (calmer = longer ~30-60s)
+/* FOUNDER (build 345) — "the candles just don't have enough variety, they don't go up and down as
+   much, they're more flat. We want the trades to be roller-coaster-esque."
+   0.10 → 0.15. This is the fraction of the remaining distance a driven candle covers, so it is the
+   single dominant control on how far price travels per candle. Raising it makes each candle a real
+   move instead of a nudge.
+   TUNED BY MEASUREMENT, not by feel: 0.15 was tried first and the audit caught it resolving the
+   trade in 16 candles — the founder had explicitly said the 20-30 candle duration was one of the
+   things that DID feel right, and the widened band (TP distance 132 -> 220) meant a faster ease
+   crossed more ground in fewer prints. Then 0.11 still ran short, because widening the spread to rand(0.55,3.0) raised the EFFECTIVE
+   ease (mean multiplier 1.78 vs the old 1.55) by ~26 percent on top of the nominal number. 0.09
+   cancels that, so the per-candle move is as calm as it was while the SPREAD is much wider and the
+   band it crosses is much bigger — which is what produces more candles, not fewer. */
+const DRIVE_EASE = 0.09;          // fraction of the remaining distance moved per candle
 // EMOTIONAL INVESTMENT (build 215) — a driven trade must BREATHE: the player traverses a
 // minimum number of candles between entry and resolution, watching price go up, down, up —
 // including the scare where it nearly stops them out before coming back. Each phase HOLDS
@@ -5879,17 +5891,17 @@ function tradeDrivenCandle() {
   // MORE frequent counter candles (genuine red pullbacks) + strongly varied step sizes so no two
   // bodies match. The safety clamps below still guarantee a win never breaches the stop and price
   // snaps cleanly onto the line, so the extra variety can never change the trade's outcome.
-  if (Math.abs(span) > 16 && Math.random() < 0.42) {
+  if (Math.abs(span) > 16 && Math.random() < 0.50) {   // build 345: 0.42 → 0.50 — every other candle fights back, so the run to target is a climb, not an escalator
     // counter candle (a fraction of R, NOT of the span-to-target — a big span must never
     // produce a counter big enough to cross the stop) → prints the opposite colour, breaks the staircase.
     // FLAT-CANDLE HARD RULE (build 214) — on a small-R trade, R-fraction bodies shrink to 2-6
     // height units and print a long visually-FLAT run (reported on-device: "ten flat candles
     // before the win"). Floor every drive body in ABSOLUTE world units; the snap + hard-safety
     // clamps below still decide the outcome, so the floor is visual-only.
-    nl = prev - dirToT * Math.max(R * rand(0.05, 0.16), TMB * rand(1.0, 2.2));
+    nl = prev - dirToT * Math.max(R * rand(0.10, 0.28), TMB * rand(1.0, 2.2));   // build 345: deeper red pullbacks — 0.05-0.16R was a twitch, not a retrace
   } else {
     // widely varied step toward target → no two bodies match. Phase caps preserve ~30-60s pacing.
-    let step = span * (DRIVE_EASE * rand(0.7, 2.4));
+    let step = span * (DRIVE_EASE * rand(0.55, 3.0));   // build 345: 0.7-2.4 → 0.55-3.0. Wider spread = the big-then-small rhythm a real chart has, instead of a uniform march.
     // SHOT 8/24 — kill the flat "staircase": near the target the eased step shrinks to nothing and
     // prints a run of tiny equal candles. Enforce a real minimum body (always < the snap distance,
     // so it can never overshoot the target or the stop); the snap below tags the line cleanly.
@@ -6499,6 +6511,33 @@ function maintainCandles(cameraX, dt) {
    gate indicator unlocks later. */
 // ── Shell economy: shells ARE the player's trading capital (not coins/XP). ──
 const RESERVE = 0;        // No "protected reserve" concept anymore — every shell is earned & spendable.
+/* ══ FOUNDER (build 345) — THE TUTORIAL MUST NOT PAY A TRADING BANKROLL ═══════════════════════════
+   "After you complete the tutorial and you start the game you're already at seventy shells. That's
+   too much to start with, and it devalues the shells."
+
+   IMPORTANT CORRECTION TO THE DIAGNOSIS, recorded because it cost a full recon pass to establish:
+   the MOVEMENT TUTORIAL (window.BlockchainJourney) pays NOTHING. It is a sealed IIFE whose pickups
+   only bump module-local S.shellCount / S.gemCount, and it even defines its own smashBox() which
+   SHADOWS the global one — the global smashBox is the one that pays. Nothing in that module, its
+   teardown, or its onDone chain ever touches player.shells. Zeroing it would have changed the
+   founder's number by exactly zero.
+
+   The ~70 is accumulated AFTER it, during the Level-1 intro:
+       5   START_SHELLS
+       3-6 the intro CINEMATIC's shell fall (banked in IntroCinematic.finish)
+      ~30  SIX-TO-SEVEN teaching reps paying +5 each — quick read, flow read, gate predict,
+           concept practice, and the two intro prediction-bet rounds
+      ~10  the engineered first-trade win
+       25  defeating Guardian 1
+
+   The teaching reps are the runaway item and the only one that is a PARTICIPATION prize: the player
+   is paid for answering a question the tutorial just taught them the answer to. They are muted here.
+   XP, floaters, audio and the "correct!" beat all survive — only the currency is withheld — so the
+   lesson still feels rewarding while a shell stays worth something. The EARNED milestones (the first
+   trade win, the Guardian) are untouched: those the player actually won. */
+function tutorialPaysShells() {
+  try { return !(typeof introFlow !== 'undefined' && introFlow.active); } catch (e) { return true; }
+}
 const START_SHELLS = 5;   // The shell-collecting fall is gone (the cinematic IS the whole intro),
                           // so seed a few starter shells — enough for a real first trade & win.
 const SHELL_PICKUP = 1;   // one collectible shell = one shell (collection funds trading; it never replaces it)
@@ -14302,11 +14341,27 @@ function playBossFlinch(level, n, onDone) {
      always reads as late.
      If the clip is skipped, errors or stalls, finish() clears this timer so the roar of a boss the
      player is no longer looking at never fires over the next question. */
+  /* FOUNDER (build 345) — SPLIT THE ROAR FROM THE STING. Both previous arrangements were wrong in
+     opposite directions, and both complaints were true:
+       build 322  roar at +90ms   → "I heard it, then watched him lurch two seconds later."
+       build 323  roar at +2.42s  → "he's moving and the sound comes two or three seconds after."
+     Re-measured the clips with the SAME method that produced BOSS_FLINCH_IMPACT (tblend=difference →
+     signalstats YAVG, per frame) but reading the ONSET rather than the peak. The peaks reproduced
+     exactly (2.47 / 2.00 / 0.62 / 1.68), which validates the table — and the profile shows the
+     Gambler is ALREADY MOVING from the first frames: flinch-1 carries YAVG 2.0 at 0.13s and never
+     goes quiet before its 10.8 peak; flinch-4 opens at 3.0 and climbs steadily to 20.8. There is no
+     silent wind-up to wait through.
+     So they are two different sounds with two different anchors:
+       ROAR  — a sustained vocalisation. It BEGINS when he begins. Fires at clip start.
+       STING — the percussive hit. It lands on the impact frame. Stays on the measured peak.
+     The nested +80ms on the roar is deleted outright; it was pure added lag.
+     Cancellation still holds: finish() clears _sfxT AND calls GameMusic.roarStop(), so a skipped or
+     stalled clip cannot roar over the next question — roarStop is now the load-bearing guard. */
   const _impact = (BOSS_FLINCH_IMPACT[level] || [])[n - 1];
   const _hitMs  = Math.max(0, Math.round(((typeof _impact === 'number') ? _impact : 0.1) * 1000) - 50);
+  try { if (typeof GameMusic !== 'undefined' && GameMusic.roar) GameMusic.roar(n); } catch (e) {}
   _sfxT = setTimeout(function () {
     try { if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting(n >= 4 ? 'bigwin' : 'hit'); } catch (e) {}
-    try { if (typeof GameMusic !== 'undefined' && GameMusic.roar) setTimeout(function () { try { GameMusic.roar(n); } catch (e) {} }, 80); } catch (e) {}
   }, _hitMs);
   vid.setAttribute('src', src);
   try { vid.loop = false; vid.muted = true; vid.playsInline = true; vid.setAttribute('playsinline',''); vid.load(); } catch (e) {}
@@ -14485,6 +14540,8 @@ function openBoss(level) {
   $('bossFight').classList.toggle('videobg', BOSS_INTRO_VIDEOS.has(level));
   applyBossTheme(level);
   try { GameMusic.unlock(); GameMusic.boss(level); } catch (e) {}
+  // Warm the roar pool at fight START, so the first flinch never waits on a cold .m4a fetch.
+  try { if (GameMusic.roarWarm) GameMusic.roarWarm(); } catch (e) {}
   // ── Content event: boss_encounter (schema #4) ──
   try {
     if (window.ContentLog) window.ContentLog.emit('boss_encounter',
@@ -15126,7 +15183,7 @@ function commitTrade() {
      shrinks — and the drive's body floor shrinks with it (trade._bodyFloor below), so a candle can
      never jump the stop no matter how tight the spot. */
   const _RmaxRoom = Math.min(_roomTP / 2, _roomSL);          // biggest 1R that keeps 2R TP and 1R SL in-world
-  const _Rwant    = TMB * 6;                      // ~132px: the dip alone is then 3-4 candles
+  const _Rwant    = TMB * 7;                      // build 345: 6→7 bodies of risk. With the recentre below this is now the band actually DRAWN, not an aspiration the clamp deletes.
   /* FOUNDER (build 314) — "the stop loss and the take profit was literally right beside me, it had
      zero room to move. It feels bad. It looks bad on the UI."
      Exactly right, and this line was why. The floor was 24px, so whenever the entry landed near a
@@ -15137,8 +15194,51 @@ function commitTrade() {
      price room to swing on the way to target. When the entry genuinely sits too close to an edge to
      hold it, we keep the honest band and let the TP clamp into the world below, rather than
      shrinking the whole trade until it has nothing to say. */
-  const _Rfloor   = TMB * 3;                      // 66px — never cramped, whatever the entry
-  const _rd0      = Math.max(_Rfloor, Math.min(_Rwant, _RmaxRoom));
+  const _Rfloor   = TMB * 5;                      // build 345: 3→5 bodies. The floor is real now that the entry recentres to honour it.
+  let _rd0        = Math.max(_Rfloor, Math.min(_Rwant, _RmaxRoom));
+
+  /* ══ FOUNDER (build 345) — RECENTRE THE BAND, DON'T CLAMP IT ═══════════════════════════════════
+     "Every trade I entered, the stop loss and the take profit were way too close, zero breathing
+     room." Build 314 already tried to fix this with _Rfloor, and the floor is computed correctly —
+     then destroyed two dozen lines below by the reachability clamp:
+
+         if (trade.slH != null) trade.slH = Math.max(CFG.levelMin + 8, ...)
+
+     Worked example, the FIRST trade, long, entry ≈ 100 (the level opens hard against the floor):
+         _roomSL   = 100 - (80 + 8)          =  12
+         _RmaxRoom = min(592/2, 12)          =  12
+         _rd0      = max(66, min(132, 12))   =  66     ← the floor does its job here…
+         slH       = 100 - 66 = 34 → CLAMPED to 88     ← …and is thrown away here
+         REAL stop distance = 100 - 88      =  12px    ← under one candle body
+
+     So the honest band was 66 and the band actually drawn was 12. That is the whole complaint, and
+     no amount of raising _Rfloor could ever fix it — the clamp was always going to win.
+
+     The band is not the thing that should move. The ENTRY is. Both lines are placed relative to
+     entryH, and a few lines below the drive is re-seeded with `market.level = trade.entryH` and Finn
+     is stood exactly on the entry line — so shifting the entry carries the price, the chart and the
+     character with it, and costs nothing visually. Shift it into the window where the FULL band fits
+     and the clamps below become no-ops.
+
+     Only if the world itself is too short for the requested R does R shrink — and then it shrinks
+     honestly, before the lines are placed, instead of being silently amputated afterwards. */
+  {
+    const _lo = CFG.levelMin + 8, _hi = CFG.levelMax - 8;
+    /* 1.2, not 1: the GUIDED first trades place the stop at _rd0 * 1.2 (see the _introTrade branch
+       just below) while the general L1-3 branch uses 1.0. Sizing the window for the WIDER of the two
+       keeps both safe — using 1.0 here left the guided stop 22px under the floor and the clamp bit
+       anyway, which is the exact failure this block exists to remove. */
+    const _needBelow = long ? 1.2 : 2, _needAbove = long ? 2 : 1.2;
+    // Largest R the world can hold at all (1.2R + 2R = 3.2R of span), with a little slack.
+    _rd0 = Math.min(_rd0, (_hi - _lo) / 3.25);
+    const _winLo = _lo + _rd0 * _needBelow;
+    const _winHi = _hi - _rd0 * _needAbove;
+    if (_winHi > _winLo) {
+      const _fit = Math.max(_winLo, Math.min(_winHi, trade.entryH));
+      if (Math.abs(_fit - trade.entryH) > 0.5) trade.entryH = _fit;   // carried by market.level + Finn below
+    }
+  }
+
   if (_introTrade && sIdx >= 0) {
     // FIRST 3 GUIDED TRADES → ALWAYS a clean 2:1 WIN. The chart is DRIVEN to the target
     // (tradeDrivenCandle), and the TP snaps to the TOP of the tagging candle — never mid-body.
@@ -15285,7 +15385,7 @@ $('intermission').addEventListener('pointerup', (e) => {
           if (q && r.i === q.correct) {
             // ECONOMY REBALANCE — a quiz answer is a small bonus, not a jackpot (was +50/+35).
             addXP(15);
-            player.shells += 5;
+            if (tutorialPaysShells()) player.shells += 5;   // build 345: teaching rep — XP/juice kept, shells withheld during the intro tutorial
             floaters.push({ text: '+15 XP  +5 🐚', color: '#ffd60a', y: 64, t: 2 });
           }
         }
@@ -15357,7 +15457,7 @@ function openPortalPredict(idx) {
     if (cfPredictAnswered) return;
     cfPredictAnswered = true;
     const ok = pick === correct;
-    if (ok) { gatePredictCredit(); player.shells += 5; addXP(5); }   // XP RULE — +5 Shells +5 XP, always
+    if (ok) { gatePredictCredit(); if (tutorialPaysShells()) player.shells += 5; addXP(5); }   // XP RULE — +5 Shells +5 XP, always   // build 345: teaching rep — XP/juice kept, shells withheld during the intro tutorial
     up.style.display = 'none'; dn.style.display = 'none';
     q.textContent = ok ? '✓ NICE READ' : '✗ NOT QUITE';
     q.style.color = ok ? COLOR.greenBody : COLOR.redBody;
@@ -15570,7 +15670,7 @@ function updateFlowRead(dt) {
     flowRead.result = correct; flowRead.resultT = 0;
     try { quickReadStats.total++; if (correct) quickReadStats.correct++; saveQuickReadStats(); } catch (e) {}
     if (correct) {
-      player.shells += 5; try { addXP(5); } catch (e) {}
+      if (tutorialPaysShells()) player.shells += 5; try { addXP(5); } catch (e) {}   // build 345: teaching rep — XP/juice kept, shells withheld during the intro tutorial
       try { gatePredictCredit(); } catch (e) {}
       if (introFlow.active && introFlow.phase === 'prove') introFlow.proveReads = (introFlow.proveReads || 0) + 1;
       floaters.push({ text: '✓ NICE READ!  +5 🐚', color: '#5dedb5', y: H * 0.17, t: 1.5, center: true, size: 16, glow: true });
@@ -15667,7 +15767,7 @@ function answerQuickRead(hit) {
   quickRead.result = (hit === quickRead.answer); quickRead.resultT = 0;
   quickReadStats.total++; if (quickRead.result) quickReadStats.correct++; saveQuickReadStats();
   if (quickRead.result) {
-    player.shells += 5; addXP(5);   // XP RULE — every correct prediction: +5 Shells +5 XP, ALWAYS
+    if (tutorialPaysShells()) player.shells += 5; addXP(5);   // XP RULE — every correct prediction: +5 Shells +5 XP, ALWAYS   // build 345: teaching rep — XP/juice kept, shells withheld during the intro tutorial
     gatePredictCredit();   // a correct read counts toward the Guardian's mastery gate
     if (introFlow.active && introFlow.phase === 'prove') introFlow.proveReads = (introFlow.proveReads || 0) + 1;
     floaters.push({ text:'✓ NICE READ!', color:'#5dedb5', y: H*0.16, t:1.4, center:true, size:16, glow:true });
@@ -19796,7 +19896,11 @@ function drawPersistentTeach() {
   // thing), so it reinforces without competing with the chart for attention.
   ctx.save();
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-  const LX = 12, LY = 98;   // CQ-0015: moved DOWN so it clears the faction badge (y51–69) + notebook
+  /* build 345 — LY 98 → 118. The card rect starts at LY-18, so 98 put its top edge on y80, which is
+     exactly the price baseline in drawHUD (see the note there). 118 puts the card top at y100, a
+     clean ~13px under the price. Card padding + leading widen with it below, or the two legend lines
+     would overflow the taller box. */
+  const LX = 12, LY = 118;  // CQ-0015: moved DOWN so it clears the faction badge (y51–69) + notebook
   const header = 'CURRENT LESSON';
   const concept = persistLessonLine(lvl);
   // CQ-0015: a two-part legend (e.g. GREEN = UP · RED = DOWN) stacks onto two lines so it's
@@ -19820,7 +19924,7 @@ function drawPersistentTeach() {
   ctx.font = '800 12px ' + SANS;
   let cw2 = 0; for (let i = 0; i < lines.length; i++) cw2 = Math.max(cw2, ctx.measureText(lines[i]).width);
   const cardW = Math.max(hw, cw2) + 16;
-  const cardH = 20 + lines.length * 15;
+  const cardH = 24 + lines.length * 17;   // build 345: +4 padding, +2 leading — the lines were tight too
   // CQ-0016: was globalAlpha 0.84 × fill-alpha 0.84 ≈ 0.70 effective, so entry/stop price
   // text behind it bled through and read as a glitch. Make the panel near-opaque.
   ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(9,13,20,0.96)';
@@ -19832,7 +19936,7 @@ function drawPersistentTeach() {
   ctx.fillText(header, LX, LY - 2);
   try { ctx.letterSpacing = '0px'; } catch (e) {}
   ctx.globalAlpha = 0.97; ctx.fillStyle = '#e3eef7'; ctx.font = '800 12px ' + SANS;
-  for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i], LX, LY + 12 + i * 15);
+  for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i], LX, LY + 14 + i * 17);   // build 345: matches cardH leading
   ctx.restore();
 }
 
@@ -20001,7 +20105,13 @@ function drawHUD() {
       const ps = MarketPrice.status(fc.ticker);
       if (ps && isFinite(ps.v) && ps.v > 0) {
         const live = (ps.kind === 'live' || ps.kind === 'cached');
-        const py = by + bh + 11;
+        /* FOUNDER (build 345) — "the badge, the price and the lesson are all squished together."
+           Measured stack was: HUD bar 0-46 · badge 51-69 · price BASELINE 80 · lesson card top 80.
+           The card's top edge landed exactly on the price baseline, so it clipped the glyph
+           descenders and the three read as one blob. This opens badge→price from ~4px of visible
+           whitespace to ~11px; drawPersistentTeach's LY opens price→card to ~13px. The provenance
+           dot below tracks py automatically. */
+        const py = by + bh + 18;
         ctx.font = '9px ' + MONO;
         ctx.fillStyle = live ? 'rgba(196,210,228,0.88)' : 'rgba(150,162,180,0.62)';
         ctx.fillText(fmtPrice(ps.v), bx + 12, py);
@@ -21140,7 +21250,7 @@ function awardIntroBet(correct) {
   if (b.round === 0) {
     // The engineered FIRST WIN — a free, can't-lose first read. Pure dopamine, no stake.
     if (!correct) return;
-    player.shells += INTRO_BET_REWARD.sh;
+    if (tutorialPaysShells()) player.shells += INTRO_BET_REWARD.sh;   // build 345: teaching rep — XP/juice kept, shells withheld during the intro tutorial
     addXP(INTRO_BET_REWARD.xp);
     try { CineAudio && CineAudio.coin && CineAudio.coin(); } catch (e) {}
     // The Prediction Bet is a tutorial exercise, NOT a trade — it is no longer logged to
@@ -21149,7 +21259,7 @@ function awardIntroBet(correct) {
   }
   // Round 1+: a REAL staked read — your shells are on the line. A misread COSTS you.
   if (correct) {
-    player.shells += INTRO_BET_STAKE.reward;
+    if (tutorialPaysShells()) player.shells += INTRO_BET_STAKE.reward;   // build 345: teaching rep — XP/juice kept, shells withheld during the intro tutorial
     addXP(INTRO_BET_REWARD.xp);
     try { CineAudio && CineAudio.coin && CineAudio.coin(); } catch (e) {}
   } else {
@@ -22895,15 +23005,30 @@ const BlockchainJourney = (() => {
       {c:'green',h:268,tower:1},                     // 11 JETPACK teach — too tall to jump; BOOST over the crown
       {c:'green',h:156,shell:1,air:[[240,18],[420,40]]},                 // 12 step down + FIRST air chain — SINGLE-boost only (tops out at 420, under the 469 ceiling) on purpose: one boost from here lands ON candle 14, so the taste of flying can't carry him over the box teach
       {c:'green',h:156},                             // 13 flat — settle after the tower
-      {c:'green',h:156,box:1},                       // 14 BOX #1 — now they know jump + roll → SMASH it
+      /* FOUNDER (build 345) — BREATHING ROOM. "after you jump three times you kinda pass the first
+         box, then you have to go back and smash it. I don't want that to happen."
+         Exactly right, and this is where it happened: the tower teach ended one flat candle before
+         BOX #1. Finn auto-walks at JWALK 86px/s over ~56px bodies — about 0.65s per candle — and
+         turning left is blocked until 3 candles are cleared, so an overshoot was unrecoverable.
+         Six FLAT candles are added across this stretch (here, after the smash, and before boxes
+         #2/#3/#4). Flat is deliberate: every step delta in this world is authored against the
+         measured 132px hop, so adding distance at the SAME height buys reaction time without
+         changing a single jump the terrain teaches. */
+      {c:'green',h:156},                             // +  345: approach room
+      {c:'green',h:156},                             // +  345: approach room — read the box before you reach it
+      {c:'green',h:156,box:1},                       // 14 BOX #1 — now they know jump + boost → SMASH it
+      {c:'green',h:156},                             // +  345: landing room after the first smash
       {c:'red',  h:200,air:[[250,19],[440,43],[580,61]]},                // 15 first DOUBLE-boost chain — safely AFTER the box teach (a double travels ~3 candles)
+      {c:'green',h:146},                             // +  345: approach room for box #2
       {c:'green',h:146,box:1},                       // 16 BOX #2
       {c:'green',h:146,air:[[250,19],[440,43],[580,61],[720,74]]},       // 17 the full double-boost ladder (top one rewards good timing)
       {c:'red',  h:206,shell:1},                     // 18 WALL
       {c:'green',h:150},                             // 19 step down — flat run-up to the wick
       {c:'green',h:150,wick:1},                      // 20 WICK → TAP to LAUNCH
       {c:'green',h:236,spinTo:1,air:[[260,20],[460,45],[600,63]]},       // 21 big candle (landed via the launch) + an air chain to celebrate the landing
+      {c:'green',h:162},                             // +  345: approach room for box #3
       {c:'green',h:162,box:1},                       // 22 BOX #3
+      {c:'green',h:162},                             // +  345: the last two boxes were back-to-back — one beat between them
       {c:'green',h:162,box:1},                       // 23 BOX #4 — same calm height, smash on the pass
       {c:'red',  h:214,shell:1},                     // 24 WALL — the last jump
       {c:'green',h:158,air:[[240,18],[430,42],[570,60]]},                // 25 step down + a last double-boost chain before the giant
@@ -22932,8 +23057,17 @@ const BlockchainJourney = (() => {
       if (sp.box){ S.boxes.push({ cx:c, off:52, w:40, h:40, broken:false, breakT:0, bob:Math.random()*6.28, glow:Math.random()*6.28, excite:0, rot:0, orb:Math.random()*6.28 }); }   // BIGGER (40) + floats clearly ABOVE the candle (the shell-roll tutorial target)
       x += w;
     }
-    // the giant sits flush against the last candle (chart-true) — the challenge is pure HEIGHT → jump + BOOST required (no auto-boost); a failed hop bonks the face and drops him back on the last crown, no pit
-    const gw=112, gh=352, gx=x;
+    /* FOUNDER (build 345) — "the very last candle before the portal should be the same size as the
+       others. There should not be a bigger candle for any reason. It violates our chart and candle
+       rule set."
+       It was gw:112 / gh:352 against a 54-wide / 200-tall neighbour — 2x the width and 1.76x the
+       height — and drawGiant inflated it further (see there). It was an intentional boost gate; the
+       rule outranks the gate. DERIVED from the last real candle rather than re-hard-coded, so it can
+       never drift out of parity with the spec again. The portal is anchored to base - giant.h -
+       PORTAL_LIFT, so it simply descends with the crown and stays exactly PORTAL_LIFT above it —
+       still a boost to reach, just no longer a wall to climb first. */
+    const _lastC = S.candles[S.candles.length - 1];
+    const gw = _lastC ? _lastC.w : 54, gh = _lastC ? _lastC.h : 200, gx = x;
     S.giant={ x:gx, w:gw, h:gh, rise:0, breathe:0, landT:0 };
     S.worldEnd=gx+gw+220;
 
@@ -23022,7 +23156,7 @@ const BlockchainJourney = (() => {
     turtle.tucked=false; turtle.rollT=0; turtle.rot=0;                  // the jetpack also beats a roll (same as the real game's fireJetpack)
     turtle.boostsUsed++; turtle.vy=CFG.jetpack1Velocity; turtle.jetT=CFG.jetpackHang; turtle.onGround=false; turtle.flameT=0.32; S.hintUp=0; S.taught.boost=true; teachCredit('boost');
     turtle.coyoteT=0;                                                   // a boost consumes the ground window too
-    if(turtle.boostsUsed>=2) S.taught.boost2=true;                          // they chained a second boost — the double-jump lesson
+    if(turtle.boostsUsed>=2){ S.taught.boost2=true; teachCredit('boost2'); }  // they chained a second boost — build 345: this now CREDITS the double-boost stage (the flag alone was dead)
     gm('boost',1); hap(S.rm?0:12); }
   // an UP input that can't boost still has to DO something — a dead flick was reading as "the game ignored me"
   function doUp(){ if(!inputLive()) return; if(onWickCandle()||boostAvailable()) doBoost(); else doJump(); }
@@ -23627,11 +23761,14 @@ const BlockchainJourney = (() => {
   }
 
   function drawGiant(camX){
-    const g=S.giant,top=giantTop(),bx=g.x-camX,cx=bx+g.w*0.5,bot=Math.max(top+40,S.base+40),glow=0.55+0.45*Math.sin(S.tGlobal*1.4),react=g.landT;
+    // build 345 — bot was S.base+40, i.e. 40px BELOW the baseline every other candle bottoms out at
+    // (drawCandle uses bot=S.base), so it read taller than its own h. Now flush with the rest.
+    const g=S.giant,top=giantTop(),bx=g.x-camX,cx=bx+g.w*0.5,bot=S.base,glow=0.55+0.45*Math.sin(S.tGlobal*1.4),react=g.landT;
     const gspr=S.glowSprites&&S.glowSprites.green;
     if(gspr){ ctx.save(); ctx.globalAlpha=Math.min(1,0.55+0.25*glow+0.6*react); ctx.drawImage(gspr,bx-70,top-70,g.w+140,(bot-top)+140); ctx.restore(); }
     else { ctx.save(); ctx.shadowColor=GREEN; ctx.shadowBlur=34+22*glow+30*react; ctx.fillStyle=`rgba(22,199,132,${0.16+0.12*react})`; ctx.fillRect(bx-12,top-12,g.w+24,(bot-top)+24); ctx.restore(); }
-    ctx.strokeStyle=GREEN; ctx.lineWidth=Math.max(2,g.w*0.05); ctx.beginPath(); ctx.moveTo(cx,top); ctx.lineTo(cx,top-54); ctx.stroke();
+    // build 345 — wick was a fixed 54px against ~36px on every normal candle at full growth. Matched.
+    ctx.strokeStyle=GREEN; ctx.lineWidth=Math.max(2,g.w*0.05); ctx.beginPath(); ctx.moveTo(cx,top); ctx.lineTo(cx,top-36); ctx.stroke();
     ctx.fillStyle=GREEN; ctx.fillRect(bx,top,g.w,bot-top);
     ctx.strokeStyle=GREEN_EDGE; ctx.lineWidth=1; ctx.strokeRect(bx+0.5,top+0.5,g.w-1,(bot-top)-1);
     ctx.fillStyle=GREEN_SHEEN; ctx.globalAlpha=0.55; ctx.fillRect(bx+1,top+1,g.w-2,Math.max(2,g.w*0.16)); ctx.globalAlpha=1;
@@ -23781,10 +23918,21 @@ const BlockchainJourney = (() => {
      tower that needs a boost, then the data boxes. A stage can also be RETIRED by reaching the
      end of the world (see teachSkipToPortal) so a player who runs out of terrain is never asked
      for a verb the chart can no longer offer. */
+  /* FOUNDER (build 345) — TEACH THE DOUBLE BOOST, AND TEACH THE RIGHT SMASH.
+     Two gaps in the old three-stage list:
+     (1) The double boost was never mentioned. S.taught.boost2 was being SET on every second boost
+         and read absolutely nowhere — a dead flag. The air chains at spec 15/17/21/25 are hung at
+         520-610px precisely because that band is impossible on one boost and reachable on any
+         double, so the world already taught it silently; now the banner says it out loud.
+     (2) The smash was worded "JUMP + SWIPE DOWN". The mechanic accepts ANY airborne dive (doDive
+         sets tucked whenever !onGround), so boost-then-dive already worked — and it is the better
+         move, because the boost buys the height that makes the dive land square on the box.
+     `need` is 2 for the double so it reads as a lesson, not a grind. */
   const TEACH_STAGES = [
-    { key:'jump',  need:3, g:'tap',  t:'TAP to JUMP' },
-    { key:'boost', need:3, g:'up',   t:'SWIPE UP to BOOST' },
-    { key:'smash', need:3, g:'down', t:'JUMP + SWIPE DOWN to SMASH' },
+    { key:'jump',   need:3, g:'tap',  t:'TAP to JUMP' },
+    { key:'boost',  need:3, g:'up',   t:'SWIPE UP to BOOST' },
+    { key:'boost2', need:2, g:'up',   t:'SWIPE UP TWICE — DOUBLE BOOST goes higher' },
+    { key:'smash',  need:3, g:'down', t:'BOOST, then SWIPE DOWN to SMASH' },
   ];
   // Credit one rep of a verb. Only the ACTIVE stage counts, so practising ahead never skips a step.
   function teachCredit(key){
@@ -24351,7 +24499,12 @@ const GameMusic = (() => {
     master.gain.cancelScheduledValues(a.currentTime);
     master.gain.linearRampToValueAtTime(base * level, a.currentTime + (ramp || 0.5));
   }
-  return { unlock, setMuted, play, boss, stop, sting, roar, roarStop, duckTo, isOn: () => started, move };
+  /* Build the roar pool WITHOUT playing it, so the .m4a files are buffered long before the first
+     flinch. They were previously created inside roarReal() microseconds before .play(), so the very
+     first roar of a fight waited on a cold network fetch — a second source of the lag the founder
+     heard, on top of the 2.4s scheduling delay. Never bypasses the `muted` gate: this only fetches. */
+  function roarWarm() { try { roarPool(); } catch (e) {} }
+  return { unlock, setMuted, play, boss, stop, sting, roar, roarStop, roarWarm, duckTo, isOn: () => started, move };
 })();
 
 /* ════════ BOSS ARENA (animated background per boss) ════════ */
@@ -26228,7 +26381,7 @@ function openConceptPractice(key, onDone){
   function close(){ if (!ov.parentNode) return; try { cancelAnimationFrame(raf); } catch(e){} ov.remove(); conceptPracticeActive = false;
     try { paused = prevPaused; session.inModal = false; turtle.halt = false; faceRight(); } catch(e){} finish(); }
   function succeed(){ settled = true;
-    try { player.shells += 5; addXP(5); } catch(e){}
+    try { if (tutorialPaysShells()) player.shells += 5; addXP(5); } catch(e){}   // build 345: teaching rep — XP/juice kept, shells withheld during the intro tutorial
     try { if (typeof gatePredictCredit === 'function') gatePredictCredit(); } catch(e){}
     try { GameMusic && GameMusic.sting && GameMusic.sting('coin'); } catch(e){}
     /* MINIMUM-3-SECONDS RULE (build 216) — the result used to flash for 1.25s; every feedback

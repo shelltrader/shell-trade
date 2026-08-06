@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="37591e599f" data-built-at="2026-08-06T06:03:33Z">
+<meta name="cq-build" content="9165ec4788" data-built-at="2026-08-06T06:16:31Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 345 - PLAYTEST HOTFIXES (6). (1) MOVEMENT TUTORIAL: teaches the DOUBLE BOOST for the first time (S.taught.boost2 was being set and read NOWHERE - a dead flag), smash reworded JUMP+SWIPE DOWN to BOOST, then SWIPE DOWN (the mechanic always accepted any airborne dive; boost is the better move and buys the height), and SIX flat candles added for breathing room - approach room before every box and a beat between the last two, which were back-to-back. Flat is deliberate: every step delta in that world is authored against the measured 132px hop, so distance is added without changing a single jump. 30 candles to 36. (2) THE GIANT before the portal is no longer oversized - it was gw112/gh352 against a 54x200 neighbour and drawGiant inflated it further (body drawn 40px BELOW the shared baseline, 54px wick vs 36). Now DERIVED from the last real candle so it can never drift again. It was an intentional boost gate; the candle rule outranks the gate. (3) SHELLS: the tutorial no longer pays a bankroll. CORRECTION - the movement tutorial never paid anything (sealed IIFE, its own smashBox shadows the global one). The ~70 came from SIX-TO-SEVEN teaching reps paying +5 each during the L1 intro. Those are muted (XP, floaters and audio kept); the EARNED milestones (first trade win, Guardian) untouched. (4) HUD: badge, price and CURRENT LESSON were measured overlapping - the card top edge sat exactly on the price baseline (both y80), clipping the descenders. Spaced to ~11px and ~13px, with card padding and leading widened to match. (5) TRADE BREATHING ROOM - the big one. Build 314 added an R floor and it was being DESTROYED by the reachability clamp 25 lines later: at the L1 entry (~100, hard against the 80 floor) the honest band computed 66 and the band actually DRAWN was 12px, against a 22px candle body. One candle was 183 percent of the entire risk distance. Fixed by recentring the ENTRY instead of clamping the LINES - market.level is re-seeded from entryH and Finn is stood on it, so the chart and the character follow for free. Measured after: stop distance 12px to 132px, target 220px, and the clamp never fires at any entry. R floor 3 to 5 bodies, want 6 to 7. Volatility raised so the chart stops reading flat: DRIVE_EASE 0.10 to 0.15, step spread 0.7-2.4 to 0.55-3.0, counter-candle rate 0.42 to 0.50 and depth 0.05-0.16R to 0.10-0.28R. (6) BOSS SFX: the roar was 2.4s late because it was scheduled on the measured IMPACT PEAK. Re-measured the clips with the same method (tblend difference, signalstats YAVG per frame): peaks reproduced exactly, and the profile shows the Gambler is ALREADY MOVING from the first frames - flinch-1 carries motion at 0.13s, flinch-4 at 0.02s. There is no silent wind-up. Split them: the ROAR is a sustained vocalisation and now fires at clip start with the movement; the impact STING stays on the measured peak. Nested +80ms deleted. Roar pool pre-warmed at fight start so the first roar is not a cold fetch.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 346 - DOUBLE-BOOST PARITY + BOSS FLINCH SOUND BED + BANNER FIX. (1) The tutorial double boost now MATCHES THE REAL GAME. doBoost used CFG.jetpack1Velocity for BOTH charges while the live-game fireJetpack picks jetpack2Velocity for the second (-1242 vs -1518), so the tutorial was teaching a double boost 22 percent weaker than the one the player takes into Level 1 - the exact move it exists to teach, taught wrong. Same ternary, same boostsUsed convention. The air chains sit at 520-610px because that band is impossible on ONE boost, so a stronger second charge only clears them more comfortably; nothing taught becomes unreachable. (2) BOSS FLINCH SOUND BED fills the dead air. Measured with ffprobe: after the impact there is 1.02s (flinch-2) to 3.50s (flinch-4) of video left with NOTHING on it, and the music was ALSO ducked to 0.25 for all of it - quiet music and silence at once, which is why the hit felt like it ended before the picture did. flinch-1 additionally has a 0.47s hole between the roar ending and the impact. Three synthesised layers on the existing bus (no new assets, nothing to precache, obeys mute): a WIND-UP sub growl climbing into the hit so the impact is arrived at rather than sprung; sub WEIGHT plus a crack under the existing hit sting; and an AFTERMATH rumble decaying across the REAL tail length with dust settling behind it. All scheduled on the AUDIO clock in one call, so they cannot drift from the picture the way the old setTimeout roar did. New BOSS_FLINCH_DUR table (measured clip lengths) sizes the tail. The music duck now RELEASES across the tail instead of snapping at clip end, so the bed breathes back while he is still reeling. (3) TEACH BANNER was cutting off in frame. The pill was single-line and sized purely from its text, so the new double-boost label overflowed by 66px at a 320px viewport, 47px at 360 and 42px at 406 - cut off on every phone width. Stages may now carry a second line (action on top, benefit beneath, quieter), AND the font shrinks until the pill fits with a margin, so no future wording in any language can overflow it again. Verified at 320/360/406: every stage fits, including the smash line which was also at risk.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -14291,6 +14291,12 @@ const BOSS_FLINCH_VIDEOS = {
 const BOSS_FLINCH_IMPACT = {
   1: [2.47, 2.00, 0.62, 1.68],   // flinch 1..4 for THE GAMBLER
 };
+/* Clip lengths, measured with ffprobe (build 346). Needed to size the AFTERMATH bed to the real
+   tail: the silence after the impact runs 1.02s (flinch-2) to 3.50s (flinch-4), and guessing it
+   would either cut the rumble short or leave it droning over the next question. */
+const BOSS_FLINCH_DUR = {
+  1: [3.92, 3.02, 3.53, 5.18],   // flinch 1..4 for THE GAMBLER
+};
 /* Play flinch `n` (1-based) fullscreen, then hand control back. Modelled on
    playBossOutroCinematic, with one deliberate difference: the outro ENDS a scene and so leaves the
    last frame up as a dimmed backdrop ('asbg'). A flinch happens MID-FIGHT, so it must clear the
@@ -14360,8 +14366,20 @@ function playBossFlinch(level, n, onDone) {
   const _impact = (BOSS_FLINCH_IMPACT[level] || [])[n - 1];
   const _hitMs  = Math.max(0, Math.round(((typeof _impact === 'number') ? _impact : 0.1) * 1000) - 50);
   try { if (typeof GameMusic !== 'undefined' && GameMusic.roar) GameMusic.roar(n); } catch (e) {}
+  /* build 346 — fill the dead air. The bed is scheduled on the AUDIO clock in one call, so the
+     wind-up, the impact weight and the aftermath rumble all stay locked to each other even if the
+     main thread stutters. Sized from the measured impact + clip length. */
+  const _clipDur = (BOSS_FLINCH_DUR[level] || [])[n - 1];
+  const _windup  = (typeof _impact === 'number') ? _impact : 1.0;
+  const _tail    = (typeof _clipDur === 'number' && typeof _impact === 'number') ? Math.max(0.3, _clipDur - _impact) : 1.2;
+  try { if (typeof GameMusic !== 'undefined' && GameMusic.bossFlinch) GameMusic.bossFlinch(_windup, _tail); } catch (e) {}
   _sfxT = setTimeout(function () {
     try { if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting(n >= 4 ? 'bigwin' : 'hit'); } catch (e) {}
+    /* Release the duck ACROSS the tail instead of snapping it at clip end. The music was held at
+       0.25 through the entire post-impact tail — up to 3.5s of quiet music over silent picture.
+       Now the bed breathes back in while he is still reeling; finish() still guarantees full
+       volume if the clip is skipped or stalls. */
+    try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(1, Math.max(0.4, _tail * 0.8)); } catch (e) {}
   }, _hitMs);
   vid.setAttribute('src', src);
   try { vid.loop = false; vid.muted = true; vid.playsInline = true; vid.setAttribute('playsinline',''); vid.load(); } catch (e) {}
@@ -23154,7 +23172,15 @@ const BlockchainJourney = (() => {
     if(onWickCandle()){ startSpin(S.candles[S.cur]); return; }          // up-input on a long wick also spins
     if(!boostAvailable()) return;
     turtle.tucked=false; turtle.rollT=0; turtle.rot=0;                  // the jetpack also beats a roll (same as the real game's fireJetpack)
-    turtle.boostsUsed++; turtle.vy=CFG.jetpack1Velocity; turtle.jetT=CFG.jetpackHang; turtle.onGround=false; turtle.flameT=0.32; S.hintUp=0; S.taught.boost=true; teachCredit('boost');
+    /* build 345 — MATCH THE REAL GAME. This used CFG.jetpack1Velocity for BOTH charges, while
+       fireJetpack (the live-game path) picks jetpack2Velocity for the second: -1242 vs -1518.
+       So the tutorial was teaching a double boost that is 22% weaker than the one the player then
+       takes into Level 1 — the exact move it exists to teach, taught wrong. Same ternary as the
+       real game, same boostsUsed convention (already incremented, so 1 === the first charge).
+       The air chains are unaffected in the direction that matters: they sit at 520-610px because
+       that band is impossible on ONE boost, and a STRONGER second charge only clears them more
+       comfortably — it cannot make a taught shell unreachable. */
+    turtle.boostsUsed++; turtle.vy=(turtle.boostsUsed===1)?CFG.jetpack1Velocity:CFG.jetpack2Velocity; turtle.jetT=CFG.jetpackHang; turtle.onGround=false; turtle.flameT=0.32; S.hintUp=0; S.taught.boost=true; teachCredit('boost');
     turtle.coyoteT=0;                                                   // a boost consumes the ground window too
     if(turtle.boostsUsed>=2){ S.taught.boost2=true; teachCredit('boost2'); }  // they chained a second boost — build 345: this now CREDITS the double-boost stage (the flag alone was dead)
     gm('boost',1); hap(S.rm?0:12); }
@@ -23931,7 +23957,7 @@ const BlockchainJourney = (() => {
   const TEACH_STAGES = [
     { key:'jump',   need:3, g:'tap',  t:'TAP to JUMP' },
     { key:'boost',  need:3, g:'up',   t:'SWIPE UP to BOOST' },
-    { key:'boost2', need:2, g:'up',   t:'SWIPE UP TWICE — DOUBLE BOOST goes higher' },
+    { key:'boost2', need:2, g:'up',   t:'SWIPE UP TWICE', t2:'DOUBLE BOOST — go higher' },
     { key:'smash',  need:3, g:'down', t:'BOOST, then SWIPE DOWN to SMASH' },
   ];
   // Credit one rep of a verb. Only the ACTIVE stage counts, so practising ahead never skips a step.
@@ -23983,13 +24009,39 @@ const BlockchainJourney = (() => {
   function drawTeach(){
     const teach=currentTeach(); if(!teach) return;
     const cx=W/2, cy=H*0.72, pl=0.6+0.4*Math.sin(S.teachPulse);
-    ctx.save(); ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.font='600 '+Math.round(Math.min(W,H)*0.04)+'px '+F;
-    const tw=ctx.measureText(teach.t).width, iconW=30, padX=18, gap=12, bh=Math.round(Math.min(W,H)*0.088);
-    const bw=iconW+gap+tw+padX*2, bx=cx-bw/2, by=cy-bh/2;
+    ctx.save(); ctx.textAlign='left'; ctx.textBaseline='middle';
+    /* build 346 — TWO-LINE LABELS + A HARD WIDTH CLAMP.
+       The pill was single-line and sized purely from the text, so a long label simply ran off the
+       screen: "SWIPE UP TWICE - DOUBLE BOOST goes higher" measured wider than the 406px play area
+       and was cut off in frame. Two fixes, because either alone would leave the trap open:
+         • a stage may now carry `t2`, rendered as a second line — action on top, benefit beneath;
+         • whatever the label, the font SHRINKS until the pill fits the viewport with a margin.
+       So no future wording, in any language, can overflow it again. */
+    const lines = teach.t2 ? [teach.t, teach.t2] : [teach.t];
+    const iconW=30, padX=18, gap=12, maxBW = W - 24;
+    let fs = Math.round(Math.min(W,H)*0.04), tw = 0;
+    for (let guard=0; guard<12; guard++) {
+      ctx.font='600 '+fs+'px '+F;
+      tw = Math.max.apply(null, lines.map(function(l){ return ctx.measureText(l).width; }));
+      if (iconW+gap+tw+padX*2 <= maxBW || fs <= 10) break;
+      fs -= 1;
+    }
+    const lh = Math.round(fs*1.20);
+    const bh = Math.round(Math.min(W,H)*0.088) + (lines.length>1 ? lh : 0);
+    const bw=Math.min(maxBW, iconW+gap+tw+padX*2), bx=cx-bw/2, by=cy-bh/2;
     ctx.globalAlpha=0.9; ctx.fillStyle='rgba(9,15,26,0.85)'; rr(bx,by,bw,bh,bh/2); ctx.fill();
     ctx.strokeStyle=`rgba(143,242,201,${0.45+0.4*pl})`; ctx.lineWidth=2; rr(bx,by,bw,bh,bh/2); ctx.stroke();
     drawGesture(teach.g, bx+padX+iconW/2, cy);
-    ctx.globalAlpha=1; ctx.fillStyle='rgba(240,248,255,0.98)'; ctx.fillText(teach.t, bx+padX+iconW+gap, cy+1);
+    ctx.globalAlpha=1;
+    const tx = bx+padX+iconW+gap;
+    if (lines.length>1) {
+      ctx.fillStyle='rgba(240,248,255,0.98)'; ctx.font='600 '+fs+'px '+F;
+      ctx.fillText(lines[0], tx, cy - lh*0.46 + 1);
+      ctx.fillStyle='rgba(143,242,201,0.92)'; ctx.font='600 '+Math.round(fs*0.86)+'px '+F;   // the benefit, quieter than the action
+      ctx.fillText(lines[1], tx, cy + lh*0.52 + 1);
+    } else {
+      ctx.fillStyle='rgba(240,248,255,0.98)'; ctx.fillText(lines[0], tx, cy+1);
+    }
     /* PROGRESS PIPS — the prompt now deliberately repeats until the verb is done `need` times, so
        without a visible count a held banner reads as frozen. Three small dots filling in is the
        cheapest honest signal that the player IS progressing. Not an "unlock animation" (founder
@@ -24504,7 +24556,49 @@ const GameMusic = (() => {
      first roar of a fight waited on a cold network fetch — a second source of the lag the founder
      heard, on top of the 2.4s scheduling delay. Never bypasses the `muted` gate: this only fetches. */
   function roarWarm() { try { roarPool(); } catch (e) {} }
-  return { unlock, setMuted, play, boss, stop, sting, roar, roarStop, roarWarm, duckTo, isOn: () => started, move };
+
+  /* ══ BOSS FLINCH BED (build 346) — the dead air around the hit ════════════════════════════════
+     FOUNDER: "can you add something for the dead space between the start of the video and the roar,
+     and the end of the video after the flinch?"
+     Measured on the shipped clips (ffprobe + the same per-frame motion analysis used for the impact
+     table), the dead space is mostly at the BACK:
+         flinch-1  3.92s, impact 2.47  →  0.47s hole after the roar ends, then 1.45s of tail
+         flinch-2  3.02s, impact 2.00  →  1.02s of tail
+         flinch-3  3.53s, impact 0.62  →  2.91s of tail
+         flinch-4  5.18s, impact 1.68  →  3.50s of tail
+     …and for every one of those seconds the music is ALSO ducked to 0.25, so it was quiet music and
+     no sound at once. That is why the hit felt like it finished before the picture did.
+
+     Three layers, all synthesised on the existing bus — no new assets to ship, nothing to precache,
+     obeys `muted` like everything else — and all SCHEDULED ON THE AUDIO CLOCK rather than setTimeout,
+     so they cannot drift from the picture the way the old roar timer did:
+        WIND-UP    a sub growl climbing into the hit, so the impact is ARRIVED AT, not sprung
+        IMPACT     sub weight + a crack underneath the existing 'hit' sting
+        AFTERMATH  a rumble decaying across the REAL tail length, then dust settling
+     The caller also releases the music duck across the tail instead of snapping it at clip end, so
+     the bed breathes back in while he is still reeling. */
+  function bossFlinch(windupSec, tailSec) {
+    const a = ctx(); if (!a || muted) return;
+    const bus = a.createGain(); bus.gain.value = 1; bus.connect(a.destination);
+    const t = a.currentTime;
+    const wu = Math.max(0.25, Math.min(4, windupSec || 1.0));
+    const tl = Math.max(0.30, Math.min(5, tailSec || 1.2));
+    const it = t + wu;                                    // the impact instant
+
+    // WIND-UP — low, quiet, rising. Sits UNDER the roar rather than fighting it.
+    sweep('sawtooth', 46, 104, t, wu, 0.042, bus);
+    if (wu > 0.6) noiseBurst(t + wu * 0.50, wu * 0.50, 280, 0.020, bus);   // air dragged in before the swing
+
+    // IMPACT — weight beneath sting('hit'), which the caller still fires on the measured peak.
+    voice('sine', MIDI(29), it, 0.32, 0.12, bus);
+    noiseBurst(it, 0.26, 1500, 0.045, bus);
+
+    // AFTERMATH — he reels. The rumble falls away over the ACTUAL tail; dust settles behind it.
+    sweep('sine', 78, 30, it + 0.05, Math.min(tl, 2.2), 0.040, bus);
+    noiseBurst(it + 0.12, Math.min(tl * 0.70, 1.6), 380, 0.016, bus);
+    if (tl > 1.6) noiseBurst(it + tl * 0.55, Math.min(tl * 0.40, 1.2), 220, 0.010, bus);
+  }
+  return { unlock, setMuted, play, boss, stop, sting, roar, roarStop, roarWarm, bossFlinch, duckTo, isOn: () => started, move };
 })();
 
 /* ════════ BOSS ARENA (animated background per boss) ════════ */

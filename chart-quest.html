@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="7dcf04c0e9" data-built-at="2026-08-06T14:21:21Z">
+<meta name="cq-build" content="b49a5ff646" data-built-at="2026-08-06T14:35:38Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 353 - THE BOX ONLY OPENS TO THE SHELL ROLL. FOUNDER: simply contacting the box broke it and paid shells; it should ONLY pay for the shell-roll smash, because that is the entire purpose of that move. The hole was the second half of the smash gate: turtle.tucked OR (airborne AND vy > 240). That OR-clause required NO INPUT AT ALL - any fast fall cleared it, and Finn passes 240px per second of downward speed off one ordinary candle drop, so walking off a ledge onto a box paid exactly like earning it. This is the plain-contact bug builds 303 and 318 each believed they had closed: they removed contact while STANDING and then re-opened it for anything falling. Now the only way in is turtle.tucked, set solely by shellTuck() - an explicit mid-air swipe down. Everything else routes to boxRefuse(): sparks, a tick and a hint, so the box visibly REFUSES instead of reading as broken. Measured, same three states, old gate vs new: walking contact refuse to refuse; FAST FALL no swipe SMASH to REFUSE; GENTLE FALL no swipe SMASH to REFUSE; shell-roll tuck SMASH to SMASH. Two free-payout paths closed, the earned one untouched. Live trial in L1: walk 0 shells, fast fall 0 shells, shell roll +1 shell. Also retired the stale prompt on that box - it said JUMP, then swipe DOWN, which named the wrong move and contradicted the tutorial. It now reads SWIPE DOWN to SHELL-ROLL and smash it open.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 354 - NO MORE COINS RAINING OVER THE DEFEAT CINEMATIC. FOUNDER: the last boss cinematic has the random silver coin thing popping up. It is the SAME bug build 319 diagnosed and fixed for the FLINCH clips, left live on the DEFEAT path. bossBurst(hit) appends 14 coin emoji as position-fixed divs at z-index 99999, centred at 30 percent screen height, and at 24px on a dark clip a coin emoji reads as a plain grey disc. The defeat path fired it THREE times at 0, 150 and 320ms - 42 of them - and playBossOutroCinematic opens a few lines below, so they rained over the Guardian death scene and the Journal hand-off. Suppressed exactly where 319 drew the line: only when there IS a clip to protect. A boss with no outro video keeps the triple burst as its celebration, because for that boss nothing is about to own the screen. Build 319 said it best - the clip IS the reaction now. Verified in-engine, both branches: level 1 (has outro) 0 coins spawned; level 2 (no outro) 14 coins spawned. Also confirmed no temporal-dead-zone hazard - BOSS_OUTRO_VIDEOS is declared below the call site but the reference lives inside a function that runs long after load, and it resolves as object with the game booting clean.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -14086,8 +14086,19 @@ function bossWin() {
     }
   } catch (e) {}
   try { GameMusic.sting(bfState.level === 1 ? 'fanfare' : 'win'); } catch (e) {}   // MASTERPIECE: the Gambler (Guardian 1) gets the fullest triumph — the first-hour peak sounds like a peak
-  // SPRINT 1 — DRAMATIC DEFEAT: a roaring coin explosion (triple burst) as the Guardian falls.
-  try { bossBurst('hit'); setTimeout(() => bossBurst('hit'), 150); setTimeout(() => bossBurst('hit'), 320); } catch (e) {}
+  /* FOUNDER (build 354) — "the last boss cinematic has the random silver coin thing popping up."
+     Same bug build 319 already diagnosed and fixed for the FLINCH clips, left live on the DEFEAT
+     path: bossBurst('hit') appends 14 🪙 emoji as position:fixed divs at z-index 99999, centred at
+     30% screen height, and at 24px on a dark clip a coin emoji reads as a plain grey disc. This
+     path fired it THREE times (0/150/320ms) — 42 of them — and playBossOutroCinematic opens a few
+     lines below, so they rain over the Guardian's death scene and the Journal hand-off.
+     Suppressed exactly where 319 drew the line: only when there IS a clip to protect. Bosses with
+     no outro video keep the triple burst as their celebration, because for them nothing is about to
+     own the screen. Build 319's own words: the clip IS the reaction now. */
+  try {
+    const _hasOutro = !!(BOSS_OUTRO_VIDEOS[bfState.level] || []).length;
+    if (!_hasOutro) { bossBurst('hit'); setTimeout(() => bossBurst('hit'), 150); setTimeout(() => bossBurst('hit'), 320); }
+  } catch (e) {}
   const bf = $('bossFight'); if (bf) { bf.classList.remove('shake', 'fighting', 'lost'); bf.classList.add('won'); void bf.offsetWidth; bf.classList.add('shakeBig'); }
   player.shells += b.reward.shells; addXP(b.reward.xp);
   floaters.push({ text: '⚔ ' + b.name + ' DEFEATED!', color: '#16c784', y: 100, t: 3 });

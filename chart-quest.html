@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="0ef410b64a" data-built-at="2026-08-06T06:33:13Z">
+<meta name="cq-build" content="eb59a91de9" data-built-at="2026-08-06T07:26:27Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 347 - SMASH LABEL SPLIT TO TWO LINES. The smash prompt was the last single-line teach banner and it was living on the edge: at a 360px viewport its pill measured 333 of the 336 available - THREE pixels from overflowing - and at 320px the auto-shrink was already dropping it to 11px, noticeably smaller than every other stage. Split into BOOST, then SWIPE DOWN / SMASH the box open using the same two-line field added in 346 (action on top, benefit beneath and quieter). Measured after at 320/360/406/469: every stage fits with real margin, and the smash line now renders at the SAME font size as the other three at every width (13/14/16/19px) instead of shrinking on its own.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 348 - MOVEMENT TUTORIAL: EVERY MOVE NOW HAS A REASON. FOUNDER: after three jumps we ask for three boosts, but every shell was on the GROUND - so the player boosted over them and had to walk back. The teach list ran jump, boost, double, smash but the WORLD was never zoned to match it. The world is now zoned to the curriculum, one zone per stage, with the reward hung at the exact height that verb and ONLY that verb can reach. Measured ceilings, from the existing browser-measured note: a plain hop peaks at 126, ONE boost at 469, a badly-timed double still clears 642. JUMP - shells on the wall crowns. BOOST - the tower carries a shell ON its crown so the boost IS the reward, then two air shells at 300 and 340, both impossible at the 126 hop ceiling. DOUBLE BOOST - three shells at 560, 580 and 600, all above the 469 single-boost ceiling, so only a double reaches them. And NO ground shell is left inside the boost or double zones, so there is never anything underneath to fly over and come back for. boost2 need raised 2 to 3 (three shells, three double boosts). World grown 36 to 46 candles for the extra room. Verified in-engine: 46 candles, 30 shells, ZERO unreachable, boost shells at c16/c18 and double shells at c20/c22/c24 exactly as zoned. SMASH now says WHY: BOOST, then SWIPE DOWN / SMASH the box for a surprise. Double boost likewise: SWIPE UP TWICE / DOUBLE BOOST for the high shells. THE TIMEOUT THAT ENDED THE TUTORIAL EARLY IS FIXED. HARD_CAP was 160 seconds of TOTAL ELAPSED TIME ticked every frame regardless of what the player was doing, so pausing to read - or to type a message - dumped the player straight into Choose Your Home Market without ever reaching the portal. It is now an INACTIVITY timer: any jump, boost, dive or teach credit resets it. A player who steps away and returns finishes the tutorial; a genuinely stuck session is still rescued, which is all this was ever for. Deliberately NOT hooked to inputLive(), which update() polls every frame for the jump buffer and would have silently disabled the net. Measured: 90s idle, one tap, 90s more - 183s total, tutorial still alive, where the old build killed it at 160.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -22920,7 +22920,18 @@ const BlockchainJourney = (() => {
   const BOOST_CHARGES = 2;                   // JETPACK capacity — both refill the moment he lands (shown as 2 pips over Finn)
   const GROW_DUR = 0.62;
   const CAM_ANCHOR = 0.40;
-  const HARD_CAP = 160;
+  /* FOUNDER (build 348) — "I paused the tutorial to type a message and it kicked me straight to
+     Choose Your Home Market. I never got to jump in the portal."
+     HARD_CAP was 160 seconds of TOTAL ELAPSED TIME, ticked every frame regardless of what the
+     player was doing — so a tutorial that now teaches four verbs at three reps each could time out
+     on someone who was simply reading, or who stepped away for a moment. It was a stuck-player
+     rescue, and it was firing on players who were not stuck.
+     It is now an INACTIVITY timer: any jump, boost, dive or teach credit resets it (see alive()).
+     A player who walks away and comes back finishes the tutorial; a genuinely stuck or broken
+     session is still rescued, which is the only thing this was ever for. The cap is raised too,
+     because 3 minutes of not touching the screen is a far safer definition of "stuck" than 160
+     seconds of playing. */
+  const HARD_CAP = 180;   // seconds of NO INPUT before the safety net fires (was 160s of total time)
   // Candle bodies come from COLOR (which derives from window.CQ), never a local hex — the Visual
   // Market Constitution's one-owner rule, enforced by verify.js #12. The tutorial's candles are
   // the player's FIRST candles, so they must speak the identical language as the real chart.
@@ -23017,11 +23028,43 @@ const BlockchainJourney = (() => {
       {c:'green',h:118},                             // 5  flat — a breath between walls
       {c:'red',  h:190,shell:1},                     // 6  WALL → the jump rhythm is set
       {c:'green',h:130},                             // 7  step down
-      {c:'green',h:130,roll:1,shell:1},              // 8  SHELL-ROLL teach — flat + safe, practise the roll alone
+      {c:'green',h:130,roll:1},                      // 8  SHELL-ROLL teach — flat + safe, practise the roll alone
       {c:'green',h:130},                             // 9  flat — room to roll again
       {c:'green',h:104},                             // 10 low — sets up the jetpack wall
-      {c:'green',h:268,tower:1},                     // 11 JETPACK teach — too tall to jump; BOOST over the crown
-      {c:'green',h:156,shell:1,air:[[240,18],[420,40]]},                 // 12 step down + FIRST air chain — SINGLE-boost only (tops out at 420, under the 469 ceiling) on purpose: one boost from here lands ON candle 14, so the taste of flying can't carry him over the box teach
+
+      /* ══ FOUNDER (build 348) — EVERY MOVE MUST HAVE A REASON, AND THE REASON IS A SHELL ═══════
+         "After they jump three times we ask them to boost three times, but all the shells are on
+         the ground — so they boost OVER the shells and then have to go back and get them. It feels
+         really bad. Make there be a purpose for every movement involving the shell."
+         Exactly the diagnosis. The teach list ran jump -> boost -> double -> smash, but the WORLD
+         was not zoned to match it: a ground shell sat on candle 8 right where the BOOST stage
+         begins, and the only boost-height shells were one chain hung after the tower. So the verb
+         being asked for and the reward on screen disagreed.
+         The world is now zoned to the curriculum, one zone per stage, with the reward placed at the
+         exact height that verb — and ONLY that verb — can reach. Measured ceilings (from the
+         existing browser-measured note): a plain hop peaks at 126, ONE boost at 469, a well-timed
+         double at 939 and even a badly-timed double still clears 642.
+             JUMP   shells sit ON the wall crowns          (reachable by hopping, above)
+             BOOST  shells at 300-340                      (impossible at 126, easy at 469)
+             DOUBLE shells at 560-600                      (impossible at 469, safe at 642+)
+         And no ground shell is left inside the boost or double zones, so there is never anything
+         underneath to fly over and walk back for. */
+
+      // ── BOOST ZONE — three boosts, three shells, each one the reason for the boost ──
+      {c:'green',h:268,tower:1,shell:1},             // BOOST 1 — too tall to jump; the shell waits ON the crown, so the boost IS the reward
+      {c:'green',h:156},                             //           landing room off the tower
+      {c:'green',h:150,air:[[300,20]]},              // BOOST 2 — 300 is above the 126 hop ceiling: boost-only
+      {c:'green',h:150},                             //           room to land and line up
+      {c:'green',h:146,air:[[340,22]]},              // BOOST 3
+      {c:'green',h:146},                             //           settle before the double-boost lesson
+
+      // ── DOUBLE-BOOST ZONE — three shells NO single boost can reach ──
+      {c:'green',h:142,air:[[560,46]]},              // DOUBLE 1 — 560 is above the 469 single-boost ceiling
+      {c:'green',h:142},                             //            room
+      {c:'green',h:140,air:[[580,50]]},              // DOUBLE 2
+      {c:'green',h:140},                             //            room
+      {c:'green',h:138,air:[[600,54]]},              // DOUBLE 3
+      {c:'green',h:138},                             //            land and settle before the box teach
       {c:'green',h:156},                             // 13 flat — settle after the tower
       /* FOUNDER (build 345) — BREATHING ROOM. "after you jump three times you kinda pass the first
          box, then you have to go back and smash it. I don't want that to happen."
@@ -23139,6 +23182,11 @@ const BlockchainJourney = (() => {
   // input at all and only ever completed via the auto-enter failsafe (which is exactly why automated runs
   // reported portalEntered:true and never saw it).
   function inputLive(){ return (S.phase==='grow'||S.phase==='reveal') && !S.spin && !S.smash; }
+  /* build 348 — the player is alive and playing: reset the inactivity watchdog. Called from the
+     three verbs and from teachCredit, NOT from inputLive() — inputLive is also polled every frame
+     by the jump-buffer check in update(), so hooking it there would reset the watchdog constantly
+     and quietly disable the safety net entirely. */
+  function alive(){ S.watchdogT = 0; }
   // The ONE place that decides whether a jetpack press can do anything, so the teach banner and the swipe
   // handler can never promise a boost the verb will reject (founder: "it says jump and it won't let me").
   //
@@ -23163,12 +23211,12 @@ const BlockchainJourney = (() => {
   // COYOTE TIME + JUMP BUFFER (mirrors the real game's Movement Feel Patch V1 — 90ms / 120ms). The journey
   // reset both fields but never implemented them, so with free-mode walking (he steps off edges constantly) a
   // press a hair late or a hair early was silently DROPPED — the founder's "I pressed jump and nothing happened".
-  function doJump(){ if(!inputLive()) return;
+  function doJump(){ if(!inputLive()) return; alive();
     if(onWickCandle()){ startSpin(S.candles[S.cur]); return; }          // JUMP on a long wick = spin up it
     if(turtle.onGround || turtle.coyoteT>0) performJump();
     else turtle.jumpBufferT=CFG.jumpBufferTime;                         // pressed too early → fires the instant he lands
   }
-  function doBoost(){ if(!inputLive()) return;
+  function doBoost(){ if(!inputLive()) return; alive();
     if(onWickCandle()){ startSpin(S.candles[S.cur]); return; }          // up-input on a long wick also spins
     if(!boostAvailable()) return;
     turtle.tucked=false; turtle.rollT=0; turtle.rot=0;                  // the jetpack also beats a roll (same as the real game's fireJetpack)
@@ -23186,7 +23234,7 @@ const BlockchainJourney = (() => {
     gm('boost',1); hap(S.rm?0:12); }
   // an UP input that can't boost still has to DO something — a dead flick was reading as "the game ignored me"
   function doUp(){ if(!inputLive()) return; if(onWickCandle()||boostAvailable()) doBoost(); else doJump(); }
-  function doDive(){ if(!inputLive()) return; if(turtle.tucked) return;
+  function doDive(){ if(!inputLive()) return; alive(); if(turtle.tucked) return;
     if(S.airMagic && !turtle.onGround) return;                            // during the launch FLIGHT a dive would drop him into the gap — the flight is meant to be flown, not cut short
     const cr=nextCrystal(); if(cr){ startCrystalSmash(cr); return; }      // at the crystal edge, ↓ = a SCRIPTED shatter that can't miss and can't drop him
     if(!turtle.onGround){ turtle.tucked=true; turtle.jetT=0; turtle.vy=Math.max(turtle.vy,CFG.tuckMinVy); }   // air-dive → smash a floating box / drop fast
@@ -23957,11 +24005,12 @@ const BlockchainJourney = (() => {
   const TEACH_STAGES = [
     { key:'jump',   need:3, g:'tap',  t:'TAP to JUMP' },
     { key:'boost',  need:3, g:'up',   t:'SWIPE UP to BOOST' },
-    { key:'boost2', need:2, g:'up',   t:'SWIPE UP TWICE', t2:'DOUBLE BOOST — go higher' },
-    { key:'smash',  need:3, g:'down', t:'BOOST, then SWIPE DOWN', t2:'SMASH the box open' },
+    { key:'boost2', need:3, g:'up',   t:'SWIPE UP TWICE', t2:'DOUBLE BOOST for the high shells' },
+    { key:'smash',  need:3, g:'down', t:'BOOST, then SWIPE DOWN', t2:'SMASH the box for a surprise' },
   ];
   // Credit one rep of a verb. Only the ACTIVE stage counts, so practising ahead never skips a step.
   function teachCredit(key){
+    alive();                      // build 348 — progress counts as activity
     if(S.tCelebDone) return;
     const st = TEACH_STAGES[S.tStage]; if(!st || st.key !== key) return;
     S.tCount++;

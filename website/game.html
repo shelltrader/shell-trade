@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="2a6d489e93" data-built-at="2026-08-06T08:25:50Z">
+<meta name="cq-build" content="1d97884163" data-built-at="2026-08-06T09:19:50Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 349 - EXIT TRUTHFULNESS (P0a). A trade exit has THREE outcomes - win, loss, manual - but five render sites asked a two-state question and printed the opposite of what happened. The worst: a profitable self-close rendered in the Journal as \u0022STOPPED OUT  +42 shells\u0022, naming a stop that was never touched, contradicting itself inside one string, on the screen a player opens specifically to understand the trade they just made. Two sites (the Journal replay header and the full trade chart) inferred from result === win, so ANY manual close read as a loss; two more (the Journal replay badges) inferred from PROFIT, so a manual close claimed TAKE-PROFIT or STOP-LOSS - targets and stops that were never reached. All now read `result` and render a third state, CLOSED EARLY, coloured by the P&L so a green +42 is never printed in red. NOT NEW DESIGN: the correct three-state idiom already existed 190 lines away (exitIsWin / exitIsLoss / CLOSED EARLY on the chart exit tag) - these sites simply predate it, and now match it. Verified by driving the shipped renderers with a synthetic manual trade AND controls: a real stop-out still says STOPPED OUT, a real target still says TAKE PROFIT HIT, and a manual loss and manual profit both say CLOSED EARLY with the colour following the money. Text and colour only - no outcome, odds, R:R, entry, stop or target logic is read or written, and resolveTrade is untouched.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 350 - SMASH ZONE IS ABOUT BOXES ONLY. Removed the four leftover air chains sitting inside or just past the box run, where they pulled the player UPWARD during the stage that asks them to dive DOWN: the double-boost chain between box 1 and box 2, the full double ladder after box 2, the celebration chain on the launch-landing candle, and the last chain between box 4 and the giant. Each was a reasonable reward back when the world was not zoned to the curriculum; now that the double boost has its own zone with its own three shells (build 348), these only competed with the verb being taught. Tutorial shells 30 to 17, and every remaining shell still has exactly one verb that reaches it - verified in-engine, ZERO unreachable, 46 candles, 4 boxes at c29/c33/c40/c42. ONE CHAIN DELIBERATELY KEPT: the wick liquidity chain at 210-630 on candle 37. It is not an extra - it is the ONLY reward for the spin-launch, which is its own teach moment (TAP to LAUNCH), so cutting it would leave a taught mechanic unrewarded and break the very rule this change serves. It does sit between box 2 and box 3; it can go too if the founder wants the box run absolutely clean.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -23094,20 +23094,20 @@ const BlockchainJourney = (() => {
       {c:'green',h:156},                             // +  345: approach room — read the box before you reach it
       {c:'green',h:156,box:1},                       // 14 BOX #1 — now they know jump + boost → SMASH it
       {c:'green',h:156},                             // +  345: landing room after the first smash
-      {c:'red',  h:200,air:[[250,19],[440,43],[580,61]]},                // 15 first DOUBLE-boost chain — safely AFTER the box teach (a double travels ~3 candles)
+      {c:'red',  h:200},                             // 15 was a double-boost chain — REMOVED (350): it sat between box #1 and #2, pulling the player upward mid-SMASH lesson
       {c:'green',h:146},                             // +  345: approach room for box #2
       {c:'green',h:146,box:1},                       // 16 BOX #2
-      {c:'green',h:146,air:[[250,19],[440,43],[580,61],[720,74]]},       // 17 the full double-boost ladder (top one rewards good timing)
+      {c:'green',h:146},                             // 17 was the full double ladder — REMOVED (350): the double boost is taught and rewarded in its own zone now
       {c:'red',  h:206,shell:1},                     // 18 WALL
       {c:'green',h:150},                             // 19 step down — flat run-up to the wick
       {c:'green',h:150,wick:1},                      // 20 WICK → TAP to LAUNCH
-      {c:'green',h:236,spinTo:1,air:[[260,20],[460,45],[600,63]]},       // 21 big candle (landed via the launch) + an air chain to celebrate the landing
+      {c:'green',h:236,spinTo:1},                    // 21 big candle (landed via the launch). Celebration chain REMOVED (350) — the wick's own liquidity chain is the launch reward
       {c:'green',h:162},                             // +  345: approach room for box #3
       {c:'green',h:162,box:1},                       // 22 BOX #3
       {c:'green',h:162},                             // +  345: the last two boxes were back-to-back — one beat between them
       {c:'green',h:162,box:1},                       // 23 BOX #4 — same calm height, smash on the pass
       {c:'red',  h:214,shell:1},                     // 24 WALL — the last jump
-      {c:'green',h:158,air:[[240,18],[430,42],[570,60]]},                // 25 step down + a last double-boost chain before the giant
+      {c:'green',h:158},                             // 25 step down — last double chain REMOVED (350): the run to the portal is a clean approach, not another lesson
       {c:'green',h:200,shell:1},                     // 26 final approach → the giant → the PORTAL
     ];
     let x=120;

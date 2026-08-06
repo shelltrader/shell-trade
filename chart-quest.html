@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="b40ced88a7" data-built-at="2026-08-06T14:00:32Z">
+<meta name="cq-build" content="788f13b7db" data-built-at="2026-08-06T14:16:00Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 351 - THE BOX RUN IS NOW COMPLETELY CLEAN. Removed the wick liquidity chain, the last air shells left inside the smash stretch: a 5-shell ladder at 210/300/400/510/630 hung above the long wick on candle 37, between box 2 and box 3, pulling the eye UPWARD during the one stage that asks the player to dive DOWN. Verified in-engine: box run c29 to c42 now contains ZERO air shells, and the teach zones are untouched - BOOST at c16/300 and c18/340, DOUBLE at c20/560, c22/580 and c24/600, zero unreachable shells anywhere. Tutorial shells 17 to 12 (30 before build 350). STATED PLAINLY: the wick launch (TAP to LAUNCH) is now a taught mechanic with NO pickup reward. It keeps its spectacle and it still carries Finn onto the big candle, so it is not purposeless, but it no longer pays. I flagged this as the only reward for the spin-launch and the founder chose the clean box run anyway. If it reads hollow in a playtest the fix is ONE ground shell on the spinTo landing candle - it rewards the launch without hanging anything in the air to compete with the dive. Deliberately not added unasked.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 352 - THE LAUNCH PAYS AGAIN. Builds 350 and 351 cleaned every air shell out of the box run, which left TAP to LAUNCH as the one taught mechanic in the tutorial that rewarded nothing. Added a single GROUND shell on the spinTo landing candle - the crown the launch actually delivers Finn to - so the move pays without hanging anything in the air to compete with the dive the SMASH stage is about. Verified in-engine: landing candle c38 carries exactly one shell at y0 34, the box run c29 to c42 still contains ZERO air shells, zero unreachable shells anywhere, 46 candles, 4 boxes, tutorial shells 12 to 13. Every taught verb now has a reward and every reward is reachable by exactly the verb being taught: JUMP the wall crowns, BOOST the tower crown plus 300 and 340, DOUBLE 560 and 580 and 600, LAUNCH the landing crown, SMASH the four boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -23101,7 +23101,13 @@ const BlockchainJourney = (() => {
       {c:'red',  h:206,shell:1},                     // 18 WALL
       {c:'green',h:150},                             // 19 step down — flat run-up to the wick
       {c:'green',h:150,wick:1},                      // 20 WICK → TAP to LAUNCH
-      {c:'green',h:236,spinTo:1},                    // 21 big candle (landed via the launch). Celebration chain REMOVED (350) — the wick's own liquidity chain is the launch reward
+      /* 21 — THE LANDING CANDLE, reached only by spinning up off the wick.
+         Build 350 removed its celebration air chain and 351 removed the wick's liquidity ladder,
+         which between them left "TAP to LAUNCH" as the one taught mechanic in the tutorial that
+         paid nothing. This is the fix, and it is deliberately a GROUND shell: it sits on the crown
+         the launch delivers Finn to, so it rewards the move without hanging anything in the air to
+         compete with the dive the SMASH stage is about. One shell, on the spot he lands. */
+      {c:'green',h:236,spinTo:1,shell:1},            // 21 big candle (landed via the launch) + the launch's own reward
       {c:'green',h:162},                             // +  345: approach room for box #3
       {c:'green',h:162,box:1},                       // 22 BOX #3
       {c:'green',h:162},                             // +  345: the last two boxes were back-to-back — one beat between them

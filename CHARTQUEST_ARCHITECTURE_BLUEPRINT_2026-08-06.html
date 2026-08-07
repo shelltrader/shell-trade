@@ -1,0 +1,532 @@
+<title>ChartQuest &mdash; Modularization Blueprint</title>
+<style>
+  :root{
+    --paper:#f5f7fa; --surface:#ffffff; --surface-2:#eef2f7;
+    --ink:#0e1621; --ink-2:#41505f; --ink-3:#6b7a8b;
+    --line:#d3dbe4; --line-2:#c0cad6;
+    --seam:#0fa891;            /* the one accent: module seam / dependency wire */
+    --seam-soft:#0fa8911a;
+    --r-vlow:#2f9e6b; --r-low:#6aa84f; --r-med:#d99a2b; --r-high:#d9534f; --r-max:#b23b3b;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --maxw:1080px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0b1119; --surface:#111a25; --surface-2:#0f1722;
+      --ink:#e8edf3; --ink-2:#a7b4c2; --ink-3:#76889a;
+      --line:#243140; --line-2:#2e3d4f;
+      --seam:#2fc3ac; --seam-soft:#2fc3ac1f;
+      --r-vlow:#43c489; --r-low:#8fce6d; --r-med:#e6b451; --r-high:#f0736f; --r-max:#e05b57;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f5f7fa; --surface:#ffffff; --surface-2:#eef2f7;
+    --ink:#0e1621; --ink-2:#41505f; --ink-3:#6b7a8b; --line:#d3dbe4; --line-2:#c0cad6;
+    --seam:#0fa891; --seam-soft:#0fa8911a;
+    --r-vlow:#2f9e6b; --r-low:#6aa84f; --r-med:#d99a2b; --r-high:#d9534f; --r-max:#b23b3b;
+  }
+  :root[data-theme="dark"]{
+    --paper:#0b1119; --surface:#111a25; --surface-2:#0f1722;
+    --ink:#e8edf3; --ink-2:#a7b4c2; --ink-3:#76889a; --line:#243140; --line-2:#2e3d4f;
+    --seam:#2fc3ac; --seam-soft:#2fc3ac1f;
+    --r-vlow:#43c489; --r-low:#8fce6d; --r-med:#e6b451; --r-high:#f0736f; --r-max:#e05b57;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    line-height:1.6;-webkit-font-smoothing:antialiased;font-size:16px}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  section{padding:34px 0;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:none}
+  h1,h2,h3{text-wrap:balance;line-height:1.15;margin:0}
+  a{color:var(--seam)}
+
+  /* eyebrow / labels in mono */
+  .ey{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--seam);font-weight:600}
+  .sec-ey{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink-3);margin-bottom:12px}
+  .mono{font-family:var(--mono)}
+  .dim{color:var(--ink-2)}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  /* -- header -- */
+  header{padding:52px 0 30px}
+  .kicker{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.05em;padding:4px 9px;border:1px solid var(--line-2);
+    border-radius:5px;color:var(--ink-2);background:var(--surface)}
+  .chip.safe{color:var(--r-vlow);border-color:color-mix(in srgb,var(--r-vlow) 45%,var(--line))}
+  h1{font-size:clamp(30px,5.4vw,52px);font-weight:800;letter-spacing:-.02em}
+  .lede{font-size:clamp(17px,2.2vw,20px);color:var(--ink-2);margin-top:18px;max-width:64ch}
+  .lede b{color:var(--ink);font-weight:650}
+
+  /* -- stat row -- */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:30px}
+  .stat{background:var(--surface);padding:18px 18px 16px}
+  .stat .n{font-family:var(--mono);font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+  .stat .n .u{font-size:14px;color:var(--ink-3);font-weight:500}
+  .stat .l{font-size:12.5px;color:var(--ink-2);margin-top:3px}
+  .stat.hot .n{color:var(--seam)}
+
+  h2{font-size:clamp(22px,3vw,30px);font-weight:750;letter-spacing:-.015em}
+  .sub{color:var(--ink-2);margin-top:8px;max-width:66ch}
+  p{margin:14px 0}
+
+  /* -- figure frame -- */
+  figure{margin:26px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:22px 20px 8px;overflow:hidden}
+  .scroll{overflow-x:auto;overflow-y:hidden}
+  figure svg{display:block;max-width:100%;height:auto;color:var(--ink)}
+  figcaption{font-size:13px;color:var(--ink-2);padding:14px 4px 8px;border-top:1px solid var(--line);
+    margin-top:12px}
+  figcaption b{color:var(--ink)}
+
+  /* diagram atoms reused across svgs via classes */
+  .b-lbl{font-family:var(--mono);font-size:12px;fill:var(--ink)}
+  .b-sub{font-family:var(--mono);font-size:10px;fill:var(--ink-3)}
+  .b-box{fill:var(--surface-2);stroke:var(--line-2);stroke-width:1.4}
+  .b-seam{fill:var(--seam-soft);stroke:var(--seam);stroke-width:1.6}
+  .wire{stroke:var(--ink-3);stroke-width:1.4;fill:none}
+  .wire-seam{stroke:var(--seam);stroke-width:1.6;fill:none}
+  .wire-dash{stroke:var(--seam);stroke-width:1.5;fill:none;stroke-dasharray:5 4}
+  .e-lbl{font-family:var(--mono);font-size:10px;fill:var(--ink-2)}
+
+  /* -- module tree -- */
+  .tree{font-family:var(--mono);font-size:13px;line-height:1.9;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:20px 22px;overflow-x:auto;color:var(--ink-2);white-space:pre;-webkit-overflow-scrolling:touch}
+  .tree .d{color:var(--ink)}
+  .tree .s{color:var(--seam)}
+  .tree .c{color:var(--ink-3)}
+  .tag{font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:4px;border:1px solid var(--line-2);
+    color:var(--ink-3);margin-left:6px}
+  .tag.t1{color:var(--r-low);border-color:color-mix(in srgb,var(--r-low) 40%,var(--line))}
+  .tag.t2{color:var(--r-high);border-color:color-mix(in srgb,var(--r-high) 40%,var(--line))}
+  .tag.done{color:var(--seam);border-color:color-mix(in srgb,var(--seam) 45%,var(--line))}
+
+  /* -- migration rows -- */
+  .steps{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);
+    border-radius:12px;overflow:hidden;margin-top:22px}
+  .step{display:grid;grid-template-columns:44px 1fr auto;gap:16px;align-items:center;background:var(--surface);
+    padding:14px 18px;position:relative}
+  .step .ph{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink-3)}
+  .step .ttl{font-weight:640;font-size:15px}
+  .step .ds{font-size:13px;color:var(--ink-2);margin-top:2px}
+  .step .risk{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;
+    padding:4px 9px;border-radius:20px;white-space:nowrap;font-weight:600}
+  .r0{color:var(--r-vlow);background:color-mix(in srgb,var(--r-vlow) 15%,transparent)}
+  .r1{color:var(--r-low);background:color-mix(in srgb,var(--r-low) 15%,transparent)}
+  .r2{color:var(--r-med);background:color-mix(in srgb,var(--r-med) 16%,transparent)}
+  .r3{color:var(--r-high);background:color-mix(in srgb,var(--r-high) 15%,transparent)}
+  .r4{color:var(--r-max);background:color-mix(in srgb,var(--r-max) 16%,transparent)}
+  .step::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stripe,var(--line-2))}
+  .step.s0::before{background:var(--r-vlow)} .step.s1::before{background:var(--r-low)}
+  .step.s2::before{background:var(--r-med)} .step.s3::before{background:var(--r-high)}
+  .step.s4::before{background:var(--r-max)}
+
+  /* -- coupling table -- */
+  table{width:100%;border-collapse:collapse;margin-top:18px;font-size:14px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  td.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
+  td.sym{font-family:var(--mono);color:var(--seam)}
+  tr:last-child td{border-bottom:none}
+  .bar{height:7px;border-radius:4px;background:var(--seam);opacity:.85}
+  .barcell{width:34%}
+
+  /* callout */
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--seam);
+    border-radius:10px;padding:18px 20px;margin-top:22px}
+  .callout h3{font-size:16px;margin-bottom:6px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}.step{grid-template-columns:34px 1fr}.step .risk{grid-column:2;justify-self:start;margin-top:4px}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .card h3{font-size:14px;font-family:var(--mono);letter-spacing:.03em;color:var(--seam);margin-bottom:8px}
+  .card p{margin:6px 0;font-size:14px;color:var(--ink-2)}
+  ul.tight{margin:10px 0;padding-left:20px}
+  ul.tight li{margin:5px 0;color:var(--ink-2)}
+  ul.tight li b{color:var(--ink)}
+  footer{padding:40px 0 60px;color:var(--ink-3);font-size:13px}
+  .rule-note{font-family:var(--mono);font-size:12px;color:var(--ink-2);background:var(--surface-2);
+    border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:10px}
+  @media(prefers-reduced-motion:no-preference){.step,.stat{transition:none}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="kicker">
+    <span class="chip">ARCHITECTURE BLUEPRINT</span>
+    <span class="chip">build 351 &middot; 2026-08-06</span>
+    <span class="chip safe">&#9671; zero production files changed</span>
+  </div>
+  <div class="ey" style="margin-bottom:14px">Post-beta modularization plan &middot; analysis &amp; design only</div>
+  <h1>Taking the monolith apart without moving a single frame.</h1>
+  <p class="lede">ChartQuest's game is <b>one self-contained 30,058-line HTML document</b> whose entire runtime lives in a single 22,907-line <span class="mono">&lt;script&gt;</span>. The project already ships <b>two working prototypes of the fix</b> &mdash; <span class="mono">ops/cq-ops.js</span> and <span class="mono">cq-track.js</span> are authored standalone and spliced in, drift-gated, producing a byte-identical file. The blueprint generalizes that mechanism to the whole game.</p>
+
+  <div class="stats">
+    <div class="stat hot"><div class="n tnum">30,058<span class="u"> lines</span></div><div class="l">one game file &middot; ~2 MB</div></div>
+    <div class="stat hot"><div class="n tnum">76<span class="u">%</span></div><div class="l">is a single &lt;script&gt; block</div></div>
+    <div class="stat"><div class="n tnum">904</div><div class="l">named functions</div></div>
+    <div class="stat"><div class="n tnum">8</div><div class="l">existing module seams</div></div>
+    <div class="stat"><div class="n tnum">21</div><div class="l">enforcement gates</div></div>
+    <div class="stat"><div class="n tnum">3</div><div class="l">byte-identical mirrors</div></div>
+  </div>
+</header>
+
+<!-- -- FIGURE 1: the monolith today -- -->
+<section>
+  <div class="sec-ey">01 &mdash; Current architecture</div>
+  <h2>Ten script blocks. One of them is the whole game.</h2>
+  <p class="sub">Block 3 holds market, movement, render, Finn, lessons, trade, boss, cinematics and audio in one contiguous span. Blocks 2 and 6&ndash;10 are the only real seams &mdash; the operational foundation, and the append-only IIFEs that bolt features on by patching the core at runtime.</p>
+
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 1000 168" role="img" aria-label="Proportional map of the ten script blocks in chart-quest.html; Block 3 spans 76 percent of the file.">
+      <!-- baseline -->
+      <text x="4" y="20" class="b-sub">chart-quest.html &middot; lines 28 &rarr; 30,056</text>
+      <!-- proportional bar: total 30056 lines mapped to width 992 from x=4 -->
+      <!-- b1 28-65, b2 68-822, gap cdn, b3 2386-25293, b4 25327-26792, b5..b10 -->
+      <!-- compute x by line*0.033 approx; hand-placed on a grid -->
+      <g>
+        <rect x="4"   y="34" width="10"  height="46" class="b-box"/>
+        <rect x="16"  y="34" width="26"  height="46" class="b-box"/>
+        <rect x="44"  y="34" width="52"  height="46" class="b-box"/>
+        <rect x="98"  y="34" width="734" height="46" class="b-seam" style="fill:color-mix(in srgb,var(--r-high) 14%,var(--surface-2));stroke:var(--r-high)"/>
+        <rect x="834" y="34" width="48"  height="46" class="b-box"/>
+        <rect x="884" y="34" width="8"   height="46" class="b-box"/>
+        <rect x="894" y="34" width="14"  height="46" class="b-box"/>
+        <rect x="910" y="34" width="36"  height="46" class="b-box"/>
+        <rect x="948" y="34" width="20"  height="46" class="b-box"/>
+        <rect x="970" y="34" width="14"  height="46" class="b-box"/>
+        <rect x="986" y="34" width="10"  height="46" class="b-box"/>
+      </g>
+      <!-- Block 3 label centered -->
+      <text x="465" y="61" text-anchor="middle" class="b-lbl" style="fill:var(--r-high);font-weight:700;font-size:13px">BLOCK 3 &mdash; the entire game &middot; 22,907 lines</text>
+      <!-- callouts -->
+      <text x="30"  y="98"  text-anchor="middle" class="b-sub">CQOPS</text>
+      <text x="30"  y="110" text-anchor="middle" class="b-sub">(modular)</text>
+      <line x1="30" y1="82" x2="30" y2="90" class="wire"/>
+      <text x="905" y="98"  text-anchor="middle" class="b-sub">trailing IIFEs</text>
+      <text x="905" y="110" text-anchor="middle" class="b-sub">ContentLog &middot; CQTrack &middot; CQBeta &middot; CQBEAT</text>
+      <line x1="905" y1="82" x2="905" y2="90" class="wire"/>
+      <!-- scale ticks -->
+      <text x="4"   y="150" class="b-sub">0</text>
+      <text x="465" y="150" text-anchor="middle" class="b-sub">~15,000</text>
+      <text x="996" y="150" text-anchor="end" class="b-sub">30,058</text>
+      <line x1="4" y1="132" x2="996" y2="132" class="wire" style="opacity:.4"/>
+    </svg>
+    </div>
+    <figcaption><b>The proportions are the problem.</b> Every subsystem shares one 22,907-line lexical scope, so unrelated edits land as adjacent git hunks and collide. The clean regions &mdash; CQOPS (Block 2) and the trailing patch IIFEs &mdash; are exactly the ones that already live behind a <span class="mono">window.CQ*</span> seam.</figcaption>
+  </figure>
+</section>
+
+<!-- -- FIGURE 2: dependency graph -- -->
+<section>
+  <div class="sec-ey">02 &mdash; Dependency graph</div>
+  <h2>Four spines hold the whole thing together.</h2>
+  <p class="sub"><span class="mono">turtle</span>, <span class="mono">trade</span>, <span class="mono">COLOR</span> and <span class="mono">CFG</span> are read from nearly everywhere. That is what makes a naive file-split dangerous &mdash; and why the entangled subsystems are sequenced last. The one clean boundary that exists today is the append-only seam at the bottom, which <em>patches</em> the core rather than editing it.</p>
+
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 1000 640" role="img" aria-label="Dependency graph: four shared spines feed the core subsystems; a tight market-trade-movement-curriculum knot; and a runtime-patch seam that wraps commitTrade, resolveTrade and openBoss.">
+      <defs>
+        <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--ink-3)"/></marker>
+        <marker id="ahs" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--seam)"/></marker>
+      </defs>
+
+      <!-- Row A: spines -->
+      <text x="20" y="30" class="b-sub" style="fill:var(--seam)">SHARED SPINES &mdash; read file-wide</text>
+      <g>
+        <rect x="20"  y="42" width="215" height="46" rx="7" class="b-seam"/>
+        <text x="127" y="63" text-anchor="middle" class="b-lbl" style="font-weight:700">turtle</text>
+        <text x="127" y="79" text-anchor="middle" class="b-sub">1,018 reads</text>
+
+        <rect x="268" y="42" width="215" height="46" rx="7" class="b-seam"/>
+        <text x="375" y="63" text-anchor="middle" class="b-lbl" style="font-weight:700">trade</text>
+        <text x="375" y="79" text-anchor="middle" class="b-sub">971 reads</text>
+
+        <rect x="516" y="42" width="215" height="46" rx="7" class="b-seam"/>
+        <text x="623" y="63" text-anchor="middle" class="b-lbl" style="font-weight:700">COLOR = CQ.color</text>
+        <text x="623" y="79" text-anchor="middle" class="b-sub">239 reads</text>
+
+        <rect x="764" y="42" width="215" height="46" rx="7" class="b-seam"/>
+        <text x="871" y="63" text-anchor="middle" class="b-lbl" style="font-weight:700">CFG</text>
+        <text x="871" y="79" text-anchor="middle" class="b-sub">185 reads &middot; movement+market</text>
+      </g>
+
+      <!-- dispersal wires from spines down to the subsystem band -->
+      <g>
+        <path class="wire" d="M127,88 C127,120 200,120 200,150" marker-end="url(#ah)"/>
+        <path class="wire" d="M375,88 C375,118 430,118 430,150" marker-end="url(#ah)"/>
+        <path class="wire" d="M623,88 C623,118 610,120 610,150" marker-end="url(#ah)"/>
+        <path class="wire" d="M871,88 C871,120 800,120 800,150" marker-end="url(#ah)"/>
+        <path class="wire" d="M871,88 C871,130 250,130 250,150" style="opacity:.5" marker-end="url(#ah)"/>
+      </g>
+
+      <!-- Row B: core subsystems -->
+      <g>
+        <!-- market -->
+        <rect x="20"  y="152" width="150" height="60" rx="8" class="b-box"/>
+        <text x="95" y="176" text-anchor="middle" class="b-lbl" style="font-weight:700">Market</text>
+        <text x="95" y="192" text-anchor="middle" class="b-sub">window.CQ &middot; gate #13</text>
+        <text x="95" y="205" text-anchor="middle" class="b-sub" style="fill:var(--r-low)">&#9671; Tier-1 ready</text>
+        <!-- movement -->
+        <rect x="192" y="152" width="150" height="60" rx="8" class="b-box"/>
+        <text x="267" y="176" text-anchor="middle" class="b-lbl" style="font-weight:700">Movement</text>
+        <text x="267" y="192" text-anchor="middle" class="b-sub">update() &middot; frame()</text>
+        <text x="267" y="205" text-anchor="middle" class="b-sub" style="fill:var(--r-max)">no seam</text>
+        <!-- render -->
+        <rect x="536" y="152" width="150" height="60" rx="8" class="b-box"/>
+        <text x="611" y="176" text-anchor="middle" class="b-lbl" style="font-weight:700">Render / HUD</text>
+        <text x="611" y="192" text-anchor="middle" class="b-sub">40+ globals</text>
+        <text x="611" y="205" text-anchor="middle" class="b-sub" style="fill:var(--r-max)">no seam</text>
+        <!-- finn -->
+        <rect x="708" y="152" width="150" height="60" rx="8" class="b-box"/>
+        <text x="783" y="176" text-anchor="middle" class="b-lbl" style="font-weight:700">Finn</text>
+        <text x="783" y="192" text-anchor="middle" class="b-sub">5 renderers</text>
+        <text x="783" y="205" text-anchor="middle" class="b-sub" style="fill:var(--r-max)">gates #1/#2/#10</text>
+      </g>
+
+      <!-- the knot: trade + curriculum -->
+      <g>
+        <rect x="364" y="152" width="150" height="60" rx="8" class="b-box" style="stroke:var(--r-med);stroke-width:1.8"/>
+        <text x="439" y="176" text-anchor="middle" class="b-lbl" style="font-weight:700">Trade</text>
+        <text x="439" y="192" text-anchor="middle" class="b-sub">commit / resolve</text>
+        <text x="439" y="205" text-anchor="middle" class="b-sub" style="fill:var(--r-med)">protected #9</text>
+      </g>
+
+      <!-- the knot grouping box: Market + Movement + Trade (the three adjacent core boxes) -->
+      <rect x="12" y="142" width="510" height="86" rx="11" fill="none" stroke="var(--r-med)" stroke-width="1.3" stroke-dasharray="4 4" opacity="0.6"/>
+
+      <!-- inter-subsystem key edges -->
+      <g>
+        <!-- clean adjacent coupling inside the knot -->
+        <path class="wire-seam" d="M170,182 L189,182" marker-end="url(#ahs)"/>
+        <path class="wire-seam" d="M342,182 L362,182" marker-end="url(#ahs)"/>
+        <!-- movement -> finn: injects turtle (long arc over the top) -->
+        <path class="wire" d="M300,152 C320,108 760,108 783,152" marker-end="url(#ah)"/>
+        <text x="540" y="103" text-anchor="middle" class="e-lbl">injects turtle</text>
+        <!-- render -> finn draws -->
+        <path class="wire" d="M686,182 L707,182" marker-end="url(#ah)"/>
+      </g>
+      <text x="267" y="245" text-anchor="middle" class="e-lbl" style="fill:var(--r-med)">the knot &middot; market &times; movement &times; trade &times; curriculum</text>
+      <text x="267" y="258" text-anchor="middle" class="e-lbl" style="fill:var(--r-med);opacity:.85">CQ.priceTouched &middot; nextCandle &middot; update() resolves &rarr; Tier 2, last</text>
+
+      <!-- Row C: audio + boss + lessons (support band) -->
+      <g>
+        <rect x="20"  y="270" width="150" height="52" rx="8" class="b-box"/>
+        <text x="95" y="292" text-anchor="middle" class="b-lbl" style="font-weight:700">Lessons</text>
+        <text x="95" y="308" text-anchor="middle" class="b-sub">conceptTier &middot; gate #4</text>
+        <rect x="192" y="270" width="150" height="52" rx="8" class="b-box"/>
+        <text x="267" y="292" text-anchor="middle" class="b-lbl" style="font-weight:700">Boss</text>
+        <text x="267" y="308" text-anchor="middle" class="b-sub">MG exam &middot; #2</text>
+        <rect x="364" y="270" width="150" height="52" rx="8" class="b-box"/>
+        <text x="439" y="292" text-anchor="middle" class="b-lbl" style="font-weight:700">Cinematics</text>
+        <text x="439" y="308" text-anchor="middle" class="b-sub">Intro &middot; Ceremony</text>
+        <rect x="536" y="270" width="150" height="52" rx="8" class="b-box" style="stroke:var(--r-low);stroke-width:1.7"/>
+        <text x="611" y="292" text-anchor="middle" class="b-lbl" style="font-weight:700">Audio</text>
+        <text x="611" y="308" text-anchor="middle" class="b-sub" style="fill:var(--r-low)">cleanest &middot; Tier-1</text>
+        <rect x="708" y="270" width="150" height="52" rx="8" class="b-box"/>
+        <text x="783" y="292" text-anchor="middle" class="b-lbl" style="font-weight:700">Collectibles</text>
+        <text x="783" y="308" text-anchor="middle" class="b-sub">CQREACH &middot; #14</text>
+      </g>
+
+      <!-- Row D: boot orchestrator -->
+      <rect x="20" y="356" width="838" height="52" rx="8" class="b-box"/>
+      <text x="439" y="378" text-anchor="middle" class="b-lbl" style="font-weight:700">Boot / Auth / Funnel &mdash; orchestrates page_load &rarr; cinematic &rarr; tutorial &rarr; ceremony &rarr; game</text>
+      <text x="439" y="394" text-anchor="middle" class="b-sub">initSupabase closes over ~20 later-declared globals &middot; protected #7 &middot; no gate today</text>
+      <path class="wire" d="M267,356 L267,322" marker-end="url(#ah)"/>
+      <path class="wire" d="M439,356 L439,322" marker-end="url(#ah)"/>
+      <path class="wire" d="M95,356 L95,322" marker-end="url(#ah)"/>
+
+      <!-- Row E: runtime-patch seam -->
+      <text x="20" y="452" class="b-sub" style="fill:var(--seam)">RUNTIME-PATCH SEAM &mdash; append-only &middot; the only real module boundary today</text>
+      <g>
+        <rect x="20"  y="462" width="200" height="52" rx="8" class="b-seam"/>
+        <text x="120" y="484" text-anchor="middle" class="b-lbl" style="font-weight:700">ContentLog</text>
+        <text x="120" y="500" text-anchor="middle" class="b-sub">telemetry &rarr; ingest fn</text>
+        <rect x="240" y="462" width="200" height="52" rx="8" class="b-seam"/>
+        <text x="340" y="484" text-anchor="middle" class="b-lbl" style="font-weight:700">CQTrack</text>
+        <text x="340" y="500" text-anchor="middle" class="b-sub">wraps &middot; gate #20</text>
+        <rect x="460" y="462" width="200" height="52" rx="8" class="b-seam"/>
+        <text x="560" y="484" text-anchor="middle" class="b-lbl" style="font-weight:700">CQBeta</text>
+        <text x="560" y="500" text-anchor="middle" class="b-sub">wraps journal-unlock</text>
+        <rect x="680" y="462" width="200" height="52" rx="8" class="b-seam"/>
+        <text x="780" y="484" text-anchor="middle" class="b-lbl" style="font-weight:700">CQBEAT</text>
+        <text x="780" y="500" text-anchor="middle" class="b-sub">wrapMoment &middot; gate #18</text>
+      </g>
+
+      <!-- dashed "patches" arrows up into the core targets -->
+      <g>
+        <path class="wire-dash" d="M340,462 C340,430 439,430 439,214" marker-end="url(#ahs)"/>
+        <path class="wire-dash" d="M780,462 C780,340 267,340 267,322" marker-end="url(#ahs)"/>
+        <path class="wire-dash" d="M120,462 C120,440 439,440 439,214" style="opacity:.6" marker-end="url(#ahs)"/>
+      </g>
+      <text x="500" y="540" text-anchor="middle" class="e-lbl" style="fill:var(--seam)">patches commitTrade &middot; resolveTrade &middot; openBoss &middot; introComplete at runtime &mdash; never edits an existing line</text>
+
+      <!-- legend -->
+      <g>
+        <line x1="20" y1="588" x2="52" y2="588" class="wire" marker-end="url(#ah)"/>
+        <text x="60" y="592" class="e-lbl">reads / calls</text>
+        <line x1="180" y1="588" x2="212" y2="588" class="wire-seam" marker-end="url(#ahs)"/>
+        <text x="220" y="592" class="e-lbl">two-way spine coupling</text>
+        <line x1="400" y1="588" x2="432" y2="588" class="wire-dash" marker-end="url(#ahs)"/>
+        <text x="440" y="592" class="e-lbl">patches at runtime</text>
+        <rect x="600" y="582" width="14" height="12" rx="3" class="b-seam"/>
+        <text x="620" y="592" class="e-lbl">existing window.CQ* seam</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>The story in one picture.</b> Spines everywhere (top) = why a file-split is hard. One tight knot (dashed box) = the Tier-2 work, done last. A clean append-only seam (bottom) = how the team copes today and the template for everything above it.</figcaption>
+  </figure>
+</section>
+
+<!-- -- FIGURE 3: the mechanism -- -->
+<section>
+  <div class="sec-ey">03 &mdash; Recommended module structure</div>
+  <h2>Author in files. Splice into one document. Ship byte-identical.</h2>
+  <p class="sub">The single-file design law stays intact: the game still runs from <span class="mono">file://</span> with no external script. Modularity is authoring-time; a build step reassembles the exact same bytes &mdash; which is precisely why the player can never tell it happened. This already works for <b>two</b> modules (<span class="mono">ops/cq-ops.js</span> via sync_ops.py, <span class="mono">cq-track.js</span> via sync_track.py); the blueprint generalizes it.</p>
+
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 1000 250" role="img" aria-label="Build pipeline: many src module files are spliced by cq.sh build into chart-quest.html, which mirrors to index.html and website game.html, each guarded by a drift gate.">
+      <defs>
+        <marker id="ah2" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--seam)"/></marker>
+      </defs>
+      <!-- src stack -->
+      <text x="80" y="26" text-anchor="middle" class="b-sub" style="fill:var(--seam)">src/ modules (authoring)</text>
+      <g class="mono">
+        <rect x="14" y="40" width="132" height="26" rx="5" class="b-box"/><text x="26" y="57" class="b-sub" style="fill:var(--ink)">audio/cq-audio.js</text>
+        <rect x="14" y="72" width="132" height="26" rx="5" class="b-box"/><text x="26" y="89" class="b-sub" style="fill:var(--ink)">market/cq-engine.js</text>
+        <rect x="14" y="104" width="132" height="26" rx="5" class="b-box"/><text x="26" y="121" class="b-sub" style="fill:var(--ink)">character/finn.js</text>
+        <rect x="14" y="136" width="132" height="26" rx="5" class="b-box"/><text x="26" y="153" class="b-sub" style="fill:var(--ink)">lessons/curriculum.js</text>
+        <rect x="14" y="168" width="132" height="26" rx="5" class="b-box"/><text x="26" y="185" class="b-sub" style="fill:var(--ink)">&hellip; 20+ modules</text>
+      </g>
+      <text x="80" y="214" text-anchor="middle" class="b-sub">+ ops/cq-ops.js, cq-track.js &#10003;</text>
+
+      <!-- arrow to build -->
+      <path class="wire-seam" d="M150,113 L236,113" marker-end="url(#ah2)"/>
+
+      <!-- build box -->
+      <rect x="240" y="78" width="180" height="70" rx="10" class="b-seam"/>
+      <text x="330" y="106" text-anchor="middle" class="b-lbl" style="font-weight:700">cq.sh build</text>
+      <text x="330" y="123" text-anchor="middle" class="b-sub">splice N marked regions</text>
+      <text x="330" y="136" text-anchor="middle" class="b-sub">(generalized sync_ops.py)</text>
+
+      <!-- arrow to single html -->
+      <path class="wire-seam" d="M420,113 L506,113" marker-end="url(#ah2)"/>
+
+      <!-- single html -->
+      <rect x="510" y="82" width="170" height="62" rx="10" class="b-box" style="stroke:var(--ink-2);stroke-width:1.8"/>
+      <text x="595" y="108" text-anchor="middle" class="b-lbl" style="font-weight:700">chart-quest.html</text>
+      <text x="595" y="124" text-anchor="middle" class="b-sub">one self-contained doc</text>
+
+      <!-- mirror to 3 -->
+      <path class="wire-seam" d="M680,100 C720,100 720,60 756,60" marker-end="url(#ah2)"/>
+      <path class="wire-seam" d="M680,113 L756,113" marker-end="url(#ah2)"/>
+      <path class="wire-seam" d="M680,126 C720,126 720,166 756,166" marker-end="url(#ah2)"/>
+      <g class="mono">
+        <rect x="760" y="46" width="226" height="28" rx="6" class="b-box"/><text x="774" y="64" class="b-sub" style="fill:var(--ink)">index.html <tspan class="b-sub">&mdash; generated</tspan></text>
+        <rect x="760" y="99" width="226" height="28" rx="6" class="b-box"/><text x="774" y="117" class="b-sub" style="fill:var(--ink)">website/game.html <tspan class="b-sub">&mdash; served</tspan></text>
+        <rect x="760" y="152" width="226" height="28" rx="6" class="b-box"/><text x="774" y="170" class="b-sub" style="fill:var(--ink)">sw.js cache bump</text>
+      </g>
+      <text x="986" y="210" text-anchor="end" class="b-sub">mirrors = build output &middot; no longer hand-merged</text>
+
+      <!-- gate ribbon -->
+      <rect x="240" y="168" width="440" height="26" rx="6" fill="none" stroke="var(--seam)" stroke-width="1.3" stroke-dasharray="5 4"/>
+      <text x="460" y="185" text-anchor="middle" class="e-lbl" style="fill:var(--seam)">drift gate: --check fails the build if any inlined region &ne; its src/ source</text>
+    </svg>
+    </div>
+    <figcaption><b>Byte-identity is the safety guarantee.</b> Because the build re-emits the same file, Tier-1 extraction changes only <em>where the source text lives</em>. The two mirrors become generated output &mdash; removing the two single largest sources of merge churn in the repo.</figcaption>
+  </figure>
+
+  <div class="tree">
+<span class="c"># authoring tree &mdash; reassembled by the build into the one HTML</span>
+<span class="d">ops/</span>cq-ops.js                 <span class="tag done">&#10003; template</span>
+<span class="d">src/core/</span>       cfg.js &middot; primitives.js &middot; bootstrap.js
+<span class="d">src/market/</span>     <span class="s">cq-engine.js</span> &middot; candle-generator.js &middot; replay.js &middot; market-identity.js   <span class="tag t1">Tier 1</span>
+<span class="d">src/world/</span>      <span class="s">cq-reach.js</span> &middot; collectibles.js &middot; event-ledger.js                     <span class="tag t1">Tier 1</span>
+<span class="d">src/motion/</span>     <span class="s">cq-motion.js</span>  <span class="c">// turtle &middot; update() split &middot; camera &middot; input</span>       <span class="tag t2">Tier 2</span>
+<span class="d">src/character/</span>  <span class="s">finn.js</span>       <span class="c">// window.CQFINN &middot; gates #1/#2/#10</span>              <span class="tag t2">Tier 2</span>
+<span class="d">src/render/</span>     world-hud.js  <span class="c">// RenderState injection</span>                       <span class="tag t2">Tier 2</span>
+<span class="d">src/lessons/</span>    <span class="s">curriculum.js</span> &middot; <span class="s">lesson-chart.js</span> &middot; mini-games.js               <span class="tag t1">Tier 1</span>
+<span class="d">src/trade/</span>      <span class="s">trade.js</span> &middot; setups.js  <span class="c">// protected #9</span>                        <span class="tag t2">Tier 2</span>
+<span class="d">src/boss/</span>       boss.js &middot; boss-cinematics.js                              <span class="tag t1">Tier 1</span>
+<span class="d">src/audio/</span>      <span class="s">cq-audio.js</span>  <span class="c">// cleanest cut in the file</span>                  <span class="tag t1">Tier 1</span>
+<span class="d">src/boot/</span>       auth-entry.js <span class="c">// dependency-inject the funnel</span>              <span class="tag t2">Tier 2</span>
+<span class="d">src/telemetry/</span>  <span class="s">content-log.js</span>                                            <span class="tag t1">Tier 1</span>
+<span class="d">src/features/</span>   <span class="s">cq-track.js</span> &middot; <span class="s">cq-beta.js</span> &middot; <span class="s">cq-beat.js</span> &middot; journal-tutorial.js  <span class="tag t1">Tier 1</span>
+  </div>
+</section>
+
+<!-- -- migration order -- -->
+<section>
+  <div class="sec-ey">04 &mdash; Migration order &middot; safest first</div>
+  <h2>Eleven steps. The risky ones wait for the entangled ones to be untied.</h2>
+  <p class="sub">Tier 1 (splice, byte-identical) can move briskly. Tier 2 (semantic decoupling of the spines) is post-beta, one module in flight at a time, each behind its own gate and an on-device playtest.</p>
+
+  <div class="steps">
+    <div class="step s0"><div class="ph">0</div><div><div class="ttl">Build the splice tool</div><div class="ds">Generalize <span class="mono">sync_ops.py</span> &rarr; <span class="mono">cq.sh build</span> for N marked regions + per-module drift gate. Moves no game code.</div></div><div class="risk r0">Very Low</div></div>
+    <div class="step s1"><div class="ph">1</div><div><div class="ttl">Harvest the clean seams</div><div class="ds">audio &middot; ContentLog &middot; render primitives &middot; LessonChart (lift out of the MG IIFE) &middot; dedupe Supabase config.</div></div><div class="risk r1">Low</div></div>
+    <div class="step s1"><div class="ph">2</div><div><div class="ttl">Extract the trailing IIFEs</div><div class="ds">CQTrack (unify with its canonical twin) &middot; CQBeta &middot; CQBEAT &middot; journal-tutorial. Kills the twin-drift class entirely.</div></div><div class="risk r1">Low</div></div>
+    <div class="step s1"><div class="ph">3</div><div><div class="ttl">Extract the gated owners</div><div class="ds">window.CQ (re-point gate #13) &middot; window.CQREACH (#14). Already frozen IIFEs &mdash; near-trivial.</div></div><div class="risk r1">Low&ndash;Med</div></div>
+    <div class="step s2"><div class="ph">4</div><div><div class="ttl">Split the big contiguous subsystems</div><div class="ds">boss &middot; cinematics &middot; market sub-modules &middot; collectibles &middot; curriculum &middot; trade. Splice = byte-identical.</div></div><div class="risk r2">Medium</div></div>
+    <div class="step s2"><div class="ph">5</div><div><div class="ttl">Isolate CFG</div><div class="ds">One shared read-only config file (still global). Re-point gate #10 to hash the module. Prereq for movement.</div></div><div class="risk r2">Medium</div></div>
+    <div class="step s3"><div class="ph">6</div><div><div class="ttl">Finn seam &middot; CQFINN</div><div class="ds">Inject <span class="mono">turtle</span>/<span class="mono">ctx</span>; re-point gates #1/#2/#10 <em>before</em> moving the marker strings. Protected #1.</div></div><div class="risk r3">High</div></div>
+    <div class="step s3"><div class="ph">7</div><div><div class="ttl">Render-state injection</div><div class="ds">One RenderState contract; hoist the two hidden impurities into update() first. No pixel gate &mdash; playtest.</div></div><div class="risk r3">High</div></div>
+    <div class="step s4"><div class="ph">8</div><div><div class="ttl">Motion seam + update() split</div><div class="ds">Pure physicsStep vs gameStep (trade resolution). Reordering changes <em>where a trade resolves</em>. Protected #4 &amp; #9.</div></div><div class="risk r4">Highest</div></div>
+    <div class="step s4"><div class="ph">9</div><div><div class="ttl">Trade seam <span style="opacity:.6">(difficulty 5)</span> + boot</div><div class="ds">CQTRADE: write the invariant gate FIRST, carve pure trade-math, keep commit/resolve as global aliases for the CQTrack wrap &middot; dependency-inject the auth funnel.</div></div><div class="risk r4">Highest</div></div>
+    <div class="step s2"><div class="ph">10</div><div><div class="ttl">Split CFG &middot; add error boundaries</div><div class="ds">cfg.movement / cfg.market &middot; wrap frame()/update() so a throw logs instead of freezing the game.</div></div><div class="risk r2">Medium</div></div>
+  </div>
+</section>
+
+<!-- -- coupling + merge -- -->
+<section>
+  <div class="sec-ey">05 &mdash; Why it pays off</div>
+  <div class="grid2">
+    <div>
+      <h2 style="font-size:22px">The measured coupling</h2>
+      <p class="sub" style="font-size:14px">Fan-in from a whole-file scan. The top four are the spines the graph warns about.</p>
+      <table>
+        <thead><tr><th>Symbol</th><th style="text-align:right">Reads</th><th class="barcell"></th></tr></thead>
+        <tbody>
+          <tr><td class="sym">turtle</td><td class="n">1,018</td><td class="barcell"><div class="bar" style="width:100%"></div></td></tr>
+          <tr><td class="sym">trade</td><td class="n">971</td><td class="barcell"><div class="bar" style="width:95%"></div></td></tr>
+          <tr><td class="sym">COLOR</td><td class="n">239</td><td class="barcell"><div class="bar" style="width:23%"></div></td></tr>
+          <tr><td class="sym">session</td><td class="n">209</td><td class="barcell"><div class="bar" style="width:21%"></div></td></tr>
+          <tr><td class="sym">CFG</td><td class="n">185</td><td class="barcell"><div class="bar" style="width:18%"></div></td></tr>
+          <tr><td class="sym">player</td><td class="n">132</td><td class="barcell"><div class="bar" style="width:13%"></div></td></tr>
+          <tr><td class="sym">GameMusic</td><td class="n">110</td><td class="barcell"><div class="bar" style="width:11%"></div></td></tr>
+          <tr><td class="sym">rr()</td><td class="n">89</td><td class="barcell"><div class="bar" style="width:9%"></div></td></tr>
+          <tr><td class="sym">candles[]</td><td class="n">72</td><td class="barcell"><div class="bar" style="width:7%"></div></td></tr>
+          <tr><td class="sym">conceptTier()</td><td class="n">~40</td><td class="barcell"><div class="bar" style="width:4%"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h2 style="font-size:22px">The merge-conflict case</h2>
+      <p class="sub" style="font-size:14px">Hard git data over 190 commits.</p>
+      <div class="callout">
+        <h3>The top-3 churn files are one file, mirrored 3&times;</h3>
+        <p class="dim" style="font-size:14px"><span class="mono">index.html</span> (108) &middot; <span class="mono">chart-quest.html</span> (107) &middot; <span class="mono">website/game.html</span> (57). Every logical change is a 3-file simultaneous rewrite under gate #8.</p>
+      </div>
+      <ul class="tight">
+        <li><b>Documented scars:</b> "three concurrent sessions, one outstanding conflict"; a self-caused clobber; two retractions; a stale analytics client shipped to testers &mdash; and gate #20 was <em>born</em> to catch cross-session drift.</li>
+        <li><b>After Tier-1:</b> mirrors become generated output (removes 165 of the top-3's commits from hand-merge), edits go module-local. Estimated <b>~80&ndash;90%</b> fewer same-file hunk collisions.</li>
+        <li><b>The scope trap closes per-module:</b> one <span class="mono">window.*</span> write, zero new top-level names &mdash; a cross-session merge can't reintroduce a silent duplicate-declaration crash.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="rule-note">Non-negotiable constraints preserved throughout &mdash; single self-contained document &middot; byte-identical mirror (gate #8) &middot; no new top-level names &middot; 9 protected systems frozen &middot; 21 gates stay green &middot; save keys byte-frozen &middot; the Trade Clock never re-couples to traversal.</div>
+</section>
+
+<footer>
+  <div class="wrap" style="padding:0">
+    Analysis &amp; design only &mdash; no production file was modified; the game remains build 351, byte-for-byte unchanged. Evidence: a 15-agent read-only analysis workflow (9 completed + 6 filled by direct inspection), verified against the live working tree. Companion document: <span class="mono">CHARTQUEST_ARCHITECTURE_BLUEPRINT_2026-08-06.md</span>.
+  </div>
+</footer>
+
+</div>

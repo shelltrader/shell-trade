@@ -10,6 +10,12 @@
 // minutes. Both are present below. LESSON: this function is edited by more than
 // one session at a time — re-read the DEPLOYED source immediately before
 // deploying, never build a new version from an earlier read.
+//
+// v8 (2026-08-07): ADDS 'tutorial_step_reached' — the movement-tutorial step
+// breadcrumb. Built by re-reading the DEPLOYED v7 (this comment's own rule), so
+// v7's 5-origin allowlist and every event name below are preserved; the stale
+// 3-origin repo copy was NOT used. Deploy BEFORE the client that emits it
+// (see website/assets/cq-track.js): an unknown name is dropped silently here.
 // ---------------------------------------------------------------------------
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -71,6 +77,9 @@ const EVENT_NAMES = new Set([
   // "check instrumentation" affordance never fires because it is gated on players === 0.
   'play_clicked', 'movement_tutorial_completed',
   'tutorial_started', 'tutorial_completed',
+  // v8 — the movement-tutorial step breadcrumb: WHERE inside the tutorial a player stalls.
+  // Fires per new step (1,2,3), deduped client-side by furthest step (not once-per-player here).
+  'tutorial_step_reached',
   'first_trade_started', 'first_trade_won', 'first_trade_lost',
   'boss_started', 'boss_defeated',
   'journal_unlocked', 'journal_discovery_started', 'journal_discovery_completed',

@@ -45,7 +45,7 @@
 
   /* The closed set. Must stay identical to EVENT_NAMES in supabase/functions/beta-ingest. */
   var NAMES = ['session_start','session_end','return_visit','play_clicked','movement_tutorial_completed',
-    'tutorial_started','tutorial_completed',
+    'tutorial_started','tutorial_completed','tutorial_step_reached',
     'first_trade_started','first_trade_won','first_trade_lost','boss_started','boss_defeated',
     'journal_unlocked','journal_discovery_started','journal_discovery_completed','journal_discovery_skipped','beta_completed',
     'survey_started','survey_submitted','crash'];
@@ -218,6 +218,7 @@
       }
       var _p = props || {};
       if (BUILD && _p.build == null) _p.build = BUILD;
+      if (IS_DEV) _p.dev = 1;                              // mark dev/self-test sessions (see founder_report.py dev_flagged)
       buf.push({
         event_id: uid('e-'), player_id: pid(), session_id: SESSION,
         name: name, ts: new Date().toISOString(), props: _p,
@@ -253,7 +254,7 @@
       buf.push({
         event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'return_visit',
         ts: new Date().toISOString(),
-        props: { visit: visits, first_seen: get('cq_bt_first_seen'), page: page(), build: BUILD },
+        props: { visit: visits, first_seen: get('cq_bt_first_seen'), page: page(), build: BUILD, dev: IS_DEV ? 1 : undefined },
         device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
       });
       schedule();
@@ -282,7 +283,8 @@
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'session_end',
       ts: new Date().toISOString(),
       props: { seconds: secs, page: page(), completion_seconds: completionSeconds(),
-               exit_stage: exitStage(), completed: !!get('cq_bt_beta_completed'), build: BUILD },
+               exit_stage: exitStage(), completed: !!get('cq_bt_beta_completed'), build: BUILD,
+               dev: IS_DEV ? 1 : undefined },
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);
@@ -334,6 +336,19 @@
     return /^(localhost|127\.0\.0\.1|\[::1\])(:\d{1,5})?$/.test(location.host || '');
   }, false);
 
+  /* Is this a developer/self-test session rather than a real tester? TAGGED (props.dev = 1),
+     not suppressed — dev activity stays visible for debugging the pipe while founder_report.py
+     filters it out (dev_flagged). This is the real flag the Founder Report asked for, replacing
+     the 699x808-viewport heuristic that could only guess. Any of: the game's own dev gate
+     (?dev / cq_dev / window._CQ_DEV) or a dev host (localhost). Anchored host test above; a
+     ?dev substring on a real query string cannot false-positive because it is bounded. */
+  var IS_DEV = safe(function () {
+    return IS_LOCAL_PAGE
+      || /[?&]dev(=[^&]*)?(&|$)/i.test(location.search || '')
+      || get('cq_dev') === '1'
+      || window._CQ_DEV === true;
+  }, false);
+
   /* '' (inline script / no filename) is OURS: window.onerror reports no filename for inline
      code, and the game is one big inline document. A cross-origin script that is not CORS-
      enabled is sanitized by the browser to "Script error." with no filename either — that
@@ -361,7 +376,7 @@
       ts: new Date().toISOString(),
       props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '',
                page: page(), build: BUILD,
-               origin: org, source_host: host || null },
+               origin: org, source_host: host || null, dev: IS_DEV ? 1 : undefined },
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);
@@ -498,6 +513,7 @@
   function watchMovementTutorial() {
     if (get('cq_bt_movement_tutorial_completed')) return;
     var n = 0, provedVerbs = false;
+    var maxStep = 0;   // furthest tutorial step reported THIS session — in-memory, so NO new save key
     var iv = setInterval(function () {
       if (++n > 1200) { clearInterval(iv); return; }   // ~10 min: auth + cinematic + the 160s cap
       var s = safe(function () {
@@ -505,6 +521,20 @@
         return (J && J._S) ? J._S : null;
       }, null);
       if (!s) return;                                  // website page, or module not parsed yet
+
+      /* BREADCRUMB — report each NEW tutorial step reached (tStage 1,2,3) so the Founder Report can
+         split "stalled at tutorial_started with ZERO reps" from "did step 1-2 then gave up" — the
+         exit point today is only "tutorial_started" with no inside-view. Deduped in-memory by the
+         furthest step reached this session (a fast poll never double-counts; the tutorial runs once
+         per player, gated on cq_played, so it is not re-entered). Deliberately NOT a localStorage
+         key: that would touch the protected save schema, and the report counts DISTINCT players per
+         step, so the only untidy case — a mid-tutorial reload re-emitting a step — is harmless.
+         Step 0 (entered, no reps) is already covered by tutorial_started, so only 1+ fires. */
+      var st = safe(function () { return (typeof s.tStage === 'number') ? s.tStage : 0; }, 0);
+      if (st > maxStep) {
+        maxStep = st;
+        event('tutorial_step_reached', { step: st, phase: s.phase || '', count: s.tCount || 0 });
+      }
 
       if (!provedVerbs && (s.tStage === 1 || s.tStage === 2) && !s.tCelebDone) provedVerbs = true;
 

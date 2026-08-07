@@ -155,6 +155,28 @@ def dev_finishers(events):
     return out
 
 
+def dev_flagged(events):
+    """Players who emitted ANY event tagged props.dev — the client-side ?dev / localhost / cq_dev
+    marker from cq-track.js (see CHARTQUEST_BETA_INSTRUMENTATION_DRAFT_2026-08-07.md).
+
+    THIS CATCHES WHAT THE OTHER TWO CANNOT: a dev/self-test session that uses an ordinary 'p-'
+    id and never devFinish()es — the founder playtesting the DEPLOYED build in a browser pane.
+    Six such sessions (desktop macOS, viewport 699x808/0x0) sat in the 2026-08-07 window,
+    slipping past both EXCLUDE_PREFIXES and dev_finishers and inflating the funnel.
+
+    No-op until the client tag ships: harmless to land now, adds no prefix (so it does not touch
+    the 3-way check_test_prefixes.py sync). Anchored on a small truthy set, not `bool(x)`, so a
+    literal 0/'0'/False never reads as dev.
+    """
+    out = set()
+    truthy = {1, '1', True, 'true'}
+    for e in events:
+        props = e.get('props') if isinstance(e.get('props'), dict) else {}
+        if props.get('dev') in truthy and e.get('player_id'):
+            out.add(e['player_id'])
+    return out
+
+
 def load(args):
     since = datetime.now(timezone.utc) - timedelta(days=args.days)
     since_iso = since.isoformat()
@@ -247,7 +269,8 @@ def main():
     now = datetime.now(timezone.utc)
 
     dev_ids = dev_finishers(events)
-    drop = lambda pid_: is_test_player(pid_) or pid_ in dev_ids   # noqa: E731
+    dev_tag_ids = dev_flagged(events)
+    drop = lambda pid_: is_test_player(pid_) or pid_ in dev_ids or pid_ in dev_tag_ids   # noqa: E731
     excluded_players = {e.get('player_id') for e in events if drop(e.get('player_id'))}
     excluded_events = len([e for e in events if drop(e.get('player_id'))])
     events = [e for e in events if not drop(e.get('player_id'))]

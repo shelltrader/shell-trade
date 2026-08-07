@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="a7b86d64f8" data-built-at="2026-08-07T06:54:17Z">
+<meta name="cq-build" content="4ef0d5ff2f" data-built-at="2026-08-07T12:31:52Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 355 - BETA INSTRUMENTATION (analytics only, no gameplay change). Added the dev-session tag: any ?dev / localhost / cq_dev / _CQ_DEV session now stamps props.dev=1 on every event, so founder + self-test sessions drop out of the Founder Report automatically (founder_report.py dev_flagged) instead of contaminating the funnel with ordinary p- ids. Added the tutorial_step_reached breadcrumb: the CQTrack poller reports each new movement-tutorial step reached (tStage 1/2/3), so the report can finally show WHERE inside the tutorial a player stalls, not just that they did. cq-track.js only; the beta-ingest edge function was deployed to v8 FIRST to accept the new event name. No trade / boss / lesson / movement / art / UI behaviour was touched.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 356 - FOUR PLAYTEST FIXES (founder), display/VFX only - no trade outcome, setup, movement, or save-key change. (1) EVERY-TRADE ANIMATED REPLAY: the entry->exit replay now auto-plays after every trade close (autoOpenTradeReplay waits for the P&L punch + review card + any celebration to clear, then opens the existing openReviewChart), not just the first trade / not just from the Notebook. (2) LAST STRAY DEFEAT COIN: the killing-blow bossBurst that rained coins over the Gambler outro is suppressed whenever a boss has an outro clip - the exact path build 354 missed (354 only silenced the burst inside bossWin). (3) FIRST-WIN TROPHY: cq_firstwin_v1 was burned at trade-resolve time while the trophy is deferred up to 90s, so an interruption lost it forever; the flag now burns only AFTER the trophy plays. (4) CURRENT-LESSON OVERLAP: the quick-read question-box floor moved 192->206 so it clears the 2-line CURRENT LESSON card.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -12017,6 +12017,35 @@ function openReviewChart(entry) {
   else showReviewDetails();
 }
 function openJournalReview(id) { openReviewChart(journal.find(x => x.id === id)); }
+// EVERY-TRADE REPLAY (founder, build 356) — the animated entry→exit replay must play after EVERY
+// trade closes, not only the first and not only from the Notebook/intermission. Once the outcome
+// punch + any post-trade review card / milestone celebration have cleared, auto-open the full-screen
+// replay (openReviewChart auto-plays it; a background tap closes it). Purely additive DISPLAY: reads a
+// FINISHED trade record and never touches trade outcome / setup / entry-stop-target logic.
+function autoOpenTradeReplay(rec) {
+  if (!rec || !rec.replay || !rec.replay.candles || !rec.replay.candles.length) return;   // nothing to animate
+  const _now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  const t0 = _now();
+  (function tick() {
+    const _elapsed = _now() - t0;
+    if (_elapsed > 12000) return;                        // gave up — never fight a screen that stays busy this long
+    let clear = _elapsed > 1200;                         // let the win/loss punch land before the replay covers it
+    try {
+      if (typeof lessonOpen !== 'undefined' && lessonOpen) clear = false;                     // a post-trade review / lesson card is up
+      else if (typeof lessonQ !== 'undefined' && lessonQ && lessonQ.length) clear = false;     // …or one is queued to show
+      else if (typeof pendingCelebration !== 'undefined' && pendingCelebration) clear = false; // a deferred milestone (e.g. FIRST WIN) is pending
+      else if (typeof trade !== 'undefined' && trade) clear = false;                           // a new trade already started — abort
+      else if (typeof pending !== 'undefined' && pending) clear = false;
+      else if (typeof firstTradeGuide !== 'undefined' && firstTradeGuide) clear = false;       // the guided first-trade walkthrough owns the screen
+      else if (typeof session !== 'undefined' && session && session.inModal) clear = false;    // intermission / boss is up
+      else if (typeof journalOpen !== 'undefined' && journalOpen) clear = false;               // player opened the Notebook themselves
+      else if (typeof walletOpen !== 'undefined' && walletOpen) clear = false;
+      else { const cf = document.getElementById('chartFull'); if (cf && cf.classList.contains('open')) clear = false; } // another full-screen is already open
+    } catch (e) {}
+    if (clear) { try { openReviewChart(rec); } catch (e) {} return; }
+    setTimeout(tick, 200);
+  })();
+}
 // Control-bar interactions (stop taps from closing the chart underneath)
 $('cfLegend').addEventListener('pointerdown', (e) => e.stopPropagation());
 $('cfLegend').addEventListener('click', (e) => {
@@ -13960,10 +13989,19 @@ function onRoundDone(score, passed) {
      fight early) can never index past the last clip. */
   const _flinchN = (passed && bfState.bossHP > 0 && BOSS_FLINCH_VIDEOS[bfState.level])
     ? Math.min(bfState.idx, BOSS_FLINCH_VIDEOS[bfState.level].length) : 0;
+  /* FOUNDER (build 356) — THE LAST STRAY COIN ON THE DEFEAT CINEMATIC. Build 354 suppressed the
+     TRIPLE bossBurst inside bossWin() when an outro clip is about to play, but the KILLING blow's
+     OWN single bossBurst('hit') fires HERE, one line before bossWin() runs. On the fatal hit
+     _flinchN is forced to 0 (the `bfState.bossHP > 0` guard above, so the defeat clip and a flinch
+     never stack), so `quiet` was false and 14 🪙 rained over the outro's warp-in — the lone coin the
+     founder still saw. Same rule 319/354 drew: the clip IS the reaction, so drop the burst whenever a
+     clip is about to own the screen. On the fatal hit that clip is the OUTRO. Bosses with no outro
+     keep the killing-blow burst as celebration. */
+  const _killWithOutro = (bfState.bossHP <= 0) && !!(BOSS_OUTRO_VIDEOS[bfState.level] || []).length;
   // The glitchy 'hit' reaction is REPLACED by the clip — never play both. A wrong answer keeps
   // its full reaction ('hurt': shakeBig + red flash + taunt), which the founder did not ask to change.
-  bossHitFX(passed ? 'hit' : 'hurt', !!_flinchN);   // flinch round → keep the impact, drop only shake+flash
-  if (bfState._lastBonus && !_flinchN) { try { setTimeout(() => bossHitFX('hit'), 160); } catch (e) {} }  // extra impact on a ×2
+  bossHitFX(passed ? 'hit' : 'hurt', !!_flinchN || _killWithOutro);   // flinch round OR fatal-hit-with-outro → drop the burst; the clip owns the screen
+  if (bfState._lastBonus && !_flinchN && !_killWithOutro) { try { setTimeout(() => bossHitFX('hit'), 160); } catch (e) {} }  // extra impact on a ×2 (never over an outro clip)
   if (bfState.playerHP <= 0) return bossLose();
   if (bfState.bossHP <= 0) return bossWin();
   try { const _bf = $('bossFight'); if (_bf) _bf.classList.remove('fighting'); } catch (e) {}
@@ -15864,9 +15902,10 @@ function updateQuickRead(dt) {
 }
 function qrRects() {
   // MOBILE OVERLAP FIX: the prompt box sits at by-44. The top-left CURRENT LESSON chip
-  // runs down to ~y137, so floor `by` at 192 to keep the prompt clear of it (capped at
-  // 0.44H so it never drops too low on short canvases).
-  const bw = Math.min(150, (W-44)/2-8), bh = 46, cx = W/2, by = Math.min(Math.max(H*0.215, 192), H*0.44);
+  // now runs down to ~y158 (build 345 grew it to a 2-line card: LY 118, cardH up to 58),
+  // so floor `by` at 206 (prompt box top = by-44 = 162) to keep the question box clear of
+  // the card's bottom line (capped at 0.44H so it never drops too low on short canvases).
+  const bw = Math.min(150, (W-44)/2-8), bh = 46, cx = W/2, by = Math.min(Math.max(H*0.215, 206), H*0.44);
   return { by, bh, bw, left:[cx-bw-8, by, bw, bh], right:[cx+8, by, bw, bh] };
 }
 function qrHitTest(x, y) {
@@ -16200,8 +16239,7 @@ function resolveTrade(result) {
     // FIRST WIN — a once-ever milestone many players will remember. Lands just after
     // the P&L pop so both read clearly.
     if (!firstWinCelebrated) {
-      firstWinCelebrated = true;
-      try { localStorage.setItem('cq_firstwin_v1', '1'); } catch (e) {}
+      firstWinCelebrated = true;   // in-memory guard ONLY: stops a 2nd win THIS session re-scheduling. The PERSISTENT cq_firstwin_v1 is now burned inside _fireFirstWin (below) — only AFTER the trophy has actually played — so a reload / boss-entry before it shows re-arms the milestone next session instead of losing it forever.
       try { winPunchT = 0.34; slowmoT = Math.max(slowmoT, SLOWMO_DUR); } catch (e) {}   // MASTERPIECE — the once-ever win ALSO lands a hit-stop + camera-punch on the tagging candle; the 'bigwin' sting + 🏆 fanfare stay deferred to the post-trade card (learn-before-dopamine + single audio milestone intact)
       // SPRINT 6 / FOLLOW-UP #2 — LEARNING BEFORE DOPAMINE, now a HARD SEQUENCE. The
       // big celebration fires when the post-trade lesson card is DISMISSED (see
@@ -16214,6 +16252,7 @@ function resolveTrade(result) {
         try { celebrate({ title: '🏆 FIRST WIN!', sub: 'You waited for the dip, then joined the green.',
           color: '#ffd60a', sparkCol: '#ffd60a', burst: 'shell', n: 46, dur: 3.8, flash: 0.68, shake: 0.6,
           haptic: 34, sound: 'fanfare', y: H * 0.42, finn: true }); } catch (e) {}   // TX-01/TX-03 — the earned once-ever moment, amplified (particles/dur/flash + a milestone buzz)
+        try { localStorage.setItem('cq_firstwin_v1', '1'); } catch (e) {}   // BURN the once-ever flag ONLY now that the trophy has actually played — an interruption before this point re-arms the celebration next session instead of silently losing it.
       };
       /* FOUNDER CALL (build 303) — THE MILESTONE MUST NOT PLAY TO AN EMPTY ROOM.
          This fired either the moment the post-trade lesson was dismissed, or on a blind 7-second
@@ -16358,6 +16397,9 @@ function resolveTrade(result) {
   // Persistent journal: log EVERY trade (uncapped, survives hour resets & reloads),
   // carrying the full chart snapshot so each entry can be reviewed full-screen.
   logJournalTrade(tradeRecord);
+  // EVERY-TRADE REPLAY (build 356): play the animated entry→exit replay on THIS close too — see
+  // autoOpenTradeReplay(). It waits for the outcome punch + review card / celebration to clear first.
+  try { autoOpenTradeReplay(tradeRecord); } catch (e) {}
   // ── Post-trade educational feedback card (reuses the lesson-card UI) — explains the grade ──
   // SPRINT 1 — first trade ever: unlock the Notebook (nav bar) so it appears WITH the
   // "new notebook entry" moment below, not before the player has anything to record.

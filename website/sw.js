@@ -27,8 +27,13 @@
    CQTrack.event('play_clicked') simply returned false for them and the two stages recorded
    NOTHING. Caught live, by testing the emit path in a browser that had visited before; a fresh
    browser works fine, which is exactly why this class of bug survives local checking.
-   The precache list is not "just marketing assets" — it contains the ANALYTICS CLIENT. */
-const CACHE = 'chartquest-site-v13';
+   The precache list is not "just marketing assets" — it contains the ANALYTICS CLIENT.
+   v13 → v14 (2026-08-07): build 355 changed cq-track.js (dev-session props.dev tag +
+   tutorial_step_reached breadcrumb) but this version string did not move IN THAT COMMIT — the
+   same miss as v12→v13. Bumping now so returning landing/play visitors get the new tracker.
+   (The game itself is game.html, served network-first, so gameplay was never stale — only the
+   precached assets/cq-track.js on the marketing pages were.) */
+const CACHE = 'chartquest-site-v14';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',

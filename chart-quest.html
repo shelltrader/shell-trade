@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="4ef0d5ff2f" data-built-at="2026-08-07T12:31:52Z">
+<meta name="cq-build" content="f3fc77e03f" data-built-at="2026-08-10T08:41:59Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 356 - FOUR PLAYTEST FIXES (founder), display/VFX only - no trade outcome, setup, movement, or save-key change. (1) EVERY-TRADE ANIMATED REPLAY: the entry->exit replay now auto-plays after every trade close (autoOpenTradeReplay waits for the P&L punch + review card + any celebration to clear, then opens the existing openReviewChart), not just the first trade / not just from the Notebook. (2) LAST STRAY DEFEAT COIN: the killing-blow bossBurst that rained coins over the Gambler outro is suppressed whenever a boss has an outro clip - the exact path build 354 missed (354 only silenced the burst inside bossWin). (3) FIRST-WIN TROPHY: cq_firstwin_v1 was burned at trade-resolve time while the trophy is deferred up to 90s, so an interruption lost it forever; the flag now burns only AFTER the trophy plays. (4) CURRENT-LESSON OVERLAP: the quick-read question-box floor moved 192->206 so it clears the 2-line CURRENT LESSON card.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 357 - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -23029,7 +23029,7 @@ const BlockchainJourney = (() => {
     base:0, candles:[], giant:null, shells:[], shellCount:0, shellCombo:0, shellComboT:0,
     boxes:[], gems:[], gemCount:0, worldEnd:0, cur:0, atEdge:false,
     awake:0, launchTrailT:0, hitStop:0, tScale:1, tScaleTgt:1, airMagic:false, trail:[],
-    smash:null, crystalWaitT:0, maxCur:0, canTurn:false, turnHintT:0, shellIntroT:0, firstShell:false,
+    smash:null, crystalWaitT:0, maxCur:0, zoneBoost:-1, zoneDouble:-1, zoneSmash:-1, canTurn:false, turnHintT:0, shellIntroT:0, firstShell:false,
     taught:{jump:false,roll:false,boost:false,boost2:false,spin:false}, teachPulse:0, portal:null, portalT:0,
     tStage:0, tCount:0, tFlash:0, tCelebT:0, tCelebDone:false,   // STAGED TEACH — see TEACH_STAGES
     stars:[], neb:[], pillars:[], motes:[], shoot:null, particles:[],
@@ -23075,7 +23075,7 @@ const BlockchainJourney = (() => {
   function buildWorld(){
     const base=Math.round(H*0.66); S.base=base;
     S.candles=[]; S.particles=[]; S.shells=[]; S.shellCount=0; S.boxes=[]; S.gems=[]; S.gemCount=0; S.spin=null; S.boostMiss=0;
-    S.trail=[]; S.airMagic=false; S.hitStop=0; S.tScale=1; S.tScaleTgt=1; S.smash=null; S.crystalWaitT=0; S.maxCur=0; S.canTurn=false; S.turnHintT=0; S.shellIntroT=0; S.firstShell=false;
+    S.trail=[]; S.airMagic=false; S.hitStop=0; S.tScale=1; S.tScaleTgt=1; S.smash=null; S.crystalWaitT=0; S.maxCur=0; S.zoneBoost=-1; S.zoneDouble=-1; S.zoneSmash=-1; S.canTurn=false; S.turnHintT=0; S.shellIntroT=0; S.firstShell=false;
     S.taught={jump:false,roll:false,boost:false,boost2:false,spin:false}; S.teachPulse=0; S.portal=null; S.portalT=0;
     S.tStage=0; S.tCount=0; S.tFlash=0; S.tCelebT=0; S.tCelebDone=false;
     // FREE-MODE terrain: Finn walks the chart continuously. A TALLER candle is a solid WALL he must JUMP over;
@@ -23108,7 +23108,7 @@ const BlockchainJourney = (() => {
       {c:'green',h:118},                             // 4  step down
       {c:'green',h:118},                             // 5  flat — a breath between walls
       {c:'red',  h:190,shell:1},                     // 6  WALL → the jump rhythm is set
-      {c:'green',h:130},                             // 7  step down
+      {c:'green',h:130,air:[[300,20]],zone:'boost'}, // 7  step down + FOUNDER (356): the FIRST boost shell, mid-air RIGHT where BOOST unlocks (no more "nothing to boost for"), and the boost-zone gate marker so the verb counts HERE, not several candles early
       {c:'green',h:130,roll:1},                      // 8  SHELL-ROLL teach — flat + safe, practise the roll alone
       {c:'green',h:130},                             // 9  flat — room to roll again
       {c:'green',h:104},                             // 10 low — sets up the jetpack wall
@@ -23140,7 +23140,7 @@ const BlockchainJourney = (() => {
       {c:'green',h:146},                             //           settle before the double-boost lesson
 
       // ── DOUBLE-BOOST ZONE — three shells NO single boost can reach ──
-      {c:'green',h:142,air:[[560,46]]},              // DOUBLE 1 — 560 is above the 469 single-boost ceiling
+      {c:'green',h:142,air:[[560,46]],zone:'double'},// DOUBLE 1 — 560 is above the 469 single-boost ceiling · build 356: double-zone gate marker (the double-boost only counts once Finn is HERE — was completing ~20 candles early)
       {c:'green',h:142},                             //            room
       {c:'green',h:140,air:[[580,50]]},              // DOUBLE 2
       {c:'green',h:140},                             //            room
@@ -23158,7 +23158,7 @@ const BlockchainJourney = (() => {
          changing a single jump the terrain teaches. */
       {c:'green',h:156},                             // +  345: approach room
       {c:'green',h:156},                             // +  345: approach room — read the box before you reach it
-      {c:'green',h:156,box:1},                       // 14 BOX #1 — now they know jump + boost → SMASH it
+      {c:'green',h:156,box:1,zone:'smash'},          // 14 BOX #1 — now they know jump + boost → SMASH it · build 356: smash-zone gate marker
       {c:'green',h:156},                             // +  345: landing room after the first smash
       {c:'red',  h:200},                             // 15 was a double-boost chain — REMOVED (350): it sat between box #1 and #2, pulling the player upward mid-SMASH lesson
       {c:'green',h:146},                             // +  345: approach room for box #2
@@ -23192,6 +23192,9 @@ const BlockchainJourney = (() => {
                 wick: sp.wick?LONG_WICK:14, wickTall:!!sp.wick, spun:false, spinTo:!!sp.spinTo, tower:!!sp.tower, rollSpot:!!sp.roll,
                 crystal:!!sp.crystal, smashed:!sp.crystal, freeT:0, whipT:0 };
       S.candles.push(c);
+      if(sp.zone==='boost')      S.zoneBoost=i;    // build 356 — remember where each verb's terrain begins, so teachCredit keeps the banner in lockstep with the reward
+      else if(sp.zone==='double') S.zoneDouble=i;
+      else if(sp.zone==='smash')  S.zoneSmash=i;
       if (sp.shell){ for (let s=0;s<sp.shell;s++) S.shells.push({ cx:c, dx:(sp.shell>1?(s-0.5)*22:0), y0:34+s*4, r:8, got:false, bob:Math.random()*6.28 }); }
       /* LIQUIDITY CHAIN — REMOVED (build 351, founder call).
          Was a 5-shell ladder at 210/300/400/510/630 above the long wick, reachable only by spinning
@@ -24103,13 +24106,21 @@ const BlockchainJourney = (() => {
     { key:'jump',   need:3, g:'tap',  t:'TAP to JUMP' },
     { key:'boost',  need:3, g:'up',   t:'SWIPE UP to BOOST' },
     { key:'boost2', need:3, g:'up',   t:'SWIPE UP TWICE', t2:'DOUBLE BOOST for the high shells' },
-    { key:'smash',  need:3, g:'down', t:'BOOST, then SWIPE DOWN', t2:'SMASH the box for a surprise' },
+    { key:'smash',  need:3, g:'down', t:'BOOST, then SWIPE DOWN', t2:'onto the BOX to SMASH it open!' },
   ];
   // Credit one rep of a verb. Only the ACTIVE stage counts, so practising ahead never skips a step.
   function teachCredit(key){
     alive();                      // build 348 — progress counts as activity
     if(S.tCelebDone) return;
     const st = TEACH_STAGES[S.tStage]; if(!st || st.key !== key) return;
+    /* FOUNDER (build 356) — KEEP THE BANNER IN LOCKSTEP WITH THE TERRAIN. Verb reps used to advance
+       the stage no matter WHERE Finn was, so a fast player raced ahead of the reward: "you jump 3x,
+       BOOST unlocks, but there's nothing to boost for; the double shells are 20 candles away." Each
+       later verb now only counts once Finn has actually REACHED that verb's terrain zone (marked in
+       the spec, captured in buildWorld), so the reward is on-screen when the pip fills. The verb
+       itself still fires — this only holds the lesson counter. Lenient: an unset zone (-1) never gates. */
+    const _zone = key==='boost' ? S.zoneBoost : key==='boost2' ? S.zoneDouble : key==='smash' ? S.zoneSmash : -1;
+    if(_zone>=0 && S.maxCur < _zone) return;
     S.tCount++;
     if(S.tCount < st.need){ blip('step'); hap(S.rm?0:4); return; }
     // stage cleared
@@ -24141,7 +24152,7 @@ const BlockchainJourney = (() => {
        otherwise walk straight past, and it never replaces the stage text for more than that beat. */
     const c = S.candles[S.cur];
     if(c && c.wickTall && !c.spun && turtle.onGround && turtle.dir>0) return {g:'tap', t:'TAP to LAUNCH'};
-    return { g: st.g, t: st.t, pips: { done: S.tCount, need: st.need } };
+    return { g: st.g, t: st.t, t2: st.t2, pips: { done: S.tCount, need: st.need } };   // build 356 — pass t2 through: the smash stage's "onto the BOX to SMASH it" sub-line was authored but currentTeach dropped it, so the player never learned WHAT to smash
   }
 
   function drawGesture(g,x,y){ ctx.save(); ctx.strokeStyle='#8ff2c9'; ctx.fillStyle='#8ff2c9'; ctx.lineWidth=2.6; ctx.lineCap='round'; ctx.lineJoin='round';

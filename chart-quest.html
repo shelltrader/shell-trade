@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="f3fc77e03f" data-built-at="2026-08-10T08:41:59Z">
+<meta name="cq-build" content="c2c9a9672f" data-built-at="2026-08-10T11:49:01Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3770,7 +3770,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 357 - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -6939,7 +6939,13 @@ function updateBoxes(dt, tx, ty) {
          the box visibly REFUSES rather than reading as broken. The move now has exactly one job
          and the box is the only thing that gives it. */
       const _smashing = turtle.tucked;
-      if (d < b.w * 0.5 + 18) {
+      /* TRADE FOCUS (P0c) — a box may not be smashed OR refused mid-position. Guarding boxRefuse
+         matters as much as guarding smashBox: the refusal fires the "SWIPE DOWN to SHELL-ROLL" hint,
+         which is precisely the un-actionable instruction the founder hit mid-trade. The box is NOT
+         removed and NOT marked — it keeps bobbing and becomes smashable the instant the trade ends.
+         b.excite (the proximity quiver above) is deliberately left alone: it is ambient, it demands
+         nothing of the player, and freezing it would read as a bug. */
+      if (d < b.w * 0.5 + 18 && !tradeInProgress()) {
         if (_smashing) smashBox(b); else boxRefuse(b);
       }
   }
@@ -7896,6 +7902,26 @@ window.addEventListener('pointercancel', () => { pointer = null; });
    ========================================================= */
 let paused = false;
 let trade = null;          // open trade, or null
+/* TRADE FOCUS (P0c, founder RC pass) — "a Mystery Journal Page and a Breakable Box appeared while I
+   was in a trade and I couldn't do anything with them."
+   Root cause was NOT spawning: maybeSpawnBox and maybeSpawnWisdomPage already refuse to place while
+   a position is open. Both objects are placed ~15 candles AHEAD of Finn at the generation edge
+   (maintainCandles) BEFORE the trade starts, and are then ENCOUNTERED during it — and an L1-3 trade
+   actively carries Finn forward across that exact lookahead for ~25-35 candles. So every trade guard
+   in this file lived at PLACEMENT time and there was none at EXPERIENCE time.
+   The deferral pattern already exists for the other two Major Event classes — portals are purged
+   while a trade is open, and the lesson queue holds because eventClear() returns false — so boxes and
+   pages were the only ones missing it. This is the one predicate those experience-time guards share.
+   Declared, not retrofitted: the ~6 existing inlined copies of this triple are left exactly as they
+   are (see POST-BETA BACKLOG) — this pass adds no behaviour anywhere it isn't the fix. */
+function tradeInProgress() {
+  try {
+    if (typeof trade      !== 'undefined' && trade)      return true;   // position open
+    if (typeof pending    !== 'undefined' && pending)    return true;   // entry committed, candles resolving
+    if (typeof setupFlow  !== 'undefined' && setupFlow)  return true;   // choosing direction / placing the stop
+  } catch (e) {}
+  return false;
+}
 let pending = null;        // structure snapshot while the panel is open
 let setupCountdown = 5;    // candles until the next setup event (L4+ instant detector)
 // PHASE 2 — OFFICIAL BEGINNER SETUP FRAMEWORK (Levels 1-3): momentum → 2-candle pullback →
@@ -11710,13 +11736,30 @@ function tradeChartSVGFull(t, opts) {
   const _gradesKnown = conceptTier('confluence') >= 2;
   const whatLines = [
     { t: 'WHAT HAPPENED?', b: true, c: '#4cc3ff' },
+    /* EXIT TRUTHFULNESS (P0b) — `result` is THREE-state ('win' | 'loss' | 'manual'), and this line
+       read it as two, so the ELSE arm fired for a MANUAL close and told the player price "hit your
+       Stop Loss" when no stop was ever touched — while the badge 250px above it (fixed by P0a, see
+       :11404) simultaneously read "● CLOSED EARLY  +42 shells" in green. One SVG, two contradictory
+       answers. `delta` decides the manual wording because a self-close ends at the live price, and
+       the colour now follows `resultCol` (the badge's own colour) so the sentence and the badge can
+       never disagree again. */
     { t: isWin
         ? (isLong ? '✓ Price went UP and hit your Take Profit.' : '✓ Price went DOWN and hit your Take Profit.')
+        : isManual
+        ? (t.delta > 0 ? '● You closed it yourself and kept the profit.' : '● You closed it early, before the stop was hit.')
         : (isLong ? '✗ Price went DOWN and hit your Stop Loss.' : '✗ Price went UP and hit your Stop Loss.'),
-      c: isWin ? COLOR.greenBody : COLOR.redBody },
+      c: resultCol },
   ];
   const _bc = '#c7d1de';
-  if (isWin && goodSetup) {
+  /* EXIT TRUTHFULNESS (P0b) — a manual close ended the trade BEFORE the market answered, so no
+     setup-quality verdict applies: "the market just didn't follow through" (the !isWin && goodSetup
+     arm) and "your stop kept the loss small" (the else arm) are BOTH false when the player closed it
+     himself. Honour the DECISION instead, in the voice already approved for the post-trade card
+     (resolveTrade :16420-16423). Handling 'manual' first leaves every existing arm untouched. */
+  if (isManual) {
+    whatLines.push({ t: t.delta > 0 ? 'You took the win in your hand — never wrong.'
+                                    : 'You stayed in control — smart, not a mistake.', c: _bc });
+  } else if (isWin && goodSetup) {
     whatLines.push({ t: (_gradesKnown ? 'A Grade ' + grade : 'A strong') + ' setup that paid off.', c: _bc });
     whatLines.push({ t: 'Strong setups win more often over time.', c: _bc });
   } else if (isWin && !goodSetup) {
@@ -11744,10 +11787,10 @@ function tradeChartSVGFull(t, opts) {
   // what you risked (dividing by RR here showed "risked 0" on small losses — on-device bug).
   // CQ-0024 Shot 2 — R:R is an UNTAUGHT term until the risk lessons (Level 5): hidden until then.
   if (t.rr && conceptTier('risk') >= 1) {   // 'risk' unlocks Level 5 ('rr' isn't a concept key — unknown keys default to SHOWN)
-    const riskAmt = isWin && t.rr > 0.01 ? Math.abs(t.delta) / t.rr : Math.abs(t.delta);
+    const riskAmt = t.delta > 0 && t.rr > 0.01 ? Math.abs(t.delta) / t.rr : Math.abs(t.delta);   // P0b: profit, not `isWin` — a profitable MANUAL close is also a payout
     s += '<text x="14" y="' + whY2 + '" fill="#4a5a70" font-size="10" font-family="monospace">R:R = '
        + t.rr.toFixed(1) + ':1  ·  risked ' + fmt(riskAmt) + ' shells  ·  '
-       + (isWin ? 'won' : 'lost') + ' ' + fmt(Math.abs(t.delta)) + ' shells</text>';
+       + (t.delta > 0 ? 'won' : 'lost') + ' ' + fmt(Math.abs(t.delta)) + ' shells</text>';   // P0b: same reason
   }
 
   s += '<text x="' + (VW/2) + '" y="' + (VH-10) + '" fill="#242e3e" font-size="11" font-family="monospace" text-anchor="middle">TAP ANYWHERE TO CLOSE</text>';
@@ -12000,14 +12043,23 @@ function startReplay() {
   let firstTick = true;
   replayTimer = setInterval(() => {
     if (firstTick) { firstTick = false; return; }   // brief pause on the entry frame
-    if (n >= total) { stopReplay(); return; }
+    /* P0d — EVERY TRADE ENDS ON ITS SUMMARY. The replay used to stop on its last frame and sit
+       there, so a trade whose post-trade card was intentionally suppressed (intro trades 2 and 3,
+       the SHOT 13 "cut the repeated taps" call) never showed WHAT HAPPENED at all. Advancing the
+       AUTO-opened replay into the details view it already owns completes the lifecycle with no new
+       UI, no OK button and no extra tap. A Notebook review opened by hand is left alone: the player
+       chose the replay there, so it still ends where they pointed it. */
+    if (n >= total) { stopReplay(); if (_replayAutoDetails) { _replayAutoDetails = false; showReviewDetails(); } return; }
     n++;
     $('cfChart').innerHTML = tradeReplaySVG(reviewEntry, n);
   }, 240);
 }
-// Open any trade record (journal entry or per-hour log) — auto-plays the replay
-function openReviewChart(entry) {
+// Open any trade record (journal entry or per-hour log) — auto-plays the replay.
+// P0d: `autoDetails` marks an AUTO-opened post-trade replay, which must end on the summary (see startReplay).
+let _replayAutoDetails = false;
+function openReviewChart(entry, autoDetails) {
   if (!entry || !entry.candleSnap || !entry.candleSnap.length) return;
+  _replayAutoDetails = !!autoDetails;
   cfTraderView = false;   // a Notebook review, not the pre-trade ritual
   try { tradeGate.reviewed = true; } catch (e) {}   // opening a trade in the Notebook = a review (mastery gate)
   reviewEntry = entry;
@@ -12025,15 +12077,25 @@ function openJournalReview(id) { openReviewChart(journal.find(x => x.id === id))
 function autoOpenTradeReplay(rec) {
   if (!rec || !rec.replay || !rec.replay.candles || !rec.replay.candles.length) return;   // nothing to animate
   const _now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-  const t0 = _now();
+  let t0 = _now();
+  /* P0d — THE 12s BUDGET WAS WALL-CLOCK, AND THE GAME SPENDS LONGER THAN THAT ON PURPOSE.
+     Every post-trade card has a hard 3s floor before its OK button enables, plus a 0.6s lessonGap
+     between cards, so a trade that queues two or three cards burns the whole budget before the
+     player can possibly have dismissed them — and the replay was then abandoned SILENTLY, on
+     exactly the trades carrying the most teaching. The budget is now 12s of IDLE waiting: it does
+     not run while the thing being waited for is the post-trade summary itself. An absolute ceiling
+     replaces it as the leak guard, so the poller still cannot run forever. */
+  const _hardStop = t0 + 120000;
   (function tick() {
-    const _elapsed = _now() - t0;
-    if (_elapsed > 12000) return;                        // gave up — never fight a screen that stays busy this long
+    const _t = _now();
+    if (_t > _hardStop) return;                          // absolute ceiling — the poller can never leak
+    const _elapsed = _t - t0;
     let clear = _elapsed > 1200;                         // let the win/loss punch land before the replay covers it
+    let _summaryOwnsScreen = false;                      // the post-trade card sequence — wait it out, don't time out on it
     try {
-      if (typeof lessonOpen !== 'undefined' && lessonOpen) clear = false;                     // a post-trade review / lesson card is up
-      else if (typeof lessonQ !== 'undefined' && lessonQ && lessonQ.length) clear = false;     // …or one is queued to show
-      else if (typeof pendingCelebration !== 'undefined' && pendingCelebration) clear = false; // a deferred milestone (e.g. FIRST WIN) is pending
+      if (typeof lessonOpen !== 'undefined' && lessonOpen) { clear = false; _summaryOwnsScreen = true; }                     // a post-trade review / lesson card is up
+      else if (typeof lessonQ !== 'undefined' && lessonQ && lessonQ.length) { clear = false; _summaryOwnsScreen = true; }     // …or one is queued to show
+      else if (typeof pendingCelebration !== 'undefined' && pendingCelebration) { clear = false; _summaryOwnsScreen = true; } // a deferred milestone (e.g. FIRST WIN) is pending
       else if (typeof trade !== 'undefined' && trade) clear = false;                           // a new trade already started — abort
       else if (typeof pending !== 'undefined' && pending) clear = false;
       else if (typeof firstTradeGuide !== 'undefined' && firstTradeGuide) clear = false;       // the guided first-trade walkthrough owns the screen
@@ -12042,7 +12104,12 @@ function autoOpenTradeReplay(rec) {
       else if (typeof walletOpen !== 'undefined' && walletOpen) clear = false;
       else { const cf = document.getElementById('chartFull'); if (cf && cf.classList.contains('open')) clear = false; } // another full-screen is already open
     } catch (e) {}
-    if (clear) { try { openReviewChart(rec); } catch (e) {} return; }
+    /* Hold the idle budget while the summary owns the screen (see above). Rewinding t0 to keep the
+       1200ms punch delay already satisfied means the replay opens on the first tick AFTER the last
+       card closes, rather than waiting another 1.2s on a screen that is already clear. */
+    if (_summaryOwnsScreen) t0 = _t - 1200;
+    else if (_elapsed > 12000) return;                   // stuck on something that is NOT the summary — give up
+    if (clear) { try { openReviewChart(rec, true); } catch (e) {} return; }   // P0d: auto-opened → must end on the summary
     setTimeout(tick, 200);
   })();
 }
@@ -12402,6 +12469,12 @@ function updateWisdomPages(dt, tx, ty) {
       continue;
     }
     if (Math.abs(tx - p.x) < 640) near = true;
+    /* TRADE FOCUS (P0c) — a page may neither REVEAL nor be COLLECTED mid-position. Placed after the
+       `near` test on purpose so the ambient proximity affordance is unchanged, and after the
+       p.collected branch above so a page already flying to Finn finishes its arc instead of freezing
+       in mid-air. Nothing is deleted: the clue stays a clue and the page stays on the wick tip, so
+       the discovery is still there — and still discoverable — the moment the trade closes. */
+    if (tradeInProgress()) continue;
     if (p.state === 'clue') {
       // Investigation = reaching the wick tip (not just crossing the candle). The reveal is
       // local and quiet — a soft bloom, the page drifts in above the tip, one boost away.
@@ -15905,7 +15978,18 @@ function qrRects() {
   // now runs down to ~y158 (build 345 grew it to a 2-line card: LY 118, cardH up to 58),
   // so floor `by` at 206 (prompt box top = by-44 = 162) to keep the question box clear of
   // the card's bottom line (capped at 0.44H so it never drops too low on short canvases).
-  const bw = Math.min(150, (W-44)/2-8), bh = 46, cx = W/2, by = Math.min(Math.max(H*0.215, 206), H*0.44);
+  /* P0e — MEASURED, NOT GUESSED. `206` was hand-derived for a 2-LINE PORTRAIT card and failed two
+     ways. (1) It is a height constant: a 3-line card runs to y175, so the prompt at 206-44=162 would
+     sit INSIDE it. (2) The outer Math.min CAPPED the floor — whenever H*0.44 < 206 (H < 468: landscape,
+     or the play.html iframe on a short window) `by` collapsed to ~149 and the prompt top landed at 105,
+     straight through the card. The floor is now read off the card's own published rect and is applied
+     LAST, so the H*0.44 preference can no longer violate it; a final clamp keeps the box on screen. */
+  const _lc    = (typeof window !== 'undefined' && window.CQSAFE) ? window.CQSAFE.lessonCard : null;
+  const _floor = _lc ? (_lc.y + _lc.h + 8 + 44) : 206;              // card bottom + 8px breathing + the box's own 44px rise
+  const bw = Math.min(150, (W-44)/2-8), bh = 46, cx = W/2;
+  const _pref  = Math.min(Math.max(H*0.215, _floor), H*0.44);       // the preferred band, exactly as before
+  const _onscr = Math.max(0, H - bh - 8);                           // never past the bottom edge
+  const by = Math.min(Math.max(_pref, _floor), _onscr);
   return { by, bh, bw, left:[cx-bw-8, by, bw, bh], right:[cx+8, by, bw, bh] };
 }
 function qrHitTest(x, y) {
@@ -16346,6 +16430,17 @@ function resolveTrade(result) {
   if (trade.setupSnap && trade.setupSnap.length) {
     const path = (trade.path || []).slice(0, 60); // cap very long trades
     replay = { candles: trade.setupSnap.concat(path), entryIdx: trade.setupSnap.length - 1 };
+  } else if (candleSnap && candleSnap.length) {
+    /* P0d — EVERY TRADE MUST HAVE A REPLAY (founder RC pass). `setupSnap` is only captured at entry
+       when sIdx >= 0 (commitTrade), and its fallback — findIndex on the candle under Finn — returns
+       -1 whenever he entered mid-air, between candles. That left `replay` null, and because
+       autoOpenTradeReplay bails on a record with no replay, those trades lost the animated review
+       SILENTLY: no error, no card, nothing to notice.
+       candleSnap already solved this exact problem for the review chart directly above, so reuse its
+       fallback rather than capturing anything new. Its shape is candles.slice(snapIdx-8, snapIdx+3),
+       so the entry candle sits at length-3 — computed, not guessed. */
+    replay = { candles: candleSnap.slice(),
+               entryIdx: snapEntryIdx >= 0 ? snapEntryIdx : Math.max(0, candleSnap.length - 3) };
   }
   // HARD RULE (build 216, user-directed) — NO IMPOSSIBLE CANDLES, EVER, in a review or replay:
   // every candle's OPEN must equal the previous candle's CLOSE, exactly like a real chart.
@@ -19980,6 +20075,17 @@ function persistLessonLine(lvl) {
   return PERSIST_LESSON[Math.min(10, Math.max(1, lvl))] || PERSIST_LESSON[1];
 }
 function drawPersistentTeach() {
+  /* SAFE AREA (P0e, founder RC pass) — PUBLISH THE RECT THIS CARD ALREADY MEASURES.
+     The CURRENT LESSON card sizes itself from measured text (cardW/cardH below), but both values
+     died as function locals, so every other text surface had to GUESS where the card was. That is
+     why the previous fix was the literal 206 — a number derived by hand in a comment, correct for a
+     2-line portrait card and wrong for every other case. Publishing one measured rect turns those
+     guesses into a lookup. Cleared FIRST so all three early-returns below leave it null: a card that
+     is not on screen must not reserve space.
+     NOTE ON TIMING: this runs after render(), so consumers inside drawHUD read the PREVIOUS frame's
+     rect. That is intentional and correct — the card only changes size when the lesson changes, and
+     a one-frame-stale rect is exactly right far more often than a hardcoded constant ever was. */
+  try { (window.CQSAFE || (window.CQSAFE = {})).lessonCard = null; } catch (e) {}
   // Show during normal play AND the guided intro RUN (traversal) — but never during the
   // full-screen intro overlays (quiz/bet/boss reveal) or modals.
   if (typeof introFlow !== 'undefined' && introFlow.active && introFlow.phase !== 'run' && introFlow.phase !== 'prove') return;
@@ -20024,6 +20130,11 @@ function drawPersistentTeach() {
   let cw2 = 0; for (let i = 0; i < lines.length; i++) cw2 = Math.max(cw2, ctx.measureText(lines[i]).width);
   const cardW = Math.max(hw, cw2) + 16;
   const cardH = 24 + lines.length * 17;   // build 345: +4 padding, +2 leading — the lines were tight too
+  /* P0e — the measured rect, in the same coordinates the card is actually drawn with on the next
+     two lines. Width matters as much as height and is the axis nobody had ever measured: a 1-LINE
+     card is SHORT but WIDE (the L1 'momentum' line runs to x≈290 on a 390px screen) and is the case
+     that swallows the centered +shells payoff whole, while a 2-line card is taller but narrower. */
+  try { (window.CQSAFE || (window.CQSAFE = {})).lessonCard = { x: LX - 8, y: LY - 18, w: cardW, h: cardH }; } catch (e) {}
   // CQ-0016: was globalAlpha 0.84 × fill-alpha 0.84 ≈ 0.70 effective, so entry/stop price
   // text behind it bled through and read as a glitch. Make the panel near-opaque.
   ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(9,13,20,0.96)';
@@ -20255,8 +20366,19 @@ function drawHUD() {
     // any already placed this frame; the floaters rise in lockstep so the offset stays stable.
     let _yoff = 0;
     if (f.center || f.big || f.plate) {
+      /* P0e — THE SOLVER WAS BLIND TO THE CURRENT LESSON CARD, AND THAT IS THE "TEXT MOVES DOWN AND
+         HIDES" BUG. This loop was seeded ONLY with other floaters placed this frame, so it happily
+         pushed a centered line 42/84px DOWN into the card's band — and because the card is drawn
+         AFTER render(), the near-opaque card then painted straight over it. Reserving the card's
+         measured band here fixes both halves at once: nothing is placed under it, so nothing can be
+         covered by it. The card is treated as occupied on the Y axis alone — a centered line and a
+         left-pinned card overlap horizontally in virtually every real case (the 1-line L1 card runs
+         to x≈290 of 390), and stepping past a card that happened to be narrow costs one 42px nudge,
+         which is exactly what this solver already does for floater-vs-floater. */
+      const _lc = (typeof window !== 'undefined' && window.CQSAFE) ? window.CQSAFE.lessonCard : null;
+      const _hitsCard = function (y) { return !!_lc && (y + 8) > _lc.y && (y - 22) < (_lc.y + _lc.h); };   // glyph band ≈ [y-22, y+8]
       let _ry = f.y, _g = 0;
-      while (_cenBands.some(function (b) { return Math.abs(_ry - b) < 42; }) && _g < 8) { _ry += 42; _g++; }
+      while ((_cenBands.some(function (b) { return Math.abs(_ry - b) < 42; }) || _hitsCard(_ry)) && _g < 8) { _ry += 42; _g++; }
       _yoff = _ry - f.y; _cenBands.push(_ry);
     }
     const _fy = f.y + _yoff;
@@ -26701,7 +26823,17 @@ function _markSeen(id){try{store.setItem('cq_mgseen_'+id,'1');}catch(e){}}
 function showConcept(g,then){clearArea();const sub=$('#pSubmit');if(sub)sub.style.display='none';
   // LESSON FRAMEWORK — if this concept has a LessonChart scene, TEACH it on an animated chart
   // (chart on top, teach card below — matches lesson-chart-preview). Otherwise keep the text card.
-  const sk=({trend:'trendline',mtf:'htf'})[g.id]||g.id;   // mini-game concept id → LessonChart scene key
+  /* P0g — THE FAKE-CANDLE TEACH WAS AUTHORED BUT ORPHANED. The Gambler's `confirm` round ("Read the
+     Close": five lead-in candles, then a big body whose long wick runs AGAINST the close) had no
+     entry here, so `sk` fell through to the raw id 'confirm', LessonChart.SCENES has no such key,
+     and the round degraded to a bare one-line objective via the MG_CONCEPTS fallback below. The
+     player was therefore GRADED on reading a fake-out having never been shown one.
+     The scene that teaches exactly this already exists and is already authored to spec —
+     SCENES.wait_close, "only the CLOSE tells you who won, not the spike" — and the registry agrees
+     it belongs here: CONCEPTS.confirmation is { boss:1, lesson:'candle_close' }. One map entry
+     re-points the round at its own scene. No lesson is added, reordered, or reworded; no trade
+     count, pacing or progression gate is touched. */
+  const sk=({trend:'trendline',mtf:'htf',confirm:'wait_close'})[g.id]||g.id;   // mini-game concept id → LessonChart scene key
   const hasChart=(typeof LessonChart!=='undefined')&&LessonChart.has(sk);
   const def=hasChart?LessonChart.SCENES[sk].caption:(MG_CONCEPTS[g.id]||g.objective||'');
   const d=document.createElement('div');d.id='mgConcept';let lc=null;
@@ -29970,7 +30102,10 @@ window.SocialAgents = (function () {
         /* L5 — a higher-priority event claims the space and stands. */
         if (conflict.other && rule(kind).pri < conflict.other.pri) { record(placedAt, kind); return out; }
         if (MODE === 'enforce') {
-          try { (0, eval)(arrName + '.pop()'); S.vetoes++; if (typeof undo === 'function') undo(); } catch (e) {}
+          /* P0f — hand the VETOED object to undo(). Without it an undo cannot know WHICH item it is
+             reversing, which is exactly how the page undo below came to hardcode one of its two
+             kinds. Existing undos that take no argument are unaffected. */
+          try { var _popped = (0, eval)(arrName + '.pop()'); S.vetoes++; if (typeof undo === 'function') undo(_popped); } catch (e) {}
           return out;
         }
         record(placedAt, kind);                           // observe: allow, but claim the space
@@ -29980,6 +30115,27 @@ window.SocialAgents = (function () {
       window[fnName] = wrapped;
       return true;
     } catch (e) { return false; }
+  }
+
+  /* P0h — the candle nearest a KNOWN world X. Same projection as placedCandleOf, but for an object
+     whose position is known BEFORE it is placed (a portal decides its X up front). x is coerced
+     with Number() so nothing but a number ever reaches the evaluated string. */
+  function candleIdAtX(x) {
+    try {
+      return (0, eval)('(function(px){if(typeof candles==="undefined")return null;var best=null,bd=1e9;' +
+        'for(var i=0;i<candles.length;i++){var c=candles[i];var d=Math.abs((c.x+c.w/2)-px);if(d<bd){bd=d;best=c.id;}}' +
+        'return best;})(' + Number(x) + ')');
+    } catch (e) { return null; }
+  }
+  /* Where a portal will ACTUALLY sit: spawnPortal places it at turtle.x + W*0.50, roughly half a
+     screen ahead of Finn — NOT at Finn's frontier, which is what this module used to reserve. */
+  function portalPlacementId() {
+    try {
+      var px = (0, eval)('(typeof turtle !== "undefined" && turtle && typeof W === "number") ? (turtle.x + W * 0.50) : null');
+      if (px == null) return currentCandleId();
+      var id = candleIdAtX(px);
+      return (id == null) ? currentCandleId() : id;
+    } catch (e) { return currentCandleId(); }
   }
 
   /* The candle the LAST element of a spawn array is standing on. */
@@ -30002,11 +30158,30 @@ window.SocialAgents = (function () {
       if (typeof orig !== 'function' || orig.__cqBeat) return false;
       var wrapped = function (label, sublabel, action, kind) {
         var k = (kind === 'boss') ? 'boss' : (kind === 'lesson') ? 'lesson' : (kind === 'trade') ? 'trade' : 'portal';
-        var id = currentCandleId();
-        /* A boss portal is priority 1 and is the ONLY way forward in a level — it is never
-           vetoed, only recorded, so pacing can never stall progression. */
-        if (MODE === 'enforce' && k !== 'boss' && !may(id, k)) return;
-        if (!(MODE === 'enforce' && k !== 'boss')) may(id, k);
+        /* P0h — TWO FIXES, ONE PLACE.
+           (1) COORDINATE. This reserved at currentCandleId() — Finn's FRONTIER — while spawnPortal
+               places the portal half a screen AHEAD of him. Every portal was therefore judged 8-13
+               candles behind where it actually appears, so boxes and pages were measured against the
+               wrong spot and could be placed right on top of a portal. That is the mechanism behind
+               the reported "Journal page → wick boost → immediate Lesson Portal" chain.
+           (2) NEVER LOSE A PORTAL. The veto path returned without spawning, and every caller is a
+               ONE-SHOT introFlow/lesson beat with no retry loop (spawnPortal is never called from a
+               per-frame maintain loop), so a vetoed portal was gone for good — including L1's
+               'GREEN vs RED' and 'THE LIE'. A portal is educational content and the only way
+               forward; per the founder's own priority order (Boss > Lesson > Journal > Mini-game >
+               Box, already encoded in RULES) it is the OPTIONAL content that must move, never the
+               lesson. So a portal now always spawns and always CLAIMS its true space — the conflict
+               is still reported for the audit, and boxes (pri 9) and pages (pri 7) are the ones
+               rescheduled away from it, which is exactly the breathing room §6 asks for.
+           No scheduler is introduced and the portal sequence is untouched: the same calls spawn the
+           same portals in the same order — they are simply measured where they really are. */
+        var id = portalPlacementId();
+        try {
+          syncLevel();
+          var _c = conflictAt(id, k);
+          if (_c) violation(id, k, _c);   // still reported — the L1 audit must see it
+          record(id, k);                  // always claim the space: this portal IS going to exist
+        } catch (e) {}
         return orig.apply(this, arguments);
       };
       wrapped.__cqBeat = true;
@@ -30129,8 +30304,16 @@ window.SocialAgents = (function () {
       wrapSpawner('maybeSpawnBox', 'boxes', 'box', function () {
         try { (0, eval)('market._boxMade = Math.max(0, (market._boxMade||1) - 1); market._boxSpace = 0;'); } catch (e) {}
       });
-      wrapSpawner('maybeSpawnWisdomPage', 'wisdomPages', 'page', function () {
-        try { (0, eval)('if (typeof _wisSpawn !== "undefined" && _wisSpawn && _wisSpawn.placed) { _wisSpawn.placed.easy = false; }'); } catch (e) {}
+      /* P0f — LOST CHAPTER BUG. maybeSpawnWisdomPage loops ['easy','hidden'] and marks
+         _wisSpawn.placed[kind], but this undo reset `easy` UNCONDITIONALLY. So vetoing a HIDDEN page
+         left placed.hidden === true — the level's hidden Lost Wisdom chapter was gone for the rest of
+         that level, permanently, with no retry — while simultaneously clearing placed.easy, which had
+         never been vetoed, allowing the easy page to be placed a second time. One veto, two wrong
+         outcomes. The page object already carries its own kind (see CQREACH.place), so reverse the
+         key that was actually set. `k` is narrowed to one of two literals — never interpolated data. */
+      wrapSpawner('maybeSpawnWisdomPage', 'wisdomPages', 'page', function (popped) {
+        var k = (popped && popped.kind === 'hidden') ? 'hidden' : 'easy';
+        try { (0, eval)('if (typeof _wisSpawn !== "undefined" && _wisSpawn && _wisSpawn.placed) { _wisSpawn.placed.' + k + ' = false; }'); } catch (e) {}
       });
       wrapPortal();
       wrapMarkEvent();

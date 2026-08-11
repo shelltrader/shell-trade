@@ -83,7 +83,7 @@ A staged-tree credential-shape scan found no private-key marker or common GitHub
 
 ## NEXT ACTION
 
-Independent Reviewer must inspect the complete `31ffd6f..31225ac` range and rerun the critical evidence before QA.
+Independent Reviewer must inspect the complete candidate through lifecycle HEAD `04227af` from parent `31ffd6f` and rerun the critical evidence before QA.
 
 ## DO NOT TOUCH
 

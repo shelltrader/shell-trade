@@ -2,6 +2,14 @@
 
 **Snapshot basis:** repository inspection during Command Center initialization Step 3 (2026-08-10), with an external-control addendum verified on 2026-08-11.
 
+## 2026-08-11 Step 8 durability addendum — VERIFIED
+
+- Local branch `codex/command-center-integration` combines the QA-passed Step 7 parent with the Step 6B controls, project-scoped Codex configuration, complete control plane, cited RC evidence, ignore boundary, and fresh-clone hook bootstrap.
+- Exact reviewed/QA-tested HEAD: `04227af12f2596cbfde1ee0189821a9f1c259ec4`; exact parent: `31ffd6f3003a439c051c0dd4c2358e40a3b5f1af`.
+- Independent Reviewer approved the complete 48-path range; independent QA passed all 10 acceptance criteria, 15/15 release tests, 5/5 parity tests, and the full 20-pass regression gate with no failure or warning.
+- A disposable standalone clone activated its own project-local hook path and remained clean. Linked-worktree bootstrap refused to repoint shared configuration.
+- No game/art file, primary index, `main`, provider, credential, push, merge, or production state changed. The branch is local and unpushed.
+
 ## 2026-08-11 Step 7 engineering addendum — VERIFIED
 
 - The first complete Investigator → Implementer → Reviewer → QA chain passed on the bounded three-artifact parity defect.
@@ -113,6 +121,7 @@ Full evidence and limits: `handoffs/STEP6B_EXTERNAL_CONTROLS.md`.
 - `CHARTQUEST_RC_RELEASE_2026-08-10.md` records a **DO NOT SHIP** decision pending complete production playthrough, fresh-browser verification, production fingerprint verification, and a Level 1 event-spacing validation report. Its build/production claims are internally inconsistent and require verification before use as a release decision.
 - The local `website/game.html` byte-comparison defect is resolved and QA-passed in feature commit `31ffd6f`, with controlled integration into `main` pending. The separate deployment-smoke/served-response identity gap remains unresolved.
 - Current local artifact drift (source build 360 versus mirror/website build 359) is a present repository condition and must not be confused with a verified production deployment.
+- Durable controls and command-center state are available on reviewed/QA-passed local integration HEAD `04227af`; promotion into `main` remains a production release action and is blocked by the active freeze.
 
 ## Sources
 

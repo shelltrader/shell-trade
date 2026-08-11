@@ -17,7 +17,7 @@ Close the first autonomous Investigator → Implementer → Reviewer → QA proo
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Command-center durability and controlled integration | Reviewer | **REVIEW READY** | Inspect integration commit `31225ac` and independently rerun the critical scope, release-control, parity, bootstrap, and regression evidence. No release action. |
+| Controlled next-task orchestration | PM/CTO | **READY** | Accept the next Founder product request or select one bounded documented backlog issue; use isolated worktrees and PM/CTO adjudication. No production action. |
 
 ## Blocked tasks
 
@@ -25,6 +25,7 @@ Close the first autonomous Investigator → Implementer → Reviewer → QA proo
 |---|---|---|
 | Release decision | **DO NOT SHIP / production frozen** | The active GitHub ruleset blocks all `main` updates; the 2026-08-10 RC release document also withholds release pending production evidence. |
 | Production artifact identity | Blocked by verification | Local source/mirror drift is present; the QA-passed three-artifact gate is not yet integrated into `main`, and the served `/game` response remains unverified. |
+| Promotion of command-center integration to `main` | Blocked by release authority | Local integration HEAD `04227af` passed Review and QA, but any `main` update auto-deploys Cloudflare production and requires a separately authorized Release Manager workflow plus a deliberate Founder action on the freeze ruleset. |
 
 ## Completed tasks
 
@@ -32,12 +33,13 @@ Close the first autonomous Investigator → Implementer → Reviewer → QA proo
 |---|---|---|
 | Step 6B technical release enforcement | **PASS WITH ACTION** | `handoffs/STEP6B_AUDIT.md`, `handoffs/STEP6B_COMPLETE.md`, `handoffs/STEP6B_REVIEW.md`, `handoffs/STEP6B_EXTERNAL_CONTROLS.md` |
 | Step 7 three-artifact parity gate | **PASS** | Feature commit `31ffd6f`; `handoffs/STEP7_INVESTIGATION.md`, `handoffs/STEP7_IMPLEMENTATION.md`, `handoffs/STEP7_REVIEW.md`, `handoffs/STEP7_QA.md`, `handoffs/STEP7_COMPLETE.md` |
+| Step 8 command-center durability integration | **PASS** | Reviewed/QA-tested local HEAD `04227af`; `handoffs/STEP8_INTEGRATION_INVESTIGATION.md`, `handoffs/STEP8_INTEGRATION_IMPLEMENTATION.md`, `handoffs/STEP8_INTEGRATION_REVIEW.md`, `handoffs/STEP8_INTEGRATION_QA.md`, `handoffs/STEP8_COMPLETE.md` |
 
 Historical documentation records a build-358/359 RC stabilization pass and related local verification. Its current applicability must be verified before it is treated as completion evidence.
 
 ## Founder decisions required
 
-No Founder decision is required for Step 7 completion or the queued non-production integration work. A future production release requires a deliberate Founder/Release-Manager account action to change the GitHub production-freeze ruleset; that is not part of this sprint.
+No Founder decision is required for command-center operation or the next bounded non-production task. Promotion to `main` or any future production release requires a deliberate Founder/Release-Manager account action to change the GitHub production-freeze ruleset; that is not part of this sprint.
 
 ## Release status
 

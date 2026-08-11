@@ -1,5 +1,29 @@
 # Current Technical State
 
+## 2026-08-12 build-362 Founder-readiness addendum — VERIFIED
+
+- Exact local candidate payload commit:
+  `3ef4bf6e30d8a75ba21abf2df8ebede74e9d02a1` on
+  `codex/beta-360-readiness`.
+- `chart-quest.html`, `index.html`, and `website/game.html` are byte-identical at SHA-256
+  `d36bb51ffaf30bdbc597c496868e54b41697473612a68448627380cd8fcce04b`;
+  the guarded Browser bridge is
+  `52fa4b7bac5ca38877ef14dde689fa259529b8154c132d680a7f844b762482cf`.
+- Independent Reviewer approved and independent QA passed the exact fingerprints. Evidence:
+  focused 16/16, release controls 15/15, artifact parity 5/5, full verifier 24 pass / 0 fail /
+  0 warn / 1 allowed skip, and in-app Browser 23/23 with no fatal, runtime, or captured-console
+  errors.
+- The complete unforced Level-1 journey passed on build 361 and exposed the trade-three
+  replay/prove race. Build 362 changed that exact lifecycle seam, then passed genuine
+  auto-replay/details, hold, central-X close, token release, and downstream prove in the exact
+  Browser artifact. QA accepted the impact-based rerun and closed the fresh-Level-1 gate.
+- PM/CTO decision: **BUILD READY FOR FOUNDER TEST**. Physical Safari/touch/DPR/audio/performance,
+  subjective readability, online survey submission, and L4+ forced-hour-close semantics remain
+  non-blocking Founder/post-beta boundaries.
+- This is not release approval. Production remains frozen; served production identity, fresh-cache
+  verification, manifest/lock/gate, Founder release acceptance, and the account-level freeze action
+  remain future Release Manager work.
+
 **Snapshot basis:** repository inspection during Command Center initialization Step 3 (2026-08-10), with an external-control addendum verified on 2026-08-11.
 
 ## 2026-08-11 Step 8 durability addendum — VERIFIED

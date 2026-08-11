@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="bdf7dd413a" data-built-at="2026-08-11T12:44:44Z">
+<meta name="cq-build" content="b8b3457e72" data-built-at="2026-08-11T18:11:35Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -1053,9 +1053,13 @@
   /* Toggle legend on the trade-review chart */
   #cfLegend {
     display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 82;
-    padding: 8px 10px; gap: 6px; flex-wrap: wrap; justify-content: center;
+    box-sizing: border-box; padding: 8px 56px 8px 10px; gap: 6px;
+    flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; overflow-y: hidden;
+    overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    pointer-events: none;
     background: rgba(8,12,18,0.9); border-bottom: 1px solid #1c2737;
   }
+  #cfLegend::-webkit-scrollbar { display: none; }
   #cfLegend.on { display: flex; }
   /* P0i — THE DEAD ✕ ON THE TRADE REPLAY. #cfLegend is a full-width fixed bar at z-index 82 and a
      SIBLING of the .uxX close button inside #chartFull's stacking context, where .uxX sits at
@@ -1072,7 +1076,8 @@
   #cfLegend button {
     font: bold 10px var(--font-ui); letter-spacing: 0.3px; padding: 7px 11px;
     border-radius: 16px; cursor: pointer; border: 1px solid #2a3d55;
-    background: #0d1320; color: #4a5666;
+    background: #0d1320; color: #4a5666; flex: 0 0 auto; white-space: nowrap;
+    pointer-events: auto;
   }
 
   /* --- Bottom action bar: Daily Drill / Journal / Wallet / Account, one row --- */
@@ -2270,12 +2275,14 @@
 #imRoot .im-trades{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 #imRoot .im-trade{ background:#0d131f; border:1px solid var(--im-line); border-radius:12px; padding:11px; cursor:pointer; position:relative; }
 #imRoot .im-trade.w{ border-left:3px solid var(--im-green); } #imRoot .im-trade.l{ border-left:3px solid var(--im-red); }
+#imRoot .im-trade.f{ border-left:3px solid var(--im-mut); }
 #imRoot .im-trade .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
 #imRoot .im-trade .side{ font-size:9px; font-weight:800; letter-spacing:1px; padding:3px 8px; border-radius:5px; }
 #imRoot .im-trade .side.long{ background:rgba(22,199,132,.14); color:var(--im-green); }
 #imRoot .im-trade .side.short{ background:rgba(234,57,67,.14); color:var(--im-red); }
 #imRoot .im-trade .delta{ font-size:15px; font-weight:800; }
 #imRoot .im-trade .delta.pos{ color:var(--im-green); } #imRoot .im-trade .delta.neg{ color:var(--im-red); }
+#imRoot .im-trade .delta.flat{ color:var(--im-mut); }
 #imRoot .im-trade .spark{ display:block; width:100%; height:30px; margin:8px 0 7px; }
 #imRoot .im-trade .meta{ font-size:9.5px; color:var(--im-mut); display:flex; justify-content:space-between; align-items:center; }
 #imRoot .im-trade .rev{ font-size:9px; color:var(--im-blue); text-align:center; margin-top:6px; opacity:.85; }
@@ -2300,6 +2307,7 @@
 #imRoot .im-outcome.show{ opacity:1; }
 #imRoot .im-outcome.win{ background:rgba(22,199,132,.16); color:var(--im-green); border:1px solid rgba(22,199,132,.45); }
 #imRoot .im-outcome.loss{ background:rgba(234,57,67,.14); color:var(--im-red); border:1px solid rgba(234,57,67,.4); }
+#imRoot .im-outcome.flat{ background:rgba(125,138,160,.14); color:var(--im-mut); border:1px solid rgba(125,138,160,.4); }
 #imRoot .im-legend{ display:flex; flex-wrap:wrap; gap:8px; padding:12px 14px; justify-content:center; }
 #imRoot .im-legend button{ font:700 10px var(--font-ui); padding:7px 11px; border-radius:8px; background:transparent; cursor:pointer; border:1px solid; }
 #imRoot .im-ctrl{ display:flex; gap:10px; padding:2px 14px 18px; }
@@ -3782,7 +3790,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 360 - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -4323,8 +4331,10 @@ window.CQSAFE = (function () {
     },
     hits(rect, exclude, pad, minPri) { try { return _hits(rect, exclude, pad, minPri); } catch (e) { return null; } },
     place(rect, opts) {
-      const home = { x: (rect && +rect.x) || 0, y: (rect && +rect.y) || 0, dir: null, moved: 0, blocked: null, tier: 0 };
+      const home = { x: 0, y: 0, dir: null, moved: 0, blocked: null, tier: 0 };
       try {
+        home.x = (rect && +rect.x) || 0;
+        home.y = (rect && +rect.y) || 0;
         if (!ok(rect)) return home;
         opts = opts || {};
         const dirs = opts.dirs || [opts.dir || 'down'];
@@ -7085,7 +7095,10 @@ function updateBoxes(dt, tx, ty) {
     b.bob += dt * 2; b.glow += dt * 2.4; b.rot += dt * (0.7 + 1.6 * (b.excite || 0)); b.orb += dt * 2.2;
     if (b.breakT > 0) b.breakT = Math.max(0, b.breakT - dt * 3);
     if (b.broken) { if (b.breakT <= 0) boxes.splice(i, 1); continue; }
-    if (b.x < turtle.x - 2600) { boxes.splice(i, 1); continue; }   // cull well behind Finn (turtle.x is global; cameraX is a render/maintain local)
+    // An unbroken box stays durable for the whole trade. A long/fast position can carry Finn past
+    // the normal cull distance; deleting the box there would violate the same defer-not-delete rule
+    // as the interaction guard below. Normal culling resumes immediately after the trade closes.
+    if (b.x < turtle.x - 2600 && !tradeInProgress()) { boxes.splice(i, 1); continue; }   // cull well behind Finn (turtle.x is global; cameraX is a render/maintain local)
     const byC = b.y + Math.sin(b.bob) * 3;
     const d = Math.hypot(tx - b.x, ty - byC);
     b.excite = Math.max(0, Math.min(1, 1 - (d - 40) / 90));   // quiver + brighten + spin faster as Finn nears
@@ -8093,6 +8106,26 @@ function tradeInProgress() {
     if (typeof setupFlow  !== 'undefined' && setupFlow)  return true;   // choosing direction / placing the stop
   } catch (e) {}
   return false;
+}
+/* One display-only classifier for every persisted trade surface. Exit reason and P&L are separate:
+   a target remains a target and a stop remains a stop, while a manual close takes its tone from the
+   signed delta. The inclusive break-even band (|delta| <= 0.5) is neither a win nor a loss — no red,
+   no green, and no invented sign. */
+function tradeOutcomeDisplay(result, delta) {
+  const n = Number(delta);
+  const rawValue = Number.isFinite(n) ? n : 0;
+  // resolveTrade owns BREAK EVEN as the inclusive band |delta| <= 0.5.
+  const pnl = rawValue > 0.5 ? 1 : rawValue < -0.5 ? -1 : 0;
+  const value = pnl === 0 ? 0 : rawValue;
+  const tone = result === 'win' ? 1 : result === 'loss' ? -1 : pnl;
+  return {
+    result, rawValue, value, pnl,
+    sign: pnl > 0 ? '+' : pnl < 0 ? '−' : '',
+    tone,
+    toneName: tone > 0 ? 'win' : tone < 0 ? 'loss' : 'flat',
+    color: tone > 0 ? COLOR.greenBody : tone < 0 ? COLOR.redBody : '#7d8aa0',
+    badge: result === 'win' ? '✓ TAKE-PROFIT' : result === 'loss' ? '✗ STOP-LOSS' : '● CLOSED EARLY',
+  };
 }
 let pending = null;        // structure snapshot while the panel is open
 let setupCountdown = 5;    // candles until the next setup event (L4+ instant detector)
@@ -9207,12 +9240,13 @@ function saveJournal() {
 }
 // Append a freshly closed trade to the persistent journal.
 function logJournalTrade(t) {
+  const outcome = tradeOutcomeDisplay(t.result, t.delta);
   journal.unshift({               // newest first
     id: ++journalSeq,
     ts: Date.now(),
     dir: t.dir,
     result: t.result,
-    delta: Math.round(t.delta),
+    delta: Math.round(outcome.value),
     balanceAfter: Math.round(player.shells),
     rr: t.rr,
     setupType: t.setupType,
@@ -9817,15 +9851,15 @@ function imRender(){
   if(tlog.length){
     const tc = $('imTrades');
     tlog.forEach(function(t,idx){
-      const win = (t.delta||0) > 0;
+      const outcome = tradeOutcomeDisplay(t.result, t.delta);
       const side = (t.dir==='short') ? 'short' : 'long';
       const el = document.createElement('div');
-      el.className = 'im-trade '+(win?'w':'l');
+      el.className = 'im-trade '+(outcome.tone > 0 ? 'w' : outcome.tone < 0 ? 'l' : 'f');
       el.setAttribute('data-trade', idx);
       el.innerHTML = '<div class="top"><span class="side '+side+'">'+(side==='long'?'▲ LONG':'▼ SHORT')+'</span>'
-        + '<span class="delta '+((t.delta||0)>=0?'pos':'neg')+'">'+((t.delta||0)>=0?'+':'−')+fmt(Math.abs(t.delta||0))+'</span></div>'
+        + '<span class="delta '+(outcome.pnl > 0 ? 'pos' : outcome.pnl < 0 ? 'neg' : 'flat')+'">'+outcome.sign+fmt(Math.abs(outcome.value))+'</span></div>'
         + '<canvas class="spark"></canvas>'
-        + '<div class="meta"><span>'+imSetupName(t)+'</span><span>'+(win?'TP hit':'SL hit')+'</span></div>'
+        + '<div class="meta"><span>'+imSetupName(t)+'</span><span>'+(outcome.result==='manual'?'Closed early':outcome.result==='win'?'TP hit':'SL hit')+'</span></div>'
         + '<div class="rev">▶ tap to replay</div>';
       tc.appendChild(el);
       requestAnimationFrame(function(){ imDrawSpark(el.querySelector('.spark'), t); });
@@ -9879,7 +9913,7 @@ function imDrawSpark(cv,t){
   if(hi<=lo) hi=lo+1;
   const Y=function(v){ return Hc-4-((v-lo)/(hi-lo))*(Hc-8); }, X=function(i){ return 3+i/Math.max(1,cs.length-1)*(Wc-6); };
   x.beginPath(); cs.forEach(function(c,i){ const y=Y(imClose(c)); i?x.lineTo(X(i),y):x.moveTo(X(i),y); });
-  x.strokeStyle=((t.delta||0)>0)?COLOR.greenBody:COLOR.redBody; x.lineWidth=1.6; x.stroke();
+  x.strokeStyle=tradeOutcomeDisplay(t.result,t.delta).color; x.lineWidth=1.6; x.stroke();
   const ei=(t.replay&&t.replay.entryIdx)||0; if(ei<cs.length){ x.fillStyle='#ffd60a'; x.beginPath(); x.arc(X(ei),Y(imClose(cs[ei])),2.6,0,7); x.fill(); }
 }
 
@@ -9920,9 +9954,9 @@ function imCloseLesson(){ var o=$('imLov'); if(o) o.classList.remove('on'); if(i
 /* ── trade replay (real recorded candles; entry/SL/TP/VWAP toggles) ── */
 function imOpenReplay(t){
   if(!t || !t.replay || !t.replay.candles || !t.replay.candles.length){ return; }
-  imRX.trade=t; var win=(t.delta||0)>0;
+  imRX.trade=t; var outcome=tradeOutcomeDisplay(t.result,t.delta);
   var tt=$('imRTitle'); if(tt&&tt.firstChild) tt.firstChild.textContent=((t.dir==='short')?'Short':'Long')+' · '+imSetupName(t);
-  var sb=$('imRSub'); if(sb) sb.textContent=(win?'Take-profit hit  ·  +':'Stop-loss hit  ·  −')+fmt(Math.abs(t.delta||0))+' shells';
+  var sb=$('imRSub'); if(sb) sb.textContent=(outcome.result==='manual'?'Closed early':outcome.result==='win'?'Take-profit hit':'Stop-loss hit')+'  ·  '+outcome.sign+fmt(Math.abs(outcome.value))+' shells';
   $('imRov').classList.add('on'); imRenderLegend(); imSizeChart(); imStartReplay();
 }
 function imCloseReplay(){ cancelAnimationFrame(imRX.raf); var o=$('imRov'); if(o)o.classList.remove('on'); var oc=$('imOutcome'); if(oc)oc.classList.remove('show'); }
@@ -9943,7 +9977,7 @@ function imStartReplay(){
       /* EXIT TRUTHFULNESS (P0a): this badge inferred the exit from PROFIT, so a manual close
          claimed '✓ TAKE-PROFIT' (a target never reached) or '✗ STOP-LOSS' (a stop never hit).
          Read t.result — 'win' | 'loss' | 'manual' — and colour a manual exit by its P&L. */
-      if(now-imRX.tEnd>250){ var o=$('imOutcome'); var win=(t.delta||0)>0, man=t.result==='manual'; if(o){ o.textContent=man?'● CLOSED EARLY':t.result==='win'?'✓ TAKE-PROFIT':'✗ STOP-LOSS'; o.className='im-outcome show '+((t.result==='win'||(man&&win))?'win':'loss'); } }
+      if(now-imRX.tEnd>250){ var o=$('imOutcome'),outcome=tradeOutcomeDisplay(t.result,t.delta); if(o){ o.textContent=outcome.badge; o.className='im-outcome show '+outcome.toneName; } }
       if(now-imRX.tEnd<holdEnd) imRX.raf=requestAnimationFrame(tick); else { var rb2=$('imReplayBtn'); if(rb2) rb2.textContent='▶ REPLAY'; }
       return;
     }
@@ -9951,7 +9985,7 @@ function imStartReplay(){
   }
   imRX.raf=requestAnimationFrame(tick);
 }
-function imShowDetails(){ cancelAnimationFrame(imRX.raf); imRX.mode='details'; var t=imRX.trade; imDrawReplay(t.replay.candles.length); var o=$('imOutcome'),win=(t.delta||0)>0,man=t.result==='manual'; if(o){ o.textContent=man?'● CLOSED EARLY':t.result==='win'?'✓ TAKE-PROFIT':'✗ STOP-LOSS'; o.className='im-outcome show '+((t.result==='win'||(man&&win))?'win':'loss'); }   /* EXIT TRUTHFULNESS (P0a) — three-state, see imStartReplay */ var rb=$('imReplayBtn'); if(rb) rb.textContent='▶ REPLAY'; }
+function imShowDetails(){ cancelAnimationFrame(imRX.raf); imRX.mode='details'; var t=imRX.trade; imDrawReplay(t.replay.candles.length); var o=$('imOutcome'),outcome=tradeOutcomeDisplay(t.result,t.delta); if(o){ o.textContent=outcome.badge; o.className='im-outcome show '+outcome.toneName; }   /* EXIT TRUTHFULNESS (P0a) — three-state, see imStartReplay */ var rb=$('imReplayBtn'); if(rb) rb.textContent='▶ REPLAY'; }
 function imDrawReplay(n){
   var t=imRX.trade,cv=$('imChart'); if(!cv||!t) return; var x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);
   var W=cv.width/dpr,H=cv.height/dpr; x.clearRect(0,0,W,H);
@@ -9973,7 +10007,7 @@ function imDrawReplay(n){
   // SHOT 2 — a CLEAR entry marker so the player can see exactly which candle they entered on and
   // trace the trade. Outcome-coloured (green = win, red = loss), larger, ringed + haloed so it
   // pops off the chart and never blends into the yellow ENTRY line.
-  var ei=t.replay.entryIdx||0; if(ei<n && t.entryH!=null){ var exx=X(ei),eyy=Y(t.entryH),eCol=((t.delta||0)>0)?COLOR.greenBody:COLOR.redBody;
+  var ei=t.replay.entryIdx||0; if(ei<n && t.entryH!=null){ var exx=X(ei),eyy=Y(t.entryH),eCol=tradeOutcomeDisplay(t.result,t.delta).color;
     x.save(); x.shadowColor=eCol; x.shadowBlur=9; x.fillStyle=eCol; x.beginPath(); x.arc(exx,eyy,5.4,0,7); x.fill(); x.shadowBlur=0;
     x.strokeStyle='#ffffff'; x.lineWidth=1.8; x.beginPath(); x.arc(exx,eyy,5.4,0,7); x.stroke(); x.restore(); }
 }
@@ -10214,7 +10248,8 @@ function drawIntermission() {
     shownLogs.forEach((t, ti) => {
       const cx4 = 10 + ti * (cardW4 + cardPad);
       const cy4 = thY + 13;
-      const tcol = t.delta > 0 ? COLOR.greenBody : COLOR.redBody;
+      const outcome4 = tradeOutcomeDisplay(t.result, t.delta);
+      const tcol = outcome4.color;
       ictx.fillStyle = 'rgba(8,14,24,0.96)'; irr(cx4, cy4, cardW4, cardH4, 6); ictx.fill();
       ictx.strokeStyle = tcol + 'aa'; ictx.lineWidth = 1.5; irr(cx4, cy4, cardW4, cardH4, 6); ictx.stroke();
       // Direction + result
@@ -10222,9 +10257,8 @@ function drawIntermission() {
       const resLbl4 = t.result === 'win' ? '✓ WIN' : t.result === 'loss' ? '✗ LOSS' : 'CLOSED';
       ictx.fillText((t.dir === 'long' ? '▲ LONG' : '▼ SHORT') + '  ' + resLbl4, cx4 + cardW4/2, cy4 + 10);
       // P&L
-      const dSign4 = t.delta > 0 ? '+' : '−';
-      ictx.font = '7px ' + SANS2; ictx.fillStyle = t.delta > 0 ? '#3ddc6a' : '#f3838a';
-      fillTextShell(ictx, dSign4 + fmt(Math.abs(t.delta)) + ' 🐚', cx4 + cardW4/2, cy4 + 20);
+      ictx.font = '7px ' + SANS2; ictx.fillStyle = outcome4.color;
+      fillTextShell(ictx, outcome4.sign + fmt(Math.abs(outcome4.value)) + ' 🐚', cx4 + cardW4/2, cy4 + 20);
       // Mini chart
       const snap4 = t.candleSnap || [];
       if (snap4.length >= 2) {
@@ -10547,6 +10581,17 @@ function _anyBlockingUI() {
   return false;
 }
 function showTradeIncoming() {
+  // Once the real ticket or trade owns the screen, this introductory notice is obsolete. Do not
+  // keep retrying it: a delayed retry could otherwise reappear after the player commits the trade.
+  try {
+    const ticket = document.getElementById('tradePanel');
+    if ((typeof pending !== 'undefined' && pending) ||
+        (typeof trade !== 'undefined' && trade) ||
+        (ticket && ticket.classList.contains('open'))) {
+      hideTradeIncoming();
+      return;
+    }
+  } catch (e) {}
   // HARD RULE — NEVER appear over any other message/popup/button/question. If anything is on
   // screen, wait and retry so the player never misses text. (Self-guards every caller.)
   try {
@@ -10565,6 +10610,7 @@ function hideTradeIncoming() {
     tradeIncomingActive = false;
     const el = document.getElementById('tradeIncoming'); if (el) el.style.display = 'none';
     if (window._tiTimer) { clearTimeout(window._tiTimer); window._tiTimer = null; }
+    if (window._tiRetry) { clearTimeout(window._tiRetry); window._tiRetry = null; }
   } catch (e) {}
 }
 function nextSetupIn() {
@@ -11566,26 +11612,34 @@ function svgLeader(ax, ay, r, col) {
    "✓ [TAKE PROFIT HIT] +12 shells" bisected: the most important sentence on the summary screen.
    This is a DOM-over-SVG layering problem, not a solver problem, so the fix is an INSET, not a nudge:
    measure the bar that is actually on screen and start the SVG's top content below it. Two details
-   that a hardcoded number would have got wrong: the bar's height depends on how many legend buttons
-   the player has UNLOCKED (they wrap), and CSS px must be converted to SVG user units by the live
-   render scale (the viewBox is 390 wide, the phone may not be). The inset is spent from the CHART's
+   that a hardcoded number would have got wrong: the live stage can be width- OR height-constrained,
+   and CSS px must be converted to SVG user units by the smaller rendered scale across both axes.
+   The legend is deliberately one horizontally scrollable row so Level 10 cannot consume the whole
+   chart on a short phone. The inset is spent from the CHART's
    height, never from the document's length — chartBot and everything below it stay exactly where they
    were, so no explanation text is pushed off the bottom of a short screen to pay for this.
    Returns 0 whenever the bar is not up (the pre-trade setup view removes .on), and 0 on any failure —
    so the geometry is byte-identical to build 359 in every path that never had the collision. */
-function cfTopInset(VW) {
+function cfTopInset(VW, VH) {
   try {
     const lg = document.getElementById('cfLegend');
     if (!lg || !lg.classList.contains('on')) { if (window.CQSAFE) window.CQSAFE.clear('cfLegend'); return 0; }
     const r = lg.getBoundingClientRect();
     if (!r || !(r.height > 0) || !(r.width > 0)) { if (window.CQSAFE) window.CQSAFE.clear('cfLegend'); return 0; }
     // Sticky: this is an event-driven DOM zone, not a per-frame canvas producer, so the registry's
-    // one-frame staleness sweep must not collect it. Cleared above the moment the bar comes down.
+    // one-frame staleness sweep must not collect it. hideReviewLegend clears it when the bar comes
+    // down; the branches above are the defensive fallback if a hidden bar is rendered directly.
     if (window.CQSAFE) window.CQSAFE.reserve('cfLegend', { x: r.left, y: r.top, w: r.width, h: r.height }, { sticky: true });
     const host = document.getElementById('cfChart');
     const hostW = host ? host.clientWidth : 0;
-    const scale = (hostW > 0) ? (VW / hostW) : 1;                 // CSS px → SVG user units
-    return Math.max(0, Math.min(120, Math.round((r.bottom + 6) * scale)));   // +6px breathing; capped so chartH stays sane
+    const hostH = host ? host.clientHeight : 0;
+    const cssPerUnit = (hostW > 0 && hostH > 0 && VH > 0)
+      ? Math.min(hostW / VW, hostH / VH)
+      : (hostW > 0 ? hostW / VW : 1);
+    // Preserve at least 120 summary-chart user units even if hostile CSS makes the bar enormous.
+    // The normal one-row bar is far below this cap; it exists only as a fail-closed geometry bound.
+    const maxInset = Number.isFinite(VH) ? Math.max(0, Math.min(292, VH - 260)) : 292;
+    return Math.max(0, Math.min(maxInset, Math.round((r.bottom + 6) / Math.max(cssPerUnit, 0.0001))));
   } catch (e) { return 0; }
 }
 function tradeChartSVGFull(t, opts) {
@@ -11630,7 +11684,7 @@ function tradeChartSVGFull(t, opts) {
   const range = Math.max(1, hi - lo);
 
   const VW = 390, VH = 760;
-  const CFI = cfTopInset(VW);          // SAFE AREA — measured #cfLegend band, 0 when the bar is not up
+  const CFI = cfTopInset(VW, VH);      // SAFE AREA — measured #cfLegend band, 0 when the bar is not up
   const chartX = 10, chartW = VW - 20;
   const chartTop = 68 + CFI, chartBot = 480;
   const chartH = chartBot - chartTop;
@@ -11647,10 +11701,11 @@ function tradeChartSVGFull(t, opts) {
      The correct three-state idiom already existed 190 lines down (exitIsWin/exitIsLoss → 'CLOSED
      EARLY'); these sites simply predate it. Colour follows the P&L for a manual exit, because a
      green "+42" printed in red is the same lie in another channel. */
+  const outcome   = tradeOutcomeDisplay(t.result, t.delta);
   const isManual  = t.result === 'manual';
-  const resultCol = (isWin || (isManual && t.delta > 0)) ? COLOR.greenBody : COLOR.redBody;
+  const resultCol = outcome.color;
   const dirLabel  = isLong ? '▲ LONG' : '▼ SHORT';
-  const dSign     = t.delta > 0 ? '+' : '−';
+  const dSign     = outcome.sign;
 
   let s = '<svg viewBox="0 0 ' + VW + ' ' + VH + '" xmlns="http://www.w3.org/2000/svg">';
   s += '<rect width="' + VW + '" height="' + VH + '" fill="#080c12"/>';
@@ -11668,7 +11723,7 @@ function tradeChartSVGFull(t, opts) {
   // Result badge
   s += '<rect x="' + (VW/2 - 70) + '" y="' + (27 + CFI) + '" width="140" height="25" rx="5" fill="' + resultCol + '22"/>';
   s += '<text x="' + (VW/2) + '" y="' + (44 + CFI) + '" fill="' + resultCol + '" font-size="13" font-weight="bold" font-family="monospace" text-anchor="middle">'
-     + (isWin ? '✓ WIN' : isManual ? '● CLOSED EARLY' : '✗ LOSS') + '  ' + dSign + fmt(Math.abs(t.delta)) + ' shells</text>';
+     + (isWin ? '✓ WIN' : isManual ? '● CLOSED EARLY' : '✗ LOSS') + '  ' + dSign + fmt(Math.abs(outcome.value)) + ' shells</text>';
 
   // Chart area
   s += '<rect x="' + chartX + '" y="' + chartTop + '" width="' + chartW + '" height="' + chartH
@@ -11961,7 +12016,9 @@ function tradeChartSVGFull(t, opts) {
     { t: isWin
         ? (isLong ? '✓ Price went UP and hit your Take Profit.' : '✓ Price went DOWN and hit your Take Profit.')
         : isManual
-        ? (t.delta > 0 ? '● You closed it yourself and kept the profit.' : '● You closed it early, before the stop was hit.')
+        ? (outcome.pnl > 0 ? '● You closed it yourself and kept the profit.'
+          : outcome.pnl < 0 ? '● You closed it early, before the stop was hit.'
+          : '● You closed it yourself at break even.')
         : (isLong ? '✗ Price went DOWN and hit your Stop Loss.' : '✗ Price went UP and hit your Stop Loss.'),
       c: resultCol },
   ];
@@ -11972,8 +12029,9 @@ function tradeChartSVGFull(t, opts) {
      himself. Honour the DECISION instead, in the voice already approved for the post-trade card
      (resolveTrade :16420-16423). Handling 'manual' first leaves every existing arm untouched. */
   if (isManual) {
-    whatLines.push({ t: t.delta > 0 ? 'You took the win in your hand — never wrong.'
-                                    : 'You stayed in control — smart, not a mistake.', c: _bc });
+    whatLines.push({ t: outcome.pnl > 0 ? 'You took the win in your hand — never wrong.'
+                     : outcome.pnl < 0 ? 'You stayed in control — smart, not a mistake.'
+                     : 'No profit, no loss — you stayed in control.', c: _bc });
   } else if (isWin && goodSetup) {
     whatLines.push({ t: (_gradesKnown ? 'A Grade ' + grade : 'A strong') + ' setup that paid off.', c: _bc });
     whatLines.push({ t: 'Strong setups win more often over time.', c: _bc });
@@ -12002,10 +12060,10 @@ function tradeChartSVGFull(t, opts) {
   // what you risked (dividing by RR here showed "risked 0" on small losses — on-device bug).
   // CQ-0024 Shot 2 — R:R is an UNTAUGHT term until the risk lessons (Level 5): hidden until then.
   if (t.rr && conceptTier('risk') >= 1) {   // 'risk' unlocks Level 5 ('rr' isn't a concept key — unknown keys default to SHOWN)
-    const riskAmt = t.delta > 0 && t.rr > 0.01 ? Math.abs(t.delta) / t.rr : Math.abs(t.delta);   // P0b: profit, not `isWin` — a profitable MANUAL close is also a payout
+    const riskAmt = outcome.pnl > 0 && t.rr > 0.01 ? Math.abs(outcome.value) / t.rr : Math.abs(outcome.value);   // P0b: profit, not `isWin` — a profitable MANUAL close is also a payout
     s += '<text x="14" y="' + whY2 + '" fill="#4a5a70" font-size="10" font-family="monospace">R:R = '
        + t.rr.toFixed(1) + ':1  ·  risked ' + fmt(riskAmt) + ' shells  ·  '
-       + (t.delta > 0 ? 'won' : 'lost') + ' ' + fmt(Math.abs(t.delta)) + ' shells</text>';   // P0b: same reason
+       + (outcome.pnl > 0 ? 'won' : outcome.pnl < 0 ? 'lost' : 'closed flat at') + ' ' + fmt(Math.abs(outcome.value)) + ' shells</text>';   // P0b: same reason
   }
 
   s += '<text x="' + (VW/2) + '" y="' + (VH-10) + '" fill="#242e3e" font-size="11" font-family="monospace" text-anchor="middle">TAP ANYWHERE TO CLOSE</text>';
@@ -12022,6 +12080,7 @@ function tradeReplaySVG(entry, n) {
   const cs = R.candles, total = cs.length, entryIdx = R.entryIdx;
   const nShown = Math.max(1, Math.min(Math.round(n), total));
   const isLong = entry.dir === 'long', isWin = entry.result === 'win';
+  const outcome = tradeOutcomeDisplay(entry.result, entry.delta);
   const done = nShown >= total;
 
   // Fixed price range over ALL candles + levels (no mid-replay rescale)
@@ -12035,7 +12094,7 @@ function tradeReplaySVG(entry, n) {
   }
   const pad = (hi - lo) * 0.08; lo -= pad; hi += pad; const range = Math.max(1, hi - lo);
 
-  const VW = 390, VH = 560, CFI = cfTopInset(VW);   // SAFE AREA — see cfTopInset; 0 when the legend bar is down
+  const VW = 390, VH = 560, CFI = cfTopInset(VW, VH);   // SAFE AREA — see cfTopInset; 0 when the legend bar is down
   const chartX = 10, chartW = VW - 20, chartTop = 64 + CFI, chartBot = 522, chartH = chartBot - chartTop;
   const xw = chartW / total;
   const Y = (v) => chartTop + (1 - (v - lo) / range) * chartH;
@@ -12050,9 +12109,9 @@ function tradeReplaySVG(entry, n) {
   /* EXIT TRUTHFULNESS (P0a) — see tradeChartSVGFull. This header was the worst of the set: a
      profitable MANUAL close printed "✗ STOPPED OUT  +42 shells", naming a stop that was never
      touched, next to a profit, in one line. `result` is 'win' | 'loss' | 'manual'. */
-  else { const _man = entry.result === 'manual', _up = entry.delta > 0;
-         status = (isWin ? '✓ TAKE PROFIT HIT  ' : _man ? '● CLOSED EARLY  ' : '✗ STOPPED OUT  ') + (_up ? '+' : '−') + fmt(Math.abs(entry.delta)) + ' shells';
-         statusCol = (isWin || (_man && _up)) ? COLOR.greenBody : COLOR.redBody; }
+  else { const _man = entry.result === 'manual';
+         status = (isWin ? '✓ TAKE PROFIT HIT  ' : _man ? '● CLOSED EARLY  ' : '✗ STOPPED OUT  ') + outcome.sign + fmt(Math.abs(outcome.value)) + ' shells';
+         statusCol = outcome.color; }
   s += '<text x="' + (VW/2) + '" y="' + (42 + CFI) + '" fill="' + statusCol + '" font-size="12" font-weight="bold" font-family="monospace" text-anchor="middle">' + status + '</text>';
 
   // Chart frame + grid
@@ -12155,32 +12214,35 @@ function jTimeAgo(ts) {
 }
 function renderJournalStats() {
   const n = journal.length;
-  const wins = journal.filter(e => e.delta > 0).length;
-  const net = journal.reduce((a, e) => a + e.delta, 0);
+  const outcomes = journal.map(e => tradeOutcomeDisplay(e.result, e.delta));
+  const wins = outcomes.filter(outcome => outcome.pnl > 0).length;
+  const net = outcomes.reduce((sum, outcome) => sum + outcome.value, 0);
   const winRate = n ? Math.round(wins / n * 100) : 0;
-  const winsNet = journal.filter(e => e.delta > 0).reduce((a, e) => a + e.delta, 0);
-  const lossNet = journal.filter(e => e.delta < 0).reduce((a, e) => a + e.delta, 0);
+  const winsNet = outcomes.filter(outcome => outcome.pnl > 0).reduce((sum, outcome) => sum + outcome.value, 0);
+  const lossNet = outcomes.filter(outcome => outcome.pnl < 0).reduce((sum, outcome) => sum + outcome.value, 0);
   const avgWin = wins ? winsNet / wins : 0;
-  const lossCount = journal.filter(e => e.delta < 0).length;
+  const lossCount = outcomes.filter(outcome => outcome.pnl < 0).length;
   const avgLoss = lossCount ? Math.abs(lossNet / lossCount) : 0;
+  const netOutcome = tradeOutcomeDisplay('manual', net);
   const stat = (k, v, color) =>
     '<div class="jStat"><div class="k">' + k + '</div><div class="v"' +
     (color ? ' style="color:' + color + '"' : '') + '>' + v + '</div></div>';
   return stat('TRADES', n) +
     stat('WIN RATE', winRate + '%', winRate >= 50 ? '#16c784' : '#e6edf3') +
     // SHOT 20 — shell-denominated values carry the crystal icon so it's clear THIS is the currency.
-    stat('NET P&amp;L', (net >= 0 ? '+' : '−') + fmt(Math.abs(net)) + shellIco(), net >= 0 ? COLOR.greenBody : COLOR.redBody) +
+    stat('NET P&amp;L', netOutcome.sign + fmt(Math.abs(netOutcome.value)) + shellIco(), netOutcome.color) +
     stat('AVG WIN', '+' + fmt(avgWin) + shellIco(), '#16c784') +
-    stat('AVG LOSS', '−' + fmt(avgLoss) + shellIco(), '#ea3943');
+    stat('AVG LOSS', (lossCount ? '−' + fmt(avgLoss) : '0') + shellIco(), lossCount ? '#ea3943' : '#7d8aa0');
 }
 function renderJournalList() {
   if (!journal.length) {
     return '<div id="jEmpty">No trades logged yet.<br>Take a trade on the chart and it will appear here —<br>every entry, with a note you can add.</div>';
   }
   return journal.map(e => {
-    const cls = e.delta > 0 ? 'win' : e.delta < 0 ? 'loss' : 'flat';
-    const dcls = e.delta > 0 ? 'up' : e.delta < 0 ? 'down' : 'flat';
-    const dsign = e.delta > 0 ? '+' : e.delta < 0 ? '−' : '';
+    const outcome = tradeOutcomeDisplay(e.result, e.delta);
+    const cls = outcome.toneName;
+    const dcls = outcome.pnl > 0 ? 'up' : outcome.pnl < 0 ? 'down' : 'flat';
+    const dsign = outcome.sign;
     const dirTxt = e.dir === 'long' ? '▲ LONG' : '▼ SHORT';
     const setup = SETUP_LABEL[e.setupType] || (e.setupType || '—');
     // Only ever show reasons for concepts the player has learned (no future-concept leaks).
@@ -12188,7 +12250,7 @@ function renderJournalList() {
     return '<div class="jEntry ' + cls + '">' +
       '<div class="jRow1">' +
         '<span class="jDir ' + e.dir + '">' + dirTxt + '</span>' +
-        '<span class="jDelta ' + dcls + '">' + dsign + fmt(Math.abs(e.delta)) + ' SHELLS</span>' +
+        '<span class="jDelta ' + dcls + '">' + dsign + fmt(Math.abs(outcome.value)) + ' SHELLS</span>' +
       '</div>' +
       // CLEAN ENTRY — just the setup name + the one-line "why". The noise (R:R / balance /
       // hour / timestamp / grade score) is gone; the detail lives in the full-screen replay.
@@ -12211,6 +12273,39 @@ let reviewEntry = null;
 let firstTradeGuide = null;   // FIX 6 — the guided first-trade entry walkthrough (entry → SL → TP)
 let reviewMode = 'replay';      // 'replay' | 'details'
 let replayTimer = null;
+let _replayAutoDetails = false;
+/* INV-003 — a post-trade auto-review owns a token from the moment its poller is armed. Ordinary
+   reviews retain the inherited terminal budgets; the required third guided review ends only when
+   its replay/details surface visibly opens and the player closes it, or the intro explicitly
+   resets/aborts. The token is created synchronously in resolveTrade's real ordering, so later intro
+   pacing can wait on completion rather than racing a second blind timer. A Set keeps older/newer
+   pollers from clearing one another. */
+let _postTradeReviewSeq = 0;
+const _postTradeReviewActive = new Set();
+const _postTradeReviewRequired = new Set();
+let _postTradeReviewOpen = 0;
+function postTradeReviewInProgress(token) {
+  return !!token && _postTradeReviewActive.has(token);
+}
+function finishPostTradeReview(token) {
+  if (!token) return;
+  _postTradeReviewActive.delete(token);
+  _postTradeReviewRequired.delete(token);
+  if (_postTradeReviewOpen === token) _postTradeReviewOpen = 0;
+}
+function requirePostTradeReview(token) {
+  if (!postTradeReviewInProgress(token)) {
+    token = ++_postTradeReviewSeq;
+    _postTradeReviewActive.add(token);
+  }
+  _postTradeReviewRequired.add(token);
+  return token;
+}
+function cancelPostTradeReview(token) {
+  if (!token) return;
+  if (_postTradeReviewOpen === token) closeReviewChart();
+  else finishPostTradeReview(token);
+}
 const reviewOpts = { vwap: true, structure: true, ob: true, levels: true };
 const LEGEND_ITEMS = [
   { key: 'vwap',      label: 'VWAP',        color: '#ff9f43' },
@@ -12219,6 +12314,26 @@ const LEGEND_ITEMS = [
   { key: 'levels',    label: 'SL / TP',     color: '#16c784' },
 ];
 function stopReplay() { if (replayTimer) { clearInterval(replayTimer); replayTimer = null; } }
+/* One teardown owner for every chart/replay exit. cfLegend is a sticky CQSAFE producer, so merely
+   hiding its DOM node is not enough: sticky zones deliberately survive frame sweeps. Keeping the
+   class removal and registry clear together prevents a closed review from displacing later HUD
+   text. The shared close also stops the replay interval and clears its auto-details latch. */
+function hideReviewLegend() {
+  try { const lg = document.getElementById('cfLegend'); if (lg) lg.classList.remove('on'); } catch (e) {}
+  try { if (window.CQSAFE) window.CQSAFE.clear('cfLegend'); } catch (e) {}
+}
+function closeReviewChart() {
+  const postTradeReviewToken = _postTradeReviewOpen;
+  stopReplay();
+  try {
+    const cf = document.getElementById('chartFull');
+    if (cf) { cf.classList.remove('open'); cf.classList.remove('predict'); }
+  } catch (e) {}
+  hideReviewLegend();
+  reviewEntry = null;
+  _replayAutoDetails = false;
+  finishPostTradeReview(postTradeReviewToken);
+}
 // Top control bar: depends on the mode
 function renderReviewBar() {
   const canReplay = !!(reviewEntry && reviewEntry.replay && reviewEntry.replay.candles && reviewEntry.replay.candles.length);
@@ -12277,7 +12392,6 @@ function startReplay() {
 }
 // Open any trade record (journal entry or per-hour log) — auto-plays the replay.
 // P0d: `autoDetails` marks an AUTO-opened post-trade replay, which must end on the summary (see startReplay).
-let _replayAutoDetails = false;
 function openReviewChart(entry, autoDetails) {
   if (!entry || !entry.candleSnap || !entry.candleSnap.length) return;
   _replayAutoDetails = !!autoDetails;
@@ -12297,6 +12411,8 @@ function openJournalReview(id) { openReviewChart(journal.find(x => x.id === id))
 // FINISHED trade record and never touches trade outcome / setup / entry-stop-target logic.
 function autoOpenTradeReplay(rec) {
   if (!rec || !rec.replay || !rec.replay.candles || !rec.replay.candles.length) return;   // nothing to animate
+  const reviewToken = ++_postTradeReviewSeq;
+  _postTradeReviewActive.add(reviewToken);
   const _now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   let t0 = _now();
   /* P0d — THE 12s BUDGET WAS WALL-CLOCK, AND THE GAME SPENDS LONGER THAN THAT ON PURPOSE.
@@ -12304,12 +12420,18 @@ function autoOpenTradeReplay(rec) {
      between cards, so a trade that queues two or three cards burns the whole budget before the
      player can possibly have dismissed them — and the replay was then abandoned SILENTLY, on
      exactly the trades carrying the most teaching. The budget is now 12s of IDLE waiting: it does
-     not run while the thing being waited for is the post-trade summary itself. An absolute ceiling
-     replaces it as the leak guard, so the poller still cannot run forever. */
+     not run while the thing being waited for is the post-trade summary itself. Ordinary reviews
+     retain the 12s idle budget and absolute leak ceiling. The required third guided review is the
+     deliberate exception: it retries fail-closed until visible open/close or an intro reset, because
+     silently skipping that summary would violate INV-003. */
   const _hardStop = t0 + 120000;
   (function tick() {
+    if (!postTradeReviewInProgress(reviewToken)) return;
     const _t = _now();
-    if (_t > _hardStop) return;                          // absolute ceiling — the poller can never leak
+    if (_t > _hardStop && !_postTradeReviewRequired.has(reviewToken)) {
+      finishPostTradeReview(reviewToken);
+      return;
+    }
     const _elapsed = _t - t0;
     let clear = _elapsed > 1200;                         // let the win/loss punch land before the replay covers it
     let _summaryOwnsScreen = false;                      // the post-trade card sequence — wait it out, don't time out on it
@@ -12329,10 +12451,25 @@ function autoOpenTradeReplay(rec) {
        1200ms punch delay already satisfied means the replay opens on the first tick AFTER the last
        card closes, rather than waiting another 1.2s on a screen that is already clear. */
     if (_summaryOwnsScreen) t0 = _t - 1200;
-    else if (_elapsed > 12000) return;                   // stuck on something that is NOT the summary — give up
-    if (clear) { try { openReviewChart(rec, true); } catch (e) {} return; }   // P0d: auto-opened → must end on the summary
+    else if (_elapsed > 12000 && !_postTradeReviewRequired.has(reviewToken)) {
+      finishPostTradeReview(reviewToken);
+      return;
+    }
+    if (clear) {
+      try { openReviewChart(rec, true); } catch (e) {}
+      let opened = false;
+      try {
+        const cf = document.getElementById('chartFull');
+        opened = reviewEntry === rec && !!cf && cf.classList.contains('open');
+      } catch (e) {}
+      if (opened) _postTradeReviewOpen = reviewToken;
+      else if (_postTradeReviewRequired.has(reviewToken)) setTimeout(tick, 200);
+      else finishPostTradeReview(reviewToken);
+      return;
+    }
     setTimeout(tick, 200);
   })();
+  return reviewToken;
 }
 // Control-bar interactions (stop taps from closing the chart underneath)
 $('cfLegend').addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -12965,14 +13102,19 @@ function noteLinkLabel(n) {
   if (n.linkType === 'term')   { const c = (typeof KNOWLEDGE_BY_KEY !== 'undefined' && KNOWLEDGE_BY_KEY[n.linkRef]) || TERM_BY_KEY[n.linkRef]; return c ? '🔗 ' + c.term : ''; }
   if (n.linkType === 'lesson') { const l = LESSONS[n.linkRef];     return l ? '🔗 ' + l[0] : ''; }
   if (n.linkType === 'trade')  { const e = journal.find(x => x.id === +n.linkRef);
-    return e ? '🔗 ' + (e.dir === 'long' ? 'LONG' : 'SHORT') + ' ' + (e.delta >= 0 ? '+' : '−') + fmt(Math.abs(e.delta)) : ''; }
+    if (!e) return '';
+    const outcome = tradeOutcomeDisplay(e.result, e.delta);
+    return '🔗 ' + (e.dir === 'long' ? 'LONG' : 'SHORT') + ' ' + outcome.sign + fmt(Math.abs(outcome.value)); }
   return '';
 }
 function renderNotes() {
   // Composer
   // Only offer links to concepts the player has DISCOVERED — never a future term.
   const termOpts  = knowledgeDiscovered().map(c => '<option value="term:' + c.key + '">Concept · ' + esc(c.term) + '</option>').join('');
-  const tradeOpts = journal.slice(0, 30).map(e => '<option value="trade:' + e.id + '">Trade · ' + (e.dir === 'long' ? 'LONG' : 'SHORT') + ' ' + (e.delta >= 0 ? '+' : '−') + fmt(Math.abs(e.delta)) + '</option>').join('');
+  const tradeOpts = journal.slice(0, 30).map(e => {
+    const outcome = tradeOutcomeDisplay(e.result, e.delta);
+    return '<option value="trade:' + e.id + '">Trade · ' + (e.dir === 'long' ? 'LONG' : 'SHORT') + ' ' + outcome.sign + fmt(Math.abs(outcome.value)) + '</option>';
+  }).join('');
   let html = '<div id="jNoteComposer">' +
     '<textarea id="jNoteText" placeholder="Write a note… (a takeaway, a rule, a reminder)"></textarea>' +
     '<div class="crow">' +
@@ -13093,7 +13235,7 @@ function openJournal(tab) {
 }
 function closeJournal() {
   // A full-screen review sits ABOVE the journal — close that first
-  if ($('chartFull').classList.contains('open')) { $('chartFull').classList.remove('open'); $('chartFull').classList.remove('predict'); return; }
+  if ($('chartFull').classList.contains('open')) { closeReviewChart(); return; }
   $('journalPanel').classList.remove('open');
   paused = journalPrevPaused; journalOpen = false; // restore prior state
 }
@@ -15815,7 +15957,7 @@ $('tpChart').addEventListener('pointerdown', (e) => {
   e.stopPropagation();
   cfTraderView = false;   // plain expand-from-ticket, not the pre-trade ritual
   const idx = lastSetupIdx >= 0 ? lastSetupIdx : candles.length - 1;
-  $('cfLegend').classList.remove('on');   // setup view has no toggle legend
+  hideReviewLegend();   // setup view has no toggle legend or sticky safe-area reservation
   $('chartFull').classList.remove('predict');   // plain expand — no prediction prompt
   $('cfChart').innerHTML = setupChartSVGFull(idx);
   $('chartFull').classList.add('open');
@@ -15868,11 +16010,7 @@ $('chartFull').addEventListener('pointerdown', () => {
   // In predict mode the player must answer first — a background tap won't dismiss it.
   if ($('chartFull').classList.contains('predict') && !cfPredictAnswered) return;
   uiTapGuard = Date.now() + 450;   // this tap must NOT fall through onto the ticket's buttons
-  stopReplay();
-  $('chartFull').classList.remove('open');
-  $('chartFull').classList.remove('predict');
-  $('cfLegend').classList.remove('on');
-  reviewEntry = null;
+  closeReviewChart();
   // PHASE 1 — if this was the pre-trade Trader View ritual, dismissing it opens the
   // trade ticket (analyse → enter), instead of dropping the player back to the banner.
   // Clear the analysis freeze FIRST so that if openPanel early-returns (e.g. setup gone),
@@ -16503,12 +16641,11 @@ function resolveTrade(result) {
   const delta = result === 'win'    ? leveragedAmt * trade.rr
               : result === 'loss'   ? -leveragedAmt
               : leveragedAmt * tradeR();
+  const outcome = tradeOutcomeDisplay(result, delta);
   // Reserve protection: the final RESERVE shells (emergency capital) can never be lost.
   player.shells = Math.max(RESERVE, player.shells + delta);
-  const col = delta > 0.5 ? COLOR.greenBody
-            : delta < -0.5 ? COLOR.redBody : '#7d8aa0';
-  const msg = delta > 0.5 ? '+' + fmt(delta)
-            : delta < -0.5 ? '−' + fmt(-delta) : 'BREAK EVEN';
+  const col = outcome.color;
+  const msg = outcome.pnl === 0 ? 'BREAK EVEN' : outcome.sign + fmt(Math.abs(outcome.value));
   // The OUTCOME is the emotional peak of the level. Big, centred, felt — no new indicators.
   if (delta > 0.5) {
     const _isFirstWin = !firstWinCelebrated;   // capture BEFORE the flag flips below
@@ -16715,7 +16852,8 @@ function resolveTrade(result) {
   logJournalTrade(tradeRecord);
   // EVERY-TRADE REPLAY (build 356): play the animated entry→exit replay on THIS close too — see
   // autoOpenTradeReplay(). It waits for the outcome punch + review card / celebration to clear first.
-  try { autoOpenTradeReplay(tradeRecord); } catch (e) {}
+  let postTradeReviewToken = 0;
+  try { postTradeReviewToken = autoOpenTradeReplay(tradeRecord) || 0; } catch (e) {}
   // ── Post-trade educational feedback card (reuses the lesson-card UI) — explains the grade ──
   // SPRINT 1 — first trade ever: unlock the Notebook (nav bar) so it appears WITH the
   // "new notebook entry" moment below, not before the player has anything to record.
@@ -16734,9 +16872,11 @@ function resolveTrade(result) {
       // it: a manual exit "protected your profits" / "stayed in control"; a held win names the nerve.
       let _reason;
       if (result === 'manual') {
-        _reason = delta > 0
+        _reason = outcome.pnl > 0
           ? 'you <b style="color:#7fd6ff">closed it yourself</b> and protected your profits — taking a win in your hand is never wrong.'
-          : 'you <b style="color:#7fd6ff">closed it early</b> to protect your shells — staying in control is smart, not a mistake.';
+          : outcome.pnl < 0
+            ? 'you <b style="color:#7fd6ff">closed it early</b> to protect your shells — staying in control is smart, not a mistake.'
+            : 'you <b style="color:#7fd6ff">closed at break even</b> — no profit, no loss, and you stayed in control.';
       } else if (delta > 0) {
         _reason = trade._heldChoice
           ? 'you <b style="color:#ffd94a">held through the scare</b> — the dip tried to shake you out, but you trusted your plan and joined the move.'
@@ -16765,13 +16905,14 @@ function resolveTrade(result) {
     // player just took, matching the full-screen review) instead of a generic scene, and keep the
     // text to a couple short lines so a 10-year-old isn't asked to read a paragraph.
     try {
-      const net = (delta >= 0 ? '+' : '−') + fmt(Math.abs(Math.round(delta)));
+      const net = outcome.sign + fmt(Math.abs(outcome.value));
       let _chart = '';
       try { const _svg = tradeChartSVGFull(tradeRecord, { vwap: false, structure: false, ob: false });
         if (_svg) _chart = '<div style="border-radius:10px;overflow:hidden;margin:2px 0 10px;background:#070b12">' + _svg + '</div>'; } catch (e) {}
       const _mainLine = result === 'manual'
-        ? (delta > 0 ? 'You <b style="color:#7fd6ff">closed it yourself</b> and protected your profits — trusting your plan and taking the win in your hand.'
-                     : 'You <b style="color:#7fd6ff">closed it early</b> to protect your shells — staying in control, never a mistake.')
+        ? (outcome.pnl > 0 ? 'You <b style="color:#7fd6ff">closed it yourself</b> and protected your profits — trusting your plan and taking the win in your hand.'
+          : outcome.pnl < 0 ? 'You <b style="color:#7fd6ff">closed it early</b> to protect your shells — staying in control, never a mistake.'
+          : 'You <b style="color:#7fd6ff">closed at break even</b> — no profit, no loss, and you stayed in control.')
         : (delta > 0 ? (trade._heldChoice ? 'You <b style="color:#ffd94a">held through the scare</b>, then joined the <b>green close</b> — real nerve.' : 'You waited for the pullback, then joined the <b>green close</b> — a good read.')
                      : 'The move didn’t come this time — but your <b>stop kept the loss small</b>. Smart, not a mistake.');
       const body = '<div style="font-size:12.5px;line-height:1.55;color:#cfdae8">' +
@@ -16815,11 +16956,14 @@ function resolveTrade(result) {
       }
     }
   } catch (e) {}
-  teach(delta > 0 ? 'win' : 'loss');
+  // A manual exit is neither target-hit nor stopped-out. Its truthful explanation is already in
+  // the dedicated review card above; do not enqueue the generic TP/SL lesson for it.
+  if (result === 'win') teach('win');
+  else if (result === 'loss') teach('loss');
   // Friendly FIRST-LOSS message (shown once). The first 3 trades are always wins; the first real
   // loss is met with kindness so a beginner learns that not every trade wins without feeling bad.
   try {
-    if (delta < 0 && !localStorage.getItem('cq_lossmsg_v1')) {
+    if (result === 'loss' && !localStorage.getItem('cq_lossmsg_v1')) {
       localStorage.setItem('cq_lossmsg_v1', '1');
       // TES v1.1 A3 — THE FIRST LOSS is a designed lesson, not a consolation prize. Finn reframes
       // it instantly: the read was right, the market did the rare thing, and the STOP is the hero.
@@ -16872,7 +17016,7 @@ function resolveTrade(result) {
       // FOLLOW-UP #2 (HARD SEQUENCE): don't blind-timer the boss in. Wait until the
       // last-trade lesson card has been read AND its celebration has played, THEN the prove
       // gate → boss — so the order is always trades → lesson → celebration → reads → boss.
-      waitThenIntroBoss();
+      waitThenIntroBoss(postTradeReviewToken);
     } else {
       // Re-arm for the next guided trade (stay in 'run', awaitingTrade stays true). CRITICAL:
       // wait until the TRADE REVIEW card + any celebration are dismissed BEFORE teaching the
@@ -16935,21 +17079,34 @@ function waitThenNextTrade(left) {
     setTimeout(tick, 200);
   })();
 }
-// Reveal the intro boss only once the first-trade lesson is dismissed and any deferred
-// celebration has fired. Polls lightly, with a hard cap so an idle player never soft-locks.
-function waitThenIntroBoss() {
+// Reveal the intro boss only once the last-trade teaching, celebration, and exact required review
+// lifecycle have completed. The 18s cap may shorten the post-review breathing beat, but it never
+// bypasses a pending/open review; only visible close or explicit intro reset releases that gate.
+function waitThenIntroBoss(postTradeReviewToken) {
+  // The third guided trade is fail-closed: its replay must visibly open and be intentionally
+  // dismissed (or the intro must reset/abort). A timeout may never silently release THE LIE.
+  postTradeReviewToken = requirePostTradeReview(postTradeReviewToken);
   const _now = function () { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); };
   const t0 = _now();
+  let clearSince = null;
   (function tick() {
-    if (!introFlow.active || introFlow.phase !== 'run') return;   // aborted (e.g. reset)
-    const capped = (_now() - t0) > 18000;                         // hard fallback
+    if (!introFlow.active || introFlow.phase !== 'run') {
+      cancelPostTradeReview(postTradeReviewToken);
+      return;
+    }
+    const now = _now();
+    const capped = (now - t0) > 18000;                            // hard fallback after the exact review lifecycle is terminal
     const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && (f.finn || f.emoji); });
     const ready  = !lessonOpen && lessonQ.length === 0 && !pendingCelebration && !_celebrating;
-    if (ready || capped) {
-      // a beat for the confetti to breathe, THEN a short "prove you can read" practice
-      // window before the boss — so Guardian 1 is earned, not handed over after one trade.
-      setTimeout(function () { if (introFlow.active && introFlow.phase === 'run') beginIntroProve(); }, capped ? 0 : 2200);
-      return;
+    const reviewBusy = postTradeReviewInProgress(postTradeReviewToken);
+    if (!reviewBusy && (ready || capped)) {
+      if (capped) { beginIntroProve(); return; }
+      // Preserve the original clear-screen beat, but start measuring it only after the exact
+      // third-trade replay/details lifecycle has been intentionally closed.
+      if (clearSince === null) clearSince = now;
+      if ((now - clearSince) >= 2200) { beginIntroProve(); return; }
+    } else {
+      clearSince = null;
     }
     setTimeout(tick, 150);
   })();
@@ -28268,9 +28425,8 @@ window.SocialAgents = (function () {
 
   /* The trade replay opens OVER the Journal (#chartFull z-70… 80, #cfLegend 82). Hold it long
      enough to register, then dismiss it the way the game itself does — its own pointerdown
-     handler owns the teardown INCLUDING stopReplay(), so we never duplicate that logic. The
-     direct close is a belt-and-braces fallback and calls stopReplay() itself, because
-     closeJournal() famously does not (the 240 ms replay interval would otherwise leak). */
+     handler owns the teardown. The belt-and-braces fallback calls the same closeReviewChart()
+     owner, so replay timers, review state and the sticky legend reservation cannot diverge. */
   function holdTradeReview(next) {
     var cf = $id('chartFull');
     if (!cf || !cf.classList.contains('open')) { next(); return; }
@@ -28279,9 +28435,7 @@ window.SocialAgents = (function () {
       try { cf.dispatchEvent(new Event('pointerdown', { bubbles: true })); } catch (e) {}
       T(function () {
         if (cf.classList.contains('open')) {
-          try { if (typeof stopReplay === 'function') stopReplay(); } catch (e) {}
-          try { cf.classList.remove('open'); cf.classList.remove('predict'); } catch (e) {}
-          try { var lg = $id('cfLegend'); if (lg) lg.classList.remove('on'); } catch (e) {}
+          try { if (typeof closeReviewChart === 'function') closeReviewChart(); } catch (e) {}
         }
         setHold(false);
         next();
@@ -28485,9 +28639,7 @@ window.SocialAgents = (function () {
     try {
       var cf = $id('chartFull');
       if (cf && cf.classList.contains('open')) {
-        try { if (typeof stopReplay === 'function') stopReplay(); } catch (e) {}
-        cf.classList.remove('open'); cf.classList.remove('predict');
-        var lg = $id('cfLegend'); if (lg) lg.classList.remove('on');
+        try { if (typeof closeReviewChart === 'function') closeReviewChart(); } catch (e) {}
       }
     } catch (e) {}
     try { if (gJournalOpen() && typeof closeJournal === 'function') closeJournal(); } catch (e) {}

@@ -17,6 +17,8 @@
  *   9  No large binaries added (>5MB, non-ignored)
  *   10 Protected systems unchanged vs HEAD  (override: CQ_ALLOW_PROTECTED=1 when a
  *      protected change was explicitly approved)
+ *   22 Build-362 CQSAFE + RC invariants (behavioural owner tests and source contracts)
+ *   23 Build-362 local browser harness safety/syntax/self-test
  */
 const fs = require('fs');
 const os = require('os');
@@ -723,6 +725,52 @@ function run() {
       }
     } catch (e) {
       add('21', 'Deploy security headers', 'FAIL', 'gate could not run (treated as FAIL by design): ' + String(e).slice(0, 90));
+    }
+  }
+
+  // 22 — BUILD-362 SAFE-AREA + RC INVARIANTS. The safe-area and post-trade review owners live inside the single-file
+  // game, so its focused suite evaluates that exact source block rather than a duplicate module.
+  // It also locks the four collision integrations and the already-approved manual-close,
+  // replay-close, and trade-focus contracts that a static syntax pass cannot distinguish.
+  {
+    try {
+      const suite = require(path.join(__dirname, 'cqsafe.test.js')).runSuite({ report: false });
+      const first = suite.failures[0];
+      add('22', 'Build-362 safe-area + RC invariants', suite.ok ? 'PASS' : 'FAIL',
+        suite.ok
+          ? suite.detail
+          : `${suite.passed}/${suite.total} passed · ${first.name}: ${String(first.error && first.error.message || first.error).slice(0, 120)}`);
+    } catch (e) {
+      add('22', 'Build-362 safe-area + RC invariants', 'FAIL',
+        'focused suite could not run: ' + String(e && e.message || e).slice(0, 120));
+    }
+  }
+
+  // 23 — LOCAL-ONLY BROWSER QA HARNESS. This is intentionally not a headless-browser substitute:
+  // it proves the durable harness/server are parseable and retain their loopback, random-port,
+  // allowlist, no-store, no-connect and canonical-hash contracts. The in-app Browser still owns
+  // the actual 7-flow + 16-cell execution and visible evidence.
+  {
+    try {
+      const server = path.join('scripts', 'beta360_qa_server.py');
+      const bridge = path.join('.chartquest', 'qa', 'beta360-bridge.js');
+      const harness = path.join('.chartquest', 'qa', 'BETA360_BROWSER_HARNESS.html');
+      const checks = [
+        [process.execPath, ['--check', bridge], 'bridge syntax'],
+        [process.execPath, [path.join('scripts', 'check_syntax.js'), harness], 'harness syntax'],
+        ['python3', [server, '--self-test'], 'server/self-test'],
+      ];
+      const failures = [], detail = [];
+      for (const [command, args, label] of checks) {
+        const result = cp.spawnSync(command, args, { cwd: ROOT, encoding: 'utf8', timeout: 15000 });
+        if (result.status !== 0) failures.push(label + ': ' + String(result.stderr || result.stdout || 'exit ' + result.status).trim().slice(0, 160));
+        else detail.push(label + ' PASS');
+      }
+      add('23', 'Build-362 local browser QA harness', failures.length ? 'FAIL' : 'PASS',
+        failures.length ? failures.join(' · ') : detail.join(' · '));
+    } catch (e) {
+      add('23', 'Build-362 local browser QA harness', 'FAIL',
+        'harness checks could not run: ' + String(e && e.message || e).slice(0, 120));
     }
   }
 

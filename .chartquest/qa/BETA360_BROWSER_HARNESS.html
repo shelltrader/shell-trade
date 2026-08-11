@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ChartQuest Beta-360 Local Browser QA</title>
+  <style>
+    :root { color-scheme: dark; font-family: ui-sans-serif,system-ui,sans-serif; background:#07101b; color:#e8f0fa; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; }
+    header { position:sticky; top:0; z-index:4; padding:14px 18px; background:#0b1624ee; border-bottom:1px solid #20344a; backdrop-filter:blur(8px); }
+    h1 { margin:0 0 5px; font-size:18px; } .sub { color:#9db0c4; font-size:12px; }
+    button { cursor:pointer; border:1px solid #31506d; border-radius:8px; padding:8px 11px; color:#e8f0fa; background:#12243a; font-weight:700; }
+    button:hover { border-color:#4cc3ff; } button:disabled { opacity:.45; cursor:wait; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    main { display:grid; grid-template-columns:minmax(390px,430px) minmax(520px,1fr); gap:16px; padding:16px; align-items:start; }
+    .phone { position:sticky; top:118px; width:392px; padding:1px; border:1px solid #30475f; border-radius:12px; background:#02060b; overflow:auto; max-height:calc(100vh - 135px); }
+    iframe { display:block; width:390px; height:844px; border:0; background:#000; }
+    .report { min-width:0; }
+    .summary { display:grid; grid-template-columns:repeat(4,minmax(100px,1fr)); gap:8px; margin-bottom:12px; }
+    .metric { background:#0c1827; border:1px solid #20344a; border-radius:9px; padding:9px; }
+    .metric b { display:block; font-size:18px; } .metric span { color:#8fa3b8; font-size:10px; text-transform:uppercase; letter-spacing:.7px; }
+    #rows { display:grid; gap:8px; }
+    .row { border:1px solid #2a3c50; background:#0a1522; border-radius:10px; padding:10px; }
+    .row.pass { border-color:#168f64; } .row.fail { border-color:#bd4050; }
+    .head { display:flex; gap:9px; align-items:center; }
+    .case { font:800 13px ui-monospace,monospace; min-width:56px; }
+    .state { font-weight:800; } .pass .state { color:#4de0a6; } .fail .state { color:#ff7784; }
+    .height { color:#7f95aa; font-size:11px; margin-left:auto; }
+    details { margin-top:8px; } summary { color:#9dc2e2; cursor:pointer; font-size:11px; }
+    .evidence { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+    .box { background:#07101a; border-radius:7px; padding:8px; min-width:0; }
+    .box b { color:#8199b0; display:block; font-size:9px; letter-spacing:.6px; margin-bottom:4px; }
+    pre { white-space:pre-wrap; overflow-wrap:anywhere; margin:0; font:10px/1.4 ui-monospace,monospace; color:#cbd8e5; }
+    #fatal { display:none; margin:12px 0; padding:12px; border:1px solid #bd4050; color:#ff9ca5; background:#2a1016; border-radius:8px; }
+    @media (max-width:980px) { main { grid-template-columns:1fr; } .phone { position:relative; top:auto; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ChartQuest Beta-360 Browser QA</h1>
+    <div class="sub" id="identity">Loading same-origin game and guarded bridge…</div>
+    <div class="toolbar">
+      <button id="runAll">Run all</button>
+      <button id="runFlows">Run F1–F7</button>
+      <button id="runMatrix">Run 16-cell matrix</button>
+      <button id="clear">Clear report</button>
+    </div>
+  </header>
+  <main>
+    <section class="phone"><iframe id="game" title="ChartQuest QA game" src="/chart-quest.html?qa=1&amp;mute=1"></iframe></section>
+    <section class="report">
+      <div id="fatal"></div>
+      <div class="summary">
+        <div class="metric"><b id="passCount">0</b><span>Pass</span></div>
+        <div class="metric"><b id="failCount">0</b><span>Fail</span></div>
+        <div class="metric"><b id="runCount">0</b><span>Run</span></div>
+        <div class="metric"><b id="pendingCount">23</b><span>Pending</span></div>
+      </div>
+      <div id="rows" aria-live="polite"></div>
+    </section>
+  </main>
+  <script>
+  (function () {
+    'use strict';
+    const frame = document.getElementById('game');
+    const rows = document.getElementById('rows');
+    const fatal = document.getElementById('fatal');
+    const heights = [844, 667, 468, 340];
+    const flowIds = ['F1','F2','F3','F4','F5','F6','F7'];
+    const collisionIds = ['C1','C2','C3','C4'];
+    const results = [];
+    let bridge = null;
+    let busy = false;
+
+    function showFatal(message) {
+      fatal.style.display = 'block';
+      fatal.textContent = message;
+    }
+    function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+    function safe(value) {
+      try { return JSON.stringify(value, null, 2); } catch (_) { return String(value); }
+    }
+    function counts() {
+      const pass = results.filter(r => r.result.pass).length;
+      const fail = results.length - pass;
+      document.getElementById('passCount').textContent = pass;
+      document.getElementById('failCount').textContent = fail;
+      document.getElementById('runCount').textContent = results.length;
+      document.getElementById('pendingCount').textContent = Math.max(0, 23 - results.length);
+    }
+    function addRow(result, height) {
+      results.push({ result, height });
+      const row = document.createElement('article');
+      row.className = 'row ' + (result.pass ? 'pass' : 'fail');
+      row.innerHTML =
+        '<div class="head"><span class="case">' + result.id + '</span>' +
+        '<span class="state">' + (result.pass ? 'PASS' : 'FAIL') + '</span>' +
+        '<span class="height">' + (height ? '390 × ' + height : 'flow') + '</span></div>' +
+        '<details' + (result.pass ? '' : ' open') + '><summary>Expected / actual / geometry / errors</summary>' +
+        '<div class="evidence"><div class="box"><b>EXPECTED</b><pre></pre></div>' +
+        '<div class="box"><b>ACTUAL</b><pre></pre></div>' +
+        '<div class="box"><b>GEOMETRY</b><pre></pre></div>' +
+        '<div class="box"><b>ERRORS / GAPS</b><pre></pre></div></div></details>';
+      const pre = row.querySelectorAll('pre');
+      pre[0].textContent = safe(result.expected);
+      pre[1].textContent = safe(result.actual);
+      pre[2].textContent = safe(result.geometry);
+      pre[3].textContent = safe({ errors: result.errors, gaps: result.gaps });
+      rows.appendChild(row);
+      counts();
+    }
+    function controls(disabled) {
+      document.querySelectorAll('button').forEach(button => { button.disabled = disabled; });
+    }
+    async function setHeight(height) {
+      frame.style.height = height + 'px';
+      frame.contentWindow.dispatchEvent(new Event('resize'));
+      await wait(180);
+    }
+    async function runCase(id, height) {
+      const result = await bridge.run(id);
+      addRow(result, height);
+      return result;
+    }
+    async function runFlows() {
+      await setHeight(844);
+      for (const id of flowIds) await runCase(id, null);
+    }
+    async function runMatrix() {
+      for (const height of heights) {
+        await setHeight(height);
+        for (const id of collisionIds) await runCase(id, height);
+      }
+      await setHeight(844);
+    }
+    async function execute(mode) {
+      if (busy || !bridge) return;
+      busy = true; controls(true);
+      try {
+        if (mode !== 'matrix') await runFlows();
+        if (mode !== 'flows') await runMatrix();
+      } catch (error) {
+        showFatal(String(error && error.stack || error));
+      } finally {
+        try { bridge.cleanup(); } catch (_) {}
+        busy = false; controls(false);
+      }
+    }
+    async function installBridge() {
+      const child = frame.contentWindow;
+      const doc = frame.contentDocument;
+      const script = doc.createElement('script');
+      script.src = '/.chartquest/qa/beta360-bridge.js';
+      script.onload = async function () {
+        for (let i = 0; i < 80; i++) {
+          if (child.QABeta360) { bridge = child.QABeta360; break; }
+          if (child.QABeta360Rejected) break;
+          await wait(50);
+        }
+        if (!bridge) {
+          showFatal('Guarded bridge refused: ' + (child.QABeta360Rejected || 'timeout'));
+          return;
+        }
+        const info = bridge.info();
+        document.getElementById('identity').textContent =
+          'Build ' + (info.build && info.build.number) + ' · canonical SHA-256 ' + info.sourceHash +
+          ' · ' + info.networkPolicy + ' · disposable random-port origin';
+        controls(false);
+      };
+      script.onerror = function () { showFatal('Could not load the same-origin QA bridge.'); };
+      doc.head.appendChild(script);
+    }
+    frame.addEventListener('load', installBridge, { once:true });
+    controls(true);
+    document.getElementById('runAll').onclick = () => execute('all');
+    document.getElementById('runFlows').onclick = () => execute('flows');
+    document.getElementById('runMatrix').onclick = () => execute('matrix');
+    document.getElementById('clear').onclick = function () {
+      results.length = 0; rows.textContent = ''; fatal.style.display = 'none'; counts();
+    };
+  })();
+  </script>
+</body>
+</html>

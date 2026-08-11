@@ -41,7 +41,7 @@ case "${1:-}" in
     # BUILD_TAG matches this checkout, and that every referenced asset answers with a real media
     # content-type and the exact local byte length — because with no 404.html a missing file
     # answers HTTP 200 with the landing page, so a status code alone proves nothing.
-    node scripts/smoke_deploy.js "${2:-}"
+    node scripts/smoke_deploy.js "${@:2}"
     ;;
   site)
     # Refresh the marketing-site embedded game so website/ ALWAYS shows the latest build.

@@ -1,0 +1,11 @@
+# ChartQuest local Codex autonomy boundary.
+#
+# This trusted-project policy removes routine file and local-command interruptions while
+# keeping the agent inside this repository. It intentionally does not enable command
+# networking, production access, or broad machine access.
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
+
+[sandbox_workspace_write]
+network_access = false

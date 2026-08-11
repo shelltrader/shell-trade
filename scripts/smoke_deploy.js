@@ -4,6 +4,8 @@
  * ChartQuest POST-DEPLOY SMOKE TEST — run against the LIVE site after every deploy.
  *   node scripts/smoke_deploy.js                    (defaults to https://playchartquest.com)
  *   node scripts/smoke_deploy.js https://staging…   (any origin)
+ *   node scripts/smoke_deploy.js --manifest .chartquest/releases/RELEASE.md
+ *      (also verifies served /game SHA-256 + cq-build stamp against the approved candidate)
  *   scripts/cq.sh smoke
  *
  * Exit 0 = production is serving what this checkout says it should. Exit 1 = it is not.
@@ -30,13 +32,27 @@
  */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const https = require('https');
 const http = require('http');
 
 const ROOT = path.resolve(__dirname, '..');
 process.chdir(ROOT);
 const SRC = 'chart-quest.html';
-const BASE = (process.argv[2] || process.env.CQ_SMOKE_URL || 'https://playchartquest.com').replace(/\/+$/, '');
+const argv = process.argv.slice(2);
+const manifestFlag = argv.indexOf('--manifest');
+const manifestArg = manifestFlag === -1 ? null : argv[manifestFlag + 1];
+if (manifestFlag !== -1 && (!manifestArg || manifestFlag !== argv.length - 2)) {
+  console.error('usage: node scripts/smoke_deploy.js [url] [--manifest .chartquest/releases/RELEASE.md]');
+  process.exit(2);
+}
+const positional = manifestFlag === -1 ? argv : argv.slice(0, manifestFlag);
+if (positional.length > 1) {
+  console.error('usage: node scripts/smoke_deploy.js [url] [--manifest .chartquest/releases/RELEASE.md]');
+  process.exit(2);
+}
+const targetArg = positional[0] || null;
+const BASE = (targetArg || process.env.CQ_SMOKE_URL || 'https://playchartquest.com').replace(/\/+$/, '');
 const CONCURRENCY = 6;
 const TIMEOUT_MS = 30000;
 
@@ -53,6 +69,49 @@ const EXPECT = {
 
 const results = [];
 const add = (status, target, detail) => results.push({ status, target, detail: detail || '' });
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function productionUrl(value, source) {
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch (_) {
+    throw new Error(`${source} must be an absolute http(s) origin URL`);
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname || parsed.username || parsed.password ||
+      parsed.search || parsed.hash || !['', '/'].includes(parsed.pathname)) {
+    throw new Error(`${source} must be an absolute http(s) origin URL`);
+  }
+  return parsed.origin;
+}
+
+function manifestFields(file) {
+  const absolute = path.resolve(ROOT, file);
+  const releaseDir = path.join(ROOT, '.chartquest', 'releases') + path.sep;
+  if (!absolute.startsWith(releaseDir)) throw new Error('release manifest must be under .chartquest/releases/');
+  const fields = new Map();
+  for (const line of fs.readFileSync(absolute, 'utf8').split(/\r?\n/)) {
+    if (!line.trim().startsWith('|')) continue;
+    const cells = line.split('|').slice(1, -1).map(cell => cell.trim());
+    if (cells.length < 2 || /^-+$/.test(cells[0]) || cells[0] === 'Field') continue;
+    fields.set(cells[0].replace(/[\*`]/g, '').replace(/\s+/g, ' ').trim().toUpperCase(), cells[1]);
+  }
+  const required = ['RELEASE ID', 'BUILD', 'PRODUCTION URL', 'WEBSITE GAME SHA256', 'CQ-BUILD CONTENT', 'CQ-BUILD BUILT-AT'];
+  const value = {};
+  for (const name of required) {
+    const found = fields.get(name);
+    if (!found || /^\[.*\]$/.test(found) || /^(UNKNOWN|REQUIRED)$/i.test(found)) {
+      throw new Error(`release manifest is missing ${name}`);
+    }
+    value[name] = found;
+  }
+  if (!/^[0-9a-f]{64}$/i.test(value['WEBSITE GAME SHA256'])) throw new Error('release manifest WEBSITE GAME SHA256 is invalid');
+  value['PRODUCTION URL'] = productionUrl(value['PRODUCTION URL'], 'release manifest PRODUCTION URL');
+  return value;
+}
 
 /* HEAD first — these are multi-MB videos and we only need the headers. Follows redirects,
    because Cloudflare serves clean URLs (/game.html -> 308 -> /game). Some edges answer HEAD
@@ -140,11 +199,21 @@ function referencedAssets(src) {
   if (!fs.existsSync(SRC)) { console.error(`✗ ${SRC} not found — run from the repo`); process.exit(1); }
   const src = fs.readFileSync(SRC, 'utf8');
   const localBuild = (src.match(/BUILD_TAG\s*=\s*'build\s+(\d+)/) || [])[1] || null;
+  let manifest = null;
+  try {
+    if (manifestArg) manifest = manifestFields(manifestArg);
+    if (manifest && productionUrl(BASE, 'smoke target URL') !== manifest['PRODUCTION URL']) {
+      throw new Error(`smoke target ${productionUrl(BASE, 'smoke target URL')} does not match manifest PRODUCTION URL ${manifest['PRODUCTION URL']}`);
+    }
+  } catch (error) {
+    console.error(`✗ invalid release manifest: ${String(error && error.message || error)}`);
+    process.exit(1);
+  }
   const { real, phantom } = referencedAssets(src);
 
   console.log(`\nChartQuest Post-Deploy Smoke Test`);
   console.log(`  target : ${BASE}`);
-  console.log(`  build  : ${localBuild ? 'build ' + localBuild : '(none found)'} (local ${SRC})`);
+  console.log(`  build  : ${manifest ? manifest.BUILD + ' (release manifest)' : (localBuild ? 'build ' + localBuild : '(none found)') + ' (local ' + SRC + ')'}`);
   console.log(`  assets : ${real.length} referenced${phantom.length ? ` · ${phantom.length} comment-only ref(s) ignored` : ''}\n`);
 
   // ── 1. PAGES ────────────────────────────────────────────────────────────────────────────
@@ -158,18 +227,34 @@ function referencedAssets(src) {
   });
 
   // ── 2. THE SERVED BUILD ─────────────────────────────────────────────────────────────────
-  // The headline question: is production running THIS checkout? Compares the BUILD_TAG on the
-  // wire against the one on disk — same guard cq.sh `qr` applies to the LAN preview.
+  // The headline question: is production running THIS candidate? Without a manifest this keeps
+  // the historical local-BUILD_TAG check. With a release manifest it also verifies the exact
+  // served game bytes and cq-build stamp against the approved candidate identity.
   await (async () => {
     const body = await fetchBody(BASE + '/game');
     if (!body) return add('FAIL', 'served BUILD_TAG', 'could not fetch /game');
     const wire = (body.match(/BUILD_TAG\s*=\s*'build\s+(\d+)/) || [])[1] || null;
     if (!wire) return add('FAIL', 'served BUILD_TAG', 'no BUILD_TAG in the served document');
-    if (wire !== localBuild) {
+    const expectedBuild = manifest ? (manifest.BUILD.match(/^build\s+(\d+)$/i) || [])[1] : localBuild;
+    if (wire !== expectedBuild) {
       return add('FAIL', 'served BUILD_TAG',
-        `production is serving build ${wire}, this checkout is build ${localBuild} — the deploy is stale or still building`);
+        `production is serving build ${wire}, expected build ${expectedBuild} — the deploy is stale or still building`);
     }
-    add('PASS', 'served BUILD_TAG', `build ${wire} matches local`);
+    if (!manifest) return add('PASS', 'served BUILD_TAG', `build ${wire} matches local`);
+    const localGame = fs.readFileSync(path.join(ROOT, 'website', 'game.html'));
+    const localHash = sha256(localGame);
+    if (localHash !== manifest['WEBSITE GAME SHA256']) {
+      return add('FAIL', 'candidate website/game.html SHA256', 'local candidate does not match the approved release manifest');
+    }
+    const servedHash = sha256(Buffer.from(body, 'utf8'));
+    if (servedHash !== manifest['WEBSITE GAME SHA256']) {
+      return add('FAIL', 'served website/game.html SHA256', `served ${servedHash}, expected ${manifest['WEBSITE GAME SHA256']}`);
+    }
+    const stamp = body.match(/<meta\s+name=["']cq-build["']\s+content=["']([^"']+)["']\s+data-built-at=["']([^"']+)["']\s*>/i);
+    if (!stamp || stamp[1] !== manifest['CQ-BUILD CONTENT'] || stamp[2] !== manifest['CQ-BUILD BUILT-AT']) {
+      return add('FAIL', 'served cq-build stamp', 'served cq-build metadata does not match the approved release manifest');
+    }
+    add('PASS', 'served candidate identity', `build ${wire}, game SHA256 and cq-build stamp match release ${manifest['RELEASE ID']}`);
   })();
 
   // ── 3. ASSETS — the check that would have caught the cinematics outage ───────────────────

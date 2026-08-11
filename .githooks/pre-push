@@ -1,0 +1,24 @@
+#!/bin/sh
+# Blocks ordinary local pushes that would update the documented Cloudflare production branch.
+# Git's --no-verify option and any remote/dashboard/API path remain outside this local guard.
+set -eu
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    # A valid gate context belongs to the actual local main candidate only. Do not
+    # let feature:main, HEAD:main, a stale SHA, or a delete ref reuse it.
+    if [ "$local_ref" != "refs/heads/main" ]; then
+      echo "RELEASE GATE: FAIL — a push to main must use refs/heads/main as its local ref" >&2
+      exit 1
+    fi
+    expected_sha="$(git rev-parse refs/heads/main)"
+    if [ "$local_sha" != "$expected_sha" ]; then
+      echo "RELEASE GATE: FAIL — pushed main SHA does not match the current local main ref" >&2
+      exit 1
+    fi
+    repo_root="$(git rev-parse --show-toplevel)"
+    exec node "$repo_root/scripts/release_control.js" gate --from-active-lock
+  fi
+done
+
+exit 0

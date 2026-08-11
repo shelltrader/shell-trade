@@ -9,9 +9,18 @@
 #  double-click this file to deploy.
 # ─────────────────────────────────────────────────────────────
 
+# This legacy direct-upload path is not a workaround for the canonical release boundary.
+# It must pass the same local lock/manifest/candidate verification as any production-affecting
+# path before it reads a credential, rebuilds an archive, or calls Netlify.
+DIR="$(cd "$(dirname "$0")" && pwd)"
+if ! node "$DIR/scripts/release_control.js" gate --from-active-lock; then
+  echo "❌ Release control gate failed. Legacy direct deployment is blocked."
+  exit 1
+fi
+
 # Token is read from a sibling file (.netlify-token) so it never lives inside
 # this script and can never be published with the site.
-TOKEN_FILE="$(dirname "$0")/.netlify-token"
+TOKEN_FILE="$DIR/.netlify-token"
 NETLIFY_TOKEN="$(cat "$TOKEN_FILE" 2>/dev/null | tr -d '[:space:]')"
 SITE_ID="5130714b-3220-4f17-98b8-9a2bc612f518"
 ZIP_FILE="$(dirname "$0")/deploy.zip"
@@ -26,7 +35,6 @@ fi
 
 # Rebuild the deploy zip fresh from the folder so any boss art you dropped into
 # /bosses/ is always included. Add new top-level files to the list if needed.
-DIR="$(dirname "$0")"
 cd "$DIR" || exit 1
 echo "📦 Packing files (incl. /bosses/ art) ..."
 rm -f "$ZIP_FILE"

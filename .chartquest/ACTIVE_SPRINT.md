@@ -17,7 +17,7 @@ Close the first autonomous Investigator → Implementer → Reviewer → QA proo
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Command-center durability and controlled integration | Implementer | **IMPLEMENTATION READY** | Construct the exact non-`main` candidate defined in `handoffs/STEP8_INTEGRATION_INVESTIGATION.md`, then run its pre-commit evidence. No release action. |
+| Command-center durability and controlled integration | Reviewer | **REVIEW READY** | Inspect integration commit `31225ac` and independently rerun the critical scope, release-control, parity, bootstrap, and regression evidence. No release action. |
 
 ## Blocked tasks
 

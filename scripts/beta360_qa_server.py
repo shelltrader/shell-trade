@@ -49,6 +49,7 @@ LOCAL_SUPABASE = '<script src="/__qa__/supabase-offline-stub.js"></script>'
 ROOT_FILES = {
     "/icon-192.png", "/icon-512.png", "/manifest.json", "/journal-book.webp",
     "/logo-512.jpg", "/logo-512.webp", "/mm-poster.jpg",
+    "/Market-maker-cinematic.mp4",
 }
 ASSET_DIRS = ("/finn/", "/bosses/")
 ASSET_EXT = {
@@ -264,6 +265,7 @@ def self_test():
         value = normalized(path)
         check(value is None or denied(value) or asset(value) is None, "deny " + path)
     check(asset("/finn/run.png") is not None, "allow Finn asset")
+    check(asset("/Market-maker-cinematic.mp4") is not None, "allow opening cinematic")
     for path in (HARNESS, BRIDGE, SURVEY, *SURVEY_DEPENDENCIES.values()):
         check(path.is_file(), "present " + path.name)
     check(SURVEY_URL == "/survey.html" and SURVEY == ROOT / "website/survey.html",

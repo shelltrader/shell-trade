@@ -13,7 +13,7 @@
  *   3a Game script parses (syntax = boot proxy)   3b Headless boot (optional, needs puppeteer)
  *   4  Lessons load        5 Bosses load        6 Save system initializes
  *   7  BUILD_TAG incremented (only if chart-quest.html changed vs HEAD)
- *   8  index.html mirrors source
+ *   8  All three canonical game artifacts are byte-identical
  *   9  No large binaries added (>5MB, non-ignored)
  *   10 Protected systems unchanged vs HEAD  (override: CQ_ALLOW_PROTECTED=1 when a
  *      protected change was explicitly approved)
@@ -21,20 +21,17 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const crypto = require('crypto');
 const cp = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 process.chdir(ROOT);
 const SRC = 'chart-quest.html';
-const MIRROR = 'index.html';
 
 const R = [];
 const add = (id, name, status, detail) => R.push({ id, name, status, detail: detail || '' });
 const read = f => fs.readFileSync(f, 'utf8');
 const exists = f => { try { fs.accessSync(f); return true; } catch { return false; } };
 const sizeMB = f => fs.statSync(f).size / (1024 * 1024);
-const sha = f => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
 const git = args => { try { return cp.execSync('git ' + args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return null; } };
 const srcChanged = () => { try { cp.execSync('git diff --quiet HEAD -- ' + SRC, { stdio: 'ignore' }); return false; } catch { return true; } };
 const buildNum = s => { const m = s && s.match(/BUILD_TAG\s*=\s*'build\s+(\d+)/); return m ? parseInt(m[1], 10) : null; };
@@ -189,11 +186,16 @@ function run() {
     }
   }
 
-  // 8 — mirror
+  // 8 — canonical game artifact parity
   {
-    const ok = exists(MIRROR) && sha(SRC) === sha(MIRROR);
-    add('8', 'index.html mirrors source', ok ? 'PASS' : 'FAIL',
-      ok ? 'sha256(index.html) == sha256(chart-quest.html)' : 'index.html differs — run: scripts/cq.sh mirror');
+    try {
+      const parity = require(path.join(__dirname, 'artifact_parity.js')).checkArtifactParity(ROOT);
+      add('8', 'Game artifacts byte-identical (source, root mirror, site)',
+        parity.ok ? 'PASS' : 'FAIL', parity.detail);
+    } catch (e) {
+      add('8', 'Game artifacts byte-identical (source, root mirror, site)', 'FAIL',
+        'artifact parity checker could not run: ' + String(e && e.message || e).slice(0, 110));
+    }
   }
 
   // 9 — no large binaries added

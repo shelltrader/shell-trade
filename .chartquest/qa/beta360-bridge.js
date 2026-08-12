@@ -250,8 +250,8 @@
     };
     const dimensions = canvas && Math.abs(canvas.width - canvas.clientWidth * actual.effectiveDpr) <= 1 &&
       Math.abs(canvas.height - canvas.clientHeight * actual.effectiveDpr) <= 1;
-    return caseResult('F1', 'dev QA build 364, capped main canvas, no walls/errors', actual,
-      actual.dev && actual.qa && actual.build === 364 && dimensions &&
+    return caseResult('F1', 'dev QA build 365, capped main canvas, no walls/errors', actual,
+      actual.dev && actual.qa && actual.build === 365 && dimensions &&
       actual.authHidden && actual.factionHidden && actual.errors.length === 0);
   }
 
@@ -680,6 +680,119 @@
       actual.title === 'FIRST TRADE WON' && actual.reward === 10);
   }
 
+  async function F11() {
+    cleanup(); paused = true; introFlow.active = false;
+    const saved = {
+      boxMade: market._boxMade, boxSpace: market._boxSpace, boxCand: market._boxCand,
+      boxGap: market._boxGap, lastRewardId: market._lastRewardId,
+    };
+    try {
+      const portalX = turtle.x + W * 0.50;
+      market._boxMade = 2; market._boxSpace = 55; market._boxCand = { wait: 1 };
+      market._boxGap = 28; market._lastRewardId = 102;
+      const before = { x: portalX - 42, w: 34, broken: false, _cqQuota: 'governed', _cqRewardId: 99,
+        __beta360Fixture: 'F11-before' };
+      const governed = { x: portalX + 8, w: 34, broken: false, _cqQuota: 'governed', _cqRewardId: 101,
+        __beta360Fixture: 'F11-governed' };
+      const legacy = { x: portalX + 90, w: 34, broken: false, _cqQuota: 'legacy', _cqRewardId: 102,
+        __beta360Fixture: 'F11-legacy' };
+      const broken = { x: portalX + 130, w: 34, broken: true, _cqQuota: 'legacy', _cqRewardId: 103,
+        __beta360Fixture: 'F11-broken' };
+      boxes.push(before, governed, legacy, broken);
+      spawnPortal('QA TRADE', 'ENTER', function () {}, 'trade');
+      const remaining = boxes.filter(function (box) { return box && /^F11-/.test(box.__beta360Fixture || ''); });
+      const portal = portals.find(function (item) { return item && item.label === 'QA TRADE'; });
+      const actual = {
+        portalX: portal && portal.x,
+        remaining: remaining.map(function (box) { return { id: box.__beta360Fixture, x: box.x, broken: box.broken }; }),
+        quota: { made: market._boxMade, space: market._boxSpace, candidate: market._boxCand },
+        legacyGap: market._boxGap, lastRewardId: market._lastRewardId,
+        tradePortalOwnsRoad: tradePortalInWorld(),
+      };
+      const ids = actual.remaining.map(function (row) { return row.id; });
+      return caseResult('F11', 'trade portal keeps the approach box, defers every unreached reward, and restores quotas',
+        actual, !!portal && ids.includes('F11-before') && ids.includes('F11-broken') &&
+        !ids.includes('F11-governed') && !ids.includes('F11-legacy') &&
+        market._boxMade === 1 && market._boxSpace === 0 && market._boxCand === null &&
+        market._boxGap === 0 && market._lastRewardId === null && actual.tradePortalOwnsRoad);
+    } finally {
+      market._boxMade = saved.boxMade; market._boxSpace = saved.boxSpace; market._boxCand = saved.boxCand;
+      market._boxGap = saved.boxGap; market._lastRewardId = saved.lastRewardId;
+      cleanup();
+    }
+  }
+
+  async function F12() {
+    cleanup(); paused = true; introFlow.active = false;
+    function geometry(record, kind) {
+      const host = document.createElement('div');
+      host.innerHTML = kind === 'replay'
+        ? tradeReplaySVG(record, record.replay.candles.length)
+        : tradeChartSVGFull(record, {});
+      const turtleGlow = host.querySelector('g.cqTurtle ellipse');
+      const contact = host.querySelector('.cqExitLineContact');
+      const crossing = host.querySelector('.cqExitCrossing');
+      const turtleY = turtleGlow ? Number(turtleGlow.getAttribute('cy')) : NaN;
+      const lineY = contact ? Number(contact.getAttribute('cy')) :
+        crossing ? Number(crossing.getAttribute('y1')) +
+          (Number(crossing.getAttribute('y2')) - Number(crossing.getAttribute('y1'))) * 9 / 23 : NaN;
+      return { turtleY: turtleY, lineY: lineY, contact: !!contact, crossing: !!crossing };
+    }
+    function shortWin() {
+      const record = fixtureRecord('win', 10);
+      record.dir = 'short';
+      record.entryH = 360; record.tpH = 240; record.slH = 420;
+      return record;
+    }
+    function longLoss() {
+      const record = fixtureRecord('loss', -10);
+      record.dir = 'long';
+      record.entryH = 300; record.tpH = 420; record.slH = 240;
+      return record;
+    }
+    const short = shortWin(), loss = longLoss();
+    const actual = {
+      shortReplay: geometry(short, 'replay'), shortRecap: geometry(short, 'recap'),
+      lossReplay: geometry(loss, 'replay'), lossRecap: geometry(loss, 'recap'),
+    };
+    const all = [actual.shortReplay, actual.shortRecap, actual.lossReplay, actual.lossRecap];
+    const pass = all.every(function (row) { return row.crossing && Number.isFinite(row.turtleY) && Number.isFinite(row.lineY); }) &&
+      actual.shortReplay.contact && actual.lossReplay.contact &&
+      actual.shortReplay.turtleY > actual.shortReplay.lineY + 8 &&
+      actual.shortRecap.turtleY > actual.shortRecap.lineY + 8 &&
+      actual.lossReplay.turtleY > actual.lossReplay.lineY + 8 &&
+      actual.lossRecap.turtleY > actual.lossRecap.lineY + 8;
+    // Leave the exact terminal short-win frame visible when this case is run alone so PM/Founder
+    // can inspect the crossing, not just its numbers. The next case begins with cleanup().
+    reviewEntry = short; reviewMode = 'replay';
+    document.getElementById('cfLegend').classList.add('on');
+    document.getElementById('chartFull').classList.add('open');
+    renderReviewBar();
+    document.getElementById('cfChart').innerHTML = tradeReplaySVG(short, short.replay.candles.length);
+    return caseResult('F12', 'final replay and recap frames visibly carry Finn beyond the exact TP/SL line', actual, pass);
+  }
+
+  async function F13() {
+    cleanup(); paused = true; introFlow.active = false;
+    const original = drawPremiumWorldToast;
+    const calls = [];
+    try {
+      drawPremiumWorldToast = function (floater, y, large) {
+        calls.push({ text: floater.text, y: y, large: !!large });
+        return original(floater, y, large);
+      };
+      floaters.push({ text: 'HOLD YOUR PLAN', color: '#ffd84d', y: H * 0.34, t: 8, center: true, glow: true });
+      floaters.push({ text: '+10', color: '#3ef0b0', y: H * 0.48, t: 8, big: true });
+      render(); await nextFrame(2);
+      const actual = { calls: calls, canvas: [canvas.clientWidth, canvas.clientHeight] };
+      return caseResult('F13', 'ordinary notices and P&L use the shared premium non-blocking toast renderer', actual,
+        calls.length >= 2 && calls.some(function (call) { return call.text === 'HOLD YOUR PLAN' && !call.large; }) &&
+        calls.some(function (call) { return call.text === '+10' && call.large; }));
+    } finally {
+      drawPremiumWorldToast = original;
+    }
+  }
+
   async function C1() {
     cleanup();
     const oldLevel = session.level;
@@ -942,7 +1055,7 @@
   }
 
   const CASES = Object.freeze({ F1: F1, F2: F2, F3: F3, F4: F4, F5: F5, F6: F6, F7: F7,
-    F8: F8, F9: F9, F10: F10,
+    F8: F8, F9: F9, F10: F10, F11: F11, F12: F12, F13: F13,
     C1: C1, C2: C2, C3: C3, C4: C4, M1: M1, M2: M2 });
   async function run(id) {
     const fn = CASES[id];

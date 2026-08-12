@@ -2,7 +2,7 @@
 'use strict';
 
 /*
- * Durable build-364 beta-blocker regression suite.
+ * Durable build-365 beta-blocker regression suite.
  *
  * The CQSAFE owner is inlined in the canonical single-file game. These tests evaluate that exact
  * source block in a fresh VM for every behavioural case, then lock the small integration contracts
@@ -77,7 +77,7 @@ function movedRect(rect, placed) {
 }
 
 const tests = [
-  ['build 364 retains build-363 safe-area owner and first-session edge contracts', () => {
+  ['build 365 retains build-363 safe-area owner and first-session edge contracts', () => {
     const fixture = freshView({
       '--cq-safe-top': '47px', '--cq-safe-right': '12.5px',
       '--cq-safe-bottom': '34px', '--cq-safe-left': 'invalid',
@@ -121,7 +121,7 @@ const tests = [
     assert.match(section('function onDown(e){', 'function onMove(e){'), /const b=S\.skipBox;/);
   }],
 
-  ['build 364 retains capped backing resolution and transactional terrain reanchoring', () => {
+  ['build 365 retains capped backing resolution and transactional terrain reanchoring', () => {
     assert.match(GAME, /const dpr = Math\.min\(2, Math\.max\(1, Number\(window\.devicePixelRatio\) \|\| 1\)\);/);
     assert.match(GAME, /const groundShift = groundY - priorGroundY;/);
     assert.match(GAME, /const journeyOwnsTerrain = !!\(window\.BlockchainJourney/);
@@ -590,6 +590,9 @@ const tests = [
 
     const replay = section('function startReplay()', '// Open any trade record');
     assert.match(replay, /if \(_replayAutoDetails\)[\s\S]{0,100}showReviewDetails\(\)/);
+    assert.match(replay, /let terminalHoldTicks = 0/);
+    assert.match(replay, /if \(terminalHoldTicks < 3\) \{ terminalHoldTicks\+\+; return; \}/,
+      'the crossed TP\/SL frame must remain visible long enough to read on a phone');
     assert.match(GAME, /autoOpenTradeReplay\(tradeRecord\)/);
   }],
 
@@ -631,7 +634,7 @@ const tests = [
     assert.ok(guard < pages.indexOf('collectWisdomPage(p)'));
   }],
 
-  ['build 364 boxes/pages use Finn body plus swept motion and work during setup formation', () => {
+  ['build 365 boxes/pages use Finn body plus swept motion and work during setup formation', () => {
     const touch = section('function finnSweptRewardTouch(', '/* One display-only classifier');
     const boxSource = section('function updateBoxes(dt, tx, ty)', 'function drawBoxes(camX)');
     const pageSource = section('function updateWisdomPages(dt, tx, ty)', 'function collectWisdomPage(p)');
@@ -664,14 +667,22 @@ const tests = [
       'the screenshot-scale page overlap that failed the old 30px centre circle must now collect');
   }],
 
-  ['build 364 first trade owns audible score routing and a complete four-act roller coaster', () => {
+  ['build 365 first trade owns a warmer authored score and retains the complete four-act roller coaster', () => {
     assert.match(GAME, /trade\._firstRide = !!_introTrade/);
     assert.match(GAME, /function tradeMusicTrack\(isFirstRide\) \{ return isFirstRide \? 'firstTrade' : 'trade'; \}/);
     assert.match(GAME, /GameMusic\.play\(tradeMusicTrack\(_introTrade\)\)/);
     const audio = section('function play(name) {', 'function boss(level)');
     assert.match(audio, /name === 'firstTrade'/);
-    assert.match(audio, /bpm: 112/);
-    assert.match(audio, /vol: 0\.18/);
+    assert.match(audio, /buildFirstTradeScore\(\)/);
+    assert.match(audio, /run\(buildFirstTradeScore\(\), \{ name: 'firstTrade', vol: 0\.17 \}\)/);
+    const firstScore = section('function buildFirstTradeScore()', 'function tick()');
+    assert.match(firstScore, /first-trade-score-v2/);
+    assert.match(firstScore, /warmLead: true/);
+    assert.match(firstScore, /beat: \(60 \/ 108\) \/ 4/);
+    assert.match(firstScore, /waveLead: 'sine'/);
+    assert.match(firstScore, /waveBass: 'triangle'/);
+    assert.doesNotMatch(firstScore, /sawtooth|dense/,
+      'the Founder first-trade loop must not regress to the brittle dense/sawtooth recipe');
     const duck = section('if (typeof GameMusic !==', 'if (winPunchT > 0)');
     for (const phase of ['dip', 'surge', 'shakeout', 'run']) assert.match(duck, new RegExp(`_drivePhase === '${phase}'`));
     assert.match(CQSH, /URL="http:\/\/\$IP:\$P\/chart-quest\.html\?fresh=1"/);
@@ -712,7 +723,7 @@ const tests = [
     }
   }],
 
-  ['build 364 FIRST WIN is one premium ChartQuest-native milestone, not an emoji/text pile', () => {
+  ['build 365 retains the premium ChartQuest-native FIRST WIN milestone', () => {
     const celebrateSource = section('function celebrate(opts)', '/* Build 364 · FIRST WIN');
     assert.match(celebrateSource, /floaters\.push\(\{ firstWin: true/);
     assert.doesNotMatch(celebrateSource, /emoji:\s*'🏆'/);
@@ -728,6 +739,79 @@ const tests = [
     assert.match(caller, /reward: delta/);
     assert.match(caller, /firstWin: true/);
     assert.doesNotMatch(caller, /🏆 FIRST WIN/);
+  }],
+
+  ['build 365 trade portals atomically defer every unreached box and restore its reward budget', () => {
+    const lifecycle = section('function tradePortalInWorld()', 'function maybeSpawnBox(c)');
+    const sandbox = {
+      Number, Math, BOX_W: 34,
+      portals: [],
+      boxes: [
+        { x: 82, w: 34, broken: false, _cqQuota: 'governed', _cqRewardId: 11 },
+        { x: 112, w: 34, broken: false, _cqQuota: 'governed', _cqRewardId: 12 },
+        { x: 180, w: 34, broken: false, _cqQuota: 'legacy', _cqRewardId: 18 },
+        { x: 210, w: 34, broken: true, _cqQuota: 'legacy', _cqRewardId: 21 },
+      ],
+      market: { _boxMade: 2, _boxSpace: 55, _boxCand: { wait: 1 }, _boxGap: 22, _lastRewardId: 18 },
+    };
+    vm.runInNewContext(lifecycle, sandbox, { timeout: 1000 });
+    const result = sandbox.deferBoxesBeyondTradePortal(100);
+    assert.deepEqual(JSON.parse(JSON.stringify(result)), { removed: 2, governed: 1, legacy: 1 });
+    assert.deepEqual(sandbox.boxes.map(box => [box.x, box.broken]), [[82, false], [210, true]],
+      'only unbroken boxes at/after the portal corridor are deferred');
+    assert.equal(sandbox.market._boxMade, 1, 'the governed Level-1 quota is returned');
+    assert.equal(sandbox.market._boxSpace, 0);
+    assert.equal(sandbox.market._boxCand, null);
+    assert.equal(sandbox.market._boxGap, 0, 'legacy placement is re-armed after the trade');
+    assert.equal(sandbox.market._lastRewardId, null, 'a removed last reward no longer reserves dead space');
+
+    const portalSource = section('function spawnPortal(label, sublabel, action, kind)', '// The BOSS gate');
+    assert.match(portalSource, /if \(portalKind === 'trade'\) deferBoxesBeyondTradePortal\(px\)/);
+    const spawner = section('function maybeSpawnBox(c)', 'function smashBox(b)');
+    assert.match(spawner, /tradePortalInWorld\(\)/,
+      'no replacement box may spawn while the trade portal owns the road');
+    assert.match(spawner, /_cqQuota: 'governed'/);
+    assert.match(spawner, /_cqQuota: 'legacy'/);
+  }],
+
+  ['build 365 replay and recap place Finn beyond the exact TP/SL line in every direction', () => {
+    const crossingSource = section('function tradeExitCrossing(', '/* Mini chart for the trade ticket');
+    const sandbox = { Number, Math };
+    vm.runInNewContext(crossingSource, sandbox, { timeout: 1000 });
+    const Y = value => value;
+    const cases = [
+      [{ dir: 'long', result: 'win', tpH: 100 }, -1],
+      [{ dir: 'short', result: 'win', tpH: 100 }, 1],
+      [{ dir: 'long', result: 'loss', slH: 100 }, 1],
+      [{ dir: 'short', result: 'loss', slH: 100 }, -1],
+    ];
+    for (const [entry, direction] of cases) {
+      const actual = sandbox.tradeExitCrossing(entry, Y, 0, 200, 14);
+      assert.equal(actual.lineY, 100);
+      assert.equal(actual.direction, direction);
+      assert.equal(actual.finnY, 100 + direction * 14);
+      assert.ok((actual.finnY - actual.lineY) * direction > 0, 'Finn must finish beyond the line');
+    }
+    assert.equal(sandbox.tradeExitCrossing({ dir: 'long', result: 'manual', tpH: 100 }, Y, 0, 200, 14), null);
+    const replaySource = section('function tradeReplaySVG(entry, n)', '// Reset stop/target');
+    assert.match(replaySource, /class="cqExitCrossing"/);
+    assert.match(replaySource, /class="cqExitLineContact"/);
+    assert.match(replaySource, /tradeExitCrossing\(entry, Y, chartTop, chartBot, 14\)/);
+    const recapSource = section('function tradeChartSVGFull(t, opts)', 'function tradeReplaySVG(entry, n)');
+    assert.match(recapSource, /tradeExitCrossing\(t, Y, chartTop, chartBot, 14\)/);
+    assert.match(recapSource, /class="cqExitCrossing"/);
+  }],
+
+  ['build 365 ordinary centered feedback uses one premium non-blocking toast owner', () => {
+    const toast = section('function drawPremiumWorldToast(f, y, large)', '/* ── Milestone hero:');
+    for (const contract of ['createLinearGradient', 'rgba(5,18,31,0.96)', 'fillTextShell', 'SANS']) {
+      assert.match(toast, new RegExp(contract.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    }
+    const renderFloaters = section('// Floating P&L / level-up texts', '// Win/loss full-screen flash');
+    assert.match(renderFloaters, /else if \(f\.big\)[\s\S]{0,180}drawPremiumWorldToast\(f, _fy, true\)/);
+    assert.match(renderFloaters, /else if \(f\.center\)[\s\S]{0,180}drawPremiumWorldToast\(f, _fy, false\)/);
+    assert.doesNotMatch(renderFloaters, /else if \(f\.center\)[\s\S]{0,240}ctx\.fillText\(f\.text/,
+      'ordinary centered feedback must not fall back to raw canvas text');
   }],
 
   ['trade-3 prove waits for the exact auto-review lifecycle and advances only after closure', () => {
@@ -951,7 +1035,7 @@ function runSuite(options = {}) {
     }
   }
 
-  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/build-364 regression tests passed`);
+  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/build-365 regression tests passed`);
   return {
     ok: failures.length === 0,
     passed,
@@ -959,7 +1043,7 @@ function runSuite(options = {}) {
     failures,
     detail: failures.length
       ? failures.map(item => item.name).join(' · ')
-      : `${passed}/${tests.length} CQSAFE/build-364 contracts`,
+      : `${passed}/${tests.length} CQSAFE/build-365 contracts`,
   };
 }
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ChartQuest Build 364 Local Browser QA</title>
+  <title>ChartQuest Build 365 Local Browser QA</title>
   <style>
     :root { color-scheme: dark; font-family: ui-sans-serif,system-ui,sans-serif; background:#07101b; color:#e8f0fa; }
     * { box-sizing:border-box; }
@@ -38,14 +38,17 @@
 </head>
 <body>
   <header>
-    <h1>ChartQuest Build 364 Browser QA</h1>
+    <h1>ChartQuest Build 365 Browser QA</h1>
     <div class="sub" id="identity">Loading same-origin game and guarded bridge…</div>
     <div class="toolbar">
       <button id="runAll">Run all</button>
-      <button id="runFlows">Run F1–F10 + M1–M2</button>
+      <button id="runFlows">Run F1–F13 + M1–M2</button>
       <button id="runF8">Test rewards</button>
       <button id="runF9">Test first trade</button>
       <button id="runF10">Preview FIRST WIN</button>
+      <button id="runF11">Test box corridor</button>
+      <button id="runF12">Test replay crossing</button>
+      <button id="runF13">Preview popups</button>
       <button id="runF5">Test replay gate</button>
       <button id="runMatrix">Run 16-cell matrix</button>
       <button id="clear">Clear report</button>
@@ -59,7 +62,7 @@
         <div class="metric"><b id="passCount">0</b><span>Pass</span></div>
         <div class="metric"><b id="failCount">0</b><span>Fail</span></div>
         <div class="metric"><b id="runCount">0</b><span>Run</span></div>
-        <div class="metric"><b id="pendingCount">28</b><span>Pending</span></div>
+        <div class="metric"><b id="pendingCount">31</b><span>Pending</span></div>
       </div>
       <div id="rows" aria-live="polite"></div>
     </section>
@@ -71,7 +74,7 @@
     const rows = document.getElementById('rows');
     const fatal = document.getElementById('fatal');
     const heights = [844, 667, 468, 340];
-    const flowIds = ['F1','M1','M2','F2','F3','F4','F5','F6','F7','F8','F9','F10'];
+    const flowIds = ['F1','M1','M2','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12','F13'];
     const collisionIds = ['C1','C2','C3','C4'];
     const caseTimeoutMs = 45000;
     const results = [];
@@ -92,7 +95,7 @@
       document.getElementById('passCount').textContent = pass;
       document.getElementById('failCount').textContent = fail;
       document.getElementById('runCount').textContent = results.length;
-      document.getElementById('pendingCount').textContent = Math.max(0, 28 - results.length);
+      document.getElementById('pendingCount').textContent = Math.max(0, 31 - results.length);
     }
     function addRow(result, height) {
       results.push({ result, height });
@@ -190,12 +193,15 @@
     document.getElementById('runF8').onclick = () => runCase('F8', null);
     document.getElementById('runF9').onclick = () => runCase('F9', null);
     document.getElementById('runF10').onclick = () => runCase('F10', null);
+    document.getElementById('runF11').onclick = () => runCase('F11', null);
+    document.getElementById('runF12').onclick = () => runCase('F12', null);
+    document.getElementById('runF13').onclick = () => runCase('F13', null);
     document.getElementById('runF5').onclick = () => runCase('F5', null);
     document.getElementById('runMatrix').onclick = () => execute('matrix');
     document.getElementById('clear').onclick = function () {
       results.length = 0; rows.textContent = ''; fatal.style.display = 'none'; counts();
     };
-    window.QAHarness364 = Object.freeze({
+    window.QAHarness365 = Object.freeze({
       runCase: function (id) { return runCase(id, null); },
       cleanup: function () { try { bridge.cleanup(); } catch (_) {} },
       ready: function () { return !!bridge; },

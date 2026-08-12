@@ -2,20 +2,20 @@
 
 Only repository-documented issues are listed below. The severity/status reflects the cited document where available; it does not assert that the issue is currently live.
 
-## Build-363 Founder mobile-retest readiness
+## Build-364 Founder mobile-retest readiness
 
-No known P0 remains for local Founder mobile retesting on exact candidate payload commit `0d6201b`
-(game artifact `26601a81...`, Browser bridge `bfcd2731...`). Independent Review approved,
-independent QA passed, the expanded in-app Browser matrix passed 25/25, and fresh real-control paths
-passed at 375x667 and 390x844. Production verification remains separate and blocked.
+No known P0 remains for local Founder mobile retesting on exact candidate payload commit `4580366`
+(game artifact `ea4c7fdc...`, Browser bridge `228f70b7...`). PM/CTO review approved, exact-byte QA
+passed, and the expanded in-app Browser matrix passed 28/28. Production verification remains separate
+and blocked.
 
 ## P0 — Release blocker
 
 | Issue | Status | Evidence |
 |---|---|---|
-| The dated RC release record says **DO NOT SHIP** until production playthrough/cache/fingerprint evidence is complete. The record also contains conflicting claims about the deployed build. | Production-release blocker only; local Founder mobile-retest gate is closed on build 363 | `CHARTQUEST_RC_RELEASE_2026-08-10.md`; `handoffs/BETA363_QA.md` |
-| Routine `scripts/verify.js` did not byte-compare `website/game.html` with the source and root mirror. | Resolved in the current build-363 candidate; gate #8 and parity fixtures passed | `handoffs/STEP7_QA.md`; `handoffs/BETA363_QA.md` |
-| Step 6B controls and the durable `.chartquest` command center were absent from the base commit and not reproducible in a fresh clone. | Resolved and present in the build-363 candidate lineage; production promotion remains blocked by the freeze | `handoffs/STEP8_INTEGRATION_QA.md`; `handoffs/BETA363_COMPLETE.md` |
+| The dated RC release record says **DO NOT SHIP** until production playthrough/cache/fingerprint evidence is complete. The record also contains conflicting claims about the deployed build. | Production-release blocker only; local Founder mobile-retest gate is closed on build 364 | `CHARTQUEST_RC_RELEASE_2026-08-10.md`; `handoffs/BETA364_QA.md` |
+| Routine `scripts/verify.js` did not byte-compare `website/game.html` with the source and root mirror. | Resolved in the current build-364 candidate; gate #8 and parity fixtures passed | `handoffs/STEP7_QA.md`; `handoffs/BETA364_QA.md` |
+| Step 6B controls and the durable `.chartquest` command center were absent from the base commit and not reproducible in a fresh clone. | Resolved and present in the build-364 candidate lineage; production promotion remains blocked by the freeze | `handoffs/STEP8_INTEGRATION_QA.md`; `handoffs/BETA364_COMPLETE.md` |
 | Deployment smoke does not yet prove that the served `/game` response is the exact approved local artifact. | Unresolved release-verification gap; outside Step 7 local-check scope | `CHARTQUEST_RC_RELEASE_2026-08-10.md`; `handoffs/STEP7_QA.md` |
 
 ## Resolved in build 363
@@ -23,6 +23,14 @@ passed at 375x667 and 390x844. Production verification remains separate and bloc
 | Issue | Status | Evidence |
 |---|---|---|
 | First-session Skip/Enter controls did not own physical safe-area geometry; viewport-height changes could move terrain without Finn and derived terrain anchors. | Resolved for the bounded local Founder mobile-retest seam on exact build 363 | `handoffs/BETA363_INVESTIGATION.md`; `handoffs/BETA363_REVIEW.md`; `handoffs/BETA363_QA.md` |
+
+## Resolved in build 364
+
+| Issue | Status | Evidence |
+|---|---|---|
+| Setup formation incorrectly disabled box smash and Lost Wisdom collection; fast body overlap could miss. | Resolved on exact build 364 with real-trade-only focus plus swept/body interaction | `handoffs/BETA364_INVESTIGATION.md`; `handoffs/BETA364_QA.md` |
+| FIRST WIN used a generic system trophy and loose text stack below the Founder quality bar. | Resolved on exact build 364 with one authored vector milestone | `handoffs/BETA364_IMPLEMENTATION.md`; `handoffs/BETA364_QA.md` |
+| The Founder first-trade preview was forced muted and the authored path was emotionally flat. | Resolved on exact build 364 with a music-on preview, dedicated score route, and four-act path | `handoffs/BETA364_INVESTIGATION.md`; `handoffs/BETA364_QA.md` |
 
 ## P1 — Major issue
 

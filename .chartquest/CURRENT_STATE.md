@@ -1,5 +1,29 @@
 # Current Technical State
 
+## 2026-08-12 build-364 Founder-blocker addendum — VERIFIED
+
+- Exact local candidate payload commit:
+  `45803665bce75df319b9b8a6dae5e8262f5d8f06` on `codex/beta-360-readiness`.
+- `chart-quest.html`, `index.html`, and `website/game.html` are byte-identical at SHA-256
+  `ea4c7fdc958b8f502e2588377068813881e37d9e9450c6c45ce7edbddf109a52`; the guarded Browser bridge
+  is `228f70b79f1d8f062bbfaa59a3166ed3680856539fc455135a1109ce02cda940`.
+- Build 364 limits reward deferral to a real ticket/position and gives boxes/Lost Wisdom the same
+  swept body-aware interaction seam as shell pickups; setup formation no longer disables them.
+- FIRST WIN is one opaque ChartQuest-native milestone card with a bespoke vector trophy, revised
+  copy hierarchy, canonical shell, and earned reward; the system emoji/loose-text stack is gone.
+- The first real trade now owns a dedicated 112 BPM score and a deterministic near-stop scare,
+  profit surge, hard give-back, and target run. Preview links no longer force/persist mute.
+- PM/CTO review approved and exact-byte QA passed: focused 21/21, release controls 15/15, artifact
+  parity 5/5, verifier 24/0/0/1, and in-app Browser 28/28 with zero captured errors.
+- PM/CTO decision: **BUILD 364 READY FOR FOUNDER MOBILE RETEST**. Physical speaker/autoplay policy,
+  subjective score mix, subjective FIRST WIN quality, touch feel, and full-device play remain Founder
+  judgments.
+- This is not release approval. Production remains frozen; served production identity, fresh-cache
+  verification, manifest/lock/gate, Founder release acceptance, and the account-level freeze action
+  remain future Release Manager work.
+
+Lower sections are historical snapshots and do not override this verified build-364 addendum.
+
 ## 2026-08-12 build-363 mobile-retest addendum — VERIFIED
 
 - Exact local candidate payload commit:

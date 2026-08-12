@@ -4,7 +4,7 @@
 
 ## Sprint objective
 
-**IN PROGRESS:** close the three Founder-confirmed beta blockers found during the physical Build 363
+**PASS:** close the three Founder-confirmed beta blockers found during the physical Build 363
 mobile retest: (1) boxes and Lost Wisdom pages are visibly reachable but do not respond, (2) the
 once-ever FIRST WIN presentation is below the product bar, and (3) the first real trade needs an
 audible, higher-energy score plus a clearly legible roller-coaster price arc. Advance one exact
@@ -15,12 +15,12 @@ is in scope.
 ## Current release/build
 
 - Isolated candidate branch: `codex/beta-360-readiness`.
-- Exact candidate payload commit: `0d6201bb64a913525fdf4d6d624d88cfbbb4dbc0`.
-- Build: **363**.
+- Exact candidate payload commit: `45803665bce75df319b9b8a6dae5e8262f5d8f06`.
+- Build: **364**.
 - Source, root mirror, and website game artifact are byte-identical at SHA-256
-  `26601a812ca693d33672db5abc1e8b1bfe338e43b0df85290c3d6f02cc3aa842`.
+  `ea4c7fdc958b8f502e2588377068813881e37d9e9450c6c45ce7edbddf109a52`.
 - Browser bridge SHA-256:
-  `bfcd273188ce8505450456c039e0b376bf73d313236e895ce4502ad8df7bba27`.
+  `228f70b79f1d8f062bbfaa59a3166ed3680856539fc455135a1109ce02cda940`.
 - Production was last observed presenting build 359; exact served-response SHA-256 remains unverified.
 - Candidate is not authorized for push, merge, deployment, or production testing.
 
@@ -28,9 +28,7 @@ is in scope.
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Build-364 blocker investigation | PM/CTO | **IN PROGRESS** | Reproduce the exact collectible, first-win, and first-trade seams from the Build 363 physical evidence and freeze bounded acceptance criteria. |
-| Build-364 implementation | Engineering | **PENDING INVESTIGATION CLOSE** | Implement only the confirmed collectible interaction, first-win presentation, first-trade score/path, and proportional QA/tooling changes. |
-| Build-364 review and QA | PM/CTO / QA | **PENDING IMPLEMENTATION** | Run focused/static/release/parity gates plus exact rendered Browser and fresh mobile-flow evidence before Founder handoff. |
+| Founder physical Build-364 retest | Founder | **READY** | Judge the fixed box/page interaction, FIRST WIN presentation, dedicated first-trade music, and four-act price journey on the intended phone. |
 
 ## Blocked tasks
 
@@ -44,6 +42,10 @@ is in scope.
 
 | Task | Result | Evidence |
 |---|---|---|
+| Build-364 blocker investigation | **PASS — three root causes confirmed** | `handoffs/BETA364_INVESTIGATION.md` |
+| Build-364 implementation | **PASS** | Candidate commit `4580366`; `handoffs/BETA364_IMPLEMENTATION.md` |
+| Build-364 PM/CTO review | **APPROVED** | `handoffs/BETA364_REVIEW.md` |
+| Build-364 exact-byte QA and Browser matrix | **PASS FOR FOUNDER MOBILE RETEST** | `handoffs/BETA364_QA.md`; focused 21/21; release 15/15; parity 5/5; verifier 24/0/0/1; Browser 28/28 |
 | Build-363 mobile investigation | **PASS — two bounded blockers identified** | `handoffs/BETA363_INVESTIGATION.md` |
 | Build-363 mobile implementation | **PASS** | Candidate commit `0d6201b`; `handoffs/BETA363_IMPLEMENTATION.md` |
 | Build-363 independent review | **APPROVED** | `handoffs/BETA363_REVIEW.md` |
@@ -61,16 +63,15 @@ is in scope.
 
 ## Founder decisions required
 
-No Founder input is required while Build 364 is being investigated, implemented, reviewed, and QA
-tested. The Founder is not required to manage branches, files, prompts, reports, or routine QA. The
-next Founder action will be the subjective physical-device retest only after the command center has
-adjudicated an exact candidate ready. A later production release still requires explicit
+No Founder engineering input is required. The Founder is not required to manage branches, files,
+prompts, reports, or routine QA. The next Founder action is the subjective physical-device retest of
+the exact accepted Build 364 candidate. A later production release still requires explicit
 Founder/Release-Manager acceptance and a deliberate account-level action on the GitHub freeze; that
 is not part of this sprint.
 
 ## Release status
 
-**BUILD 364 BLOCKER STRIKE IN PROGRESS — DO NOT SHIP — PRODUCTION FROZEN**
+**BUILD 364 READY FOR FOUNDER MOBILE RETEST — DO NOT SHIP — PRODUCTION FROZEN**
 
 Automated QA does not authorize production. The next technical workflow after Founder acceptance is
 a separate Release Manager candidate/manifest/lock/gate/fingerprint process.

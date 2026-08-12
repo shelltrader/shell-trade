@@ -1,5 +1,30 @@
 # Current Technical State
 
+## 2026-08-12 build-363 mobile-retest addendum — VERIFIED
+
+- Exact local candidate payload commit:
+  `0d6201bb64a913525fdf4d6d624d88cfbbb4dbc0` on `codex/beta-360-readiness`.
+- `chart-quest.html`, `index.html`, and `website/game.html` are byte-identical at SHA-256
+  `26601a812ca693d33672db5abc1e8b1bfe338e43b0df85290c3d6f02cc3aa842`; the guarded Browser bridge
+  is `bfcd273188ce8505450456c039e0b376bf73d313236e895ce4502ad8df7bba27`.
+- Build 363 adds one fail-closed `CQVIEW` safe-area owner for the bounded first-session Skip/Enter
+  seam, shared 44px draw/hit targets, a main-canvas backing DPR cap of 2, and transactional
+  Finn/world terrain re-anchoring while the active movement tutorial retains sole terrain ownership.
+- Independent Reviewer approved and independent QA passed the exact fingerprints. Evidence:
+  focused 18/18, release controls 15/15, artifact parity 5/5, full verifier 24 pass / 0 fail /
+  0 warn / 1 allowed skip, and in-app Browser 25/25 with no captured runtime failure.
+- Fresh non-QA real-control paths passed at 375x667 and 390x844: DOM cinematic Skip, premise
+  Continue, canvas movement Skip, and Home Market.
+- PM/CTO decision: **BUILD 363 READY FOR FOUNDER MOBILE RETEST**. Physical Safari notch/address-bar
+  behavior, real touch feel, audio/haptics, sustained performance/heat, global HUD/modal safe areas,
+  wrapper/PWA/cache behavior, online survey, and subjective readability remain explicit device or
+  post-beta boundaries.
+- This is not release approval. Production remains frozen; served production identity, fresh-cache
+  verification, manifest/lock/gate, Founder release acceptance, and the account-level freeze action
+  remain future Release Manager work.
+
+Lower sections are historical snapshots and do not override this verified build-363 addendum.
+
 ## 2026-08-12 build-362 Founder-readiness addendum — VERIFIED
 
 - Exact local candidate payload commit:

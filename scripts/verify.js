@@ -17,8 +17,8 @@
  *   9  No large binaries added (>5MB, non-ignored)
  *   10 Protected systems unchanged vs HEAD  (override: CQ_ALLOW_PROTECTED=1 when a
  *      protected change was explicitly approved)
- *   22 Build-362 CQSAFE + RC invariants (behavioural owner tests and source contracts)
- *   23 Build-362 local browser harness safety/syntax/self-test
+ *   22 Build-363 viewport safety + CQSAFE/RC invariants (behavioural owner tests and source contracts)
+ *   23 Build-363 local browser harness safety/syntax/self-test
  */
 const fs = require('fs');
 const os = require('os');
@@ -728,7 +728,7 @@ function run() {
     }
   }
 
-  // 22 — BUILD-362 SAFE-AREA + RC INVARIANTS. The safe-area and post-trade review owners live inside the single-file
+  // 22 — BUILD-363 VIEWPORT SAFETY + CQSAFE/RC INVARIANTS. The viewport, safe-area and post-trade review owners live inside the single-file
   // game, so its focused suite evaluates that exact source block rather than a duplicate module.
   // It also locks the four collision integrations and the already-approved manual-close,
   // replay-close, and trade-focus contracts that a static syntax pass cannot distinguish.
@@ -736,12 +736,12 @@ function run() {
     try {
       const suite = require(path.join(__dirname, 'cqsafe.test.js')).runSuite({ report: false });
       const first = suite.failures[0];
-      add('22', 'Build-362 safe-area + RC invariants', suite.ok ? 'PASS' : 'FAIL',
+      add('22', 'Build-363 viewport safety + CQSAFE/RC invariants', suite.ok ? 'PASS' : 'FAIL',
         suite.ok
           ? suite.detail
           : `${suite.passed}/${suite.total} passed · ${first.name}: ${String(first.error && first.error.message || first.error).slice(0, 120)}`);
     } catch (e) {
-      add('22', 'Build-362 safe-area + RC invariants', 'FAIL',
+      add('22', 'Build-363 viewport safety + CQSAFE/RC invariants', 'FAIL',
         'focused suite could not run: ' + String(e && e.message || e).slice(0, 120));
     }
   }
@@ -766,10 +766,10 @@ function run() {
         if (result.status !== 0) failures.push(label + ': ' + String(result.stderr || result.stdout || 'exit ' + result.status).trim().slice(0, 160));
         else detail.push(label + ' PASS');
       }
-      add('23', 'Build-362 local browser QA harness', failures.length ? 'FAIL' : 'PASS',
+      add('23', 'Build-363 local browser QA harness', failures.length ? 'FAIL' : 'PASS',
         failures.length ? failures.join(' · ') : detail.join(' · '));
     } catch (e) {
-      add('23', 'Build-362 local browser QA harness', 'FAIL',
+      add('23', 'Build-363 local browser QA harness', 'FAIL',
         'harness checks could not run: ' + String(e && e.message || e).slice(0, 120));
     }
   }

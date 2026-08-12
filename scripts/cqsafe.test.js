@@ -2,7 +2,7 @@
 'use strict';
 
 /*
- * Durable build-362 beta-readiness regression suite.
+ * Durable build-363 mobile-readiness regression suite.
  *
  * The CQSAFE owner is inlined in the canonical single-file game. These tests evaluate that exact
  * source block in a fresh VM for every behavioural case, then lock the small integration contracts
@@ -41,11 +41,181 @@ function freshSafe() {
   return sandbox.window.CQSAFE;
 }
 
+function freshView(cssValues = {}) {
+  const startMarker = 'window.CQVIEW = (function () {';
+  const endMarker = '\n})();';
+  const start = GAME.indexOf(startMarker);
+  assert.notEqual(start, -1, 'window.CQVIEW owner missing');
+  const end = GAME.indexOf(endMarker, start);
+  assert.notEqual(end, -1, 'window.CQVIEW owner terminator missing');
+  const sandbox = {
+    window: {
+      getComputedStyle: () => ({
+        getPropertyValue: name => Object.prototype.hasOwnProperty.call(cssValues, name) ? cssValues[name] : '0px',
+      }),
+    },
+    document: { documentElement: {} },
+  };
+  const world = `
+    const turtle = { y: 500, _pcy: 512, spinning: true, tipY: 420, spinBase: 530, grabY: 470,
+      trail: [{ x: 1, y: 490 }, { x: 2, y: 480 }] };
+    const rings = [{ x: 20, y: 460 }];
+    let camY = 70, _portalGroundY = 524, _finnFallTop = 440;
+  `;
+  vm.runInNewContext(`${world}\n${GAME.slice(start, end + endMarker.length)}\n` +
+    'window.__viewState = () => ({ turtle, rings, camY, _portalGroundY, _finnFallTop });', sandbox, {
+    filename: 'chart-quest.html#CQVIEW',
+    timeout: 1000,
+  });
+  return { view: sandbox.window.CQVIEW, state: () => JSON.parse(JSON.stringify(sandbox.window.__viewState())) };
+}
+
 function movedRect(rect, placed) {
   return { x: placed.x, y: placed.y, w: rect.w, h: rect.h };
 }
 
 const tests = [
+  ['build 363 safe-area owner and first-session controls preserve edge offsets', () => {
+    const fixture = freshView({
+      '--cq-safe-top': '47px', '--cq-safe-right': '12.5px',
+      '--cq-safe-bottom': '34px', '--cq-safe-left': 'invalid',
+    });
+    assert.deepEqual(JSON.parse(JSON.stringify(fixture.view.insets())), { top: 47, right: 12.5, bottom: 34, left: 0 });
+    assert.deepEqual(JSON.parse(JSON.stringify(fixture.view.insets({ top: -8, right: '9px', bottom: Infinity, left: 3 }))),
+      { top: 0, right: 9, bottom: 0, left: 3 });
+    const hostile = new Proxy({}, { get() { throw new Error('hostile inset getter'); } });
+    assert.doesNotThrow(() => fixture.view.insets(hostile));
+    assert.deepEqual(JSON.parse(JSON.stringify(fixture.view.insets(hostile))), { top: 0, right: 0, bottom: 0, left: 0 });
+
+    assert.match(GAME, /--cq-safe-top:\s*env\(safe-area-inset-top, 0px\)/);
+    const mmSkipCss = section('#mmSkip {', '/* Black-and-gold portal');
+    assert.match(mmSkipCss, /top: calc\(14px \+ var\(--cq-safe-top\)\)/);
+    assert.match(mmSkipCss, /right: calc\(14px \+ var\(--cq-safe-right\)\)/);
+    assert.match(mmSkipCss, /min-height:\s*44px/);
+    assert.match(mmSkipCss, /min-width:\s*72px/);
+    const skipZ = Number((mmSkipCss.match(/z-index:\s*(\d+)/) || [])[1]);
+    const portalZ = Number((section('#mmPortal {', '#mmPortal.show').match(/z-index:\s*(\d+)/) || [])[1]);
+    assert.ok(skipZ > portalZ, 'the visible Skip must retain hit ownership after the ENTER portal appears');
+    const mmEnterCss = section('#mmEnter {', '#mmEnter:hover');
+    assert.match(mmEnterCss, /bottom: max\(5\.5%, calc\(10px \+ var\(--cq-safe-bottom\)\)\)/);
+
+    const introDraw = section('// SKIP control (top-right)', 'return { start, update, draw');
+    assert.match(introDraw, /CQVIEW\.insets\(\)/);
+    assert.match(introDraw, /const sw = 72, sh = 44/);
+    assert.match(introDraw, /sx = W - sw - 12 - safe\.right/);
+    assert.match(introDraw, /sy = 14 \+ safe\.top/);
+    assert.match(introDraw, /S\.skipBox = \{ x: sx, y: sy, w: sw, h: sh \}/);
+
+    const geometry = section('function movementSkipRect(width,height,source){', 'function drawSkip()');
+    const sandbox = { window: { CQVIEW: fixture.view }, result: null };
+    vm.runInNewContext(`${geometry}\nresult = movementSkipRect(390, 844, {right:12,bottom:34});`, sandbox, { timeout: 1000 });
+    assert.deepEqual(JSON.parse(JSON.stringify(sandbox.result)), { x: 280, y: 752, w: 84, h: 44 });
+    vm.runInNewContext('result = movementSkipRect(390, 844, {});', sandbox, { timeout: 1000 });
+    assert.deepEqual(JSON.parse(JSON.stringify(sandbox.result)), { x: 292, y: 786, w: 84, h: 44 },
+      'zero insets retain the 14px edge offsets while enlarging the touch target');
+    const draw = section('function drawSkip(){', '// ── input ──');
+    assert.match(draw, /const box=movementSkipRect\(W,H\)/);
+    assert.match(draw, /S\.skipBox=box;/, 'draw and hit-testing must share the exact rectangle object');
+    assert.match(section('function onDown(e){', 'function onMove(e){'), /const b=S\.skipBox;/);
+  }],
+
+  ['build 363 caps backing resolution and transactionally reanchors Finn/world on terrain shifts', () => {
+    assert.match(GAME, /const dpr = Math\.min\(2, Math\.max\(1, Number\(window\.devicePixelRatio\) \|\| 1\)\);/);
+    assert.match(GAME, /const groundShift = groundY - priorGroundY;/);
+    assert.match(GAME, /const journeyOwnsTerrain = !!\(window\.BlockchainJourney/);
+    assert.match(GAME, /if \(groundShift && !journeyOwnsTerrain && window\.CQVIEW\) window\.CQVIEW\.shiftWorldY\(groundShift\);/);
+
+    const resizeSource = section('function resize() {', "window.addEventListener('resize', resize);");
+    function resizeFixture(rawDpr, width, height, withOwner = true) {
+      const shifts = [], transforms = [];
+      const sandbox = {
+        W: 0, H: 0, groundY: 0, stageX: 0, stageY: 0, MAX_ASPECT: 0.58,
+        stageEl: { style: {} },
+        canvas: { width: 0, height: 0, style: {} },
+        ctx: { setTransform: (...args) => transforms.push(args) },
+        window: {
+          innerWidth: width, innerHeight: height, devicePixelRatio: rawDpr,
+          CQREACH: { reanchor() {} },
+        },
+      };
+      if (withOwner) sandbox.window.CQVIEW = { shiftWorldY: delta => shifts.push(delta) };
+      const context = vm.createContext(sandbox);
+      vm.runInContext(`${resizeSource}\nwindow.__resize = resize;`, context, { timeout: 1000 });
+      return {
+        sandbox, shifts, transforms,
+        run(nextWidth = sandbox.window.innerWidth, nextHeight = sandbox.window.innerHeight) {
+          sandbox.window.innerWidth = nextWidth; sandbox.window.innerHeight = nextHeight;
+          sandbox.window.__resize();
+          return {
+            W: sandbox.W, H: sandbox.H, groundY: sandbox.groundY,
+            backing: [sandbox.canvas.width, sandbox.canvas.height],
+            css: [sandbox.canvas.style.width, sandbox.canvas.style.height],
+            transform: transforms[transforms.length - 1],
+          };
+        },
+      };
+    }
+    for (const rawDpr of [1, 2, 3, 4]) {
+      const fixtureDpr = resizeFixture(rawDpr, 390, 844);
+      const actual = fixtureDpr.run();
+      const effective = Math.min(rawDpr, 2);
+      assert.deepEqual(actual.backing, [390 * effective, 844 * effective]);
+      assert.deepEqual(actual.css, ['390px', '844px']);
+      assert.deepEqual(actual.transform, [effective, 0, 0, effective, 0, 0]);
+    }
+    const large = resizeFixture(3, 430, 932).run();
+    assert.deepEqual(large.backing, [860, 1864]);
+    assert.deepEqual(large.css, ['430px', '932px']);
+
+    const early = resizeFixture(3, 390, 0, false);
+    assert.doesNotThrow(() => early.run(), 'zero-height boot before the late terrain owner must be safe');
+    early.sandbox.window.CQVIEW = { shiftWorldY: delta => early.shifts.push(delta) };
+    const recovered = early.run(390, 844);
+    assert.equal(recovered.groundY, 591);
+    assert.deepEqual(early.shifts, [591], 'delayed zero→valid sizing must translate initialized terrain state');
+
+    const dynamic = resizeFixture(2, 390, 812);
+    dynamic.run();
+    dynamic.shifts.length = 0;
+    dynamic.run(390, 730);
+    dynamic.run(390, 812);
+    dynamic.run(390, 812);
+    assert.deepEqual(dynamic.shifts, [-57, 57], 'height collapse/restore translates once each; same-size is idempotent');
+
+    const journey = resizeFixture(2, 390, 812);
+    journey.run();
+    journey.shifts.length = 0;
+    journey.sandbox.window.BlockchainJourney = { _S: { active: true } };
+    journey.run(390, 390);
+    journey.run(390, 812);
+    assert.deepEqual(journey.shifts, [], 'the active first-session tutorial retains sole ownership of Finn terrain');
+    journey.sandbox.window.BlockchainJourney._S.active = false;
+    journey.run(390, 730);
+    assert.deepEqual(journey.shifts, [-57], 'main-world translation resumes after tutorial handoff');
+
+    const fixture = freshView();
+    assert.equal(fixture.view.shiftWorldY(-57), -57);
+    const state = fixture.state();
+    assert.equal(state.turtle.y, 443);
+    assert.equal(state.turtle._pcy, 455, 'the collision sweep origin must move with Finn');
+    assert.deepEqual(state.turtle.trail.map(ghost => ghost.y), [433, 423]);
+    assert.deepEqual([state.turtle.tipY, state.turtle.spinBase, state.turtle.grabY], [363, 473, 413]);
+    assert.equal(state.rings[0].y, 403);
+    assert.deepEqual([state.camY, state._portalGroundY, state._finnFallTop], [70, 467, 383],
+      'camera refits independently while remembered terrain anchors translate');
+    assert.equal(state.turtle.y - state._finnFallTop, 60, 'fall distance must be invariant');
+    assert.equal(state.turtle.y - state.turtle._pcy, -12, 'swept collision segment must be invariant');
+    const before = fixture.state();
+    assert.equal(fixture.view.shiftWorldY('not-a-number'), 0);
+    assert.deepEqual(fixture.state(), before, 'invalid shifts must be non-throwing no-ops');
+    assert.equal(fixture.view.shiftWorldY(57), 57);
+    assert.deepEqual(fixture.state(), {
+      turtle: { y: 500, _pcy: 512, spinning: true, tipY: 420, spinBase: 530, grabY: 470,
+        trail: [{ x: 1, y: 490 }, { x: 2, y: 480 }] },
+      rings: [{ x: 20, y: 460 }], camY: 70, _portalGroundY: 524, _finnFallTop: 440,
+    }, '812→730→812 terrain translation must be exactly reversible');
+  }],
+
   ['reserve/get/clear publishes and releases a measured zone', () => {
     const safe = freshSafe();
     const saved = safe.reserve('lessonCard', { x: 4, y: 100, w: 286, h: 41 }, { pri: 1 });
@@ -671,7 +841,7 @@ function runSuite(options = {}) {
     }
   }
 
-  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/beta-360 regression tests passed`);
+  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/build-363 regression tests passed`);
   return {
     ok: failures.length === 0,
     passed,
@@ -679,7 +849,7 @@ function runSuite(options = {}) {
     failures,
     detail: failures.length
       ? failures.map(item => item.name).join(' · ')
-      : `${passed}/${tests.length} CQSAFE/beta-360 contracts`,
+      : `${passed}/${tests.length} CQSAFE/build-363 contracts`,
   };
 }
 

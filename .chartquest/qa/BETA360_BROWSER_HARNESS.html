@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ChartQuest Beta-360 Local Browser QA</title>
+  <title>ChartQuest Build 363 Local Browser QA</title>
   <style>
     :root { color-scheme: dark; font-family: ui-sans-serif,system-ui,sans-serif; background:#07101b; color:#e8f0fa; }
     * { box-sizing:border-box; }
@@ -38,11 +38,11 @@
 </head>
 <body>
   <header>
-    <h1>ChartQuest Beta-360 Browser QA</h1>
+    <h1>ChartQuest Build 363 Browser QA</h1>
     <div class="sub" id="identity">Loading same-origin game and guarded bridge…</div>
     <div class="toolbar">
       <button id="runAll">Run all</button>
-      <button id="runFlows">Run F1–F7</button>
+      <button id="runFlows">Run F1–F7 + M1–M2</button>
       <button id="runMatrix">Run 16-cell matrix</button>
       <button id="clear">Clear report</button>
     </div>
@@ -55,7 +55,7 @@
         <div class="metric"><b id="passCount">0</b><span>Pass</span></div>
         <div class="metric"><b id="failCount">0</b><span>Fail</span></div>
         <div class="metric"><b id="runCount">0</b><span>Run</span></div>
-        <div class="metric"><b id="pendingCount">23</b><span>Pending</span></div>
+        <div class="metric"><b id="pendingCount">25</b><span>Pending</span></div>
       </div>
       <div id="rows" aria-live="polite"></div>
     </section>
@@ -67,7 +67,7 @@
     const rows = document.getElementById('rows');
     const fatal = document.getElementById('fatal');
     const heights = [844, 667, 468, 340];
-    const flowIds = ['F1','F2','F3','F4','F5','F6','F7'];
+    const flowIds = ['F1','M1','M2','F2','F3','F4','F5','F6','F7'];
     const collisionIds = ['C1','C2','C3','C4'];
     const results = [];
     let bridge = null;
@@ -87,7 +87,7 @@
       document.getElementById('passCount').textContent = pass;
       document.getElementById('failCount').textContent = fail;
       document.getElementById('runCount').textContent = results.length;
-      document.getElementById('pendingCount').textContent = Math.max(0, 23 - results.length);
+      document.getElementById('pendingCount').textContent = Math.max(0, 25 - results.length);
     }
     function addRow(result, height) {
       results.push({ result, height });

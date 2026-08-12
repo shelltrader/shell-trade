@@ -243,14 +243,15 @@
       canvasCss: canvas ? [canvas.clientWidth, canvas.clientHeight] : null,
       canvasBacking: canvas ? [canvas.width, canvas.height] : null,
       dpr: devicePixelRatio || 1,
+      effectiveDpr: Math.min(2, Math.max(1, Number(devicePixelRatio) || 1)),
       authHidden: !visible(auth),
       factionHidden: !visible(faction),
       errors: observedErrors(),
     };
-    const dimensions = canvas && Math.abs(canvas.width - canvas.clientWidth * actual.dpr) <= 1 &&
-      Math.abs(canvas.height - canvas.clientHeight * actual.dpr) <= 1;
-    return caseResult('F1', 'dev QA build 362, valid canvas, no walls/errors', actual,
-      actual.dev && actual.qa && actual.build === 362 && dimensions &&
+    const dimensions = canvas && Math.abs(canvas.width - canvas.clientWidth * actual.effectiveDpr) <= 1 &&
+      Math.abs(canvas.height - canvas.clientHeight * actual.effectiveDpr) <= 1;
+    return caseResult('F1', 'dev QA build 363, capped main canvas, no walls/errors', actual,
+      actual.dev && actual.qa && actual.build === 363 && dimensions &&
       actual.authHidden && actual.factionHidden && actual.errors.length === 0);
   }
 
@@ -701,8 +702,150 @@
       !noticeOverTicket && !retryWhileTicket && !noticeAfterCommit && !retryAfterCommit);
   }
 
+  async function M1() {
+    cleanup();
+    const root = document.documentElement;
+    const keys = ['--cq-safe-top', '--cq-safe-right', '--cq-safe-bottom', '--cq-safe-left'];
+    const saved = {};
+    keys.forEach(function (key) { saved[key] = root.style.getPropertyValue(key); });
+    const teaser = document.getElementById('mmTeaser');
+    const portal = document.getElementById('mmPortal');
+    const skip = document.getElementById('mmSkip');
+    const enter = document.getElementById('mmEnter');
+    const teaserClass = teaser ? teaser.className : '';
+    const portalClass = portal ? portal.className : '';
+    let startedJourney = false;
+    try {
+      root.style.setProperty('--cq-safe-top', '47px');
+      root.style.setProperty('--cq-safe-right', '21px');
+      root.style.setProperty('--cq-safe-bottom', '34px');
+      root.style.setProperty('--cq-safe-left', '0px');
+      if (teaser) teaser.classList.add('on');
+      if (portal) portal.classList.add('show');
+      await nextFrame(2);
+      const safe = window.CQVIEW && window.CQVIEW.insets();
+      const skipRect = rect(skip), enterRect = rect(enter);
+      const hit = skipRect && document.elementFromPoint(
+        skipRect.x + skipRect.w / 2, skipRect.y + skipRect.h / 2);
+      const domPass = !!(safe && skipRect && enterRect &&
+        Math.abs(safe.top - 47) <= 0.5 && Math.abs(safe.right - 21) <= 0.5 &&
+        Math.abs(safe.bottom - 34) <= 0.5 &&
+        Math.abs(skipRect.y - 61) <= 1 && Math.abs((W - skipRect.right) - 35) <= 1 &&
+        skipRect.w >= 72 && skipRect.h >= 44 && hit === skip &&
+        enterRect.bottom <= H - safe.bottom - 9);
+
+      if (teaser) teaser.classList.remove('on');
+      if (portal) portal.classList.remove('show');
+      try { if (bcJourney.active) BlockchainJourney.abort(); } catch (_) {}
+      startedJourney = BlockchainJourney.start('BTC', function () {}) === true;
+      bcJourney._freeze = true;
+      BlockchainJourney.draw();
+      const movement = bcJourney.skipBox ? Object.assign({}, bcJourney.skipBox) : null;
+      const movementPass = !!(movement && movement.w >= 84 && movement.h >= 44 &&
+        Math.abs(movement.x - (W - movement.w - 14 - safe.right)) <= 0.5 &&
+        Math.abs(movement.y - (H - movement.h - 14 - safe.bottom)) <= 0.5);
+
+      return caseResult('M1', '47/21/34 safe insets own DOM Skip, Enter and movement draw/hit geometry', {
+        safe: safe, domHitOwner: hit && hit.id, journeyStarted: startedJourney,
+        domPass: domPass, movementPass: movementPass,
+      }, domPass && movementPass, { skip: skipRect, enter: enterRect, movementSkip: movement,
+        stage: { w: W, h: H } });
+    } finally {
+      try { if (startedJourney || bcJourney.active) BlockchainJourney.abort(); } catch (_) {}
+      if (teaser) teaser.className = teaserClass;
+      if (portal) portal.className = portalClass;
+      keys.forEach(function (key) {
+        if (saved[key]) root.style.setProperty(key, saved[key]);
+        else root.style.removeProperty(key);
+      });
+      resize();
+      cleanup();
+    }
+  }
+
+  async function M2() {
+    cleanup();
+    const frame = window.frameElement;
+    const oldHeight = frame ? frame.style.height : '';
+    let journeyStarted = false;
+    function setViewportHeight(height) {
+      if (frame) frame.style.height = height + 'px';
+      window.dispatchEvent(new Event('resize'));
+    }
+    try {
+      if (frame) frame.style.height = '844px';
+      resize();
+      cleanup();
+      paused = true;
+      introFlow.active = false;
+      introFlow.phase = 'done';
+      await delay(250); // drain prior case callbacks before binding resize evidence to this fixture
+      portals.splice(0); floaters.splice(0);
+      const index = pickCandle();
+      const candle = candles[index];
+      turtle.x = candle.x + candle.w * 0.5 - turtle.w * 0.5;
+      turtle.y = candleTop(candle) - turtle.h;
+      turtle.vy = 0; turtle.onGround = true; turtle.spinning = false;
+      turtle._pcy = turtle.y;
+      const groundStart = {
+        rel: (turtle.y + turtle.h) - candleTop(candle), x: turtle.x, vy: turtle.vy,
+        onGround: turtle.onGround, collected: coins.filter(function (coin) { return coin.collected; }).length,
+        floaters: floaters.length, portals: portals.length,
+      };
+      setViewportHeight(667);
+      await nextFrame(2);
+      const groundCollapsed = {
+        rel: (turtle.y + turtle.h) - candleTop(candle), x: turtle.x, vy: turtle.vy,
+        onGround: turtle.onGround, collected: coins.filter(function (coin) { return coin.collected; }).length,
+        floaters: floaters.length, portals: portals.length,
+        canvas: [canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight],
+      };
+      setViewportHeight(844);
+      await nextFrame(2);
+      const groundRestored = { rel: (turtle.y + turtle.h) - candleTop(candle), x: turtle.x,
+        vy: turtle.vy, onGround: turtle.onGround };
+      const groundedPass = Math.abs(groundStart.rel - groundCollapsed.rel) <= 0.01 &&
+        Math.abs(groundStart.rel - groundRestored.rel) <= 0.01 &&
+        groundStart.x === groundCollapsed.x && groundStart.vy === groundCollapsed.vy &&
+        groundStart.onGround === groundCollapsed.onGround &&
+        groundStart.collected === groundCollapsed.collected &&
+        groundStart.floaters === groundCollapsed.floaters && groundStart.portals === groundCollapsed.portals &&
+        groundCollapsed.canvas[0] === groundCollapsed.canvas[2] * Math.min(2, devicePixelRatio || 1) &&
+        groundCollapsed.canvas[1] === groundCollapsed.canvas[3] * Math.min(2, devicePixelRatio || 1);
+
+      journeyStarted = BlockchainJourney.start('BTC', function () {}) === true;
+      bcJourney._freeze = true;
+      const tutorialStart = { base: bcJourney.base, y: turtle.y, rel: turtle.y - bcJourney.base };
+      setViewportHeight(390);
+      await nextFrame(1);
+      BlockchainJourney.draw();
+      const tutorialLandscape = { base: bcJourney.base, y: turtle.y, rel: turtle.y - bcJourney.base,
+        h: H, skip: bcJourney.skipBox ? Object.assign({}, bcJourney.skipBox) : null };
+      setViewportHeight(844);
+      await nextFrame(1);
+      const tutorialRestored = { base: bcJourney.base, y: turtle.y, rel: turtle.y - bcJourney.base };
+      const tutorialPass = tutorialStart.base === tutorialLandscape.base &&
+        tutorialStart.y === tutorialLandscape.y && tutorialStart.rel === tutorialLandscape.rel &&
+        tutorialStart.rel === tutorialRestored.rel && tutorialLandscape.skip &&
+        tutorialLandscape.skip.y + tutorialLandscape.skip.h <= tutorialLandscape.h - 14;
+
+      return caseResult('M2', 'mobile height/orientation changes preserve main and tutorial terrain ownership', {
+        groundedPass: groundedPass, tutorialPass: tutorialPass, journeyStarted: journeyStarted,
+      }, groundedPass && tutorialPass, {
+        groundStart: groundStart, groundCollapsed: groundCollapsed, groundRestored: groundRestored,
+        tutorialStart: tutorialStart, tutorialLandscape: tutorialLandscape,
+        tutorialRestored: tutorialRestored,
+      });
+    } finally {
+      try { if (journeyStarted || bcJourney.active) BlockchainJourney.abort(); } catch (_) {}
+      if (frame) frame.style.height = oldHeight || '844px';
+      resize();
+      cleanup();
+    }
+  }
+
   const CASES = Object.freeze({ F1: F1, F2: F2, F3: F3, F4: F4, F5: F5, F6: F6, F7: F7,
-    C1: C1, C2: C2, C3: C3, C4: C4 });
+    C1: C1, C2: C2, C3: C3, C4: C4, M1: M1, M2: M2 });
   async function run(id) {
     const fn = CASES[id];
     if (!fn) return caseResult(id, 'known case', { error: 'unknown case' }, false);

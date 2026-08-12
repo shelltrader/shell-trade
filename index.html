@@ -874,6 +874,12 @@
     --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
     /* Display face for cinematic titles — same one the marketing site uses. */
     --font-cine: 'Space Grotesk', 'Inter', -apple-system, system-ui, sans-serif;
+    /* Build 363 — one CSS probe for the physical viewport. JavaScript reads these
+       computed values through CQVIEW; ordinary rectangular screens resolve to 0px. */
+    --cq-safe-top: env(safe-area-inset-top, 0px);
+    --cq-safe-right: env(safe-area-inset-right, 0px);
+    --cq-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --cq-safe-left: env(safe-area-inset-left, 0px);
   }
 
   /* --- SETUP DETECTED banner (Step 6) --- */
@@ -1642,14 +1648,14 @@
   #mmDialogue .mmSub { display: block; margin-top: 9px; font: 600 clamp(8.5px, 2.3vw, 10px) var(--font-cine); letter-spacing: 0.34em; text-indent: 0.34em; color: #ff6b73; text-shadow: 0 0 10px rgba(255,107,115,0.5); animation: mmSubReveal 0.7s 0.55s ease both; }
   @keyframes mmNameReveal { 0% { opacity: 0; transform: scale(1.4); filter: blur(7px); } 100% { opacity: 1; transform: scale(1); filter: blur(0); } }
   @keyframes mmSubReveal { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
-  #mmSkip { position: absolute; top: 14px; right: 14px; z-index: 3; font: 700 12px var(--font-ui); color: rgba(255,255,255,0.72); background: rgba(8,10,22,0.6); border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  #mmSkip { position: absolute; top: calc(14px + var(--cq-safe-top)); right: calc(14px + var(--cq-safe-right)); z-index: 7; min-width: 72px; min-height: 44px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font: 700 12px var(--font-ui); color: rgba(255,255,255,0.72); background: rgba(8,10,22,0.6); border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
   /* Black-and-gold portal + ENTER button (Market Maker realm colors) — raised after the name
      lands; the player descends to the charts at their own pace. Pulse = transform/opacity only. */
   #mmPortal { position: absolute; inset: 0; z-index: 6; opacity: 0; transition: opacity 0.8s ease; pointer-events: none; }
   #mmPortal.show { opacity: 1; pointer-events: auto; }
   .mmPortalRing { position: absolute; left: 50%; top: 40%; width: 144px; height: 144px; margin: -72px 0 0 -72px; border-radius: 50%; border: 3px solid #ffd60a; background: radial-gradient(circle at 50% 50%, rgba(255,214,10,0.14), rgba(0,0,0,0.62) 60%, #000 100%); box-shadow: 0 0 48px 8px rgba(255,214,10,0.5), inset 0 0 40px rgba(184,134,11,0.7); animation: mmRingPulse 2.6s ease-in-out infinite; will-change: transform, opacity; }
   @keyframes mmRingPulse { 0%,100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.07); opacity: 1; } }
-  #mmEnter { position: absolute; left: 50%; bottom: 5.5%; transform: translateX(-50%); white-space: nowrap; font: 800 15px var(--font-ui); letter-spacing: 1.5px; color: #1a1300; background: linear-gradient(180deg, #ffe680, #ffd60a 46%, #d4a017); border: 1px solid #fff3c4; border-radius: 12px; padding: 13px 28px; cursor: pointer; box-shadow: 0 6px 26px rgba(255,214,10,0.45), 0 2px 8px rgba(0,0,0,0.55); text-shadow: 0 1px 0 rgba(255,255,255,0.35); }
+  #mmEnter { position: absolute; left: 50%; bottom: max(5.5%, calc(10px + var(--cq-safe-bottom))); transform: translateX(-50%); white-space: nowrap; font: 800 15px var(--font-ui); letter-spacing: 1.5px; color: #1a1300; background: linear-gradient(180deg, #ffe680, #ffd60a 46%, #d4a017); border: 1px solid #fff3c4; border-radius: 12px; padding: 13px 28px; cursor: pointer; box-shadow: 0 6px 26px rgba(255,214,10,0.45), 0 2px 8px rgba(0,0,0,0.55); text-shadow: 0 1px 0 rgba(255,255,255,0.35); }
   #mmEnter:hover { filter: brightness(1.07); }
   #mmEnter:active { filter: brightness(0.96); }
   /* Gold ring that expands on descend — fly THROUGH the portal (transform/opacity only = smooth). */
@@ -3790,16 +3796,83 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
+
+/* Build 363 — the single numeric owner for physical safe-area insets and viewport-height
+   re-anchoring. `insets(source)` accepts an explicit object only as a deterministic test seam;
+   production callers omit it and read the four :root CSS env() probes above. Every public path
+   is fail-closed and non-throwing: malformed/negative values become zero, preserving all old
+   geometry on rectangular screens. */
+window.CQVIEW = (function () {
+  'use strict';
+  const ZERO = Object.freeze({ top: 0, right: 0, bottom: 0, left: 0 });
+  function safeNumber(value) {
+    const n = Number.parseFloat(value);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+  function insets(source) {
+    try {
+      if (source == null) {
+        const style = window.getComputedStyle(document.documentElement);
+        source = {
+          top: style.getPropertyValue('--cq-safe-top'),
+          right: style.getPropertyValue('--cq-safe-right'),
+          bottom: style.getPropertyValue('--cq-safe-bottom'),
+          left: style.getPropertyValue('--cq-safe-left'),
+        };
+      }
+      return {
+        top: safeNumber(source.top),
+        right: safeNumber(source.right),
+        bottom: safeNumber(source.bottom),
+        left: safeNumber(source.left),
+      };
+    } catch (_) {
+      return ZERO;
+    }
+  }
+  function shiftWorldY(delta) {
+    try {
+      delta = Number(delta);
+      if (!Number.isFinite(delta) || delta === 0) return 0;
+
+      /* Read every late-bound owner before mutating anything. The first positive boot resize runs
+         above their declarations and may enter this path; the contained TDZ read makes that call
+         a harmless no-op instead of leaving a half-shifted world. */
+      const finn = turtle;
+      const oldPortalGroundY = _portalGroundY;
+      const oldFallTop = _finnFallTop;
+      const trail = Array.isArray(finn.trail) ? finn.trail : [];
+      const worldRings = Array.isArray(rings) ? rings : [];
+
+      finn.y += delta;
+      if (Number.isFinite(finn._pcy)) finn._pcy += delta;
+      for (const ghost of trail) if (ghost && Number.isFinite(ghost.y)) ghost.y += delta;
+      if (finn.spinning) {
+        if (Number.isFinite(finn.tipY)) finn.tipY += delta;
+        if (Number.isFinite(finn.spinBase)) finn.spinBase += delta;
+        if (Number.isFinite(finn.grabY)) finn.grabY += delta;
+      }
+      for (const ring of worldRings) if (ring && Number.isFinite(ring.y)) ring.y += delta;
+      if (Number.isFinite(oldPortalGroundY) && oldPortalGroundY !== 0) _portalGroundY = oldPortalGroundY + delta;
+      if (Number.isFinite(oldFallTop)) _finnFallTop = oldFallTop + delta;
+      return delta;
+    } catch (_) {
+      return 0;
+    }
+  }
+  return Object.freeze({ insets, shiftWorldY });
+})();
 
 /* The game is PORTRAIT. On a phone in portrait it fills the screen; on a wider
    screen (desktop, or a phone rotated) it's a centered portrait column with
    letterbox bars. MAX_ASPECT is the widest width:height the play area may take. */
 const MAX_ASPECT = 0.58; // ~ taller than 16:9 phones, so those fill fully
 function resize() {
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(2, Math.max(1, Number(window.devicePixelRatio) || 1));
+  const priorGroundY = groundY;
   const availW = window.innerWidth, availH = window.innerHeight;
   // Portrait play area: cap the width so it never exceeds MAX_ASPECT
   H = availH;
@@ -3817,6 +3890,18 @@ function resize() {
   canvas.style.height = H + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
   groundY = Math.round(H * 0.7); // baseline across the lower third
+  /* Use the literal baseline delta, including a delayed 0 -> valid recovery. The first normal
+     boot resize runs while turtle is still in its lexical TDZ; CQVIEW contains that read and
+     returns without mutation. A later self-heal runs after initialization and must translate
+     Finn from the hidden/zero baseline into the real terrain coordinate system. */
+  const groundShift = groundY - priorGroundY;
+  /* The sealed first-session movement tutorial owns an independent terrain/camera system.
+     Its shared Finn and S.base intentionally remain in that coordinate space while S.camY
+     refits to a new viewport. Applying the main world's 70%-baseline delta there would split
+     Finn from the tutorial candles. Main-world translation resumes after the handoff. */
+  const journeyOwnsTerrain = !!(window.BlockchainJourney && window.BlockchainJourney._S &&
+    window.BlockchainJourney._S.active);
+  if (groundShift && !journeyOwnsTerrain && window.CQVIEW) window.CQVIEW.shiftWorldY(groundShift);
   /* COLLECTIBLE LAW 001 — groundY just moved, so every candle top moved with it (candles
      are terrain-space: h/open are heights ABOVE this baseline). Collectibles must move the
      same way or they strand: this is the exact P0 the founder hit — a mobile URL-bar reflow
@@ -23532,14 +23617,15 @@ const IntroCinematic = (() => {
     // SKIP control (top-right) — keeps the cinematic memorable but never a wall.
     // During the Market Maker teaser the DOM overlay provides its own #mmSkip.
     if (S.phase !== 'title' && S.phase !== 'marketmaker') {
-      const sw = 70, sh = 28, sx = W - sw - 12, sy = 14;
+      const safe = window.CQVIEW ? window.CQVIEW.insets() : { top: 0, right: 0 };
+      const sw = 72, sh = 44, sx = W - sw - 12 - safe.right, sy = 14 + safe.top;
       S.skipBox = { x: sx, y: sy, w: sw, h: sh };
       ctx.globalAlpha = 0.78;
       ctx.fillStyle = 'rgba(8,10,22,0.6)';
       rr(sx, sy, sw, sh, 8); ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 1; rr(sx, sy, sw, sh, 8); ctx.stroke();
       ctx.fillStyle = 'rgba(255,255,255,0.88)'; ctx.font = '700 12px ' + F; ctx.textAlign = 'center';
-      ctx.fillText('SKIP ▸', sx + sw / 2, sy + 19);
+      ctx.fillText('SKIP ▸', sx + sw / 2, sy + sh / 2 + 4);
       ctx.globalAlpha = 1;
     } else {
       S.skipBox = null;
@@ -24864,11 +24950,16 @@ const BlockchainJourney = (() => {
     ctx.fillStyle='rgba(235,244,255,0.94)'; ctx.font='600 '+Math.round(Math.min(W,H)*0.046)+'px '+F; ctx.textAlign='center';
     ctx.shadowColor='rgba(255,213,74,0.55)'; ctx.shadowBlur=20; ctx.fillText('Every candle tells a story.',W/2,H*0.28); ctx.restore(); ctx.textAlign='left'; }
 
+  function movementSkipRect(width,height,source){
+    const safe=window.CQVIEW ? window.CQVIEW.insets(source) : {right:0,bottom:0};
+    const w=84,h=44,gap=14;
+    return {x:width-w-gap-safe.right,y:height-h-gap-safe.bottom,w,h};
+  }
   function drawSkip(){ if(S.phase==='reveal'||S.phase==='done'){ S.skipBox=null; return; }
-    const bw=84,bh=30,bx=W-bw-14,by=H-bh-14; ctx.save(); ctx.globalAlpha=0.5;
+    const box=movementSkipRect(W,H),bw=box.w,bh=box.h,bx=box.x,by=box.y; ctx.save(); ctx.globalAlpha=0.5;
     ctx.fillStyle='rgba(10,14,24,0.7)'; rr(bx,by,bw,bh,15); ctx.fill(); ctx.strokeStyle='rgba(180,200,230,0.5)'; ctx.lineWidth=1; rr(bx,by,bw,bh,15); ctx.stroke();
     ctx.fillStyle='rgba(220,230,245,0.9)'; ctx.font='600 12px '+F; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('skip ▸',bx+bw/2,by+bh/2);
-    ctx.restore(); ctx.textAlign='left'; ctx.textBaseline='alphabetic'; S.skipBox={x:bx,y:by,w:bw,h:bh}; }
+    ctx.restore(); ctx.textAlign='left'; ctx.textBaseline='alphabetic'; S.skipBox=box; }
 
   // ── input ──
   function screenPt(e){ const r=canvas.getBoundingClientRect(); const t=e.touches?e.touches[0]:e; return {x:t.clientX-r.left,y:t.clientY-r.top}; }

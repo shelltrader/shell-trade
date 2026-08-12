@@ -131,7 +131,7 @@ case "${1:-}" in
     # The QR now refuses to print unless the server on that port is serving THIS checkout:
     # it compares the BUILD_TAG on the wire against the BUILD_TAG on disk.
     IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo 127.0.0.1)"
-    P="${2:-8795}"; URL="http://$IP:$P/chart-quest.html?fresh=1&mute=1"
+    P="${2:-8795}"; URL="http://$IP:$P/chart-quest.html?fresh=1"
     # Must read the BUILD_TAG LINE specifically — a bare `grep "build [0-9]"` matches prose in
     # older comments ("build 262 …") and would happily "verify" two unrelated checkouts as equal.
     # Must read the BUILD_TAG LINE specifically — a bare `grep "build [0-9]"` matches prose in
@@ -156,7 +156,7 @@ case "${1:-}" in
       echo "  serve THIS checkout on a free port, e.g.:  scripts/cq.sh qr 8799"
       exit 1
     fi
-    echo "SCAN (beginner mode, muted) — verified $WIRE from $(pwd):"; echo "$URL"; echo
+    echo "SCAN (beginner mode, music on) — verified $WIRE from $(pwd):"; echo "$URL"; echo
     command -v qrencode >/dev/null 2>&1 && qrencode -t ANSIUTF8 "$URL" || echo "(brew install qrencode for the QR)"
     ;;
   *)

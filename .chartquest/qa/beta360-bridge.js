@@ -250,8 +250,8 @@
     };
     const dimensions = canvas && Math.abs(canvas.width - canvas.clientWidth * actual.effectiveDpr) <= 1 &&
       Math.abs(canvas.height - canvas.clientHeight * actual.effectiveDpr) <= 1;
-    return caseResult('F1', 'dev QA build 363, capped main canvas, no walls/errors', actual,
-      actual.dev && actual.qa && actual.build === 363 && dimensions &&
+    return caseResult('F1', 'dev QA build 364, capped main canvas, no walls/errors', actual,
+      actual.dev && actual.qa && actual.build === 364 && dimensions &&
       actual.authHidden && actual.factionHidden && actual.errors.length === 0);
   }
 
@@ -583,6 +583,103 @@
         afterFirst: afterFirst, afterSecond: afterSecond, afterRepeat: afterRepeat }, pass);
   }
 
+  async function F8() {
+    cleanup();
+    const id = ++fixtureSequence;
+    let pageIndex = -1;
+    for (let i = WISDOM.length - 1; i >= 0; i--) {
+      if (!wisdomFound.includes(i) && !fixtureIndexes.includes(i)) { pageIndex = i; break; }
+    }
+    if (pageIndex < 0) return caseResult('F8', 'an unused wisdom fixture exists', { pageIndex: pageIndex }, false);
+    fixtureIndexes.push(pageIndex);
+    const tx = turtle.x + turtle.w / 2, ty = turtle.y + turtle.h / 2;
+    setupFlow = { phase: 'armed', armed: true, confirmId: -1 };
+    trade = null; pending = null;
+    turtle._pcx = tx - 84; turtle._pcy = ty; turtle.tucked = true;
+    const box = { x: tx - 42, y: ty, w: 34, premium: false, broken: false, breakT: 0,
+      bob: 0, glow: 0, rot: 0, orb: 0, excite: 0, __beta360Fixture: id };
+    const page = { idx: pageIndex, kind: 'easy', state: 'live', x: tx - 42, y: ty,
+      tipY: ty, clear: 100, cid: -1, bobT: 0, revealT: 0, collected: false, flyT: 0,
+      __beta360Fixture: id };
+    boxes.push(box); wisdomPages.push(page);
+    const shellsBefore = player.shells;
+    updateBoxes(0.016, tx, ty);
+    updateWisdomPages(0.016, tx, ty);
+    const actual = {
+      setupFlowActive: !!setupFlow,
+      tradeFocusActive: tradeInProgress(),
+      boxBroken: box.broken,
+      pageCollected: page.collected,
+      pageFoundCount: wisdomFound.filter(function (value) { return value === pageIndex; }).length,
+      shellDelta: player.shells - shellsBefore,
+      sweptFrom: [tx - 84, ty], sweptTo: [tx, ty], rewardAt: [tx - 42, ty],
+    };
+    return caseResult('F8', 'setup forming never disables a swept shell-roll box or visible Lost Page',
+      actual, actual.setupFlowActive && !actual.tradeFocusActive && actual.boxBroken &&
+      actual.pageCollected && actual.pageFoundCount === 1 && actual.shellDelta === 1);
+  }
+
+  async function F9() {
+    cleanup();
+    paused = true; introFlow.active = false; session.level = 1;
+    const savedRandom = Math.random;
+    const savedMarket = { level: market.level, price: market.price, trendDir: market.trendDir };
+    let seed = 7;
+    Math.random = function () { return ((seed = seed * 16807 % 2147483647) - 1) / 2147483646; };
+    try {
+      trade = { dir: 'long', entryH: 300, slH: 180, tpH: 500, lastPrice: 300,
+        _l1Outcome: 'win', _firstRide: true, path: [] };
+      market.level = 300; market.price = 100;
+      const rows = [];
+      for (let i = 0; i < 120; i++) {
+        const candle = tradeDrivenCandle();
+        rows.push({ r: (candle.h - 300) / 120, phase: trade._drivePhase, color: candle.color });
+        if (trade._drivePhase === 'run' && Math.abs(candle.h - 500) < 0.01) break;
+      }
+      const surge = rows.findIndex(function (row) { return row.phase === 'surge'; });
+      const shakeout = rows.findIndex(function (row) { return row.phase === 'shakeout'; });
+      const run = rows.findIndex(function (row) { return row.phase === 'run'; });
+      const minScare = Math.min.apply(null, rows.slice(0, surge + 1).map(function (row) { return row.r; }));
+      const peak = Math.max.apply(null, rows.slice(surge, shakeout + 1).map(function (row) { return row.r; }));
+      const giveBack = Math.min.apply(null, rows.slice(shakeout, run + 1).map(function (row) { return row.r; }));
+      const actual = {
+        selectedMusicRoute: tradeMusicTrack(true), ordinaryMusicRoute: tradeMusicTrack(false),
+        candles: rows.length, phaseOrder: { surge: surge, shakeout: shakeout, run: run },
+        minScareR: minScare, peakProfitR: peak, giveBackR: giveBack,
+        finalR: rows[rows.length - 1].r,
+        redCandles: rows.filter(function (row) { return row.color === 'red'; }).length,
+        greenCandles: rows.filter(function (row) { return row.color === 'green'; }).length,
+      };
+      return caseResult('F9', 'first real trade selects its score and visibly travels scare→surge→give-back→target',
+        actual, actual.selectedMusicRoute === 'firstTrade' && actual.ordinaryMusicRoute === 'trade' &&
+        surge > 0 && shakeout > surge && run > shakeout && minScare <= -0.70 && minScare > -1 &&
+        peak >= 1.25 && giveBack <= 0 && actual.candles >= 30 && actual.candles <= 100 &&
+        Math.abs(actual.finalR - 5 / 3) < 0.01 && actual.redCandles >= 8 && actual.greenCandles >= 8);
+    } finally {
+      Math.random = savedRandom; trade = null;
+      market.level = savedMarket.level; market.price = savedMarket.price; market.trendDir = savedMarket.trendDir;
+    }
+  }
+
+  async function F10() {
+    cleanup();
+    paused = true; introFlow.active = false;
+    celebrate({ title: 'FIRST TRADE WON', sub: 'You read it. You waited. You executed.',
+      reward: 10, color: '#ffd60a', burst: 'shell', n: 24, dur: 8,
+      flash: 0.2, shake: 0, haptic: 0, sound: false, firstWin: true });
+    render(); await nextFrame(2);
+    const cards = floaters.filter(function (floater) { return floater && floater.firstWin; });
+    const emoji = floaters.filter(function (floater) { return floater && floater.emoji; });
+    const actual = {
+      cardCount: cards.length, emojiCount: emoji.length, looseBigText: floaters.filter(function (floater) { return floater && floater.big; }).length,
+      title: cards[0] && cards[0].title, reward: cards[0] && cards[0].reward,
+      canvas: [canvas.clientWidth, canvas.clientHeight], visibleForSeconds: cards[0] && cards[0].t,
+    };
+    return caseResult('F10', 'FIRST WIN renders as one premium milestone with no system trophy/text pile',
+      actual, actual.cardCount === 1 && actual.emojiCount === 0 && actual.looseBigText === 0 &&
+      actual.title === 'FIRST TRADE WON' && actual.reward === 10);
+  }
+
   async function C1() {
     cleanup();
     const oldLevel = session.level;
@@ -845,6 +942,7 @@
   }
 
   const CASES = Object.freeze({ F1: F1, F2: F2, F3: F3, F4: F4, F5: F5, F6: F6, F7: F7,
+    F8: F8, F9: F9, F10: F10,
     C1: C1, C2: C2, C3: C3, C4: C4, M1: M1, M2: M2 });
   async function run(id) {
     const fn = CASES[id];

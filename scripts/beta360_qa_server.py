@@ -119,11 +119,13 @@ def denied(path):
 
 
 def game_mode(query):
-    """Accept only the two isolated game URLs; QA and fresh may never be combined."""
+    """Accept only isolated QA/fresh URLs; QA and fresh may never be combined."""
     if query == {"qa": ["1"], "mute": ["1"]}:
         return "qa"
-    if query == {"fresh": ["1"], "mute": ["1"]}:
+    if query == {"fresh": ["1"]}:
         return "fresh"
+    if query == {"fresh": ["1"], "mute": ["1"]}:
+        return "fresh-muted"
     return None
 
 
@@ -258,7 +260,8 @@ def self_test():
     check(b"__BETA360_CONSOLE_ERRORS__" in rewritten and b"console.error=function" in rewritten,
           "early console.error capture")
     check(game_mode(parse_qs("qa=1&mute=1")) == "qa", "strict QA query")
-    check(game_mode(parse_qs("fresh=1&mute=1")) == "fresh", "strict unforced fresh query")
+    check(game_mode(parse_qs("fresh=1")) == "fresh", "strict unmuted fresh query")
+    check(game_mode(parse_qs("fresh=1&mute=1")) == "fresh-muted", "strict muted fresh query")
     check(game_mode(parse_qs("qa=1&fresh=1&mute=1")) is None, "reject combined QA/fresh query")
     check(game_mode(parse_qs("fresh=1&mute=1&extra=1")) is None, "reject extra game query")
     for path in ("/.git/config", "/.codex/config.toml", "/.env", "/token.json", "/package.json", "/scripts/x.py"):
@@ -308,7 +311,7 @@ def main():
     with http.server.ThreadingHTTPServer((HOST, args.port), Handler) as server:
         server.quiet = args.quiet
         url = f"http://{HOST}:{server.server_address[1]}{HARNESS_URL}"
-        fresh_url = f"http://{HOST}:{server.server_address[1]}/chart-quest.html?fresh=1&mute=1"
+        fresh_url = f"http://{HOST}:{server.server_address[1]}/chart-quest.html?fresh=1"
         print("BETA360_QA_URL=" + url, flush=True)
         print("BETA360_FRESH_URL=" + fresh_url, flush=True)
         try:

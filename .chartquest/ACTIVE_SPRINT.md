@@ -4,10 +4,13 @@
 
 ## Sprint objective
 
-**ACHIEVED:** close the bounded mobile blockers found after build 362 and advance one exact build-363
-candidate through autonomous investigation, implementation, independent review, Browser QA, and
-PM/CTO adjudication to **BUILD READY FOR FOUNDER MOBILE RETEST**. Production remains frozen and no
-deployment is in scope.
+**IN PROGRESS:** close the three Founder-confirmed beta blockers found during the physical Build 363
+mobile retest: (1) boxes and Lost Wisdom pages are visibly reachable but do not respond, (2) the
+once-ever FIRST WIN presentation is below the product bar, and (3) the first real trade needs an
+audible, higher-energy score plus a clearly legible roller-coaster price arc. Advance one exact
+Build 364 candidate through implementation, regression review, rendered Browser QA, and PM/CTO
+adjudication to **BUILD READY FOR FOUNDER MOBILE RETEST**. Production remains frozen and no deployment
+is in scope.
 
 ## Current release/build
 
@@ -25,7 +28,9 @@ deployment is in scope.
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Founder mobile retest | Founder | **READY** | Play the exact local build-363 candidate on the intended phone and report only gameplay feel, device behavior, readability, or acceptance. The command center owns all technical coordination. |
+| Build-364 blocker investigation | PM/CTO | **IN PROGRESS** | Reproduce the exact collectible, first-win, and first-trade seams from the Build 363 physical evidence and freeze bounded acceptance criteria. |
+| Build-364 implementation | Engineering | **PENDING INVESTIGATION CLOSE** | Implement only the confirmed collectible interaction, first-win presentation, first-trade score/path, and proportional QA/tooling changes. |
+| Build-364 review and QA | PM/CTO / QA | **PENDING IMPLEMENTATION** | Run focused/static/release/parity gates plus exact rendered Browser and fresh mobile-flow evidence before Founder handoff. |
 
 ## Blocked tasks
 
@@ -56,14 +61,16 @@ deployment is in scope.
 
 ## Founder decisions required
 
-Founder input is now required only for subjective gameplay/device acceptance of the local build-363
-candidate. The Founder is not required to manage branches, files, agents, prompts, reports, or
-routine QA. A later production release still requires explicit Founder/Release-Manager acceptance
-and a deliberate account-level action on the GitHub freeze; that is not part of this sprint.
+No Founder input is required while Build 364 is being investigated, implemented, reviewed, and QA
+tested. The Founder is not required to manage branches, files, prompts, reports, or routine QA. The
+next Founder action will be the subjective physical-device retest only after the command center has
+adjudicated an exact candidate ready. A later production release still requires explicit
+Founder/Release-Manager acceptance and a deliberate account-level action on the GitHub freeze; that
+is not part of this sprint.
 
 ## Release status
 
-**BUILD 363 READY FOR FOUNDER MOBILE RETEST — DO NOT SHIP — PRODUCTION FROZEN**
+**BUILD 364 BLOCKER STRIKE IN PROGRESS — DO NOT SHIP — PRODUCTION FROZEN**
 
 Automated QA does not authorize production. The next technical workflow after Founder acceptance is
 a separate Release Manager candidate/manifest/lock/gate/fingerprint process.

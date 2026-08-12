@@ -2,7 +2,7 @@
 'use strict';
 
 /*
- * Durable build-363 mobile-readiness regression suite.
+ * Durable build-364 beta-blocker regression suite.
  *
  * The CQSAFE owner is inlined in the canonical single-file game. These tests evaluate that exact
  * source block in a fresh VM for every behavioural case, then lock the small integration contracts
@@ -16,6 +16,8 @@ const vm = require('vm');
 const ROOT = path.resolve(__dirname, '..');
 const GAME_FILE = path.join(ROOT, 'chart-quest.html');
 const GAME = fs.readFileSync(GAME_FILE, 'utf8');
+const CQSH = fs.readFileSync(path.join(ROOT, 'scripts', 'cq.sh'), 'utf8');
+const QA_SERVER = fs.readFileSync(path.join(ROOT, 'scripts', 'beta360_qa_server.py'), 'utf8');
 
 function section(startMarker, endMarker) {
   const start = GAME.indexOf(startMarker);
@@ -75,7 +77,7 @@ function movedRect(rect, placed) {
 }
 
 const tests = [
-  ['build 363 safe-area owner and first-session controls preserve edge offsets', () => {
+  ['build 364 retains build-363 safe-area owner and first-session edge contracts', () => {
     const fixture = freshView({
       '--cq-safe-top': '47px', '--cq-safe-right': '12.5px',
       '--cq-safe-bottom': '34px', '--cq-safe-left': 'invalid',
@@ -119,7 +121,7 @@ const tests = [
     assert.match(section('function onDown(e){', 'function onMove(e){'), /const b=S\.skipBox;/);
   }],
 
-  ['build 363 caps backing resolution and transactionally reanchors Finn/world on terrain shifts', () => {
+  ['build 364 retains capped backing resolution and transactional terrain reanchoring', () => {
     assert.match(GAME, /const dpr = Math\.min\(2, Math\.max\(1, Number\(window\.devicePixelRatio\) \|\| 1\)\);/);
     assert.match(GAME, /const groundShift = groundY - priorGroundY;/);
     assert.match(GAME, /const journeyOwnsTerrain = !!\(window\.BlockchainJourney/);
@@ -593,10 +595,18 @@ const tests = [
 
   ['trade-time boxes and pages defer interaction without deletion', () => {
     const predicate = section('function tradeInProgress()', 'let pending = null');
-    for (const name of ['trade', 'pending', 'setupFlow']) assert.match(predicate, new RegExp(`typeof ${name}`));
+    for (const name of ['trade', 'pending']) assert.match(predicate, new RegExp(`typeof ${name}`));
+    assert.doesNotMatch(predicate, /typeof setupFlow/,
+      'a visible setup-forming window is not a trade and must not disable world rewards');
+    const owner = { trade: null, pending: null, setupFlow: { phase: 'armed', armed: true } };
+    vm.runInNewContext(predicate, owner, { timeout: 1000 });
+    assert.equal(owner.tradeInProgress(), false, 'setupFlow alone must keep boxes/pages interactive');
+    owner.pending = {};
+    assert.equal(owner.tradeInProgress(), true, 'the actual ticket still owns trade focus');
 
     const boxes = section('function updateBoxes(dt, tx, ty)', 'function drawBoxes(camX)');
-    assert.match(boxes, /if \(d < b\.w \* 0\.5 \+ 18 && !tradeInProgress\(\)\) \{[\s\S]{0,100}smashBox\(b\)/);
+    assert.match(boxes, /const touches = finnSweptRewardTouch/);
+    assert.match(boxes, /if \(touches && !tradeInProgress\(\)\) \{[\s\S]{0,100}smashBox\(b\)/);
     assert.match(boxes, /b\.x < turtle\.x - 2600 && !tradeInProgress\(\)/);
 
     let tradeActive = true;
@@ -604,6 +614,7 @@ const tests = [
       boxes: [{ bob: 0, glow: 0, rot: 0, orb: 0, excite: 0, breakT: 0, broken: false, x: 0, y: 0, w: 20 }],
       boxFx: [], turtle: { x: 3000, tucked: false },
       tradeInProgress: () => tradeActive,
+      finnSweptRewardTouch: () => false,
       smashBox() {}, boxRefuse() {}, Math,
     };
     vm.runInNewContext(boxes, boxSandbox, { timeout: 1000 });
@@ -618,6 +629,105 @@ const tests = [
     assert.ok(guard >= 0);
     assert.ok(guard < pages.indexOf("if (p.state === 'clue')"));
     assert.ok(guard < pages.indexOf('collectWisdomPage(p)'));
+  }],
+
+  ['build 364 boxes/pages use Finn body plus swept motion and work during setup formation', () => {
+    const touch = section('function finnSweptRewardTouch(', '/* One display-only classifier');
+    const boxSource = section('function updateBoxes(dt, tx, ty)', 'function drawBoxes(camX)');
+    const pageSource = section('function updateWisdomPages(dt, tx, ty)', 'function collectWisdomPage(p)');
+    const sandbox = {
+      Math, Number,
+      turtle: { x: 100, y: -12, w: 36, h: 24, _pcx: 0, _pcy: 0, tucked: true },
+      boxes: [{ bob: 0, glow: 0, rot: 0, orb: 0, excite: 0, breakT: 0, broken: false,
+        x: 50, y: 0, w: 24 }],
+      boxFx: [], wisdomPages: [{ idx: 1, kind: 'easy', state: 'live', x: 50, y: 0,
+        tipY: 0, bobT: 0, revealT: 0, collected: false, flyT: 0 }],
+      tradeInProgress: () => false,
+      smashCount: 0, collectCount: 0,
+      smashBox(box) { box.broken = true; sandbox.smashCount++; },
+      boxRefuse() {},
+      collectWisdomPage(page) { page.collected = true; sandbox.collectCount++; },
+      document: { body: { classList: { toggle() {} } } },
+      bossesEverCount: () => 0,
+    };
+    vm.runInNewContext(`${touch}\n${boxSource}\n${pageSource}`, sandbox, { timeout: 1000 });
+    assert.equal(sandbox.finnSweptRewardTouch(100, 0, 50, 0, 12, 12), true,
+      'a reward crossed between frames must intersect Finn\'s swept body');
+    sandbox.updateBoxes(0.016, 100, 0);
+    sandbox.updateWisdomPages(0.016, 100, 0);
+    assert.equal(sandbox.smashCount, 1, 'one explicit tucked sweep must smash exactly once');
+    assert.equal(sandbox.collectCount, 1, 'one visibly crossed page must collect exactly once');
+
+    const visibleOverlap = { turtle: { _pcx: 0, _pcy: 0, w: 36, h: 24 }, Math, Number };
+    vm.runInNewContext(touch, visibleOverlap, { timeout: 1000 });
+    assert.equal(visibleOverlap.finnSweptRewardTouch(0, 0, 31, 0, 16, 20), true,
+      'the screenshot-scale page overlap that failed the old 30px centre circle must now collect');
+  }],
+
+  ['build 364 first trade owns audible score routing and a complete four-act roller coaster', () => {
+    assert.match(GAME, /trade\._firstRide = !!_introTrade/);
+    assert.match(GAME, /function tradeMusicTrack\(isFirstRide\) \{ return isFirstRide \? 'firstTrade' : 'trade'; \}/);
+    assert.match(GAME, /GameMusic\.play\(tradeMusicTrack\(_introTrade\)\)/);
+    const audio = section('function play(name) {', 'function boss(level)');
+    assert.match(audio, /name === 'firstTrade'/);
+    assert.match(audio, /bpm: 112/);
+    assert.match(audio, /vol: 0\.18/);
+    const duck = section('if (typeof GameMusic !==', 'if (winPunchT > 0)');
+    for (const phase of ['dip', 'surge', 'shakeout', 'run']) assert.match(duck, new RegExp(`_drivePhase === '${phase}'`));
+    assert.match(CQSH, /URL="http:\/\/\$IP:\$P\/chart-quest\.html\?fresh=1"/);
+    assert.doesNotMatch(CQSH, /URL="[^\n]*fresh=1&mute=1"/);
+    assert.match(QA_SERVER, /fresh_url = f"http:\/\/\{HOST\}:\{server\.server_address\[1\]\}\/chart-quest\.html\?fresh=1"/);
+
+    const driveSource = section('const DRIVE_EASE =', '\nfunction nextCandle()');
+    for (const initialSeed of [1, 7, 16]) {
+      let seed = initialSeed;
+      const deterministicMath = Object.create(Math);
+      deterministicMath.random = () => ((seed = seed * 16807 % 2147483647) - 1) / 2147483646;
+      const drive = {
+        Math: deterministicMath,
+        CFG: { levelMin: 80, levelMax: 700, pxPerPct: 100 },
+        trade: { dir: 'long', entryH: 300, slH: 180, tpH: 500,
+          _l1Outcome: 'win', _firstRide: true },
+        market: { level: 300, price: 100 },
+        rand: (a, b) => a + (b - a) * deterministicMath.random(),
+        flashT: 0, flashColor: '', hapticMove() {},
+      };
+      vm.runInNewContext(driveSource, drive, { timeout: 1000 });
+      const rows = [];
+      for (let i = 0; i < 120; i++) {
+        const candle = drive.tradeDrivenCandle();
+        rows.push({ r: (candle.h - 300) / 120, phase: drive.trade._drivePhase });
+        if (drive.trade._drivePhase === 'run' && Math.abs(candle.h - 500) < 0.01) break;
+      }
+      const surge = rows.findIndex(row => row.phase === 'surge');
+      const shakeout = rows.findIndex(row => row.phase === 'shakeout');
+      const run = rows.findIndex(row => row.phase === 'run');
+      assert.ok(surge > 0 && shakeout > surge && run > shakeout, `seed ${initialSeed}: phase order`);
+      assert.ok(Math.min(...rows.slice(0, surge + 1).map(row => row.r)) <= -0.70, `seed ${initialSeed}: near-stop scare`);
+      assert.ok(Math.max(...rows.slice(surge, shakeout + 1).map(row => row.r)) >= 1.25, `seed ${initialSeed}: real profit surge`);
+      assert.ok(Math.min(...rows.slice(shakeout, run + 1).map(row => row.r)) <= 0, `seed ${initialSeed}: hard give-back`);
+      assert.ok(Math.min(...rows.map(row => row.r)) > -1, `seed ${initialSeed}: stop remains untouched`);
+      assert.ok(rows.length >= 30 && rows.length <= 100, `seed ${initialSeed}: felt duration ${rows.length}`);
+      assert.ok(Math.abs(rows[rows.length - 1].r - (5 / 3)) < 0.01, `seed ${initialSeed}: final target`);
+    }
+  }],
+
+  ['build 364 FIRST WIN is one premium ChartQuest-native milestone, not an emoji/text pile', () => {
+    const celebrateSource = section('function celebrate(opts)', '/* Build 364 · FIRST WIN');
+    assert.match(celebrateSource, /floaters\.push\(\{ firstWin: true/);
+    assert.doesNotMatch(celebrateSource, /emoji:\s*'🏆'/);
+    const card = section('function drawFirstWinMilestone(f)', '/* ── Milestone hero:');
+    for (const copy of ['PLAYER MILESTONE', 'FIRST TRADE WON', 'NOT LUCK. YOU READ THE CHART AND EXECUTED.', 'SHELLS BANKED', 'PLAN FOLLOWED']) {
+      assert.match(card, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    }
+    assert.match(card, /createLinearGradient/);
+    assert.match(card, /quadraticCurveTo/);
+    assert.match(card, /drawShell\(ctx/);
+    const caller = section('const _fireFirstWin = function ()', '/* FOUNDER CALL');
+    assert.match(caller, /title: 'FIRST TRADE WON'/);
+    assert.match(caller, /reward: delta/);
+    assert.match(caller, /firstWin: true/);
+    assert.doesNotMatch(caller, /🏆 FIRST WIN/);
   }],
 
   ['trade-3 prove waits for the exact auto-review lifecycle and advances only after closure', () => {
@@ -841,7 +951,7 @@ function runSuite(options = {}) {
     }
   }
 
-  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/build-363 regression tests passed`);
+  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/build-364 regression tests passed`);
   return {
     ok: failures.length === 0,
     passed,
@@ -849,7 +959,7 @@ function runSuite(options = {}) {
     failures,
     detail: failures.length
       ? failures.map(item => item.name).join(' · ')
-      : `${passed}/${tests.length} CQSAFE/build-363 contracts`,
+      : `${passed}/${tests.length} CQSAFE/build-364 contracts`,
   };
 }
 

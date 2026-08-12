@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="b8b3457e72" data-built-at="2026-08-11T18:11:35Z">
+<meta name="cq-build" content="bbf3aa5590" data-built-at="2026-08-12T07:36:39Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3796,7 +3796,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 364 - FINAL BETA BLOCKER STRIKE. Reward interaction now defers only while a real ticket/position owns the screen; boxes and Lost Wisdom pages share Finn\'s swept body-aware collision so visible overlap and fast shell-rolls cannot miss. FIRST WIN is one premium ChartQuest-native vector milestone with a bespoke trophy, disciplined copy hierarchy and earned reward badge instead of a system emoji/text pile. The first real trade owns a louder 112 BPM score and a four-act near-stop to profit-surge to hard-give-back to target run, while safe preview links no longer force or persist mute. - build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -6132,20 +6132,36 @@ function tradeDrivenCandle() {
     else if (trade._drivePhase === 'falsehope') { target = toward(0.30); if ((reached(target) && trade._phaseT >= 7) || trade._phaseT > 13) { trade._drivePhase = 'stopout'; trade._phaseT = 0; beat('🌊 The market reversed this time.', 'Your stop caps the loss — losses happen.', '#9fc8e0'); } }
     if (trade._drivePhase === 'stopout')   { target = trade.slH; finalPhase = true; }   // drive THROUGH the stop → stop-out
   } else {
-    // WIN — dip toward the stop (the scare), hold, recover, then run to target.
+    // WIN — every guided win dips toward the stop before it runs. The FIRST real trade is the game's
+    // emotional promise, so Build 364 gives it a four-act roller coaster instead of the old shallow
+    // dip→+0.2R→target slope: near-stop scare → meaningful profit → hard give-back → final run.
     if (trade._drivePhase == null) { trade._drivePhase = 'dip'; trade._phaseT = 0; beat('😬 Oh no — price is pulling back…', 'Stay calm. Your stop is your shield.', '#ff9f6b'); }
-    if (trade._drivePhase === 'dip') {
-      target = toward(0.72);                                   // ~72% of the way to the stop — scary, never through it
-      if ((reached(target) && trade._phaseT >= 10) || trade._phaseT > 22) { trade._drivePhase = 'recover'; trade._phaseT = 0; beat('😅 It HELD — the stop protected you.', 'That dip is the rush every trader feels.', '#ffd60a');
-        // TEC EP-4→EP-5 (EC-2 scary_winner): the SCARE just resolved — deliver the "phew, it held"
-        // relief as a felt beat (a gentle gold flash + a soft haptic) so the drawdown pays off and
-        // Finn's relief (Obj 1) has a moment to land. Pure feedback — the authored path is unchanged.
-        try { flashT = Math.max(flashT, 0.42); flashColor = '#ffd60a'; hapticMove(18); } catch (e) {} }   // MASTERPIECE — a brighter 'phew, it held' relief snap so the payoff matches the heartbeat tension it resolves
-    } else if (trade._drivePhase === 'recover') {
-      target = above(0.20);                                    // climb back above entry — tension releases
-      if ((reached(target) && trade._phaseT >= 7) || trade._phaseT > 20) { trade._drivePhase = 'run'; trade._phaseT = 0; beat('🎯 You were RIGHT — running to target!', null, '#3ef0b0'); }
+    if (trade._firstRide) {
+      if (trade._drivePhase === 'dip') {
+        target = toward(0.82);                                  // close enough to feel the stop, still inside the 0.10R safety corridor
+        if (reached(target) && trade._phaseT >= 9) {
+          trade._drivePhase = 'surge'; trade._phaseT = 0;
+          try { flashT = Math.max(flashT, 0.42); flashColor = '#ffd60a'; hapticMove(18); } catch (e) {}
+        }
+      } else if (trade._drivePhase === 'surge') {
+        target = above(1.15);                                   // visibly and meaningfully in profit, not a +0 twitch
+        if (reached(target) && trade._phaseT >= 8) { trade._drivePhase = 'shakeout'; trade._phaseT = 0; }
+      } else if (trade._drivePhase === 'shakeout') {
+        target = toward(0.10);                                  // give nearly all of it back and briefly threaten entry again
+        if (reached(target) && trade._phaseT >= 8) { trade._drivePhase = 'run'; trade._phaseT = 0; }
+      }
+      if (trade._drivePhase === 'run') { target = trade.tpH; finalPhase = true; }
+    } else {
+      if (trade._drivePhase === 'dip') {
+        target = toward(0.72);                                  // ~72% of the way to the stop — scary, never through it
+        if ((reached(target) && trade._phaseT >= 10) || trade._phaseT > 22) { trade._drivePhase = 'recover'; trade._phaseT = 0; beat('😅 It HELD — the stop protected you.', 'That dip is the rush every trader feels.', '#ffd60a');
+          try { flashT = Math.max(flashT, 0.42); flashColor = '#ffd60a'; hapticMove(18); } catch (e) {} }
+      } else if (trade._drivePhase === 'recover') {
+        target = above(0.20);                                   // climb back above entry — tension releases
+        if ((reached(target) && trade._phaseT >= 7) || trade._phaseT > 20) { trade._drivePhase = 'run'; trade._phaseT = 0; beat('🎯 You were RIGHT — running to target!', null, '#3ef0b0'); }
+      }
+      if (trade._drivePhase === 'run') { target = trade.tpH; finalPhase = true; }
     }
-    if (trade._drivePhase === 'run') { target = trade.tpH; finalPhase = true; }
   }
   // SPRINT 1.5 — break the uniform "staircase". Vary the step size, and let the odd candle tick
   // slightly AGAINST the move (a realistic micro-pullback). The counter-move is ALWAYS the safe
@@ -6158,7 +6174,8 @@ function tradeDrivenCandle() {
   // MORE frequent counter candles (genuine red pullbacks) + strongly varied step sizes so no two
   // bodies match. The safety clamps below still guarantee a win never breaches the stop and price
   // snaps cleanly onto the line, so the extra variety can never change the trade's outcome.
-  if (Math.abs(span) > 16 && Math.random() < 0.50) {   // build 345: 0.42 → 0.50 — every other candle fights back, so the run to target is a climb, not an escalator
+  const _counterChance = trade._firstRide ? 0.30 : 0.50;  // first ride has big counter-acts already; keep its beats decisive
+  if (Math.abs(span) > 16 && Math.random() < _counterChance) {   // build 345: 0.42 → 0.50 — every other candle fights back, so the run to target is a climb, not an escalator
     // counter candle (a fraction of R, NOT of the span-to-target — a big span must never
     // produce a counter big enough to cross the stop) → prints the opposite colour, breaks the staircase.
     // FLAT-CANDLE HARD RULE (build 214) — on a small-R trade, R-fraction bodies shrink to 2-6
@@ -7186,6 +7203,7 @@ function updateBoxes(dt, tx, ty) {
     if (b.x < turtle.x - 2600 && !tradeInProgress()) { boxes.splice(i, 1); continue; }   // cull well behind Finn (turtle.x is global; cameraX is a render/maintain local)
     const byC = b.y + Math.sin(b.bob) * 3;
     const d = Math.hypot(tx - b.x, ty - byC);
+    const touches = finnSweptRewardTouch(tx, ty, b.x, byC, b.w * 0.5 + 4, b.w * 0.5 + 4);
     b.excite = Math.max(0, Math.min(1, 1 - (d - 40) / 90));   // quiver + brighten + spin faster as Finn nears
       /* THE SMASH MUST BE EARNED (founder, builds 303 + 318 — both agents fixed this independently;
          this is the union of the two). A box used to open on plain CONTACT, so it popped the instant
@@ -7215,7 +7233,7 @@ function updateBoxes(dt, tx, ty) {
          removed and NOT marked — it keeps bobbing and becomes smashable the instant the trade ends.
          b.excite (the proximity quiver above) is deliberately left alone: it is ambient, it demands
          nothing of the player, and freezing it would read as a bug. */
-      if (d < b.w * 0.5 + 18 && !tradeInProgress()) {
+      if (touches && !tradeInProgress()) {
         if (_smashing) smashBox(b); else boxRefuse(b);
       }
   }
@@ -8187,10 +8205,26 @@ let trade = null;          // open trade, or null
 function tradeInProgress() {
   try {
     if (typeof trade      !== 'undefined' && trade)      return true;   // position open
-    if (typeof pending    !== 'undefined' && pending)    return true;   // entry committed, candles resolving
-    if (typeof setupFlow  !== 'undefined' && setupFlow)  return true;   // choosing direction / placing the stop
+    if (typeof pending    !== 'undefined' && pending)    return true;   // ticket open / entry being configured
   } catch (e) {}
   return false;
+}
+/* Build 364 — one continuous, body-aware overlap owner for the two world rewards that are larger
+   than shells. Build 363 used the current-frame distance from Finn's centre to the reward centre.
+   That made a page Finn visibly overlapped fail outside a 30px circle, and a fast shell-roll could
+   tunnel through a box between frames. Shell collection already solved this with Finn's real body
+   and his previous-to-current sweep; boxes and pages now use the same physical contract. */
+function finnSweptRewardTouch(tx, ty, rx, ry, halfW, halfH) {
+  try {
+    const sx = Number.isFinite(turtle._pcx) ? turtle._pcx : tx;
+    const sy = Number.isFinite(turtle._pcy) ? turtle._pcy : ty;
+    const vx = tx - sx, vy = ty - sy;
+    const len2 = vx * vx + vy * vy;
+    const t = len2 > 0 ? Math.max(0, Math.min(1, ((rx - sx) * vx + (ry - sy) * vy) / len2)) : 0;
+    const px = sx + vx * t, py = sy + vy * t;
+    return Math.abs(rx - px) <= Math.max(0, Number(halfW) || 0) + turtle.w * 0.5 &&
+           Math.abs(ry - py) <= Math.max(0, Number(halfH) || 0) + turtle.h * 0.5;
+  } catch (e) { return false; }
 }
 /* One display-only classifier for every persisted trade surface. Exit reason and P&L are separate:
    a target remains a target and a stop remains a stop, while a manual close takes its tone from the
@@ -8361,16 +8395,13 @@ function celebrate(opts) {
   const col = opts.color || '#4cc3ff';
   const dur = opts.dur || 2.6;
   let _subY;
-  if (opts.finn) {
-    // SHOT 5 — the giant centre-screen Finn used to CLUSTER with the title + "LESSON LEARNED"
-    // + "TRADE WON" floaters (an ugly overlap on the first win). Replaced with ONE clean big
-    // TROPHY emoji, the title spaced well BELOW it so nothing overlaps. (`emoji` floaters also
-    // count as a "celebration" so the next event still waits for the party to finish.)
-    const es = Math.min(W, H) * 0.22;
-    const cy = (opts.y != null) ? opts.y : H * 0.32;
-    floaters.push({ emoji: '🏆', size: es, t: dur, dur: dur, y: cy });
-    floaters.push({ text: opts.title, color: col, y: cy + es * 0.78, t: dur, big: true });
-    _subY = cy + es * 0.78 + 26;
+  if (opts.firstWin || opts.finn) {
+    // Build 364 — FIRST WIN is one premium, art-directed milestone rather than three unrelated
+    // floaters (system emoji + duplicate trophy glyph + debug-looking text). One object owns the
+    // complete visual hierarchy, timing and safe bounds; no loose sub-lines can overlap the chart.
+    floaters.push({ firstWin: true, title: opts.title || 'FIRST TRADE WON', sub: opts.sub || '',
+      reward: Math.max(0, Math.round(Number(opts.reward) || 0)), color: col,
+      t: dur, dur: dur, y: (opts.y != null) ? opts.y : H * 0.16 });
   } else if (opts.box) {
     // BOXED PLATE (build 215) — one framed, centred announcement card (title + wrapped sub
     // INSIDE the box), auto-fitted to the screen. Built for LOST WISDOM: the loose floating
@@ -8386,7 +8417,7 @@ function celebrate(opts) {
     _subY = y0 + 26;
   }
   // SHOT 11 (CQ-0023) — WRAP a long sub onto centred lines so it never spans the whole screen on one line.
-  if (opts.sub && !opts.box) {
+  if (opts.sub && !opts.box && !opts.firstWin && !opts.finn) {
     const _w = String(opts.sub).split(' '); const _ln = []; let _cur = '';
     for (const _word of _w) { const _t = _cur ? _cur + ' ' + _word : _word; if (_t.length > 26) { if (_cur) _ln.push(_cur); _cur = _word; } else _cur = _t; }
     if (_cur) _ln.push(_cur);
@@ -8407,6 +8438,112 @@ function celebrate(opts) {
   }
   try { if (opts.sound !== false && typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting(opts.sound || 'level'); } catch (e) {}
   try { turtle.adjustT = 0.45; } catch (e) {}   // VICTORY beat — Finn's glasses flash (push-up) on any milestone
+}
+
+/* Build 364 · FIRST WIN — a deliberately code-native trophy card.
+   No platform emoji, no generic banner, no second copy floating through the candles. The cup,
+   laurel, light, reward badge and three-beat lesson are all drawn from the same canvas palette as
+   ChartQuest, so the first trade finally looks like the game's defining milestone. */
+function drawFirstWinMilestone(f) {
+  const life = f.dur || 4.6;
+  const age = Math.max(0, life - f.t);
+  const enter = Math.min(1, age / 0.46);
+  const pop = 1 + 0.055 * Math.sin(Math.min(1, enter) * Math.PI) * (1 - enter * 0.5);
+  const fade = Math.min(1, enter * 1.35, Math.max(0, f.t * 1.8));
+  const compact = H < 520;
+  const cw = Math.min(W - 24, 366);
+  const ch = Math.min(compact ? 248 : 318, Math.max(232, H - 76));
+  const left = (W - cw) / 2;
+  const top = Math.max(30, Math.min(H - ch - 34, compact ? 54 : H * 0.15));
+  const cx = W / 2;
+
+  ctx.save();
+  ctx.globalAlpha = fade;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = 'rgba(1,5,12,0.82)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.translate(cx, top + ch / 2); ctx.scale(pop, pop); ctx.translate(-cx, -(top + ch / 2));
+
+  // Premium obsidian card with a cyan-gold rim and a narrow top victory rail.
+  const panel = ctx.createLinearGradient(left, top, left + cw, top + ch);
+  panel.addColorStop(0, '#081722');
+  panel.addColorStop(0.55, '#050c18');
+  panel.addColorStop(1, '#120d19');
+  rr(left, top, cw, ch, 20); ctx.fillStyle = '#030812'; ctx.fill();
+  rr(left, top, cw, ch, 20); ctx.fillStyle = panel;
+  ctx.shadowColor = '#ffd84d'; ctx.shadowBlur = 28; ctx.fill(); ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255,216,77,0.92)'; ctx.lineWidth = 2.2; ctx.stroke();
+  rr(left + 5, top + 5, cw - 10, ch - 10, 16); ctx.strokeStyle = 'rgba(82,214,255,0.30)'; ctx.lineWidth = 1; ctx.stroke();
+  const rail = ctx.createLinearGradient(left + 24, 0, left + cw - 24, 0);
+  rail.addColorStop(0, 'rgba(82,214,255,0)'); rail.addColorStop(0.35, '#52d6ff');
+  rail.addColorStop(0.65, '#ffd84d'); rail.addColorStop(1, 'rgba(255,216,77,0)');
+  ctx.fillStyle = rail; ctx.fillRect(left + 24, top + 8, cw - 48, 3);
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#7fdcff'; ctx.font = '800 ' + (compact ? 9 : 10) + 'px ' + MONO;
+  ctx.letterSpacing = '2px';
+  ctx.fillText('PLAYER MILESTONE', cx, top + (compact ? 23 : 27));
+  ctx.letterSpacing = '0px';
+
+  // Bespoke vector trophy: faceted metal, live handles, laurel and a shell at its heart.
+  const trophyY = top + (compact ? 63 : 78);
+  const ts = compact ? 0.78 : 1.12;
+  ctx.save(); ctx.translate(cx, trophyY); ctx.scale(ts, ts);
+  const halo = ctx.createRadialGradient(0, 0, 4, 0, 0, 72);
+  halo.addColorStop(0, 'rgba(255,235,124,0.38)'); halo.addColorStop(0.55, 'rgba(255,191,35,0.12)'); halo.addColorStop(1, 'rgba(255,191,35,0)');
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(0, 0, 72, 0, Math.PI * 2); ctx.fill();
+  for (let ray = 0; ray < 12; ray++) {
+    const a = ray * Math.PI / 6;
+    ctx.strokeStyle = ray % 2 ? 'rgba(82,214,255,0.30)' : 'rgba(255,216,77,0.44)';
+    ctx.lineWidth = ray % 2 ? 1 : 1.6;
+    ctx.beginPath(); ctx.moveTo(Math.cos(a) * 48, Math.sin(a) * 48);
+    ctx.lineTo(Math.cos(a) * 67, Math.sin(a) * 67); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(255,216,77,0.55)'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(-43, 2, 27, 1.85, 4.42); ctx.stroke();
+  ctx.beginPath(); ctx.arc(43, 2, 27, -1.28, 1.30); ctx.stroke();
+  const gold = ctx.createLinearGradient(-34, -30, 34, 35);
+  gold.addColorStop(0, '#fff2a8'); gold.addColorStop(0.28, '#ffd84d');
+  gold.addColorStop(0.68, '#f2a900'); gold.addColorStop(1, '#9c5b00');
+  ctx.fillStyle = gold; ctx.strokeStyle = '#fff0a0'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(-34, -27); ctx.lineTo(34, -27); ctx.quadraticCurveTo(30, 17, 0, 24); ctx.quadraticCurveTo(-30, 17, -34, -27); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-32, -19); ctx.bezierCurveTo(-58, -23, -55, 13, -28, 10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(32, -19); ctx.bezierCurveTo(58, -23, 55, 13, 28, 10); ctx.stroke();
+  ctx.fillStyle = '#f4b51c'; ctx.fillRect(-5, 22, 10, 17);
+  rr(-21, 36, 42, 9, 4); ctx.fillStyle = gold; ctx.fill(); ctx.stroke();
+  try { drawShell(ctx, 0, -2, 9, 1); } catch (e) {}
+  ctx.restore();
+
+  const titleY = top + (compact ? 121 : 160);
+  ctx.shadowColor = '#ffd84d'; ctx.shadowBlur = 16;
+  ctx.fillStyle = '#ffffff'; ctx.font = '950 ' + (compact ? 22 : 29) + 'px ' + MONO;
+  ctx.fillText(f.title || 'FIRST TRADE WON', cx, titleY); ctx.shadowBlur = 0;
+  ctx.fillStyle = '#eaf6ff'; ctx.font = '800 ' + (compact ? 10 : 11) + 'px ' + SANS;
+  ctx.fillText('NOT LUCK. YOU READ THE CHART AND EXECUTED.', cx, titleY + (compact ? 25 : 31));
+
+  const beatsY = titleY + (compact ? 52 : 67);
+  const labels = ['READ', 'WAIT', 'EXECUTE'];
+  const gap = compact ? 63 : 78;
+  labels.forEach(function (label, i) {
+    const x = cx + (i - 1) * gap;
+    ctx.fillStyle = i === 2 ? '#183c33' : '#122a3a'; rr(x - 28, beatsY - 12, 56, 24, 12); ctx.fill();
+    ctx.strokeStyle = i === 2 ? '#4de0a6' : '#52d6ff'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = i === 2 ? '#7ff0be' : '#98e8ff'; ctx.font = '800 9px ' + MONO; ctx.fillText(label, x, beatsY + 1);
+    if (i < 2) { ctx.strokeStyle = 'rgba(255,216,77,0.55)'; ctx.beginPath(); ctx.moveTo(x + 31, beatsY); ctx.lineTo(x + gap - 31, beatsY); ctx.stroke(); }
+  });
+
+  const badgeY = top + ch - (compact ? 24 : 28);
+  const badgeW = Math.min(cw - 44, compact ? 236 : 270);
+  rr(cx - badgeW / 2, badgeY - 15, badgeW, 30, 15);
+  const badge = ctx.createLinearGradient(cx - badgeW / 2, 0, cx + badgeW / 2, 0);
+  badge.addColorStop(0, '#13b989'); badge.addColorStop(1, '#2be0a2');
+  ctx.fillStyle = badge; ctx.shadowColor = '#2be0a2'; ctx.shadowBlur = 14; ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = '#03261c'; ctx.font = '900 ' + (compact ? 10 : 11) + 'px ' + MONO;
+  const reward = f.reward > 0 ? '+' + f.reward + ' SHELLS BANKED  ·  ' : '';
+  ctx.fillText(reward + 'PLAN FOLLOWED', cx, badgeY + 1);
+
+  ctx.restore();
+  ctx.globalAlpha = 1; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 }
 
 /* ── Milestone hero: a big, smiling Finn rendered centre-screen for a celebration.
@@ -12921,14 +13058,14 @@ function updateWisdomPages(dt, tx, ty) {
     if (p.state === 'clue') {
       // Investigation = reaching the wick tip (not just crossing the candle). The reveal is
       // local and quiet — a soft bloom, the page drifts in above the tip, one boost away.
-      if (Math.hypot(tx - p.x, ty - p.tipY) < 50) {
+      if (finnSweptRewardTouch(tx, ty, p.x, p.tipY, 24, 24)) {
         p.state = 'revealed'; p.revealT = 0.7;
         try { if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting('setup'); } catch (e) {}
       }
       continue;                                    // invisible while a clue: never collectible
     }
     if (p.revealT > 0) p.revealT = Math.max(0, p.revealT - dt);
-    if (Math.hypot(tx - p.x, ty - p.y) < 30) collectWisdomPage(p);
+    if (finnSweptRewardTouch(tx, ty, p.x, p.y, 16, 20)) collectWisdomPage(p);
   }
   try { document.body.classList.toggle('wisdomNear', near && bossesEverCount() >= 1); } catch (e) {}
 }
@@ -15716,6 +15853,7 @@ function authoredTutorialOutcome() {
   } catch (e) {}
   return 'win';   // L1 · L2-after-First-Loss · L3 → authored win
 }
+function tradeMusicTrack(isFirstRide) { return isFirstRide ? 'firstTrade' : 'trade'; }
 function commitTrade() {
   try { FinnLife.lookToward(0.85, 1.4, 'trade'); } catch (e) {}   // Living Renderer — a glance to the chart as the trade opens
   if (!pending || trade) return;
@@ -15763,6 +15901,7 @@ function commitTrade() {
   //   • a LOSS: the stop sits exactly where a real candle crosses it, so the stop-out is
   //     SHOWN on the chart instead of price sailing past an untouched line.
   const _introTrade = introFlow.active && introFlow.awaitingTrade && !introFlow.firstTradeDone;
+  trade._firstRide = !!_introTrade;       // Build 364: only the first real trade gets the authored roller-coaster score/path
   // Note 2a (playtest 253) — the FIRST guided trade repositions Finn onto the entry line (below).
   // If entryH came from a setup candle that isn't under him, the entry line (and Finn) float in the
   // AIR above the chart — the reported "first-trade entry is above the chart" bug. Re-anchor the
@@ -15943,7 +16082,7 @@ function commitTrade() {
   trade.path = [];   // candles AFTER entry, recorded live → the replay "film"
   closePanel();
   // Note 1 (playtest 253) — pattern-break to the FOCUS bed the moment the trade goes live.
-  try { if (localStorage.getItem('cq_music') !== 'off') GameMusic.play('trade'); } catch (e) {}
+  try { if (localStorage.getItem('cq_music') !== 'off') GameMusic.play(tradeMusicTrack(_introTrade)); } catch (e) {}
   clearBeginnerSetup();   // PHASE 2 — the setup was taken; drop its state + fly-in portal
   // FIX 6 — the FIRST trade is THE moment. Freeze the chart and walk the player through
   // their ENTRY → STOP → TARGET with pointing arrows, so a beginner actually understands
@@ -16776,9 +16915,9 @@ function resolveTrade(result) {
       // SHOT 5 — ONE box: the trophy names the milestone AND explains how it was won (wait for the
       // pullback, then a green close = you joined the move), so no separate cards pile up around it.
       const _fireFirstWin = function () {
-        try { celebrate({ title: '🏆 FIRST WIN!', sub: 'You waited for the dip, then joined the green.',
-          color: '#ffd60a', sparkCol: '#ffd60a', burst: 'shell', n: 46, dur: 3.8, flash: 0.68, shake: 0.6,
-          haptic: 34, sound: 'fanfare', y: H * 0.42, finn: true }); } catch (e) {}   // TX-01/TX-03 — the earned once-ever moment, amplified (particles/dur/flash + a milestone buzz)
+        try { celebrate({ title: 'FIRST TRADE WON', sub: 'You read it. You waited. You executed.',
+          reward: delta, color: '#ffd60a', sparkCol: '#ffd60a', burst: 'shell', n: 46, dur: 4.6, flash: 0.68, shake: 0.6,
+          haptic: 34, sound: 'fanfare', y: H * 0.15, firstWin: true }); } catch (e) {}   // Build 364 — one premium vector milestone, no system emoji or loose text stack
         try { localStorage.setItem('cq_firstwin_v1', '1'); } catch (e) {}   // BURN the once-ever flag ONLY now that the trophy has actually played — an interruption before this point re-arms the celebration next session instead of silently losing it.
       };
       /* FOUNDER CALL (build 303) — THE MILESTONE MUST NOT PLAY TO AN EMPTY ROOM.
@@ -17125,7 +17264,7 @@ function teachThenNextTrade(concept, left) {
   (function tick() {
     if (!introFlow.active || introFlow.phase !== 'run' || !introFlow.awaitingTrade) return;
     const capped = (_now() - t0) > 18000;
-    const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && (f.finn || f.emoji); });
+    const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && (f.firstWin || f.finn || f.emoji); });
     const ready = !lessonOpen && (typeof lessonQ === 'undefined' || lessonQ.length === 0) && !pendingCelebration && !_celebrating;
     if (ready || capped) {
       // SHOT 15 — after the trade review clears, EXPLORE first, then discover the next concept's
@@ -17147,7 +17286,7 @@ function waitThenNextTrade(left) {
     const capped = (_now() - t0) > 18000;
     // Wait for the lesson card, any deferred celebration, AND the active FIRST-WIN hero
     // celebration (a `finn` floater) to finish — so TRADE INCOMING never lands over the party.
-    const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && (f.finn || f.emoji); });
+    const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && (f.firstWin || f.finn || f.emoji); });
     const ready = !lessonOpen && (typeof lessonQ === 'undefined' || lessonQ.length === 0) && !pendingCelebration && !_celebrating;
     if (ready || capped) {
       // 3-TRADE RULE — this arms the NEXT guided trade. Re-assert awaitingTrade so resolveTrade
@@ -17181,7 +17320,7 @@ function waitThenIntroBoss(postTradeReviewToken) {
     }
     const now = _now();
     const capped = (now - t0) > 18000;                            // hard fallback after the exact review lifecycle is terminal
-    const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && (f.finn || f.emoji); });
+    const _celebrating = (typeof floaters !== 'undefined') && floaters.some(function (f) { return f && (f.firstWin || f.finn || f.emoji); });
     const ready  = !lessonOpen && lessonQ.length === 0 && !pendingCelebration && !_celebrating;
     const reviewBusy = postTradeReviewInProgress(postTradeReviewToken);
     if (!reviewBusy && (ready || capped)) {
@@ -20934,7 +21073,10 @@ function drawHUD() {
       _yoff = _ry - f.y; _cenBands.push(_ry);
     }
     const _fy = f.y + _yoff;
-    if (f.finn) {                        // milestone hero — big smiling Finn, centred
+    if (f.firstWin) {                    // Build 364 — one art-directed FIRST WIN milestone card
+      try { drawFirstWinMilestone(f); } catch (e) {}
+      ctx.globalAlpha = 1; ctx.textAlign = 'left';
+    } else if (f.finn) {                 // legacy milestone hero — big smiling Finn, centred
       try { drawHeroFinn(f); } catch (e) {}
       ctx.globalAlpha = 1; ctx.textAlign = 'left';
     } else if (f.emoji) {                // SHOT 5 — a big single emoji (🏆) milestone pop, centred
@@ -25112,7 +25254,13 @@ const GameMusic = (() => {
     // Note 1 (playtest 253) — a distinct FOCUS bed for the "taking a trade / exercise" moment:
     // a tense, mid-tempo minor pulse with a soft heartbeat drum, so the music itself signals
     // "this matters" and pattern-breaks from the calm explore bed. Returns to 'explore' after.
-    if (name === 'trade' || name === 'focus') {
+    if (name === 'firstTrade') {
+      // Build 364 — the first trade is the game's promise. A faster, fuller pulse starts on the
+      // CONFIRM gesture itself and stays audibly present through the scare/surge/give-back arc.
+      run(build({ root: 50, scale: MINOR, bpm: 112, leadOn: true, dense: true, leadOct: 1,
+        waveLead: 'triangle', waveBass: 'sawtooth', leadVol: 0.068, bassVol: 0.14, vol: 0.18, drums: true }),
+        { name: 'firstTrade', vol: 0.18 });
+    } else if (name === 'trade' || name === 'focus') {
       run(build({ root: 50, scale: MINOR, bpm: 96, leadOn: true, dense: false, leadOct: 1,
         waveLead: 'sine', waveBass: 'triangle', leadVol: 0.055, bassVol: 0.12, vol: 0.145, drums: true }),
         { name: 'trade', vol: 0.145 });
@@ -25740,7 +25888,15 @@ function frame(now) {
     if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) {
       let _dl, _rp = 0.5;
       if (!trade) _dl = 1;
-      else if (trade._drivePhase === 'dip' || trade._drivePhase === 'stopout') _dl = 0.34;
+      else if (trade._firstRide) {
+        // The first-trade score must never disappear under its own drama. It still breathes with
+        // the chart, but its quietest beat stays clearly audible on a phone speaker.
+        if (trade._drivePhase === 'dip') _dl = 0.64;
+        else if (trade._drivePhase === 'surge') _dl = 0.92;
+        else if (trade._drivePhase === 'shakeout') _dl = 0.72;
+        else if (trade._drivePhase === 'run') { _dl = 1; _rp = 0.75; }
+        else _dl = 0.82;
+      } else if (trade._drivePhase === 'dip' || trade._drivePhase === 'stopout') _dl = 0.34;
       else if (trade._drivePhase === 'run') { _dl = 0.85; _rp = 0.9; }
       else _dl = 0.55;
       GameMusic.duckTo(_dl, _rp);

@@ -1,5 +1,27 @@
 # Current Technical State
 
+## 2026-08-12 build-365 final-send addendum — VERIFIED
+
+- Exact local candidate payload commit:
+  `7b3679c6497d8d4e9bfd8cdac3754489aaa9c4f7` on `codex/beta-360-readiness`.
+- `chart-quest.html`, `index.html`, and `website/game.html` are byte-identical at SHA-256
+  `f80cecb3a4ed343ae21fa491b71cda46e2485176b56019a8484b11b490352879`; the guarded Browser bridge
+  is `114d91e611a125d6e6ebadb80029deae04357db1f960abed05b27103b4614937`.
+- A trade portal now publishes only after every unbroken box in/beyond its corridor is deferred and
+  its governed or legacy reward budget is restored. Planned replay/recap exits place Finn beyond the
+  exact TP/SL line in the correct direction and retain the crossed frame for about 960 ms.
+- The first trade now uses a sparse warmer authored score while retaining its deterministic four-act
+  price path. Ordinary centered feedback routes through one premium non-blocking toast owner.
+- PM/CTO review approved and exact-byte QA passed: focused 24/24, release controls 15/15, artifact
+  parity 5/5, verifier 24/0/0/1, and in-app Browser 31/31 with zero captured errors.
+- PM/CTO decision: **BUILD 365 READY FOR FOUNDER FINAL MOBILE RETEST**. Subjective phone audio and
+  visual taste plus one final real-trade/reward feel pass remain Founder judgments.
+- This is not release approval. Production remains frozen; served identity, fresh-cache verification,
+  manifest/lock/gate, Founder release acceptance, and the account-level freeze action remain future
+  Release Manager work.
+
+Lower sections are historical snapshots and do not override this verified build-365 addendum.
+
 ## 2026-08-12 build-364 Founder-blocker addendum — VERIFIED
 
 - Exact local candidate payload commit:

@@ -4,23 +4,21 @@
 
 ## Sprint objective
 
-**PASS:** close the three Founder-confirmed beta blockers found during the physical Build 363
-mobile retest: (1) boxes and Lost Wisdom pages are visibly reachable but do not respond, (2) the
-once-ever FIRST WIN presentation is below the product bar, and (3) the first real trade needs an
-audible, higher-energy score plus a clearly legible roller-coaster price arc. Advance one exact
-Build 364 candidate through implementation, regression review, rendered Browser QA, and PM/CTO
-adjudication to **BUILD READY FOR FOUNDER MOBILE RETEST**. Production remains frozen and no deployment
-is in scope.
+**PASS:** close the final two Founder-confirmed send blockers from the physical Build 364 retest:
+(1) a breakable box may not survive in/beyond a trade-portal corridor, and (2) replay/recap must
+visibly show Finn cross the correct take-profit or stop-loss line. Include the bounded Founder
+polish requests for a warmer first-trade score and premium centered feedback, then advance exact
+Build 365 through review, exact-byte Browser QA, and PM/CTO adjudication. Production remains frozen.
 
 ## Current release/build
 
 - Isolated candidate branch: `codex/beta-360-readiness`.
-- Exact candidate payload commit: `45803665bce75df319b9b8a6dae5e8262f5d8f06`.
-- Build: **364**.
+- Exact candidate payload commit: `7b3679c6497d8d4e9bfd8cdac3754489aaa9c4f7`.
+- Build: **365**.
 - Source, root mirror, and website game artifact are byte-identical at SHA-256
-  `ea4c7fdc958b8f502e2588377068813881e37d9e9450c6c45ce7edbddf109a52`.
+  `f80cecb3a4ed343ae21fa491b71cda46e2485176b56019a8484b11b490352879`.
 - Browser bridge SHA-256:
-  `228f70b79f1d8f062bbfaa59a3166ed3680856539fc455135a1109ce02cda940`.
+  `114d91e611a125d6e6ebadb80029deae04357db1f960abed05b27103b4614937`.
 - Production was last observed presenting build 359; exact served-response SHA-256 remains unverified.
 - Candidate is not authorized for push, merge, deployment, or production testing.
 
@@ -28,7 +26,7 @@ is in scope.
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Founder physical Build-364 retest | Founder | **READY** | Judge the fixed box/page interaction, FIRST WIN presentation, dedicated first-trade music, and four-act price journey on the intended phone. |
+| Founder final physical Build-365 retest | Founder | **READY** | Judge the reward-free trade-portal corridor, visible TP/SL replay crossing, warmer first-trade score, and premium centered feedback on the intended phone. |
 
 ## Blocked tasks
 
@@ -42,6 +40,9 @@ is in scope.
 
 | Task | Result | Evidence |
 |---|---|---|
+| Build-365 final-send investigation | **PASS — four root causes confirmed** | `handoffs/BETA365_INVESTIGATION.md` |
+| Build-365 implementation and PM/CTO review | **APPROVED** | Candidate commit `7b3679c`; `handoffs/BETA365_IMPLEMENTATION.md`; `handoffs/BETA365_REVIEW.md` |
+| Build-365 exact-byte QA and Browser matrix | **PASS FOR FOUNDER FINAL MOBILE RETEST** | `handoffs/BETA365_QA.md`; focused 24/24; release 15/15; parity 5/5; verifier 24/0/0/1; Browser 31/31 |
 | Build-364 blocker investigation | **PASS — three root causes confirmed** | `handoffs/BETA364_INVESTIGATION.md` |
 | Build-364 implementation | **PASS** | Candidate commit `4580366`; `handoffs/BETA364_IMPLEMENTATION.md` |
 | Build-364 PM/CTO review | **APPROVED** | `handoffs/BETA364_REVIEW.md` |
@@ -65,13 +66,13 @@ is in scope.
 
 No Founder engineering input is required. The Founder is not required to manage branches, files,
 prompts, reports, or routine QA. The next Founder action is the subjective physical-device retest of
-the exact accepted Build 364 candidate. A later production release still requires explicit
+the exact accepted Build 365 candidate. A later production release still requires explicit
 Founder/Release-Manager acceptance and a deliberate account-level action on the GitHub freeze; that
 is not part of this sprint.
 
 ## Release status
 
-**BUILD 364 READY FOR FOUNDER MOBILE RETEST — DO NOT SHIP — PRODUCTION FROZEN**
+**BUILD 365 READY FOR FOUNDER FINAL MOBILE RETEST — DO NOT SHIP — PRODUCTION FROZEN**
 
 Automated QA does not authorize production. The next technical workflow after Founder acceptance is
 a separate Release Manager candidate/manifest/lock/gate/fingerprint process.

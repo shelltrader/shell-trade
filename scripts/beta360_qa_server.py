@@ -269,6 +269,14 @@ def self_test():
         check(value is None or denied(value) or asset(value) is None, "deny " + path)
     check(asset("/finn/run.png") is not None, "allow Finn asset")
     check(asset("/Market-maker-cinematic.mp4") is not None, "allow opening cinematic")
+    for path in (
+        "/bosses/sfx/boss1-polish-v1/intro.m4a",
+        "/bosses/sfx/boss1-polish-v1/flinch-1.m4a",
+        "/bosses/sfx/boss1-polish-v1/flinch-2.m4a",
+        "/bosses/sfx/boss1-polish-v1/flinch-3.m4a",
+        "/bosses/sfx/boss1-polish-v1/flinch-4.m4a",
+    ):
+        check(asset(path) is not None, "allow Boss 1 mix " + path)
     for path in (HARNESS, BRIDGE, SURVEY, *SURVEY_DEPENDENCIES.values()):
         check(path.is_file(), "present " + path.name)
     check(SURVEY_URL == "/survey.html" and SURVEY == ROOT / "website/survey.html",
@@ -284,12 +292,25 @@ def self_test():
         check("chart-quest.html?qa=1&amp;mute=1" in text and "fresh=1" not in low, "safe iframe URL")
         check(all(x not in low for x in ("localstorage", "indexeddb", "document.cookie")), "harness avoids storage APIs")
         check("run all" in low and "expected" in low and "actual" in low, "visible report")
+        check("<b id=\"pendingCount\">37</b>" in text and "const expectedCount" in text,
+              "dynamic 37-case Build 367 count")
+        check(all(case in text for case in ("'F17'", "'F18'", "'F19'")), "Boss 1 flow cases")
+        flow = text[text.find("const flowIds"):text.find("const collisionIds")]
+        check("A1" not in flow and "showBoss1Audition" not in flow, "audible A1 excluded from Run All")
     if BRIDGE.is_file():
         text = BRIDGE.read_text()
         low = text.lower()
         check(all(x in low for x in ("127.0.0.1", "localhost", "window._cq_dev", "window.qa", "window.parent.location.origin", "window.qabeta360")), "bridge guards")
         check(all(x not in low for x in ("localstorage", "indexeddb", "document.cookie", "resolvetrade('loss')", 'resolvetrade("loss")')), "bridge forbidden operations")
         check("tradetouchcheck" in low and "tradedrivencandle" in low, "real stop path")
+        check(all(("async function " + case + "()") in text for case in ("F17", "F18", "F19")),
+              "Boss 1 browser cases implemented")
+        check("showBoss1Audition: showBoss1Audition" in text and "CQBoss1AudioQA" in text,
+              "separate dev-only audible audition exported")
+        check(all(name in text for name in (
+            "boss-1.mp4", "boss-1-flinch-1.mp4", "boss-1-flinch-2.mp4",
+            "boss-1-flinch-3.mp4", "boss-1-flinch-4.mp4",
+        )), "A1 names all exact cinematics")
     for failure in failures:
         print("FAIL", failure)
     if not failures:

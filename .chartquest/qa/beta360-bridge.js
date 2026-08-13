@@ -35,6 +35,49 @@
   let caseErrorBaseline = 0;
   let fixtureSequence = 0;
   const fixtureIndexes = [];
+  let boss1QaFactoryActive = false;
+  let boss1QaPriorMuted = null;
+  let boss1AuditionPriorMuted = null;
+  let boss1AuditionCompleted = new Set();
+  let boss1AuditionTimer = 0;
+  let boss1AuditionFinalizeTimer = 0;
+  let boss1AuditionVideo = null;
+
+  function boss1Api() {
+    return window.CQBoss1AudioQA || null;
+  }
+  function stopBoss1Audition(reason) {
+    if (boss1AuditionTimer) clearTimeout(boss1AuditionTimer);
+    if (boss1AuditionFinalizeTimer) clearTimeout(boss1AuditionFinalizeTimer);
+    boss1AuditionTimer = 0;
+    boss1AuditionFinalizeTimer = 0;
+    const api = boss1Api();
+    try { if (api) api.stopAll(reason || 'qa-audition-stop'); } catch (_) {}
+    try { if (boss1AuditionVideo) { boss1AuditionVideo.pause(); boss1AuditionVideo.removeAttribute('src'); boss1AuditionVideo.load(); } } catch (_) {}
+    boss1AuditionVideo = null;
+    try {
+      if (typeof GameMusic !== 'undefined') {
+        if (GameMusic.duckTo) GameMusic.duckTo(1, 0.12);
+        if (GameMusic.setMuted) GameMusic.setMuted(true);
+      }
+    } catch (_) {}
+    try {
+      if (api && boss1AuditionPriorMuted != null) api.setMuted(boss1AuditionPriorMuted);
+    } catch (_) {}
+    boss1AuditionPriorMuted = null;
+  }
+  function restoreBoss1Qa() {
+    const api = boss1Api();
+    try { if (api) api.stopAll('qa-cleanup'); } catch (_) {}
+    try { delete window.__CQ_BOSS1_AUDIO_TEST_SINK__; } catch (_) {}
+    if (boss1QaFactoryActive) {
+      try { if (api) api.setTestAudioFactory(null); } catch (_) {}
+      try { if (api && boss1QaPriorMuted != null) api.setMuted(boss1QaPriorMuted); } catch (_) {}
+    }
+    boss1QaFactoryActive = false;
+    boss1QaPriorMuted = null;
+    try { if (api) api.clearEvents(); } catch (_) {}
+  }
 
   function nextFrame(count) {
     count = count == null ? 1 : count;
@@ -106,7 +149,44 @@
       if (list[i] && list[i].__beta360Fixture) list.splice(i, 1);
     }
   }
+  function stopProgressionFixtures() {
+    /* Run All reuses one live iframe. Product progression owns self-scheduling 150/200/280ms
+       callbacks, so clearing only their visible portal is not isolation: a callback from the
+       preceding run can recreate UI/world state during the next case. Revoke that ownership
+       before closing any surface (whose close handler may itself advance progression). */
+    try {
+      introFlow.active = false;
+      introFlow.phase = 'done';
+      introFlow.awaitingTrade = false;
+      introFlow.exploreBreather = false;
+      introFlow.exploreConcept = null;
+      introFlow.exploreAfter = null;
+      introFlow.explorePortalUp = false;
+      introFlow._proveRepPending = false;
+      introFlow.bossPortalUp = false;
+      introFlow.finalApproach = null;
+    } catch (_) {}
+    try {
+      _postTradeReviewActive.clear();
+      _postTradeReviewRequired.clear();
+      _postTradeReviewOpen = 0;
+    } catch (_) {}
+    try {
+      setupSeq = null;
+      setupZone = null;
+      setupFlow = null;
+      firstTradeGuide = null;
+      setupCountdown = Math.max(30, Number(setupCountdown) || 0);
+      genSetupIn = Math.max(30, Number(genSetupIn) || 0);
+    } catch (_) {}
+  }
+  function clearWorldList(list) {
+    try { if (list && typeof list.splice === 'function') list.splice(0); } catch (_) {}
+  }
   function cleanup() {
+    stopBoss1Audition('qa-cleanup');
+    restoreBoss1Qa();
+    stopProgressionFixtures();
     try {
       if (window.CQJournalTutorial && typeof window.CQJournalTutorial.isActive === 'function' &&
           window.CQJournalTutorial.isActive() && typeof window.CQJournalTutorial.stop === 'function') {
@@ -116,12 +196,14 @@
     try { const journalQaRoot = document.getElementById('jtut'); if (journalQaRoot) journalQaRoot.remove(); } catch (_) {}
     try { const cosmetics = document.getElementById('beta366Cosmetics'); if (cosmetics) cosmetics.remove(); } catch (_) {}
     try { const media = document.getElementById('beta366Media'); if (media) media.remove(); } catch (_) {}
+    try { const media = document.getElementById('beta367AudioMedia'); if (media) media.remove(); } catch (_) {}
+    try { const audition = document.getElementById('beta367AudioAudition'); if (audition) audition.remove(); } catch (_) {}
     try { closeReviewChart(); } catch (_) {}
     try { hideTradeIncoming(); } catch (_) {}
     try { if (panelEl && panelEl.classList.contains('open')) closePanel(); } catch (_) {}
     try { pending = null; } catch (_) {}
     try { trade = null; } catch (_) {}
-    try { setupZone = null; setupFlow = null; firstTradeGuide = null; } catch (_) {}
+    try { setupSeq = null; setupZone = null; setupFlow = null; firstTradeGuide = null; } catch (_) {}
     try { session.inModal = false; } catch (_) {}
     try { paused = false; } catch (_) {}
     try { lessonQ.length = 0; lessonOpen = false; pendingCelebration = null; } catch (_) {}
@@ -136,9 +218,15 @@
     } catch (_) {}
     try { if (closeBtnEl) closeBtnEl.style.display = 'none'; } catch (_) {}
     try { const hold = document.getElementById('holdPlanBtn'); if (hold) hold.style.display = 'none'; } catch (_) {}
+    /* Keep these independent: one malformed/stale collection must never prevent the portal
+       owner from being cleared. That was the repeated-run F11 leak. */
+    clearWorldList(tradeFx);
+    clearWorldList(floaters);
+    clearWorldList(boxFx);
+    clearWorldList(rings);
+    clearWorldList(coins);
+    clearWorldList(portals);
     try {
-      tradeFx.splice(0); floaters.splice(0); boxFx.splice(0); rings.splice(0);
-      coins.splice(0); portals.splice(0);
       walletDisplay = -1; flashT = 0; shakeT = 0; winPunchT = 0;
       tradeOpenT = 0; scareHeart = 0; portalWarp = null;
     } catch (_) {}
@@ -160,6 +248,19 @@
     window.QA.boot();
     await nextFrame(2);
     cleanup();
+  }
+
+  async function isolateWorldFixture() {
+    /* Let already-queued progression/portal-entry callbacks observe the revoked state, then
+       clean once more and freeze before a case binds its evidence. 360ms covers the product's
+       150/200ms progression polls and 280ms portal hand-off without slowing every QA case. */
+    cleanup();
+    await delay(360);
+    cleanup();
+    stopProgressionFixtures();
+    try { paused = true; session.inModal = false; turtle.halt = false; } catch (_) {}
+    clearWorldList(portals);
+    clearWorldList(floaters);
   }
 
   function pickCandle() {
@@ -238,6 +339,7 @@
   }
 
   async function F1() {
+    await isolateWorldFixture();
     window.QA.boot();
     await nextFrame(3);
     const canvas = document.getElementById('game');
@@ -260,8 +362,8 @@
     };
     const dimensions = canvas && Math.abs(canvas.width - canvas.clientWidth * actual.effectiveDpr) <= 1 &&
       Math.abs(canvas.height - canvas.clientHeight * actual.effectiveDpr) <= 1;
-    return caseResult('F1', 'dev QA build 366, capped main canvas, no walls/errors', actual,
-      actual.dev && actual.qa && actual.build === 366 && dimensions &&
+    return caseResult('F1', 'dev QA build 367, capped main canvas, no walls/errors', actual,
+      actual.dev && actual.qa && actual.build === 367 && dimensions &&
       actual.authHidden && actual.factionHidden && actual.errors.length === 0);
   }
 
@@ -385,7 +487,6 @@
     cleanup();
     const record = lastRecord || fixtureRecord('manual', 12);
     lastRecord = record;
-    const introSnapshot = Object.assign({}, introFlow);
     const lieBefore = new Set(portals.filter(function (portal) { return portal && portal.label === 'THE LIE'; }));
     const practiceBefore = document.getElementById('cqPractice');
     let reviewToken = 0;
@@ -471,8 +572,6 @@
       const practice = document.getElementById('cqPractice');
       if (practice && practice !== practiceBefore) practice.remove();
       cleanup();
-      Object.keys(introFlow).forEach(function (key) { if (!(key in introSnapshot)) delete introFlow[key]; });
-      Object.assign(introFlow, introSnapshot);
     }
   }
 
@@ -691,12 +790,17 @@
   }
 
   async function F11() {
-    cleanup(); paused = true; introFlow.active = false;
+    await isolateWorldFixture();
     const saved = {
       boxMade: market._boxMade, boxSpace: market._boxSpace, boxCand: market._boxCand,
       boxGap: market._boxGap, lastRewardId: market._lastRewardId,
     };
     try {
+      /* The product defers every unreached box, so this fixture must own the complete corridor;
+         otherwise a legitimate box left by the live rAF changes its quota assertions. */
+      clearWorldList(boxes);
+      clearWorldList(portals);
+      const portalCountBefore = portals.length;
       const portalX = turtle.x + W * 0.50;
       market._boxMade = 2; market._boxSpace = 55; market._boxCand = { wait: 1 };
       market._boxGap = 28; market._lastRewardId = 102;
@@ -711,8 +815,11 @@
       boxes.push(before, governed, legacy, broken);
       spawnPortal('QA TRADE', 'ENTER', function () {}, 'trade');
       const remaining = boxes.filter(function (box) { return box && /^F11-/.test(box.__beta360Fixture || ''); });
-      const portal = portals.find(function (item) { return item && item.label === 'QA TRADE'; });
+      const qaPortals = portals.filter(function (item) { return item && item.label === 'QA TRADE'; });
+      const portal = qaPortals[0];
       const actual = {
+        portalCountBefore: portalCountBefore,
+        qaPortalCount: qaPortals.length,
         portalX: portal && portal.x,
         remaining: remaining.map(function (box) { return { id: box.__beta360Fixture, x: box.x, broken: box.broken }; }),
         quota: { made: market._boxMade, space: market._boxSpace, candidate: market._boxCand },
@@ -721,7 +828,8 @@
       };
       const ids = actual.remaining.map(function (row) { return row.id; });
       return caseResult('F11', 'trade portal keeps the approach box, defers every unreached reward, and restores quotas',
-        actual, !!portal && ids.includes('F11-before') && ids.includes('F11-broken') &&
+        actual, portalCountBefore === 0 && qaPortals.length === 1 && !!portal &&
+        ids.includes('F11-before') && ids.includes('F11-broken') &&
         !ids.includes('F11-governed') && !ids.includes('F11-legacy') &&
         market._boxMade === 1 && market._boxSpace === 0 && market._boxCand === null &&
         market._boxGap === 0 && market._lastRewardId === null && actual.tradePortalOwnsRoad);
@@ -903,6 +1011,476 @@
     const staleRoot = document.getElementById('jtut');
     if (staleRoot) staleRoot.remove();
     return result;
+  }
+
+  function Boss1QaTarget() { this.listeners = Object.create(null); }
+  Boss1QaTarget.prototype.addEventListener = function (type, fn) {
+    (this.listeners[type] || (this.listeners[type] = [])).push(fn);
+  };
+  Boss1QaTarget.prototype.removeEventListener = function (type, fn) {
+    const list = this.listeners[type] || [];
+    const at = list.indexOf(fn); if (at >= 0) list.splice(at, 1);
+  };
+  Boss1QaTarget.prototype.emit = function (type) {
+    (this.listeners[type] || []).slice().forEach(function (fn) {
+      fn({ type: type, target: this });
+    }, this);
+  };
+  function Boss1FakeAudio() {
+    Boss1QaTarget.call(this);
+    this.src = ''; this.preload = ''; this.playsInline = true;
+    this.readyState = 4; this.currentTime = 0; this.playbackRate = 1;
+    this._volume = 0.73; this.muted = false; this.playMuted = [];
+    this.paused = true; this.playCalls = 0; this.pauseCalls = 0;
+  }
+  Boss1FakeAudio.prototype = Object.create(Boss1QaTarget.prototype);
+  Boss1FakeAudio.prototype.constructor = Boss1FakeAudio;
+  Object.defineProperty(Boss1FakeAudio.prototype, 'volume', {
+    get: function () { return this._volume; }, set: function () {} // iOS seam: setter ignored
+  });
+  Boss1FakeAudio.prototype.load = function () { this.readyState = 4; this.emit('loadedmetadata'); };
+  Boss1FakeAudio.prototype.play = function () {
+    this.playCalls++; this.playMuted.push(this.muted); this.paused = false; return Promise.resolve();
+  };
+  Boss1FakeAudio.prototype.pause = function () { this.pauseCalls++; this.paused = true; };
+  function Boss1FakeVideo() {
+    Boss1QaTarget.call(this);
+    this.currentTime = 0; this.playbackRate = 1; this.paused = false;
+    this.seeking = false; this.readyState = 4; this.nextFrameId = 1;
+    this.frames = Object.create(null);
+  }
+  Boss1FakeVideo.prototype = Object.create(Boss1QaTarget.prototype);
+  Boss1FakeVideo.prototype.constructor = Boss1FakeVideo;
+  Boss1FakeVideo.prototype.requestVideoFrameCallback = function (fn) {
+    const id = this.nextFrameId++; this.frames[id] = fn; return id;
+  };
+  Boss1FakeVideo.prototype.cancelVideoFrameCallback = function (id) { delete this.frames[id]; };
+  Boss1FakeVideo.prototype.frame = function (mediaTime) {
+    this.currentTime = mediaTime;
+    const pending = Object.keys(this.frames).map(function (id) { return this.frames[id]; }, this);
+    this.frames = Object.create(null);
+    pending.forEach(function (fn) { fn(performance.now(), { mediaTime: mediaTime }); });
+  };
+
+  function installBoss1FakeAudio() {
+    const api = boss1Api();
+    if (!api) throw new Error('CQBoss1AudioQA is unavailable');
+    const audios = [], sink = [];
+    boss1QaPriorMuted = api.isMuted();
+    api.stopAll('qa-fake-install');
+    api.setTestAudioFactory(function () {
+      const audio = new Boss1FakeAudio(); audios.push(audio); return audio;
+    });
+    boss1QaFactoryActive = true;
+    window.__CQ_BOSS1_AUDIO_TEST_SINK__ = function (row) { sink.push(row); };
+    api.clearEvents();
+    api.setMuted(false);
+    return { api: api, audios: audios, sink: sink };
+  }
+  function waitForBoss1Trace(api, type, scene, timeout) {
+    const started = performance.now();
+    return new Promise(function (resolve, rejectPromise) {
+      function poll() {
+        const row = api.events().find(function (event) {
+          return event.type === type && (!scene || event.scene === scene);
+        });
+        if (row) return resolve(row);
+        if (performance.now() - started > timeout) return rejectPromise(new Error('timed out waiting for ' + type + ':' + scene));
+        setTimeout(poll, 20);
+      }
+      poll();
+    });
+  }
+  function loadBoss1Metadata(element, src, timeout) {
+    return new Promise(function (resolve) {
+      let settled = false;
+      const timer = setTimeout(function () { finish(false, 'timeout'); }, timeout || 5000);
+      function finish(ok, error) {
+        if (settled) return; settled = true; clearTimeout(timer);
+        element.removeEventListener('loadedmetadata', loaded);
+        element.removeEventListener('error', failed);
+        resolve({ ok: ok, error: error || null });
+      }
+      function loaded() { finish(true, null); }
+      function failed() { finish(false, 'media-error-' + ((element.error && element.error.code) || 'unknown')); }
+      element.addEventListener('loadedmetadata', loaded);
+      element.addEventListener('error', failed);
+      element.preload = 'metadata'; element.src = src;
+      try { element.load(); } catch (error) { finish(false, String(error)); }
+    });
+  }
+
+  async function F17() {
+    cleanup();
+    const api = boss1Api();
+    const expected = {
+      intro: ['bosses/sfx/boss1-polish-v1/intro.m4a', 10.041667],
+      flinch1: ['bosses/sfx/boss1-polish-v1/flinch-1.m4a', 3.916],
+      flinch2: ['bosses/sfx/boss1-polish-v1/flinch-2.m4a', 3.016],
+      flinch3: ['bosses/sfx/boss1-polish-v1/flinch-3.m4a', 3.533],
+      flinch4: ['bosses/sfx/boss1-polish-v1/flinch-4.m4a', 5.183],
+    };
+    if (!api) return caseResult('F17', 'five versioned Boss 1 mixes decode without playback', {
+      api: false,
+    }, false);
+    const initialMute = api.isMuted();
+    const rows = [];
+    for (const scene of Object.keys(expected)) {
+      const audio = document.createElement('audio');
+      const outcome = await loadBoss1Metadata(audio, expected[scene][0], 6000);
+      rows.push({
+        scene: scene, source: String(audio.currentSrc || audio.src || ''), ok: outcome.ok,
+        error: outcome.error, duration: audio.duration, readyState: audio.readyState,
+      });
+      try { audio.pause(); audio.removeAttribute('src'); audio.load(); } catch (_) {}
+    }
+    const exactAssets = Object.keys(expected).every(function (scene) { return api.assets[scene] === expected[scene][0]; });
+    const decoded = rows.every(function (row) {
+      return row.ok && row.readyState >= 1 && Number.isFinite(row.duration) &&
+        Math.abs(row.duration - expected[row.scene][1]) < 0.035 &&
+        row.source.indexOf(expected[row.scene][0]) >= 0;
+    });
+    return caseResult('F17', 'five versioned Boss 1 mixes decode by metadata only; Run All remains silent', {
+      api: true, exactAssets: exactAssets, initialMute: initialMute, stillMuted: api.isMuted(), media: rows,
+    }, exactAssets && decoded && initialMute && api.isMuted(), null,
+    ['loudness, clipping, phone-band clarity, and artistic quality are locked by media/static QA plus the separate A1 listening audition']);
+  }
+
+  async function F18() {
+    cleanup();
+    const expected = [
+      { scene:'intro', src:'bosses/intros/boss-1.mp4', duration:10.041667, width:720, height:1264 },
+      { scene:'flinch1', src:'bosses/flinches/boss-1-flinch-1.mp4', duration:3.916667, width:720, height:1280 },
+      { scene:'flinch2', src:'bosses/flinches/boss-1-flinch-2.mp4', duration:3.016667, width:720, height:1280 },
+      { scene:'flinch3', src:'bosses/flinches/boss-1-flinch-3.mp4', duration:3.533333, width:720, height:1280 },
+      { scene:'flinch4', src:'bosses/flinches/boss-1-flinch-4.mp4', duration:5.183333, width:720, height:1280 },
+    ];
+    const root = document.createElement('div');
+    root.id = 'beta367AudioMedia';
+    root.style.cssText = 'position:fixed;left:-20px;top:-20px;width:2px;height:2px;overflow:hidden;opacity:.001;pointer-events:none';
+    document.body.appendChild(root);
+    const env = installBoss1FakeAudio(), rows = [];
+    try {
+      for (const item of expected) {
+        const video = document.createElement('video');
+        video.muted = true; video.defaultMuted = true; video.volume = 0; video.playsInline = true;
+        video.style.cssText = 'width:2px;height:2px'; root.appendChild(video);
+        const loaded = await loadBoss1Metadata(video, item.src, 7000);
+        env.api.clearEvents();
+        const owned = loaded.ok && env.api.start(item.scene, video);
+        let playError = null;
+        if (owned) {
+          try { await video.play(); } catch (error) { playError = String(error); }
+        }
+        let playRow = null;
+        if (owned && !playError) {
+          try { playRow = await waitForBoss1Trace(env.api, 'play', item.scene, 5000); }
+          catch (error) { playError = String(error); }
+        }
+        env.api.stop(video, 'qa-real-video');
+        try { video.pause(); } catch (_) {}
+        const trace = env.api.events();
+        rows.push({
+          scene:item.scene, source:String(video.currentSrc || ''), metadata:loaded,
+          duration:video.duration, width:video.videoWidth, height:video.videoHeight,
+          playError:playError, play:playRow, trace:trace,
+        });
+        video.remove();
+      }
+      const pass = rows.every(function (row, index) {
+        const item = expected[index], play = row.play;
+        return row.metadata.ok && row.source.indexOf(item.src) >= 0 &&
+          row.width === item.width && row.height === item.height &&
+          Math.abs(row.duration - item.duration) < 0.035 && !row.playError && play &&
+          /^rendered-frame/.test(play.reason) && Number.isFinite(play.mediaTime) &&
+          Number.isFinite(play.audioTime) && Math.abs(play.mediaTime - play.audioTime) <= 0.08 &&
+          row.trace.filter(function (event) { return event.type === 'play'; }).length === 1 &&
+          row.trace.some(function (event) { return event.type === 'stop' && event.reason === 'qa-real-video'; });
+      });
+      return caseResult('F18', 'real intro and all four real flinch videos start a silent fake mix from their first rendered media frame', {
+        allMutedVideos: true, fakeAudioCount: env.audios.length, rows: rows,
+      }, pass && env.audios.length === 5 && env.api.snapshot() === null, { mediaRoot: rect(root) });
+    } finally {
+      try { root.querySelectorAll('video').forEach(function (video) { video.pause(); }); } catch (_) {}
+      root.remove(); restoreBoss1Qa();
+    }
+  }
+
+  async function F19() {
+    cleanup();
+    const mutedApi = boss1Api();
+    const mutedUnlockCount = mutedApi && mutedApi.isMuted() && typeof mutedApi.unlock === 'function'
+      ? mutedApi.unlock() : null;
+    const env = installBoss1FakeAudio();
+    const duckRows = [];
+    let oldDuck = null;
+    try {
+      try {
+        oldDuck = GameMusic.duckTo;
+        GameMusic.duckTo = function (level, ramp) { duckRows.push({ level:level, ramp:ramp }); };
+      } catch (_) {}
+      const unlockedCount = env.api.unlock();
+      const primedAudios = env.audios.slice();
+      const unlockSynchronous = unlockedCount === 5 && primedAudios.length === 5 &&
+        primedAudios.every(function (audio) {
+          return audio.playCalls === 1 && audio.playMuted[0] === true && audio.volume === 0.73;
+        });
+      env.api.setMuted(true);
+      await delay(0);
+      const latePrimeContained = primedAudios.every(function (audio) { return audio.paused; });
+      env.api.setMuted(false);
+      env.api.setTestAudioFactory(function () {
+        const audio = new Boss1FakeAudio(); env.audios.push(audio); return audio;
+      });
+      const heldVideo = new Boss1FakeVideo();
+      const heldOwned = env.api.start('intro', heldVideo);
+      const heldAudio = env.audios[env.audios.length - 1];
+      heldVideo.emit('waiting');
+      heldVideo.frame(0.55); await delay(0);
+      const waitingBeforeFrameSilent = heldAudio.playCalls === 0;
+      heldVideo.currentTime = 0.9; heldVideo.emit('playing'); await delay(0);
+      const playingBeforeFrameSilent = heldAudio.playCalls === 0;
+      heldVideo.frame(0.9); await delay(0);
+      const heldFrameStarted = heldAudio.playCalls === 1 && Math.abs(heldAudio.currentTime - 0.9) < 0.001;
+      env.api.stop(heldVideo, 'qa-cold-hold-complete');
+
+      /* The preceding held-scene test intentionally warmed the pooled intro element. A second
+         intro must remain silent until its own rendered frame, but its lifetime play counter is
+         not expected to reset merely because the controller reused that authorized element. */
+      const coldCounts = new Map(env.audios.map(function (audio) { return [audio, audio.playCalls]; }));
+      const coldVideo = new Boss1FakeVideo();
+      const coldOwned = env.api.start('intro', coldVideo);
+      const coldAudio = env.audios[env.audios.length - 1];
+      const coldBaseline = coldCounts.has(coldAudio) ? coldCounts.get(coldAudio) : 0;
+      await delay(35);
+      const coldSilent = coldAudio.playCalls === coldBaseline;
+      coldVideo.frame(0.8); await delay(0);
+      const frameStarted = coldAudio.playCalls === coldBaseline + 1 && Math.abs(coldAudio.currentTime - 0.8) < 0.001;
+
+      coldVideo.emit('waiting');
+      const stallPlayCalls = coldAudio.playCalls; await delay(35);
+      const stallHeld = coldAudio.paused && coldAudio.playCalls === stallPlayCalls;
+      coldVideo.currentTime = 1.2; coldVideo.paused = false; coldVideo.emit('playing'); await delay(0);
+      const resumed = coldAudio.playCalls === stallPlayCalls + 1 && Math.abs(coldAudio.currentTime - 1.2) < 0.001;
+      coldAudio.currentTime = 0.2; coldVideo.frame(1.6); await delay(0);
+      const resynced = Math.abs(coldAudio.currentTime - 1.6) < 0.001;
+      const seekCalls = coldAudio.playCalls;
+      coldVideo.seeking = true; coldVideo.emit('seeking');
+      coldVideo.currentTime = 1.9; coldVideo.seeking = false; coldVideo.emit('seeked'); await delay(0);
+      const bufferedSeekResumed = coldAudio.playCalls === seekCalls + 1 && Math.abs(coldAudio.currentTime - 1.9) < 0.001;
+
+      const activeDuckAt = duckRows.length;
+      await nextFrame(3);
+      const activeDuckHeld = !duckRows.slice(activeDuckAt).some(function (row) { return row.level === 1; });
+
+      const replacementVideo = new Boss1FakeVideo();
+      const oldPlayCalls = coldAudio.playCalls;
+      const beforeReplaceDuck = duckRows.length;
+      env.api.start('flinch1', replacementVideo);
+      const replaceDuckRows = duckRows.slice(beforeReplaceDuck);
+      const restoreOnceOnReplace = replaceDuckRows.filter(function (row) { return row.level === 1; }).length === 1;
+      coldVideo.frame(2.0); await delay(0);
+      const replacedStayedStopped = coldAudio.playCalls === oldPlayCalls;
+      const replacementAudio = env.audios[env.audios.length - 1];
+      replacementVideo.frame(0.3); await delay(0);
+      env.api.setMuted(true);
+      const mutedPlayCalls = replacementAudio.playCalls;
+      replacementVideo.frame(0.7); replacementVideo.emit('playing'); await delay(0);
+      const muteStopped = env.api.snapshot() === null && replacementAudio.paused && replacementAudio.playCalls === mutedPlayCalls;
+      env.api.setMuted(false);
+
+      const errorVideo = new Boss1FakeVideo();
+      env.api.start('flinch2', errorVideo);
+      const errorAudio = env.audios[env.audios.length - 1];
+      errorAudio.emit('error'); await delay(0);
+      const errorFailedOpen = env.api.snapshot() === null && errorAudio.playCalls === 0;
+
+      const endedVideo = new Boss1FakeVideo();
+      env.api.start('flinch3', endedVideo);
+      const endedAudio = env.audios[env.audios.length - 1];
+      endedVideo.frame(0.2); await delay(0); endedVideo.emit('ended'); await delay(0);
+      const endedStopped = env.api.snapshot() === null && endedAudio.paused;
+
+      const skipVideo = new Boss1FakeVideo();
+      env.api.start('flinch4', skipVideo);
+      skipVideo.frame(0.25); await delay(0);
+      env.api.stop(skipVideo, 'qa-skip'); env.api.stop(skipVideo, 'qa-skip');
+      const trace = env.api.events();
+      const reasons = trace.filter(function (row) { return row.type === 'stop'; }).map(function (row) { return row.reason; });
+      const oneSkip = reasons.filter(function (reason) { return reason === 'qa-skip'; }).length === 1;
+      let fakeNow = 0, introWatchEnds = 0, flinchWatchEnds = 0, idleEnds = 0;
+      const clock = { now:function () { return fakeNow; }, set:function () { return 0; }, clear:function () {}, idleMs:10000, tickMs:1000 };
+      const slowIntro = new Boss1FakeVideo(), introWatch = env.api.makeWatchdog(slowIntro, function () { introWatchEnds++; }, 60000, clock);
+      for (let elapsed = 3000; elapsed <= 15000; elapsed += 3000) {
+        fakeNow = elapsed; slowIntro.currentTime += 1.8; introWatch.progress(); introWatch.tick();
+      }
+      const introSurvivesSlow15s = introWatchEnds === 0; introWatch.stop();
+      fakeNow = 0;
+      const slowFlinch = new Boss1FakeVideo(), flinchWatch = env.api.makeWatchdog(slowFlinch, function () { flinchWatchEnds++; }, 45000, clock);
+      for (let elapsed = 3000; elapsed <= 12000; elapsed += 3000) {
+        fakeNow = elapsed; slowFlinch.currentTime += 1.1; flinchWatch.progress(); flinchWatch.tick();
+      }
+      const flinchSurvivesSlow12s = flinchWatchEnds === 0; flinchWatch.stop();
+      fakeNow = 0;
+      const idleVideo = new Boss1FakeVideo(), idleWatch = env.api.makeWatchdog(idleVideo, function () { idleEnds++; }, 60000, clock);
+      fakeNow = 10000; idleWatch.tick(); idleWatch.tick();
+      const trueIdleArrivesOnce = idleEnds === 1;
+      const contracts = mutedUnlockCount === 0 && unlockSynchronous && latePrimeContained &&
+        heldOwned && waitingBeforeFrameSilent && playingBeforeFrameSilent && heldFrameStarted &&
+        coldOwned && coldSilent && frameStarted && stallHeld && resumed && resynced && bufferedSeekResumed &&
+        activeDuckHeld && restoreOnceOnReplace && replacedStayedStopped && muteStopped &&
+        errorFailedOpen && endedStopped && oneSkip && introSurvivesSlow15s && flinchSurvivesSlow12s && trueIdleArrivesOnce &&
+        ['replace','music-toggle-off','asset-error','video-ended','qa-skip'].every(function (reason) { return reasons.includes(reason); }) &&
+        trace.some(function (row) { return row.type === 'pause' && row.reason === 'waiting'; }) &&
+        trace.some(function (row) { return row.type === 'resync' && Math.abs(row.drift) > 0.085; }) &&
+        duckRows.some(function (row) { return row.level === 0.18; }) &&
+        duckRows.filter(function (row) { return row.level === 1; }).length >= 4 && env.api.snapshot() === null;
+      return caseResult('F19', 'cold load, rendered-frame start, stall/resume/resync, replacement, mute, error, end, and skip are silent and teardown exactly once', {
+        mutedUnlockCount:mutedUnlockCount, unlockedCount:unlockedCount, unlockSynchronous:unlockSynchronous,
+        latePrimeContained:latePrimeContained, heldOwned:heldOwned,
+        waitingBeforeFrameSilent:waitingBeforeFrameSilent, playingBeforeFrameSilent:playingBeforeFrameSilent,
+        heldFrameStarted:heldFrameStarted, coldBaseline:coldBaseline,
+        coldSilent:coldSilent, frameStarted:frameStarted,
+        stallHeld:stallHeld, resumed:resumed,
+        resynced:resynced, bufferedSeekResumed:bufferedSeekResumed,
+        activeDuckHeld:activeDuckHeld, restoreOnceOnReplace:restoreOnceOnReplace,
+        introSurvivesSlow15s:introSurvivesSlow15s, flinchSurvivesSlow12s:flinchSurvivesSlow12s,
+        trueIdleArrivesOnce:trueIdleArrivesOnce, replacedStayedStopped:replacedStayedStopped, muteStopped:muteStopped,
+        errorFailedOpen:errorFailedOpen, endedStopped:endedStopped, oneSkip:oneSkip,
+        stopReasons:reasons, duckRows:duckRows, fakeAudioCount:env.audios.length, trace:trace,
+      }, contracts);
+    } finally {
+      restoreBoss1Qa();
+      try { if (oldDuck) GameMusic.duckTo = oldDuck; } catch (_) {}
+    }
+  }
+
+  function showBoss1Audition() {
+    cleanup();
+    const api = boss1Api();
+    if (!api) return false;
+    const videos = {
+      intro:'bosses/intros/boss-1.mp4',
+      flinch1:'bosses/flinches/boss-1-flinch-1.mp4',
+      flinch2:'bosses/flinches/boss-1-flinch-2.mp4',
+      flinch3:'bosses/flinches/boss-1-flinch-3.mp4',
+      flinch4:'bosses/flinches/boss-1-flinch-4.mp4',
+    };
+    /* A1 must count a scene only when the real media `ended` event owns completion. Keep its
+       deadlock fallback outside normal cold-decode/slow-progress timing, matching the product's
+       progress-aware hard ceilings, so the fallback can never race the final frame/tail. */
+    const watchdogs = { intro:60000, flinch1:45000, flinch2:45000, flinch3:45000, flinch4:45000 };
+    /* Keep completion evidence across overlay re-opens. The overlay intentionally tears itself
+       down after each real `ended`, and the harness reopens it for the next explicit user gesture;
+       resetting this Set there would make five honest full plays impossible to aggregate. */
+    const completed = boss1AuditionCompleted;
+    let auditionToken = 0, armedToken = 0, armedScene = null, armedStarted = false;
+    let armedPlayTraced = false;
+    const root = document.createElement('section');
+    root.id = 'beta367AudioAudition';
+    root.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(2,7,14,.97);color:#eaf6ff;padding:max(24px,env(safe-area-inset-top)) 22px max(24px,env(safe-area-inset-bottom));font:700 14px/1.45 system-ui,sans-serif;overflow:auto';
+    root.innerHTML = '<div style="max-width:560px;margin:0 auto"><h2 style="color:#51c8ff;margin:0 0 8px">A1 · Boss 1 audible audition</h2>' +
+      '<p>This is intentionally excluded from Run All. Use headphones and then a phone speaker. Tap every mix yourself; automation never presses these controls.</p>' +
+      '<p style="color:#ffd56b">Listen for a threatening intro, four clearly distinct reactions aligned to their visual impact, clean speech-band detail, no clicks/clipping, no excessive tail, and clean music duck/restore.</p>' +
+      '<video id="beta367AuditionVideo" playsinline muted preload="metadata" style="display:block;width:100%;max-height:48vh;object-fit:contain;background:#000;border:1px solid #35516c;border-radius:10px;margin:12px 0"></video>' +
+      '<div id="beta367AudioButtons" style="display:grid;gap:10px"></div>' +
+      '<p id="beta367AudioStatus" style="padding:12px;border:1px solid #35516c;border-radius:8px">' +
+      completed.size + ' / 5 completed · listener verdict still required</p>' +
+      '<button id="beta367AudioStop" style="padding:10px 16px">Stop and close</button></div>';
+    document.body.appendChild(root);
+    const status = root.querySelector('#beta367AudioStatus');
+    const buttons = root.querySelector('#beta367AudioButtons');
+    const video = root.querySelector('#beta367AuditionVideo');
+    const labels = { intro:'Play intro cinematic + roar', flinch1:'Play flinch 1 cinematic', flinch2:'Play flinch 2 cinematic', flinch3:'Play flinch 3 cinematic', flinch4:'Play flinch 4 cinematic' };
+    boss1AuditionPriorMuted = api.isMuted();
+    function finishScene(reason) {
+      auditionToken++; armedToken = 0; armedScene = null; armedStarted = false; armedPlayTraced = false;
+      if (boss1AuditionTimer) clearTimeout(boss1AuditionTimer);
+      if (boss1AuditionFinalizeTimer) clearTimeout(boss1AuditionFinalizeTimer);
+      boss1AuditionTimer = 0;
+      boss1AuditionFinalizeTimer = 0;
+      try { api.stop(video, reason || 'qa-audition-video-finish'); } catch (_) {}
+      try { video.pause(); } catch (_) {}
+      try {
+        if (typeof GameMusic !== 'undefined') {
+          if (GameMusic.duckTo) GameMusic.duckTo(1, 0.12);
+          if (GameMusic.setMuted) GameMusic.setMuted(true);
+        }
+      } catch (_) {}
+      try { if (boss1AuditionPriorMuted != null) api.setMuted(boss1AuditionPriorMuted); } catch (_) {}
+      boss1AuditionVideo = null;
+    }
+    video.onended = function () {
+      const token = armedToken, scene = armedScene;
+      const duration = Number(video.duration), mediaTime = Number(video.currentTime) || 0;
+      const fullTimeline = Number.isFinite(duration) && duration > 0 && mediaTime >= duration - 0.12;
+      /* The controller's own `ended` listener stops the soundtrack in the same event dispatch.
+         Browser listener order is deliberately not an evidence assumption: let that dispatch
+         finish, then require the scene's exact play trace plus the media element's real terminal
+         time. The visible ended event itself is the lifecycle proof; controller teardown is
+         independently locked by F18/F19. */
+      if (boss1AuditionFinalizeTimer) clearTimeout(boss1AuditionFinalizeTimer);
+      boss1AuditionFinalizeTimer = setTimeout(function () {
+        boss1AuditionFinalizeTimer = 0;
+        if (armedStarted && token === auditionToken && boss1AuditionVideo === video &&
+            armedPlayTraced && fullTimeline) {
+          completed.add(scene);
+          status.textContent = completed.size === 5
+            ? 'ALL 5 COMPLETED · HUMAN LISTENING VERDICT REQUIRED'
+            : completed.size + ' / 5 completed · ' + videos[scene];
+        }
+        finishScene('qa-audition-video-ended');
+      }, 0);
+    };
+    video.onerror = function () {
+      status.textContent = 'VIDEO ERROR · stop and report this artifact';
+      finishScene('qa-audition-video-error');
+    };
+    Object.keys(labels).forEach(function (scene) {
+      const button = document.createElement('button');
+      button.textContent = labels[scene];
+      button.style.cssText = 'padding:13px;text-align:left;background:#10263b;color:#eef8ff;border:1px solid #3b83ad;border-radius:8px';
+      button.onclick = function () {
+        finishScene('qa-audition-replace');
+        const token = ++auditionToken;
+        armedToken = token; armedScene = scene; armedStarted = false; armedPlayTraced = false;
+        if (typeof api.clearEvents === 'function') api.clearEvents();
+        try {
+          window.__CQ_BOSS1_AUDIO_TEST_SINK__ = function (row) {
+            if (row && row.type === 'play' && row.scene === scene && token === auditionToken) armedPlayTraced = true;
+          };
+        } catch (_) {}
+        api.setMuted(false);
+        try {
+          if (typeof GameMusic !== 'undefined') {
+            if (GameMusic.unlock) GameMusic.unlock();
+            if (GameMusic.setMuted) GameMusic.setMuted(false);
+            if (GameMusic.boss) GameMusic.boss(1);
+          }
+        } catch (_) {}
+        const primed = typeof api.unlock === 'function' ? api.unlock() : 0;
+        video.src = videos[scene];
+        video.load();
+        const started = api.start(scene, video);
+        armedStarted = !!started;
+        let videoPlay = null;
+        try { videoPlay = video.play(); } catch (_) {}
+        if (videoPlay && videoPlay.catch) videoPlay.catch(function (error) {
+          status.textContent = 'PLAY REFUSED · tap this scene again (' + String(error && error.name || error) + ')';
+          finishScene('qa-audition-play-refused');
+        });
+        boss1AuditionVideo = video;
+        status.textContent = completed.size + ' / 5 completed · now playing full ' + videos[scene] + ' · primed ' + primed;
+        boss1AuditionTimer = setTimeout(function () {
+          finishScene('qa-audition-watchdog');
+        }, watchdogs[scene]);
+      };
+      buttons.appendChild(button);
+    });
+    root.querySelector('#beta367AudioStop').onclick = function () {
+      stopBoss1Audition('qa-audition-close'); root.remove();
+    };
+    return true;
   }
 
   async function C1() {
@@ -1097,12 +1675,7 @@
     try {
       if (frame) frame.style.height = '844px';
       resize();
-      cleanup();
-      paused = true;
-      introFlow.active = false;
-      introFlow.phase = 'done';
-      await delay(250); // drain prior case callbacks before binding resize evidence to this fixture
-      portals.splice(0); floaters.splice(0);
+      await isolateWorldFixture();
       const index = pickCandle();
       const candle = candles[index];
       turtle.x = candle.x + candle.w * 0.5 - turtle.w * 0.5;
@@ -1132,7 +1705,8 @@
         groundStart.x === groundCollapsed.x && groundStart.vy === groundCollapsed.vy &&
         groundStart.onGround === groundCollapsed.onGround &&
         groundStart.collected === groundCollapsed.collected &&
-        groundStart.floaters === groundCollapsed.floaters && groundCollapsed.portals === portalBaseline &&
+        groundStart.floaters === groundCollapsed.floaters && groundStart.portals === 0 &&
+        groundCollapsed.portals === portalBaseline &&
         groundCollapsed.canvas[0] === groundCollapsed.canvas[2] * Math.min(2, devicePixelRatio || 1) &&
         groundCollapsed.canvas[1] === groundCollapsed.canvas[3] * Math.min(2, devicePixelRatio || 1);
 
@@ -1169,6 +1743,7 @@
 
   const CASES = Object.freeze({ F1: F1, F2: F2, F3: F3, F4: F4, F5: F5, F6: F6, F7: F7,
     F8: F8, F9: F9, F10: F10, F11: F11, F12: F12, F13: F13, F14: F14, F15: F15, F16: F16,
+    F17: F17, F18: F18, F19: F19,
     C1: C1, C2: C2, C3: C3, C4: C4, M1: M1, M2: M2 });
   async function run(id) {
     const fn = CASES[id];
@@ -1182,7 +1757,7 @@
   }
   function info() {
     return {
-      version: 1,
+      version: 2,
       cases: Object.keys(CASES),
       build: window.CQOPS && window.CQOPS.build,
       sourceHash: (document.querySelector('meta[name="beta360-canonical-sha256"]') || {}).content || null,
@@ -1190,5 +1765,7 @@
       errors: runtimeErrors.slice(),
     };
   }
-  window.QABeta360 = Object.freeze({ version: 1, info: info, run: run, cleanup: cleanup });
+  window.QABeta360 = Object.freeze({
+    version: 2, info: info, run: run, cleanup: cleanup, showBoss1Audition: showBoss1Audition,
+  });
 })();

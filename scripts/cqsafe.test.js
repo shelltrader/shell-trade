@@ -2,13 +2,14 @@
 'use strict';
 
 /*
- * Durable build-366 beta-readiness regression suite.
+ * Durable build-367 beta-readiness regression suite.
  *
  * The CQSAFE owner is inlined in the canonical single-file game. These tests evaluate that exact
  * source block in a fresh VM for every behavioural case, then lock the small integration contracts
  * that cannot be exercised without booting the whole game. The suite is read-only and network-free.
  */
 const assert = require('assert/strict');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -856,6 +857,220 @@ const tests = [
     assert.match(bridge, /CQJournalTutorial\.stop/);
   }],
 
+  ['build 367 Boss 1 authored mixes have exact identity and guarded media-time ownership', () => {
+    const controller = section('const Boss1CineAudio = (() => {', '/* Play flinch `n` (1-based)');
+    const expectedAssets = {
+      'intro.m4a': '3384ccde8bebf7b21df5ee05fce8349695c54563a6462e9a4ea81ea791c808f5',
+      'flinch-1.m4a': 'e6dd59cdb78da70e5da59c6f5a79ee79231edde9a3b1c0d0d33c083c4bb0ee17',
+      'flinch-2.m4a': '238fe86c4fce0582aa99734957261fe4e81b99def4c09ab154ba4da6cac523bd',
+      'flinch-3.m4a': 'b2938ab0abc51088c77019574dfba6c7d7ec9938c728028649fe9f824b45010d',
+      'flinch-4.m4a': '6d949154c1695d6c1e6ad61536a8396d89e7bb1462e3c42d9afdd40cf50e8632',
+    };
+    for (const [name, digest] of Object.entries(expectedAssets)) {
+      const root = fs.readFileSync(path.join(ROOT, 'bosses', 'sfx', 'boss1-polish-v1', name));
+      const site = fs.readFileSync(path.join(ROOT, 'website', 'bosses', 'sfx', 'boss1-polish-v1', name));
+      assert.deepEqual(root, site, `${name} root/website bytes must match`);
+      assert.equal(crypto.createHash('sha256').update(root).digest('hex'), digest, `${name} identity`);
+      assert.ok(root.includes(Buffer.from('ftyp')), `${name} must be an MP4-family AAC file`);
+    }
+    const immutableMedia = {
+      'bosses/intros/boss-1.mp4': 'ab95be2b3c61f91b5d2e53be2c044ec8e753a6991dcaa064f423e61958ffabee',
+      'bosses/flinches/boss-1-flinch-1.mp4': '8ed9cce05b688275044b218dfc8c53b4a6ed9d2bf9d671224051fa3c497d2bf2',
+      'bosses/flinches/boss-1-flinch-2.mp4': '2c126ffb85049e66cdb42e8e3628889b89776a69fa50ef99ff391cfd56c9c75b',
+      'bosses/flinches/boss-1-flinch-3.mp4': '36fbbce914512a2cb11181669d4607908ace2778d8fbbde7a4468734932fb3f9',
+      'bosses/flinches/boss-1-flinch-4.mp4': '6e43dd3583006a57141a505af03970b0a298a93371d41d679ab92c794930b1b2',
+      'bosses/sfx/boss-roar-1.m4a': 'e1948449619df11d60eb9d57d187bd5e72497de87d56f41d1f0aee40b5bf0733',
+      'bosses/sfx/boss-roar-2.m4a': '78bd238de4c3edc64f6231aef9720aa1a8c29df7d320d87ec4ba03617d5fda66',
+      'bosses/sfx/boss-roar-3.m4a': '212f8624aa9b077eeef428ae748de37b44d49ad005742abf842142f5abeb1bb3',
+    };
+    for (const [name, digest] of Object.entries(immutableMedia)) {
+      const bytes = fs.readFileSync(path.join(ROOT, name));
+      assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), digest, `${name} stayed immutable`);
+    }
+    for (const src of ['intro.m4a', 'flinch-1.m4a', 'flinch-2.m4a', 'flinch-3.m4a', 'flinch-4.m4a']) {
+      assert.match(controller, new RegExp(`boss1-polish-v1/${src.replace('.', '\\.')}`));
+    }
+    for (const contract of [
+      'requestVideoFrameCallback', 'mediaTime', 'currentTime', "listen(s, video, 'waiting'",
+      "listen(s, video, 'seeking'", "listen(s, video, 'ended'", "listen(s, audio, 'error'",
+      "cancel('music-toggle-off')", "stopAll('boss-outro-start')",
+    ]) assert.match(GAME, new RegExp(contract.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.match(controller, /Math\.abs\(drift\) > 0\.085/);
+    assert.match(controller, /window\.__CQ_BOSS1_AUDIO_TEST_SINK__/);
+    assert.match(controller, /window\.CQBoss1AudioQA = Boss1CineAudio/);
+    assert.match(controller, /typeof _CQ_DEV !== 'undefined' && _CQ_DEV/);
+    assert.match(GAME, /boss1MediaWatchdog\(vid, arrive, 60000\)/,
+      'Boss 1 intro uses progress-aware idle and hard-cap watchdogs; ended owns normal completion');
+    assert.match(GAME, /boss1MediaWatchdog\(vid, finish, 45000\)/,
+      'Boss 1 flinches use progress-aware idle and hard-cap watchdogs');
+    assert.match(GAME, /now - lastAt >= idleMs \|\| now - startedAt >= hardMs/);
+    assert.doesNotMatch(controller, /window\.Boss1CineAudio\s*=/);
+    assert.doesNotMatch(controller, /localStorage|sessionStorage|document\.cookie/);
+    assert.match(controller, /function unlock\(\)/);
+    assert.match(controller, /if \(!enabled\(\)\) return 0/);
+    assert.match(controller, /a\.muted = true/);
+    assert.match(controller, /resetPrimeElement\(a, state\)/);
+    assert.match(controller, /assets: ASSETS, owns, warm, unlock, start/);
+    assert.match(GAME, /Boss1CineAudio\.unlock\(\)/);
+    assert.match(controller, /function videoHeld\(s\)/);
+    assert.match(controller, /if \(videoHeld\(s\)\) return/);
+    assert.match(controller, /if \(!videoHeld\(s\)\) \{[\s\S]*startAt\(s, mt, 'rendered-frame'\)/);
+    assert.match(controller, /listen\(s, video, 'playing',[\s\S]*s\.pausedByVideo = false;[\s\S]*if \(s\.started\) startAt/);
+    assert.match(GAME, /_boss1CineOwnsDuck[\s\S]*Boss1CineAudio\.snapshot\(\)[\s\S]*if \(!_boss1CineOwnsDuck/,
+      'trade-drama frame duck yields to an active Boss 1 cinematic');
+
+    const flinchOwner = section('function onRoundDone(score, passed)', 'function renderBossRound()');
+    assert.match(flinchOwner, /Boss1CineAudio\.owns\('flinch' \+ _flinchN\)/);
+    assert.match(flinchOwner, /_boss1AudioOwned/);
+    assert.match(flinchOwner, /bossHitFX\(passed \? 'hit' : 'hurt',[\s\S]*_boss1AudioOwned\)/);
+    const bridge = fs.readFileSync(path.join(ROOT, '.chartquest', 'qa', 'beta360-bridge.js'), 'utf8');
+    const harness = fs.readFileSync(path.join(ROOT, '.chartquest', 'qa', 'BETA360_BROWSER_HARNESS.html'), 'utf8');
+    for (const id of ['F17', 'F18', 'F19']) assert.match(bridge, new RegExp(`async function ${id}\\(\\)`));
+    assert.match(bridge, /showBoss1Audition: showBoss1Audition/);
+    assert.match(bridge, /video\.onended = function \(\)[\s\S]*armedPlayTraced[\s\S]*fullTimeline[\s\S]*completed\.add\(scene\)/,
+      'A1 counts only exact-scene, traced, full-video completion');
+    assert.match(bridge, /token === auditionToken/);
+    assert.doesNotMatch(bridge, /heard\.add\(/);
+    assert.match(bridge, /bufferedSeekResumed/);
+    assert.match(bridge, /activeDuckHeld/);
+    assert.match(bridge, /introSurvivesSlow15s/);
+    assert.match(harness, /const expectedCount = flowIds\.length \+ heights\.length \* collisionIds\.length/);
+    assert.match(harness, /<b id="pendingCount">37<\/b>/);
+    assert.match(harness, /bridge\.showBoss1Audition\(\)/);
+    const flowOwner = harness.slice(harness.indexOf('const flowIds'), harness.indexOf('const collisionIds'));
+    assert.doesNotMatch(flowOwner, /A1|showBoss1Audition/);
+  }],
+
+  ['build 367 Boss 1 controller VM gates sound on rendered media and tears down stale owners', () => {
+    function Target() { this.listeners = Object.create(null); }
+    Target.prototype.addEventListener = function (type, fn) {
+      (this.listeners[type] || (this.listeners[type] = [])).push(fn);
+    };
+    Target.prototype.removeEventListener = function (type, fn) {
+      const list = this.listeners[type] || []; const at = list.indexOf(fn); if (at >= 0) list.splice(at, 1);
+    };
+    Target.prototype.emit = function (type) {
+      (this.listeners[type] || []).slice().forEach(fn => fn({ type, target: this }));
+    };
+    function FakeAudio() {
+      Target.call(this); this.readyState = 4; this.currentTime = 0; this.playbackRate = 1;
+      this.paused = true; this.playCalls = 0; this.pauseCalls = 0; this.muted = false;
+      this._volume = 0.73; this.playMuted = [];
+    }
+    FakeAudio.prototype = Object.create(Target.prototype);
+    FakeAudio.prototype.constructor = FakeAudio;
+    Object.defineProperty(FakeAudio.prototype, 'volume', {
+      get() { return this._volume; }, set(_) {}             // iOS regression seam: volume write ignored
+    });
+    FakeAudio.prototype.play = function () { this.paused = false; this.playCalls++; this.playMuted.push(this.muted); return undefined; };
+    FakeAudio.prototype.pause = function () { this.paused = true; this.pauseCalls++; };
+    FakeAudio.prototype.load = function () { this.emit('loadedmetadata'); };
+    function FakeVideo() {
+      Target.call(this); this.currentTime = 0; this.playbackRate = 1; this.paused = false;
+      this.seeking = false; this.readyState = 4; this.nextId = 1; this.frames = Object.create(null);
+    }
+    FakeVideo.prototype = Object.create(Target.prototype);
+    FakeVideo.prototype.requestVideoFrameCallback = function (fn) {
+      const id = this.nextId++; this.frames[id] = fn; return id;
+    };
+    FakeVideo.prototype.cancelVideoFrameCallback = function (id) { delete this.frames[id]; };
+    FakeVideo.prototype.frame = function (mediaTime) {
+      this.currentTime = mediaTime;
+      const callbacks = Object.values(this.frames); this.frames = Object.create(null);
+      callbacks.forEach(fn => fn(1, { mediaTime }));
+    };
+    const document = new Target(); document.hidden = false;
+    const ducks = [];
+    const sandbox = {
+      window: {}, document, _CQ_DEV: true, Audio: FakeAudio,
+      GameMusic: { duckTo(level, ramp) { ducks.push({ level, ramp }); } },
+      performance: { now: () => 1 }, Date, Math, Number, Object,
+      requestAnimationFrame: () => 1, cancelAnimationFrame() {},
+    };
+    const controller = section('const Boss1CineAudio = (() => {', '/* Play flinch `n` (1-based)');
+    vm.runInNewContext(controller, sandbox, { filename: 'chart-quest.html#Boss1CineAudio', timeout: 1000 });
+    const api = sandbox.window.CQBoss1AudioQA;
+    assert.ok(api, 'dev-only controller seam must publish in QA');
+    const audios = [];
+    api.setTestAudioFactory(() => { const audio = new FakeAudio(); audios.push(audio); return audio; });
+    api.clearEvents(); api.setMuted(true);
+    assert.equal(api.unlock(), 0, 'mute blocks permission priming');
+    api.setMuted(false);
+    assert.equal(api.unlock(), 5, 'one gesture invokes all five play requests synchronously');
+    assert.equal(audios.length, 5);
+    assert.ok(audios.every(audio => audio.playCalls === 1 && audio.playMuted[0] === true && audio.paused && audio.muted === false),
+      'all five iOS primes play muted then restore their prior muted state');
+    api.setTestAudioFactory(() => { const audio = new FakeAudio(); audios.push(audio); return audio; });
+    audios.length = 0;
+
+    const held = new FakeVideo();
+    assert.equal(api.start('intro', held), true);
+    held.emit('waiting');
+    held.frame(0.55);
+    assert.equal(audios[0].playCalls, 0, 'waiting before first frame holds cold-start audio');
+    held.currentTime = 0.9; held.emit('playing');
+    assert.equal(audios[0].playCalls, 0, 'playing only clears the hold; it cannot own first sound');
+    held.frame(0.9);
+    assert.equal(audios[0].playCalls, 1, 'next rendered frame owns first sound after resume');
+    assert.equal(audios[0].currentTime, 0.9, 'resumed cold start uses current video media time');
+    api.stop(held, 'vm-cold-hold-complete');
+    api.setTestAudioFactory(() => { const audio = new FakeAudio(); audios.push(audio); return audio; });
+    audios.length = 0;
+
+    const first = new FakeVideo();
+    assert.equal(api.start('intro', first), true);
+    assert.equal(audios[0].playCalls, 0, 'cold load cannot sound before a rendered frame');
+    first.frame(0.8);
+    assert.equal(audios[0].playCalls, 1);
+    assert.equal(audios[0].currentTime, 0.8, 'audio starts from video media time');
+    first.emit('waiting');
+    assert.equal(audios[0].paused, true, 'stall pauses authored mix');
+    first.currentTime = 1.2; first.emit('playing');
+    assert.equal(audios[0].playCalls, 2, 'playing resumes the same timeline');
+    assert.equal(audios[0].currentTime, 1.2);
+    const beforeSeek = audios[0].playCalls;
+    first.seeking = true; first.emit('seeking');
+    first.currentTime = 1.42; first.seeking = false; first.emit('seeked');
+    assert.equal(audios[0].playCalls, beforeSeek + 1, 'buffered seek resumes without a later playing event');
+    assert.equal(audios[0].currentTime, 1.42);
+    audios[0].currentTime = 0.2; first.frame(1.6);
+    assert.equal(audios[0].currentTime, 1.6, 'drift is hard-resynced');
+
+    const second = new FakeVideo(), stalePlayCount = audios[0].playCalls;
+    api.start('flinch1', second);
+    first.frame(2.0);
+    assert.equal(audios[0].playCalls, stalePlayCount, 'replaced video cannot resurrect old audio');
+    second.frame(0.25);
+    assert.equal(audios[1].playCalls, 1);
+    api.setMuted(true);
+    assert.equal(api.snapshot(), null);
+    second.frame(0.5); second.emit('playing');
+    assert.equal(audios[1].playCalls, 1, 'mute destroys event/frame ownership');
+    const events = api.events();
+    assert.ok(events.some(row => row.type === 'play' && row.reason === 'rendered-frame'));
+    assert.ok(events.some(row => row.type === 'pause' && row.reason === 'waiting'));
+    assert.ok(events.some(row => row.type === 'resync' && Math.abs(row.drift) > 0.085));
+    assert.ok(events.some(row => row.type === 'stop' && row.reason === 'replace'));
+    assert.ok(events.some(row => row.type === 'stop' && row.reason === 'music-toggle-off'));
+    assert.ok(ducks.some(row => row.level === 0.18), 'music ducks under authored audio');
+    assert.ok(ducks.filter(row => row.level === 1).length >= 2, 'music restores after every teardown');
+
+    let fakeNow = 0, slowEnds = 0, idleEnds = 0;
+    const seam = { now: () => fakeNow, set: () => 0, clear() {}, idleMs: 10000, tickMs: 1000 };
+    const slow = new FakeVideo();
+    const slowWatch = api.makeWatchdog(slow, () => { slowEnds++; }, 60000, seam);
+    for (let elapsed = 3000; elapsed <= 15000; elapsed += 3000) {
+      fakeNow = elapsed; slow.currentTime += 1.8; slowWatch.progress(); slowWatch.tick();
+    }
+    assert.equal(slowEnds, 0, 'actual progress survives beyond the former 12s wall-clock cutoff');
+    slowWatch.stop();
+    fakeNow = 0;
+    const idle = new FakeVideo();
+    const idleWatch = api.makeWatchdog(idle, () => { idleEnds++; }, 60000, seam);
+    fakeNow = 10000; idleWatch.tick(); idleWatch.tick();
+    assert.equal(idleEnds, 1, 'true idle fails open exactly once');
+  }],
+
   ['trade-3 prove waits for the exact auto-review lifecycle and advances only after closure', () => {
     const reviewLifecycle = section('let reviewEntry = null;', '// Control-bar interactions');
     const introWait = section('function waitThenIntroBoss(', '/* GUARDIAN 1');
@@ -1077,7 +1292,7 @@ function runSuite(options = {}) {
     }
   }
 
-  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/build-366 regression tests passed`);
+  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/build-367 regression tests passed`);
   return {
     ok: failures.length === 0,
     passed,
@@ -1085,7 +1300,7 @@ function runSuite(options = {}) {
     failures,
     detail: failures.length
       ? failures.map(item => item.name).join(' · ')
-      : `${passed}/${tests.length} CQSAFE/build-366 contracts`,
+      : `${passed}/${tests.length} CQSAFE/build-367 contracts`,
   };
 }
 

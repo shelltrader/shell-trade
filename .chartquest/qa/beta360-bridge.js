@@ -107,6 +107,15 @@
     }
   }
   function cleanup() {
+    try {
+      if (window.CQJournalTutorial && typeof window.CQJournalTutorial.isActive === 'function' &&
+          window.CQJournalTutorial.isActive() && typeof window.CQJournalTutorial.stop === 'function') {
+        window.CQJournalTutorial.stop();
+      }
+    } catch (_) {}
+    try { const journalQaRoot = document.getElementById('jtut'); if (journalQaRoot) journalQaRoot.remove(); } catch (_) {}
+    try { const cosmetics = document.getElementById('beta366Cosmetics'); if (cosmetics) cosmetics.remove(); } catch (_) {}
+    try { const media = document.getElementById('beta366Media'); if (media) media.remove(); } catch (_) {}
     try { closeReviewChart(); } catch (_) {}
     try { hideTradeIncoming(); } catch (_) {}
     try { if (panelEl && panelEl.classList.contains('open')) closePanel(); } catch (_) {}
@@ -120,6 +129,7 @@
     try { journalOpen = false; walletOpen = false; dailyOpen = false; htfZoomState = null; bannerT = 0; } catch (_) {}
     try { const lesson = document.getElementById('lesson'); if (lesson) lesson.classList.remove('show'); } catch (_) {}
     try { const betaEnd = document.getElementById('cqBetaEnd'); if (betaEnd) betaEnd.remove(); } catch (_) {}
+    try { if (window.CQBeta && typeof window.CQBeta.reset === 'function') window.CQBeta.reset(); } catch (_) {}
     try {
       session.level = 1;
       if (window.CQBeta && typeof window.CQBeta.reset === 'function') window.CQBeta.reset();
@@ -250,8 +260,8 @@
     };
     const dimensions = canvas && Math.abs(canvas.width - canvas.clientWidth * actual.effectiveDpr) <= 1 &&
       Math.abs(canvas.height - canvas.clientHeight * actual.effectiveDpr) <= 1;
-    return caseResult('F1', 'dev QA build 365, capped main canvas, no walls/errors', actual,
-      actual.dev && actual.qa && actual.build === 365 && dimensions &&
+    return caseResult('F1', 'dev QA build 366, capped main canvas, no walls/errors', actual,
+      actual.dev && actual.qa && actual.build === 366 && dimensions &&
       actual.authHidden && actual.factionHidden && actual.errors.length === 0);
   }
 
@@ -793,6 +803,108 @@
     }
   }
 
+  async function F14() {
+    cleanup(); paused = true; introFlow.active = false;
+    const root = document.createElement('div');
+    root.id = 'beta366Cosmetics';
+    root.style.cssText = 'position:fixed;inset:0;z-index:99997;display:flex;align-items:center;justify-content:center;background:#030810ee;padding:18px;overflow:auto';
+    const oldHadBoss = bossesEverBeaten.has(1);
+    const oldWisdom = wisdomFound.slice();
+    try {
+      bossesEverBeaten.add(1);
+      root.innerHTML = '<div style="display:grid;gap:14px;width:min(342px,100%);font-family:var(--font-ui)">' +
+        '<div class="beta366Journal" style="background:#0b1320;border:1px solid #24384e;border-radius:16px;padding:12px;max-height:245px;overflow:auto">' +
+          '<div style="font:900 12px var(--font-ui);letter-spacing:1px;color:#4cc3ff;margin-bottom:8px">JOURNAL PORTRAIT</div>' +
+          renderGuardians() + '</div>' +
+        '<div class="beta366Victory" style="background:#110d07;border:1px solid #8b6b20;border-radius:16px;padding:14px;text-align:center">' +
+          '<div class="vicPortrait vg1Portrait" style="margin:0 auto 8px"><img class="vicImg on" src="' + bossPortraitSrc(1) + '" alt="Current Gambler"></div>' +
+          '<div style="font:900 19px var(--font-ui);color:#ffd60a">THE GAMBLER FALLS</div></div>' +
+        '</div>';
+      document.body.appendChild(root);
+      const imgs = Array.from(root.querySelectorAll('img'));
+      await Promise.all(imgs.map(function (img) {
+        if (img.complete) return Promise.resolve();
+        return new Promise(function (resolve) { img.onload = resolve; img.onerror = resolve; });
+      }));
+      await nextFrame(3);
+      const sources = imgs.map(function (img) { return String(img.currentSrc || img.src || ''); });
+      const loaded = imgs.length >= 2 && imgs.every(function (img) { return img.naturalWidth === 720 && img.naturalHeight === 720; });
+      return caseResult('F14', 'Journal and defeat-card portraits use the current 720px Gambler artwork', {
+        imageCount: imgs.length, loaded: loaded, sources: sources,
+      }, loaded && sources.every(function (src) { return /boss-1-gambler-v2\.webp/.test(src); }), {
+        journalPortrait: rect(imgs[0]), victoryPortrait: rect(imgs[1]),
+      });
+    } finally {
+      if (!oldHadBoss) bossesEverBeaten.delete(1);
+      wisdomFound.splice(0, wisdomFound.length); oldWisdom.forEach(function (idx) { wisdomFound.push(idx); });
+      // Intentionally leave the visual comparison visible when this preview is run alone.
+    }
+  }
+
+  async function F15() {
+    const oldFixture = document.getElementById('beta366Cosmetics'); if (oldFixture) oldFixture.remove();
+    cleanup(); paused = true; introFlow.active = false;
+    const root = document.createElement('div');
+    root.id = 'beta366Media';
+    root.style.cssText = 'position:fixed;inset:0;z-index:99998;background:#000;display:flex;align-items:center;justify-content:center';
+    root.innerHTML = '<video playsinline muted preload="auto" style="display:block;width:100%;height:100%;object-fit:contain" aria-label="Finn defeats the Gambler with his compass necklace"></video>';
+    document.body.appendChild(root);
+    const video = root.querySelector('video');
+    video.src = BOSS_OUTRO_VIDEOS[1][0];
+    await new Promise(function (resolve) {
+      const done = function () { video.removeEventListener('loadedmetadata', done); video.removeEventListener('error', done); resolve(); };
+      video.addEventListener('loadedmetadata', done); video.addEventListener('error', done); video.load();
+    });
+    try { await video.play(); } catch (_) {}
+    if (Number.isFinite(video.duration) && video.duration > 5.4) {
+      video.currentTime = 5.4;
+      await delay(250);
+    }
+    try { video.pause(); } catch (_) {}
+    const requestedFrame = Number.isFinite(video.duration) && video.duration > 5.4 ? 5.4 : null;
+    await nextFrame(3);
+    const actual = {
+      source: String(video.currentSrc || ''), readyState: video.readyState,
+      duration: video.duration, videoWidth: video.videoWidth, videoHeight: video.videoHeight,
+      currentTime: video.currentTime, requestedFrame: requestedFrame,
+    };
+    return caseResult('F15', 'versioned Guardian-1 defeat clip decodes at the exact original media contract', actual,
+      /boss-1-defeat-v2\.mp4/.test(actual.source) && actual.readyState >= 2 &&
+      actual.videoWidth === 720 && actual.videoHeight === 1280 &&
+      Math.abs(actual.duration - 5.966667) < 0.03 && actual.requestedFrame === 5.4,
+      { video: rect(video) }, ['visual necklace attachment is independently inspected at the pinned 5.4-second frame']);
+  }
+
+  async function F16() {
+    cleanup(); paused = false; introFlow.active = false;
+    const api = window.CQJournalTutorial;
+    const started = !!(api && typeof api.devPreviewFinish === 'function' && api.devPreviewFinish());
+    await delay(700);
+    await nextFrame(3);
+    const master = document.querySelector('#jtut .jt-master');
+    const card = master && master.querySelector('.mc');
+    const book = master && master.querySelector('.bk img');
+    const title = master && master.querySelector('.ti');
+    const reward = master && master.querySelector('.sh');
+    const lost = master && master.querySelector('.lw');
+    const mr = rect(master), cr = rect(card), br = rect(book), tr = rect(title), rr = rect(reward), lr = rect(lost);
+    const vw = innerWidth, vh = innerHeight;
+    const inBounds = !!(cr && cr.x >= 16 && cr.right <= vw - 16 && cr.y >= 20 && cr.bottom <= vh - 20);
+    const nonOverlap = !!(br && tr && rr && br.bottom <= tr.y && tr.bottom <= rr.y && (!lr || rr.bottom <= lr.y));
+    const loaded = !!(book && book.complete && book.naturalWidth === 292 && book.naturalHeight === 480 &&
+      /journal-book\.webp/.test(String(book.currentSrc || book.src || '')));
+    const result = caseResult('F16', 'exact Journal-mastery finale uses one compact canonical-book reward card inside the phone', {
+      started: started, loaded: loaded, title: title && title.textContent,
+      reward: reward && reward.textContent, lost: lost && lost.textContent,
+    }, started && visible(master) && visible(card) && loaded && inBounds && nonOverlap && br.w <= 94.5,
+      { viewport: [vw, vh], master: mr, card: cr, book: br, title: tr, reward: rr, lost: lr });
+    try { if (api && api.isActive && api.isActive() && api.stop) api.stop(); } catch (_) {}
+    await nextFrame(2);
+    const staleRoot = document.getElementById('jtut');
+    if (staleRoot) staleRoot.remove();
+    return result;
+  }
+
   async function C1() {
     cleanup();
     const oldLevel = session.level;
@@ -1002,6 +1114,7 @@
         onGround: turtle.onGround, collected: coins.filter(function (coin) { return coin.collected; }).length,
         floaters: floaters.length, portals: portals.length,
       };
+      const portalBaseline = portals.length;
       setViewportHeight(667);
       await nextFrame(2);
       const groundCollapsed = {
@@ -1019,7 +1132,7 @@
         groundStart.x === groundCollapsed.x && groundStart.vy === groundCollapsed.vy &&
         groundStart.onGround === groundCollapsed.onGround &&
         groundStart.collected === groundCollapsed.collected &&
-        groundStart.floaters === groundCollapsed.floaters && groundStart.portals === groundCollapsed.portals &&
+        groundStart.floaters === groundCollapsed.floaters && groundCollapsed.portals === portalBaseline &&
         groundCollapsed.canvas[0] === groundCollapsed.canvas[2] * Math.min(2, devicePixelRatio || 1) &&
         groundCollapsed.canvas[1] === groundCollapsed.canvas[3] * Math.min(2, devicePixelRatio || 1);
 
@@ -1055,7 +1168,7 @@
   }
 
   const CASES = Object.freeze({ F1: F1, F2: F2, F3: F3, F4: F4, F5: F5, F6: F6, F7: F7,
-    F8: F8, F9: F9, F10: F10, F11: F11, F12: F12, F13: F13,
+    F8: F8, F9: F9, F10: F10, F11: F11, F12: F12, F13: F13, F14: F14, F15: F15, F16: F16,
     C1: C1, C2: C2, C3: C3, C4: C4, M1: M1, M2: M2 });
   async function run(id) {
     const fn = CASES[id];

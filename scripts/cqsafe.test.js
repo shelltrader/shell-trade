@@ -2,7 +2,7 @@
 'use strict';
 
 /*
- * Durable build-365 beta-blocker regression suite.
+ * Durable build-366 beta-readiness regression suite.
  *
  * The CQSAFE owner is inlined in the canonical single-file game. These tests evaluate that exact
  * source block in a fresh VM for every behavioural case, then lock the small integration contracts
@@ -814,6 +814,48 @@ const tests = [
       'ordinary centered feedback must not fall back to raw canvas text');
   }],
 
+  ['build 366 cosmetic closeout uses current Gambler art, a compact Journal card, and Finn necklace video', () => {
+    const portraitOwner = section('const BOSS_PORTRAIT_SRC = {', '// Small circular portrait');
+    const guardians = section('function renderGuardians()', '// Section 2');
+    const victory = section('function bossWin()', '/* ════ SHOT 7');
+    const outroOwner = section('const BOSS_OUTRO_VIDEOS = {', 'function playBossOutroCinematic');
+    assert.match(portraitOwner, /1:\s*'bosses\/boss-1-gambler-v2\.webp'/);
+    assert.match(guardians, /bossPortraitSrc\(k\)/);
+    assert.doesNotMatch(guardians, /src="bosses\/boss-' \+ k/);
+    assert.match(victory, /bossPortraitSrc\(bfState\.level\)/);
+    assert.match(outroOwner, /bosses\/outros\/boss-1-defeat-v2\.mp4/);
+
+    const portraitRoot = fs.readFileSync(path.join(ROOT, 'bosses', 'boss-1-gambler-v2.webp'));
+    const portraitSite = fs.readFileSync(path.join(ROOT, 'website', 'bosses', 'boss-1-gambler-v2.webp'));
+    const outroRoot = fs.readFileSync(path.join(ROOT, 'bosses', 'outros', 'boss-1-defeat-v2.mp4'));
+    const outroSite = fs.readFileSync(path.join(ROOT, 'website', 'bosses', 'outros', 'boss-1-defeat-v2.mp4'));
+    assert.deepEqual(portraitRoot, portraitSite, 'Gambler portrait root and website bytes must match');
+    assert.deepEqual(outroRoot, outroSite, 'Gambler defeat video root and website bytes must match');
+    assert.equal(portraitRoot.subarray(0, 4).toString('ascii'), 'RIFF');
+    assert.ok(outroRoot.includes(Buffer.from('ftyp')), 'versioned defeat asset must be an MP4');
+
+    const journalCss = section('/* the finale */', 'function injectCSS()');
+    const journalFinish = section('/* ── FINALE', 'function teardown()');
+    assert.match(journalCss, /\.jt-master \.mc/);
+    assert.match(journalCss, /width:clamp\(72px,22vw,94px\)/);
+    assert.match(journalCss, /env\(safe-area-inset-top,0px\)/);
+    assert.match(journalCss, /env\(safe-area-inset-bottom,0px\)/);
+    assert.doesNotMatch(journalCss, /width:138px/);
+    assert.doesNotMatch(journalCss, /mask-image:radial-gradient/);
+    assert.equal((journalFinish.match(/journal-book\.webp/g) || []).length, 2,
+      'one runtime book plus one explanatory comment keeps the canonical asset singular');
+    assert.match(journalFinish, /alt="ChartQuest Trader\\'s Journal"/);
+    assert.match(journalFinish, /T\(function \(\) \{[\s\S]*payShells\(\);[\s\S]*\}, 430\)/);
+    assert.match(journalFinish, /T\(teardown, MASTERY_MS \+ 640\)/);
+    assert.match(journalFinish, /&#43;<b>' \+ REWARD \+ '<\/b> SHELLS/);
+    assert.match(GAME, /devPreviewFinish:\s*function \(\)/);
+    assert.match(GAME, /if \(!window\._CQ_DEV \|\| S\.active\) return false/);
+    const bridge = fs.readFileSync(path.join(ROOT, '.chartquest', 'qa', 'beta360-bridge.js'), 'utf8');
+    assert.match(bridge, /async function F16\(\)/);
+    assert.match(bridge, /CQJournalTutorial\.isActive/);
+    assert.match(bridge, /CQJournalTutorial\.stop/);
+  }],
+
   ['trade-3 prove waits for the exact auto-review lifecycle and advances only after closure', () => {
     const reviewLifecycle = section('let reviewEntry = null;', '// Control-bar interactions');
     const introWait = section('function waitThenIntroBoss(', '/* GUARDIAN 1');
@@ -1035,7 +1077,7 @@ function runSuite(options = {}) {
     }
   }
 
-  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/build-365 regression tests passed`);
+  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/build-366 regression tests passed`);
   return {
     ok: failures.length === 0,
     passed,
@@ -1043,7 +1085,7 @@ function runSuite(options = {}) {
     failures,
     detail: failures.length
       ? failures.map(item => item.name).join(' · ')
-      : `${passed}/${tests.length} CQSAFE/build-365 contracts`,
+      : `${passed}/${tests.length} CQSAFE/build-366 contracts`,
   };
 }
 

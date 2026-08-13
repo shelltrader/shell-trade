@@ -4,21 +4,20 @@
 
 ## Sprint objective
 
-**PASS:** close the final two Founder-confirmed send blockers from the physical Build 364 retest:
-(1) a breakable box may not survive in/beyond a trade-portal corridor, and (2) replay/recap must
-visibly show Finn cross the correct take-profit or stop-loss line. Include the bounded Founder
-polish requests for a warmer first-trade score and premium centered feedback, then advance exact
-Build 365 through review, exact-byte Browser QA, and PM/CTO adjudication. Production remains frozen.
+**PASS:** close the three Founder-confirmed cosmetic issues from the physical Build 365 retest:
+current Gambler portraits in Journal/victory, a compact premium Journal mastery finale, and Finn's
+signature necklace in the existing Gambler-defeat clip. Advance exact Build 366 through independent
+review, exact-byte Browser QA, and PM/CTO adjudication. Production remains frozen.
 
 ## Current release/build
 
 - Isolated candidate branch: `codex/beta-360-readiness`.
-- Exact candidate payload commit: `7b3679c6497d8d4e9bfd8cdac3754489aaa9c4f7`.
-- Build: **365**.
+- Exact candidate payload commit: `19c443414bc4ebc74dfbc5b3ce7bafdd1c381765`.
+- Build: **366**.
 - Source, root mirror, and website game artifact are byte-identical at SHA-256
-  `f80cecb3a4ed343ae21fa491b71cda46e2485176b56019a8484b11b490352879`.
+  `fdbf69803bd491b739c1ffc1ff8300b45871b38c265477b36eb89170bb67e7b0`.
 - Browser bridge SHA-256:
-  `114d91e611a125d6e6ebadb80029deae04357db1f960abed05b27103b4614937`.
+  `477cd8b059c033e9bb46ee9066b13cb8f9d0d26215c869ce70dd386e3ee14cef`.
 - Production was last observed presenting build 359; exact served-response SHA-256 remains unverified.
 - Candidate is not authorized for push, merge, deployment, or production testing.
 
@@ -26,7 +25,7 @@ Build 365 through review, exact-byte Browser QA, and PM/CTO adjudication. Produc
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Founder final physical Build-365 retest | Founder | **READY** | Judge the reward-free trade-portal corridor, visible TP/SL replay crossing, warmer first-trade score, and premium centered feedback on the intended phone. |
+| Founder final cosmetic Build-366 retest | Founder | **READY** | Judge the current Gambler portraits, compact Journal mastery card, and necklace repair on the intended phone. |
 
 ## Blocked tasks
 
@@ -40,6 +39,9 @@ Build 365 through review, exact-byte Browser QA, and PM/CTO adjudication. Produc
 
 | Task | Result | Evidence |
 |---|---|---|
+| Build-366 cosmetic investigation | **PASS — three presentation root causes confirmed** | `handoffs/BETA366_INVESTIGATION.md` |
+| Build-366 implementation and independent review | **APPROVED** | Candidate commit `19c4434`; `handoffs/BETA366_IMPLEMENTATION.md`; `handoffs/BETA366_REVIEW.md` |
+| Build-366 exact-byte QA and Browser matrix | **PASS FOR FOUNDER FINAL COSMETIC RETEST** | `handoffs/BETA366_QA.md`; focused 25/25; release 15/15; parity 5/5; verifier 24/0/0/1; Browser 34/34 |
 | Build-365 final-send investigation | **PASS — four root causes confirmed** | `handoffs/BETA365_INVESTIGATION.md` |
 | Build-365 implementation and PM/CTO review | **APPROVED** | Candidate commit `7b3679c`; `handoffs/BETA365_IMPLEMENTATION.md`; `handoffs/BETA365_REVIEW.md` |
 | Build-365 exact-byte QA and Browser matrix | **PASS FOR FOUNDER FINAL MOBILE RETEST** | `handoffs/BETA365_QA.md`; focused 24/24; release 15/15; parity 5/5; verifier 24/0/0/1; Browser 31/31 |
@@ -66,13 +68,13 @@ Build 365 through review, exact-byte Browser QA, and PM/CTO adjudication. Produc
 
 No Founder engineering input is required. The Founder is not required to manage branches, files,
 prompts, reports, or routine QA. The next Founder action is the subjective physical-device retest of
-the exact accepted Build 365 candidate. A later production release still requires explicit
+the exact accepted Build 366 candidate. A later production release still requires explicit
 Founder/Release-Manager acceptance and a deliberate account-level action on the GitHub freeze; that
 is not part of this sprint.
 
 ## Release status
 
-**BUILD 365 READY FOR FOUNDER FINAL MOBILE RETEST — DO NOT SHIP — PRODUCTION FROZEN**
+**BUILD 366 READY FOR FOUNDER FINAL COSMETIC RETEST — DO NOT SHIP — PRODUCTION FROZEN**
 
 Automated QA does not authorize production. The next technical workflow after Founder acceptance is
 a separate Release Manager candidate/manifest/lock/gate/fingerprint process.

@@ -1,5 +1,24 @@
 # Current Technical State
 
+## 2026-08-13 build-366 cosmetic-closeout addendum — VERIFIED
+
+- Exact local candidate payload commit: `19c443414bc4ebc74dfbc5b3ce7bafdd1c381765` on
+  `codex/beta-360-readiness`.
+- The three game artifacts are byte-identical at `fdbf6980...`; the Browser bridge is `477cd8b0...`.
+- The Journal and victory card share the current versioned Gambler portrait; the Journal mastery
+  finale retains the existing book in a compact premium card; the existing defeat clip now includes
+  Finn's compass necklace throughout its front-facing victory frames.
+- Independent review approved and exact-byte QA passed: focused 25/25, release controls 15/15,
+  artifact parity 5/5, verifier 24/0/0/1, and in-app Browser 34/34 with zero captured errors.
+- PM/CTO decision: **BUILD 366 READY FOR FOUNDER FINAL COSMETIC RETEST**. Portrait crop, card taste,
+  and necklace visual remain subjective phone checks. The inherited upright cinematic pose is
+  beta-deferred art debt and is not claimed as repaired.
+- This is not release approval. Production remains frozen; served identity, fresh-cache evidence,
+  manifest/lock/gate, Founder release acceptance, and the account-level freeze action remain future
+  Release Manager work.
+
+Lower sections are historical snapshots and do not override this verified build-366 addendum.
+
 ## 2026-08-12 build-365 final-send addendum — VERIFIED
 
 - Exact local candidate payload commit:

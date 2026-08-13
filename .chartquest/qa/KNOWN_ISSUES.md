@@ -2,7 +2,15 @@
 
 Only repository-documented issues are listed below. The severity/status reflects the cited document where available; it does not assert that the issue is currently live.
 
-## Build-365 Founder final mobile-retest readiness
+## Build-366 Founder final cosmetic-retest readiness
+
+No known P0 remains for local Founder cosmetic retesting on exact candidate payload commit `19c4434`
+(game artifact `fdbf6980...`, Browser bridge `477cd8b0...`). Independent review approved,
+exact-byte QA passed, and the expanded in-app Browser matrix passed 34/34. The inherited upright
+Finn pose in the defeat cinematic remains explicit beta-deferred art debt; only the necklace repair
+is claimed. Production verification remains separate and blocked.
+
+## Historical Build-365 Founder final mobile-retest readiness
 
 No known P0 remains for local Founder mobile retesting on exact candidate payload commit `7b3679c`
 (game artifact `f80cecb3...`, Browser bridge `114d91e6...`). PM/CTO review approved, exact-byte QA

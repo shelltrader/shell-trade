@@ -4,41 +4,46 @@
 
 ## Sprint objective
 
-**PASS:** close the three Founder-confirmed cosmetic issues from the physical Build 365 retest:
-current Gambler portraits in Journal/victory, a compact premium Journal mastery finale, and Finn's
-signature necklace in the existing Gambler-defeat clip. Advance exact Build 366 through independent
-review, exact-byte Browser QA, and PM/CTO adjudication. Production remains frozen.
+Move new beta funnel events and surveys to a fresh Cloudflare D1 dataset, retain Supabase safely for
+accounts/cloud saves/history/fallback, and give the Founder one private dashboard for all new
+Cloudflare beta data. Preserve the serving Build 367 game until the provider configuration and live
+cutover evidence pass.
 
 ## Current release/build
 
-- Isolated candidate branch: `codex/beta-360-readiness`.
-- Exact candidate payload commit: `19c443414bc4ebc74dfbc5b3ce7bafdd1c381765`.
-- Build: **366**.
+- Isolated candidate branch: `codex/cloudflare-only-beta`.
+- Exact runtime payload commit: `b8f671adf4982bb2997a4bf2f5d02207b19cfe68`.
+- Build: **368**.
 - Source, root mirror, and website game artifact are byte-identical at SHA-256
-  `fdbf69803bd491b739c1ffc1ff8300b45871b38c265477b36eb89170bb67e7b0`.
+  `4e11d01d9b5b5bc662ce153e880ce1466de529f77cef40152bbd525fb4e2b5ca`.
 - Browser bridge SHA-256:
-  `477cd8b059c033e9bb46ee9066b13cb8f9d0d26215c869ce70dd386e3ee14cef`.
-- Production was last observed presenting build 359; exact served-response SHA-256 remains unverified.
-- Candidate is not authorized for push, merge, deployment, or production testing.
+  `cf9c0cadc8b3cd7c45d4a411c475ba789893d5a8e0712e177fc39b352addd7c0`.
+- Production Build 367 remains live and unaffected. Build 368 has not been pushed or deployed.
 
 ## Active tasks
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Founder final cosmetic Build-366 retest | Founder | **READY** | Judge the current Gambler portraits, compact Journal mastery card, and necklace repair on the intended phone. |
+| Cloudflare D1 + Pages binding | Release Manager | **PENDING EXTERNAL SETUP** | Create/migrate fresh D1 and bind `BETA_DB`. |
+| Founder Access policy | Release Manager | **PENDING EXTERNAL SETUP** | Set issuer/audience and exact deny-by-default `/founder` policy. |
+| Live Build-368 cutover smoke | Release Manager + Founder | **BLOCKED ON SETUP** | Prove empty baseline, write/read/export, upgrade privacy, returning player, and rollback. |
 
 ## Blocked tasks
 
 | Item | Status | Evidence |
 |---|---|---|
-| Production release | **DO NOT SHIP / production frozen** | The active GitHub ruleset blocks `main` updates. Push, merge, deployment, freeze changes, and provider actions are outside this readiness sprint. |
-| Served artifact identity | Blocked until release workflow | Production presents build 359, while exact served-response SHA-256 and fresh-cache verification belong to a separately authorized release operation. |
-| Online survey submission and physical-device behavior | Founder/release follow-up | The local harness intentionally denied external connections. Physical Safari notch/address-bar behavior, touch feel, audio/haptics, sustained performance/heat, and successful online telemetry remain device/production checks. |
+| Build 368 deployment | **DO NOT DEPLOY** | D1, binding, secrets, Access application/policy, empty-cutover proof, live smoke, and release manifest/lock/gate are not complete. |
+| Historical beta visibility | Pending later Supabase import | The new dashboard reads Cloudflare D1 only. Existing Supabase rows remain untouched and are not yet displayed. |
+| Full Supabase retirement | Out of scope | Accounts/cloud saves and history still require Supabase; removing them needs a separate identity/data migration. |
 
 ## Completed tasks
 
 | Task | Result | Evidence |
 |---|---|---|
+| Build-368 analytics/dashboard investigation | **PASS — safe additive boundary defined** | `handoffs/BETA368_INVESTIGATION.md` |
+| Build-368 implementation and independent review | **APPROVED LOCALLY** | Runtime commit `b8f671a`; `handoffs/BETA368_IMPLEMENTATION.md`; `handoffs/BETA368_REVIEW.md` |
+| Build-368 exact-byte QA and Browser matrix | **PASS FOR LOCAL ENGINEERING CANDIDATE** | `handoffs/BETA368_QA.md`; contracts 23/23 + 7/7 + 5/5; verifier 26/0/0/1; Browser 37/37 and repeat 74/74 |
+| Build-368 PM/CTO adjudication | **LOCAL CANDIDATE APPROVED; RELEASE HELD** | `handoffs/BETA368_COMPLETE.md` |
 | Build-366 cosmetic investigation | **PASS — three presentation root causes confirmed** | `handoffs/BETA366_INVESTIGATION.md` |
 | Build-366 implementation and independent review | **APPROVED** | Candidate commit `19c4434`; `handoffs/BETA366_IMPLEMENTATION.md`; `handoffs/BETA366_REVIEW.md` |
 | Build-366 exact-byte QA and Browser matrix | **PASS FOR FOUNDER FINAL COSMETIC RETEST** | `handoffs/BETA366_QA.md`; focused 25/25; release 15/15; parity 5/5; verifier 24/0/0/1; Browser 34/34 |
@@ -66,15 +71,13 @@ review, exact-byte Browser QA, and PM/CTO adjudication. Production remains froze
 
 ## Founder decisions required
 
-No Founder engineering input is required. The Founder is not required to manage branches, files,
-prompts, reports, or routine QA. The next Founder action is the subjective physical-device retest of
-the exact accepted Build 366 candidate. A later production release still requires explicit
-Founder/Release-Manager acceptance and a deliberate account-level action on the GitHub freeze; that
-is not part of this sprint.
+No product-design decision is required. The next Founder action is a single Cloudflare sign-in when
+provider setup is ready, followed by dashboard access and the live cutover smoke. The Founder is not
+required to recover Supabase access for the new post-cutover dashboard.
 
 ## Release status
 
-**BUILD 366 READY FOR FOUNDER FINAL COSMETIC RETEST — DO NOT SHIP — PRODUCTION FROZEN**
+**BUILD 368 LOCAL ENGINEERING CANDIDATE APPROVED — DO NOT DEPLOY — CLOUDFLARE D1/ACCESS CONFIGURATION AND LIVE SMOKE PENDING — BUILD 367 REMAINS LIVE**
 
-Automated QA does not authorize production. The next technical workflow after Founder acceptance is
-a separate Release Manager candidate/manifest/lock/gate/fingerprint process.
+Automated QA does not authorize production. Configure and verify Cloudflare first, then use the
+normal Release Manager manifest/lock/gate/fingerprint process for a separately authorized deploy.

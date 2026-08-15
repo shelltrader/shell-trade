@@ -1,5 +1,28 @@
 # Current Technical State
 
+## 2026-08-15 build-368 Cloudflare beta-data addendum — VERIFIED LOCALLY
+
+- Exact local runtime payload commit:
+  `b8f671adf4982bb2997a4bf2f5d02207b19cfe68` on `codex/cloudflare-only-beta`.
+- The three game artifacts are byte-identical at `4e11d01d...`; the Browser bridge is
+  `cf9c0cad...`; Build 367 remains live in production.
+- Build 368 adds a fresh D1 schema, confirmed-write Cloudflare-primary beta ingest with the existing
+  Supabase endpoint as a confirmed-write fallback, and an Access-verifying private Founder dashboard.
+- Supabase intentionally remains for authentication, cloud saves, historical beta rows, and fallback.
+  No provider, database, player row, account, remote ref, deployment, or served website changed.
+- Local review/QA passed: Cloudflare 23/23, client 7/7, dashboard 5/5, CQSAFE 27/27, release 15/15,
+  parity 5/5, audio 5/5, verifier 26/0/0/1, Browser 37/37 and repeat 74/74.
+- The dashboard shows new Cloudflare D1 data only after cutover. Build 367/earlier Supabase history is
+  preserved in place and requires a later authenticated import; already-latched milestones do not
+  re-emit automatically.
+- External gates remain: migrate/bind D1, set rate-limit and Access configuration, create the exact
+  deny-by-default Access policy, prove empty-at-cutover state, and run live write/read/export/v14
+  upgrade/returning-player/rollback smoke.
+- PM/CTO decision: **BUILD 368 LOCAL ENGINEERING CANDIDATE APPROVED — DO NOT DEPLOY — CLOUDFLARE
+  D1/ACCESS CONFIGURATION AND LIVE SMOKE PENDING — BUILD 367 REMAINS LIVE**.
+
+Lower sections are historical snapshots and do not override this verified-local addendum.
+
 ## 2026-08-13 build-366 cosmetic-closeout addendum — VERIFIED
 
 - Exact local candidate payload commit: `19c443414bc4ebc74dfbc5b3ce7bafdd1c381765` on

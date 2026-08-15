@@ -2,6 +2,21 @@
 
 Only repository-documented issues are listed below. The severity/status reflects the cited document where available; it does not assert that the issue is currently live.
 
+## Build-368 Cloudflare beta-data candidate
+
+No known local code P0 remains on runtime payload commit `b8f671a` (game artifact `4e11d01d...`,
+Browser bridge `cf9c0cad...`). Independent runtime and security reviews approved; dashboard Browser QA
+and the complete exact-byte regression evidence passed.
+
+Production release remains blocked until all external Cloudflare state is proven: migrated/bound D1,
+`BETA_RATE_SALT`, Access issuer/audience, an exact deny-by-default `/founder` policy, empty baseline,
+and live write/read/survey/export/v14-upgrade/returning-player/rollback smoke. Build 367 remains live.
+
+The dashboard intentionally excludes Build 367/earlier Supabase history until a later authenticated
+import. Existing milestone latches will not re-emit completed milestones into the fresh D1. No
+historical row, account, save, or player ID was deleted. Supabase remains operationally required for
+accounts, cloud saves, history, and temporary telemetry fallback.
+
 ## Build-366 Founder final cosmetic-retest readiness
 
 No known P0 remains for local Founder cosmetic retesting on exact candidate payload commit `19c4434`

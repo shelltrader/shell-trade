@@ -26,7 +26,7 @@
 <body>
   <div class="wrap">
     <h1>Privacy Policy</h1>
-    <div class="meta">ChartQuest &middot; Last updated 4 August 2026</div>
+    <div class="meta">ChartQuest &middot; Last updated 15 August 2026</div>
 
     <p>ChartQuest is a game that teaches you about charts and trading. This page explains, in plain words, what information we keep and how we look after it. If anything here is unclear, email us at <a href="mailto:habitsimulator@gmail.com">habitsimulator@gmail.com</a>.</p>
 
@@ -51,7 +51,7 @@
       <li>No payment or bank details — the "shells" and trades in the game are pretend and have no real money value.</li>
       <li>No cookies for tracking, and no advertising.</li>
       <li>No following you around other websites. Nothing is shared with advertisers or data brokers, because we do not use any.</li>
-      <li>We do not keep your IP address. Our servers see it for a moment to stop people flooding us with junk, and then it is gone.</li>
+      <li>We do not keep your IP address. To stop automated flooding, Cloudflare turns it into a one-way, minute-specific code that cannot be used across time. Codes older than about ten minutes are removed when later beta traffic arrives; any final idle limiter codes are deleted with the beta records when the beta ends.</li>
     </ul>
 
     <h2>Guest mode</h2>
@@ -59,8 +59,8 @@
 
     <h2>Where your information is kept</h2>
     <ul>
-      <li><strong>Supabase</strong> — stores accounts, progress and the beta records. Your account data is protected so that only your own signed-in account can read it.</li>
-      <li><strong>Cloudflare Pages</strong> — hosts the website.</li>
+      <li><strong>Cloudflare</strong> — hosts the website and stores new beta progress marks and survey responses. The private results dashboard is restricted to the ChartQuest team.</li>
+      <li><strong>Supabase</strong> — still stores signed-in accounts and cloud progress while those features are being migrated. It also holds earlier beta records and may receive a fallback copy if the Cloudflare beta endpoint cannot confirm a write. Your account data is protected so that only your own signed-in account can read it.</li>
       <li><strong>Google Fonts</strong> — delivers the lettering used on the site.</li>
       <li><strong>Public market data</strong> — we read public market prices to draw the charts. We do <strong>not</strong> send any of your information to them.</li>
     </ul>

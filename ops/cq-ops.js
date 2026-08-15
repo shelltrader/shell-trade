@@ -82,15 +82,13 @@
      laptop, on the LAN QR, on a Cloudflare preview and on playchartquest.com, with no build
      flags and no separate bundles.
 
-     PHASE 1 HONESTY: all three environments currently point at the SAME Supabase project,
-     because that is the truth today — there is no staging project yet. This table is where
-     that changes, and it is the ONLY place it changes. Do not add a second endpoint literal
-     anywhere else in the codebase; add it here. (The last time a config value lived in more
-     than one place, a Cloudflare migration silently 403'd every telemetry POST and nothing in
-     the codebase could see it.) */
+     BUILD 368 HONESTY: beta analytics now enters through the same-origin Cloudflare Pages
+     Function. The separate apiBase intentionally remains Supabase during the overlap because
+     signed-in accounts and cloud saves have not been migrated yet. Do not confuse an analytics
+     cutover with an account-data migration. */
   var ENV_CONFIG = {
     development: {
-      analyticsEndpoint: 'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest',
+      analyticsEndpoint: '/api/beta-ingest',
       apiBase:           'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1',
       surveyUrl:         'survey.html',
       logLevel:          'debug',
@@ -98,7 +96,7 @@
       remoteLogging:     false
     },
     staging: {
-      analyticsEndpoint: 'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest',
+      analyticsEndpoint: '/api/beta-ingest',
       apiBase:           'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1',
       surveyUrl:         'survey.html',
       logLevel:          'info',
@@ -106,7 +104,7 @@
       remoteLogging:     false
     },
     production: {
-      analyticsEndpoint: 'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest',
+      analyticsEndpoint: '/api/beta-ingest',
       apiBase:           'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1',
       surveyUrl:         'survey.html',
       logLevel:          'warn',

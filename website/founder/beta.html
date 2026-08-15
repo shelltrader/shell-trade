@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>ChartQuest · Founder Beta Command</title>
+  <link rel="stylesheet" href="./beta.css">
+</head>
+<body>
+  <a class="skip" href="#workspace">Skip to dashboard</a>
+  <header class="masthead">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">CQ</div>
+      <div>
+        <p class="eyebrow">FOUNDER ACCESS · BETA COMMAND</p>
+        <h1>ChartQuest field report</h1>
+      </div>
+    </div>
+    <div class="load-state" id="loadState" role="status" aria-live="polite">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span id="loadStateText">Connecting to Cloudflare…</span>
+    </div>
+  </header>
+
+  <aside class="cutover-note" aria-label="Data history notice">
+    <strong>Cloudflare beta dataset only.</strong>
+    Build 367 and earlier Supabase test history is intentionally not merged into this view.
+    A verified empty result means no post-cutover activity—not zero all-time players.
+  </aside>
+
+  <section class="error-panel" id="errorPanel" role="alert" hidden>
+    <div>
+      <p class="eyebrow">DATA FEED UNAVAILABLE</p>
+      <h2 id="errorTitle">The dashboard could not load.</h2>
+      <p id="errorMessage"></p>
+      <p class="error-detail" id="errorDetail"></p>
+    </div>
+    <button class="button primary" id="retryButton" type="button">Retry connection</button>
+  </section>
+
+  <section class="control-deck" aria-label="Dashboard controls">
+    <label>
+      <span>Time window</span>
+      <select id="windowSelect">
+        <option value="1">Last 24 hours</option>
+        <option value="7" selected>Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="0">All Cloudflare history</option>
+      </select>
+    </label>
+    <label>
+      <span>Entry build cohort</span>
+      <select id="buildSelect" disabled>
+        <option value="all">All builds</option>
+      </select>
+    </label>
+    <label class="search-control">
+      <span>Search loaded data</span>
+      <input id="searchInput" type="search" placeholder="Player, response, event, crash…" autocomplete="off" disabled>
+    </label>
+    <div class="control-actions">
+      <button class="button" id="refreshButton" type="button">↻ Refresh</button>
+      <details class="export-menu">
+        <summary class="button">Export ▾</summary>
+        <div class="export-popover">
+          <small>All rows · server generated</small>
+          <a href="/founder/api/beta-data?dataset=events&amp;mode=export&amp;format=json">All events JSON</a>
+          <a href="/founder/api/beta-data?dataset=surveys&amp;mode=export&amp;format=json">All surveys JSON</a>
+          <a href="/founder/api/beta-data?dataset=events&amp;mode=export&amp;format=csv">All events CSV</a>
+          <a href="/founder/api/beta-data?dataset=surveys&amp;mode=export&amp;format=csv">All surveys CSV</a>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <nav class="tabs" aria-label="Beta report views">
+    <button type="button" class="tab active" data-view="overview" aria-selected="true">Overview</button>
+    <button type="button" class="tab" data-view="funnel" aria-selected="false">Funnel</button>
+    <button type="button" class="tab" data-view="players" aria-selected="false">Players</button>
+    <button type="button" class="tab" data-view="surveys" aria-selected="false">Surveys</button>
+    <button type="button" class="tab" data-view="events" aria-selected="false">Raw events</button>
+    <button type="button" class="tab" data-view="builds" aria-selected="false">Builds</button>
+    <button type="button" class="tab" data-view="devices" aria-selected="false">Devices</button>
+    <button type="button" class="tab" data-view="crashes" aria-selected="false">Crashes</button>
+  </nav>
+
+  <main id="workspace" class="workspace" aria-busy="true">
+    <section class="loading-shell" id="loadingShell">
+      <div class="loader" aria-hidden="true"></div>
+      <p>Reading every protected Cloudflare page…</p>
+      <small>No totals appear until both feeds are complete.</small>
+    </section>
+
+    <section class="view" id="view-overview" data-view-panel="overview" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">LIVE PULSE</p><h2>Beta overview</h2></div>
+        <p id="overviewScope" class="section-note"></p>
+      </div>
+      <div class="kpi-grid" id="overviewCards"></div>
+      <div class="split-grid">
+        <article class="panel">
+          <div class="panel-head"><h3>Journey reach</h3><button class="text-button" data-go="funnel">Open funnel →</button></div>
+          <div id="overviewJourney"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-head"><h3>Signal check</h3><span class="quiet">post-cutover</span></div>
+          <div id="overviewSignals"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="view" id="view-funnel" data-view-panel="funnel" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">PLAYER JOURNEY</p><h2>Monotonic funnel</h2></div>
+        <p class="section-note">Skippable and click-observation stages are shown as raw reach and never manufacture drop-off.</p>
+      </div>
+      <div class="panel table-panel"><div class="table-scroll"><table>
+        <thead><tr><th>Stage</th><th>Players</th><th>Of landing</th><th>Kept</th><th>Drop</th><th>Reach</th></tr></thead>
+        <tbody id="funnelRows"></tbody>
+      </table></div></div>
+    </section>
+
+    <section class="view" id="view-players" data-view-panel="players" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">ROSTER</p><h2>Every beta player</h2></div>
+        <p class="section-note" id="playerCount"></p>
+      </div>
+      <div class="panel table-panel"><div class="table-scroll"><table>
+        <thead><tr><th>Player</th><th>Last seen</th><th>Furthest stage</th><th>Sessions</th><th>Builds</th><th>Device</th><th>Rating</th><th>Crashes</th></tr></thead>
+        <tbody id="playerRows"></tbody>
+      </table></div><div class="empty" id="playerEmpty" hidden>No players match this search.</div></div>
+    </section>
+
+    <section class="view" id="view-surveys" data-view-panel="surveys" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">VOICE OF PLAYER</p><h2>Every survey, verbatim</h2></div>
+        <p class="section-note" id="surveyCount"></p>
+      </div>
+      <div class="survey-summary" id="surveySummary"></div>
+      <div class="response-list" id="surveyResponses"></div>
+      <div class="empty" id="surveyEmpty" hidden>No survey responses match this search.</div>
+    </section>
+
+    <section class="view" id="view-events" data-view-panel="events" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">SOURCE OF TRUTH</p><h2>Raw event stream</h2></div>
+        <p class="section-note" id="eventCount"></p>
+      </div>
+      <div class="event-tools">
+        <label><span>Event name</span><select id="eventNameSelect"><option value="all">All event names</option></select></label>
+        <div class="pager" id="eventPager"></div>
+      </div>
+      <div class="panel table-panel"><div class="table-scroll"><table>
+        <thead><tr><th>Event time</th><th>Name</th><th>Player</th><th>Session</th><th>Build</th><th>Environment</th><th>Raw row</th></tr></thead>
+        <tbody id="eventRows"></tbody>
+      </table></div><div class="empty" id="eventEmpty" hidden>No events match these filters.</div></div>
+    </section>
+
+    <section class="view" id="view-builds" data-view-panel="builds" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">ENTRY COHORTS</p><h2>Build performance</h2></div>
+        <p class="section-note">Each player belongs to the first build-bearing event in the selected window.</p>
+      </div>
+      <div class="panel table-panel"><div class="table-scroll"><table>
+        <thead><tr><th>Build</th><th>Players</th><th>Sessions</th><th>Boss</th><th>Journal</th><th>Completed</th><th>Survey</th><th>Rating</th><th>Crashes</th></tr></thead>
+        <tbody id="buildRows"></tbody>
+      </table></div></div>
+    </section>
+
+    <section class="view" id="view-devices" data-view-panel="devices" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">PLAY ENVIRONMENT</p><h2>Devices and browsers</h2></div>
+        <p class="section-note">Counted once per player using their latest non-empty environment. Country and language are not collected.</p>
+      </div>
+      <div class="tech-grid" id="techGrid"></div>
+    </section>
+
+    <section class="view" id="view-crashes" data-view-panel="crashes" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">STABILITY</p><h2>Crash intelligence</h2></div>
+        <p class="section-note" id="crashCount"></p>
+      </div>
+      <div class="origin-legend"><span class="pill self">ChartQuest</span><span class="pill third_party">Third party</span><span class="pill local">Local/dev</span></div>
+      <div class="crash-list" id="crashList"></div>
+      <div class="empty" id="crashEmpty" hidden>No crashes match this search.</div>
+    </section>
+  </main>
+
+  <dialog id="playerDialog" class="player-dialog">
+    <form method="dialog"><button class="dialog-close" aria-label="Close player detail">×</button></form>
+    <div id="playerDialogBody"></div>
+  </dialog>
+
+  <footer>
+    <span>ChartQuest Founder Beta Command</span>
+    <span id="footerFreshness">Awaiting verified data</span>
+  </footer>
+
+  <script src="./beta-model.js"></script>
+  <script src="./beta.js"></script>
+</body>
+</html>

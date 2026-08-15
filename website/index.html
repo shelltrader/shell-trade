@@ -30,14 +30,31 @@
       sent = true;
       var K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
       var pid = 'anon'; try { pid = localStorage.getItem('cq_pid') || 'anon'; } catch (e) {}
-      fetch('https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest', {
-        method: 'POST', keepalive: true,
-        headers: { apikey: K, Authorization: 'Bearer ' + K, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: 'events', rows: Q.slice(0, 3).map(function (q, i) {
-          return { event_id: 'boot-' + Date.now() + '-' + i, player_id: pid, session_id: 'boot',
-                   name: 'crash', ts: new Date().toISOString(), props: q.props };
-        }) })
-      }).catch(function () {});
+      var rows = Q.slice(0, 3).map(function (q, i) {
+        return { event_id: 'boot-' + Date.now() + '-' + i, player_id: pid, session_id: 'boot',
+                 name: 'crash', ts: new Date().toISOString(), props: q.props };
+      });
+      var body = JSON.stringify({ kind: 'events', rows: rows });
+      function acknowledged(r) {
+        if (!r || !r.ok) return Promise.resolve(false);
+        var type = r.headers && r.headers.get ? String(r.headers.get('Content-Type') || '') : '';
+        if (type.toLowerCase().indexOf('application/json') === -1) return Promise.resolve(false);
+        return r.json().then(function (receipt) {
+          return !!receipt && receipt.ok === true && Number(receipt.written) === rows.length;
+        }).catch(function () { return false; });
+      }
+      fetch('/api/beta-ingest', {
+        method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: body
+      }).then(acknowledged).then(function (ok) {
+        if (ok) return true;
+        throw new Error('Cloudflare beta ingest did not confirm this crash');
+      }).catch(function () {
+        return fetch('https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest', {
+          method: 'POST', keepalive: true,
+          headers: { apikey: K, Authorization: 'Bearer ' + K, 'Content-Type': 'application/json' },
+          body: body
+        }).catch(function () {});
+      });
     } catch (e) {}
   }, 8000);
 })();
@@ -1571,7 +1588,7 @@ body.tab-hidden *{animation-play-state:paused!important}
 <!-- Closed-beta analytics (ticket 3). Cookieless, no third parties, no personal data.
      This is the FIRST stage of the beta funnel — without it the report cannot show how
      many people who saw the landing page went on to play. -->
-<script src="assets/cq-track.js"></script>
+<script src="assets/cq-track.js?v=368"></script>
 
 <script>
 /* CHARTQUEST — portal experience. Edit URLs in one place: */

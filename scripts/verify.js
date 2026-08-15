@@ -17,9 +17,10 @@
  *   9  No large binaries added (>5MB, non-ignored)
  *   10 Protected systems unchanged vs HEAD  (override: CQ_ALLOW_PROTECTED=1 when a
  *      protected change was explicitly approved)
- *   22 Build-367 beta readiness + Boss1 audio/viewport/CQSAFE/RC invariants
- *   23 Build-367 local browser harness safety/syntax/self-test
- *   24 Build-367 Boss1 cinematic-audio media quality/parity/timing
+ *   22 Build-368 beta readiness + Boss1 audio/viewport/CQSAFE/RC invariants
+ *   23 Build-368 local browser harness safety/syntax/self-test
+ *   24 Build-368 Boss1 cinematic-audio media quality/parity/timing
+ *   25 Build-368 Cloudflare beta data-plane + no-loss client contracts
  */
 const fs = require('fs');
 const os = require('os');
@@ -729,7 +730,7 @@ function run() {
     }
   }
 
-  // 22 — BUILD-367 BETA READINESS + AUDIO/VIEWPORT/CQSAFE/RC INVARIANTS. Boss1's media-time
+  // 22 — BUILD-368 BETA READINESS + AUDIO/VIEWPORT/CQSAFE/RC INVARIANTS. Boss1's media-time
   // cinematic audio owner plus the previous cosmetic closeout,
   // portal corridor, replay exit,
   // authored first-trade score, premium world toasts, collectible, first-trade,
@@ -741,12 +742,12 @@ function run() {
     try {
       const suite = require(path.join(__dirname, 'cqsafe.test.js')).runSuite({ report: false });
       const first = suite.failures[0];
-      add('22', 'Build-367 beta readiness + Boss1 audio/viewport/CQSAFE/RC invariants', suite.ok ? 'PASS' : 'FAIL',
+      add('22', 'Build-368 beta readiness + Boss1 audio/viewport/CQSAFE/RC invariants', suite.ok ? 'PASS' : 'FAIL',
         suite.ok
           ? suite.detail
           : `${suite.passed}/${suite.total} passed · ${first.name}: ${String(first.error && first.error.message || first.error).slice(0, 120)}`);
     } catch (e) {
-      add('22', 'Build-367 beta readiness + Boss1 audio/viewport/CQSAFE/RC invariants', 'FAIL',
+      add('22', 'Build-368 beta readiness + Boss1 audio/viewport/CQSAFE/RC invariants', 'FAIL',
         'focused suite could not run: ' + String(e && e.message || e).slice(0, 120));
     }
   }
@@ -771,10 +772,10 @@ function run() {
         if (result.status !== 0) failures.push(label + ': ' + String(result.stderr || result.stdout || 'exit ' + result.status).trim().slice(0, 160));
         else detail.push(label + ' PASS');
       }
-      add('23', 'Build-367 local browser QA harness', failures.length ? 'FAIL' : 'PASS',
+      add('23', 'Build-368 local browser QA harness', failures.length ? 'FAIL' : 'PASS',
         failures.length ? failures.join(' · ') : detail.join(' · '));
     } catch (e) {
-      add('23', 'Build-367 local browser QA harness', 'FAIL',
+      add('23', 'Build-368 local browser QA harness', 'FAIL',
         'harness checks could not run: ' + String(e && e.message || e).slice(0, 120));
     }
   }
@@ -785,11 +786,42 @@ function run() {
   {
     try {
       const suite = require(path.join(__dirname, 'boss1_audio_media.test.js')).runSuite({ report: false });
-      add('24', 'Build-367 Boss1 cinematic audio (AAC/parity/timing/headroom/phone-band)',
+      add('24', 'Build-368 Boss1 cinematic audio (AAC/parity/timing/headroom/phone-band)',
         suite.ok ? 'PASS' : 'FAIL', suite.detail);
     } catch (e) {
-      add('24', 'Build-367 Boss1 cinematic audio (AAC/parity/timing/headroom/phone-band)', 'FAIL',
+      add('24', 'Build-368 Boss1 cinematic audio (AAC/parity/timing/headroom/phone-band)', 'FAIL',
         'audio media gate could not run: ' + String(e && e.message || e).slice(0, 140));
+    }
+  }
+
+  // 25 — CLOUDFLARE BETA DATA PLANE. The public endpoint is write-only and schema-bound;
+  // founder reads fail closed behind a verified Access token; exports neutralise spreadsheet
+  // formula cells. The browser client proves Cloudflare-first/Supabase-fallback truthfulness,
+  // confirmed survey writes, complete 40-row queue draining and save/player-key preservation.
+  {
+    try {
+      const checks = [
+        ['cloudflare_beta.test.js', 'service/Access/D1 contracts'],
+        ['cloudflare_client.test.js', 'client fallback/queue/save contracts'],
+        ['founder_beta_dashboard.test.js', 'private dashboard/data-honesty contracts'],
+      ];
+      const failures = [], detail = [];
+      for (const [file, label] of checks) {
+        const result = cp.spawnSync(process.execPath, [path.join('scripts', file)], {
+          cwd: ROOT, encoding: 'utf8', timeout: 30000,
+        });
+        if (result.status !== 0) {
+          failures.push(label + ': ' + String(result.stderr || result.stdout || 'exit ' + result.status).trim().slice(0, 180));
+        } else {
+          const match = String(result.stdout || '').match(/(\d+\/\d+[^\n]*passed|all[^\n]*pass)/i);
+          detail.push(label + ' PASS' + (match ? ' (' + match[1] + ')' : ''));
+        }
+      }
+      add('25', 'Build-368 Cloudflare beta data plane + no-loss client', failures.length ? 'FAIL' : 'PASS',
+        failures.length ? failures.join(' · ') : detail.join(' · '));
+    } catch (e) {
+      add('25', 'Build-368 Cloudflare beta data plane + no-loss client', 'FAIL',
+        'Cloudflare data-plane checks could not run: ' + String(e && e.message || e).slice(0, 140));
     }
   }
 

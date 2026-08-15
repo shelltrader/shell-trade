@@ -32,8 +32,11 @@
    tutorial_step_reached breadcrumb) but this version string did not move IN THAT COMMIT — the
    same miss as v12→v13. Bumping now so returning landing/play visitors get the new tracker.
    (The game itself is game.html, served network-first, so gameplay was never stale — only the
-   precached assets/cq-track.js on the marketing pages were.) */
-const CACHE = 'chartquest-site-v14';
+   precached assets/cq-track.js on the marketing pages were.)
+   v14 → v15 (build 368): analytics and surveys become Cloudflare-first with a verified
+   Supabase fallback during the no-loss overlap. The HTML also requests cq-track.js?v=368 so
+   even a still-controlling v14 worker misses its old unversioned cache on first navigation. */
+const CACHE = 'chartquest-site-v15';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',
@@ -77,6 +80,24 @@ self.addEventListener('fetch', e => {
         }));
       }));
     }
+    return;
+  }
+
+  // Founder data and every API response are private/live data, never offline
+  // assets. Bypass CacheStorage completely so Access logout/revocation cannot
+  // leave survey or player records readable from this service worker, and so
+  // dashboard refreshes always reach the authenticated origin.
+  const requestURL = new URL(req.url);
+  // Cross-origin CORS responses can contain authenticated account/save data or live
+  // prices. Browser HTTP caching may obey their response policy; ChartQuest CacheStorage
+  // must never pin them or reuse an Authorization response across an account switch.
+  if (requestURL.origin !== self.location.origin) {
+    e.respondWith(fetch(req));
+    return;
+  }
+  if (requestURL.pathname === '/api' || requestURL.pathname.startsWith('/api/') ||
+      requestURL.pathname === '/founder' || requestURL.pathname.startsWith('/founder/')) {
+    e.respondWith(fetch(req));
     return;
   }
 

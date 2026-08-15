@@ -362,8 +362,8 @@
     };
     const dimensions = canvas && Math.abs(canvas.width - canvas.clientWidth * actual.effectiveDpr) <= 1 &&
       Math.abs(canvas.height - canvas.clientHeight * actual.effectiveDpr) <= 1;
-    return caseResult('F1', 'dev QA build 367, capped main canvas, no walls/errors', actual,
-      actual.dev && actual.qa && actual.build === 367 && dimensions &&
+    return caseResult('F1', 'dev QA build 368, capped main canvas, no walls/errors', actual,
+      actual.dev && actual.qa && actual.build === 368 && dimensions &&
       actual.authHidden && actual.factionHidden && actual.errors.length === 0);
   }
 

@@ -25,8 +25,10 @@
      stage, not a counter. Replays must not inflate it.
    • Every event carries a client-generated event_id, and the edge function upserts on it,
      so a retry after a flaky mobile connection can never double-count a stage.
-   • Buffered and flushed in batches; flushed hard on pagehide with keepalive (NOT
-     sendBeacon — beacon cannot set the apikey/Authorization headers this endpoint needs).
+   • Buffered and flushed in batches; flushed hard on pagehide with keepalive. The primary
+     Cloudflare endpoint is same-origin and needs no browser credential. During the migration
+     window only, an unconfirmed primary write falls back to the existing Supabase endpoint so
+     a Pages/D1 configuration mistake cannot eat a live tester's milestone.
    • Every public method is try/caught and non-throwing. Analytics must never be able to
      break a playtest — a dropped metric is a nuisance, a broken game is the beta.
    ══════════════════════════════════════════════════════════════════════════════════════════ */
@@ -34,7 +36,8 @@
   'use strict';
   if (window.CQTrack) return;                      // never double-install
 
-  var ENDPOINT = 'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest';
+  var ENDPOINT = '/api/beta-ingest';
+  var FALLBACK_ENDPOINT = 'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest';
   /* Supabase ANON key — a public, publishable key. It is already shipped in the game; it
      grants nothing on its own (every beta table has RLS on with no anon policy, and the
      only write path is the service-role edge function). */
@@ -138,15 +141,34 @@
   var ended   = false;
   var PENDING = 'cq_bt_pending';        // durable queue for rows whose POST has not been confirmed
 
+  function send(endpoint, kind, rows, keepalive, fallback) {
+    var headers = { 'Content-Type': 'application/json' };
+    if (fallback) {
+      headers.apikey = ANON;
+      headers.Authorization = 'Bearer ' + ANON;
+    }
+    return fetch(endpoint, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ kind: kind, rows: rows }),
+      keepalive: !!keepalive
+    }).then(function (r) {
+      if (!r || !r.ok) return false;
+      var type = r.headers && r.headers.get ? String(r.headers.get('Content-Type') || '') : '';
+      if (type.toLowerCase().indexOf('application/json') === -1) return false;
+      return r.json().then(function (receipt) {
+        return !!receipt && receipt.ok === true && Number(receipt.written) === rows.length;
+      }).catch(function () { return false; });
+    }).catch(function () { return false; });
+  }
+
   function post(kind, rows, keepalive) {
     if (!rows || !rows.length) return Promise.resolve(false);
     return safe(function () {
-      return fetch(ENDPOINT, {
-        method: 'POST',
-        headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: kind, rows: rows }),
-        keepalive: !!keepalive
-      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+      return send(ENDPOINT, kind, rows, keepalive, false).then(function (ok) {
+        if (ok) return true;
+        return send(FALLBACK_ENDPOINT, kind, rows, keepalive, true);
+      });
     }, Promise.resolve(false));
   }
 
@@ -198,7 +220,15 @@
     safe(function () {
       var q = JSON.parse(get(PENDING) || '[]');
       if (!q.length) return;
-      post('events', q.slice(0, MAX_BATCH), false).then(function (ok) { if (ok) clearPending(q); });
+      var batch = q.slice(0, MAX_BATCH);
+      post('events', batch, false).then(function (ok) {
+        if (!ok) return;
+        /* Clear ONLY the rows this request confirmed. The old code acknowledged 40 rows but
+           passed the entire (up to 200 row) queue to clearPending(), silently deleting every
+           unsent row after the first batch. Keep draining in bounded batches instead. */
+        clearPending(batch);
+        if (q.length > batch.length) setTimeout(drainPending, 0);
+      });
     });
   }
 

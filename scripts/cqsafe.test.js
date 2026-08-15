@@ -2,7 +2,7 @@
 'use strict';
 
 /*
- * Durable build-367 beta-readiness regression suite.
+ * Durable build-368 beta-readiness regression suite.
  *
  * The CQSAFE owner is inlined in the canonical single-file game. These tests evaluate that exact
  * source block in a fresh VM for every behavioural case, then lock the small integration contracts
@@ -1292,7 +1292,7 @@ function runSuite(options = {}) {
     }
   }
 
-  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/build-367 regression tests passed`);
+  if (report) console.log(`\n${passed}/${tests.length} CQSAFE/build-368 regression tests passed`);
   return {
     ok: failures.length === 0,
     passed,
@@ -1300,7 +1300,7 @@ function runSuite(options = {}) {
     failures,
     detail: failures.length
       ? failures.map(item => item.name).join(' · ')
-      : `${passed}/${tests.length} CQSAFE/build-367 contracts`,
+      : `${passed}/${tests.length} CQSAFE/build-368 contracts`,
   };
 }
 

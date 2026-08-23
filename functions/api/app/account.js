@@ -40,11 +40,14 @@ export async function onRequest(context) {
     return authError(request, 400, 'invalid_account', 'Use a valid email, an 8+ character password, and accept the terms.');
   }
   if (!key) return authError(request, 400, 'idempotency_required', 'A valid idempotency key is required.');
+  let stage = 'rate_limit';
   try {
     const rate = await enforceAppRateLimit(context.env.APP_DB, request, context.env, 'account', 5, 300);
     if (!rate.allowed) return authError(request, 429, 'rate_limited', 'Too many attempts. Try again shortly.');
+    stage = 'password_fingerprint';
     const passwordFingerprint = await passwordRequestFingerprint(email, password, context.env);
     const digest = await payloadDigest({ email, consent: true, password_fingerprint: passwordFingerprint });
+    stage = 'receipt_lookup';
     const prior = await findReceipt(context.env.APP_DB, key);
     if (prior) {
       if (prior.operation !== 'account.create' || prior.payload_hash !== digest) {
@@ -63,6 +66,7 @@ export async function onRequest(context) {
     if (await findIdentityByEmail(context.env.APP_DB, email)) {
       return authError(request, 409, 'account_exists', 'An account already exists for this email.');
     }
+    stage = 'password_kdf';
     const credential = await createPasswordCredential(password, context.env);
     const userId = randomUuid();
     const nowIso = new Date().toISOString();
@@ -70,6 +74,7 @@ export async function onRequest(context) {
       id: key, userScope: userId, operation: 'account.create', payloadHash: digest,
       accepted: 1, result: { user_id: userId }, nowIso,
     };
+    stage = 'account_batch';
     await context.env.APP_DB.batch([
       context.env.APP_DB.prepare(`INSERT INTO app_identities (
         id, email_normalized, email_original, source_provider, status,
@@ -88,12 +93,19 @@ export async function onRequest(context) {
       receiptStatement(context.env.APP_DB, values),
     ]);
     const identity = { id: userId, email_original: String(parsed.body.email).trim(), source_provider: 'cloudflare' };
+    stage = 'session';
     const session = await issueSession(context.env.APP_DB, identity, request);
     return authJson(request, 201, {
       ok: true, user: session.user, csrf_token: session.csrf, expires_at: session.expiresAt,
       receipt: receiptShape({ receipt_id: key, operation: values.operation, accepted: 1, result_json: JSON.stringify(values.result) }, false),
     }, session.cookies);
   } catch (error) {
+    // Operational diagnostics deliberately record only the failing stage and
+    // exception class—never account input, credentials, tokens, or hashes.
+    console.error('account.create_failed', {
+      stage,
+      name: typeof error?.name === 'string' ? error.name.slice(0, 80) : 'Error',
+    });
     if (/unique/i.test(String(error?.message || ''))) {
       return authError(request, 409, 'account_exists', 'An account already exists for this email.');
     }

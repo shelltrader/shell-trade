@@ -12,7 +12,10 @@ import {
 export const SESSION_COOKIE = '__Host-cq_session';
 export const CSRF_COOKIE = '__Host-cq_csrf';
 export const SESSION_SECONDS = 30 * 24 * 60 * 60;
-export const PASSWORD_ITERATIONS = 310000;
+// Cloudflare Workers currently rejects WebCrypto PBKDF2 requests above 100,000
+// iterations. Keep the stored per-identity count so this can be raised safely
+// when the runtime limit changes.
+export const PASSWORD_ITERATIONS = 100000;
 
 function cookies(request) {
   const result = {};

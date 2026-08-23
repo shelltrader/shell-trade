@@ -207,9 +207,11 @@ async function jsonBody(response) {
       await app.payloadDigest({ a: { y: 0, z: 1 }, b: 2 }));
   });
 
-  await test('password credentials use peppered PBKDF2 and reject wrong passwords', async () => {
-    const credential = await auth.createPasswordCredential('correct horse', env, { iterations: 100000 });
+  await test('password credentials use the Workers PBKDF2 cap and honor stored legacy iterations', async () => {
+    assert.strictEqual(auth.PASSWORD_ITERATIONS, 100000);
+    const credential = await auth.createPasswordCredential('correct horse', env);
     assert.strictEqual(credential.scheme, 'pbkdf2-sha256-v1');
+    assert.strictEqual(credential.iterations, 100000);
     assert.notStrictEqual(credential.hash, 'correct horse');
     const identity = {
       password_scheme: credential.scheme, password_salt: credential.salt,
@@ -217,6 +219,18 @@ async function jsonBody(response) {
     };
     assert.strictEqual(await auth.verifyPassword('correct horse', identity, env), true);
     assert.strictEqual(await auth.verifyPassword('wrong horse', identity, env), false);
+
+    // Verification reads each row's stored work factor rather than assuming the
+    // current default, preserving compatibility with credentials minted earlier.
+    const legacy = await auth.createPasswordCredential('legacy horse', env, { iterations: 100001 });
+    const legacyIdentity = {
+      password_scheme: legacy.scheme, password_salt: legacy.salt,
+      password_hash: legacy.hash, password_iterations: legacy.iterations,
+    };
+    assert.strictEqual(await auth.verifyPassword('legacy horse', legacyIdentity, env), true);
+    assert.strictEqual(await auth.verifyPassword('legacy horse', {
+      ...legacyIdentity, password_iterations: auth.PASSWORD_ITERATIONS,
+    }, env), false);
   });
 
   await test('account creation gives exact receipt and stores no raw password/session token', async () => {
@@ -238,6 +252,7 @@ async function jsonBody(response) {
     const identity = sqlite("SELECT * FROM app_identities WHERE email_normalized='player@example.com'")[0];
     assert(identity);
     assert.strictEqual(identity.source_provider, 'cloudflare');
+    assert.strictEqual(identity.password_iterations, 100000);
     assert.notStrictEqual(identity.password_hash, body.password);
     const session = sqlite('SELECT * FROM app_sessions WHERE user_id=' + literal(identity.id))[0];
     assert.strictEqual(session.session_hash.length, 64);

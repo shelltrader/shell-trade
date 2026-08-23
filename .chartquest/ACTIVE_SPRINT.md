@@ -4,52 +4,45 @@
 
 ## Sprint objective
 
-Recover the complete historical ChartQuest dataset from Supabase, import and reconcile it into
-Cloudflare without deleting source or player-device data, cut every production game-data path over
-to Cloudflare, and give the Founder one private dashboard with complete player/survey views and an
-evidence-based improvement report. Preserve serving Build 367 until preview, import, and release
-evidence prove Build 369 safe.
+Prepare the next closed-beta experiment from the recovered evidence: restore player-paced guided
+trades without changing their price/outcome doctrine, improve the smallest confirmed teaching
+surfaces, add two bounded research questions, and attribute the next cohort with private opaque
+invites. Preserve Build 367 in production until the Build-370 migration, preview, device, release,
+and served-fingerprint gates all pass.
 
 ## Current release/build
 
-- Isolated candidate branch: `codex/cloudflare-only-beta`.
-- Exact runtime, migration-tooling, and dashboard payload commit:
-  `df0053c05506d6691b6545d96be6202dc685f1b6`.
-- D1 Studio compatibility follow-up:
-  `1b8f4e53e42b3a91c9243f8ba7ee38a6dd120baa`.
-- Cloudflare runtime compatibility and privacy-safe diagnostic follow-ups:
-  `c0f0b5ab1714a69fd72cf9e631d1cadd7f3da3ab` and
-  `42982171ecf8942a223ec83702ef92448ef00902`.
-- Build: **369**.
+- Isolated candidate branch: `codex/beta370-player-paced-trades`.
+- Exact Build-370 payload commit: `08d3b3c930f86ca4894ff9c26c813f78b43fb040`.
+- Build: **370**.
 - Source, root mirror, and website game artifact are byte-identical at SHA-256
-  `201682c415cb673e2ef24e524319dc5e5c194b94f039861200cf686e8ef0c702`.
-- Final APP_DB schema SHA-256:
-  `8d2be65b0ccc207aed5a6bf04f7f982bfd2210ce7480283b8055459a2c121a07`.
-- Production Build 367 remains live and unaffected. The Build-369 feature branch is pushed and its
-  preview deployment `297c2141` succeeded; no Build-369 production deployment occurred.
+  `b615adb1c06558b5409111384c406053dfb9dee802eda86d7000db8b2e63103d`.
+- Additive survey migration SHA-256:
+  `3283707ade48d84447cf003377613b897bb004d836b89a5175df082930032a4d`.
+- Production Build 367 remains live and unaffected. Build 370 has not been pushed or deployed.
 
 ## Active tasks
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Complete Supabase source export | Supabase Support + Release Manager | **BLOCKED EXTERNALLY** | Release Manager observed the identity-verification flow and sent a complete read-only export request in case `SU-452541`; provider processing is unverified. Import nothing until approved source proof is present. |
-| Final Cloudflare schema verification | Release Manager | **PREVIEW STRUCTURAL + CORE ACCOUNT PASS; PRODUCTION HELD** | Exact `0002_app.sql` was applied to fresh preview APP_DB `chartquest-app-preview-b369`; it has 32 app tables, 8 guards/triggers, 20 named indexes, zero FK violations, and zero rows after smoke cleanup. Preview BETA_DB has 3 tables, 2 guards/triggers, 9 named indexes, zero FK violations, and zero rows. Account creation, exact receipt, and session-row creation passed; the remaining routes/triggers and production proof stay gated. |
-| Build-369 preview deployment and smoke | Release Manager | **CORE ACCOUNT-CREATION SMOKE PASS; FULL MATRIX PENDING** | Feature HEAD `4298217` is deployed in Preview. Continue Access allow/deny, sign-in/restore, profile bootstrap/Journal/streak/mastery, survey, dashboard/exports, old service worker, market, and rollback checks without changing production. |
-| Historical import and reconciliation | Release Manager | **BLOCKED ON EXPORT** | Run offline attestation, apply idempotent split imports, export both D1 targets, compare counts/digests/quarantine, then mark reconciled. |
-| Real-data product report | PM/CTO | **BLOCKED ON RECONCILED DATA** | Capture protected BETA_DB and APP_DB exports at one recorded analysis cutoff; use the dashboard insights plus a human report based only on that fixed landed evidence. |
+| Build-370 BETA_DB migration | Release Manager | **PENDING; HARD ORDERING GATE** | Back up and count BETA_DB, inspect columns, apply `0003_beta_survey_research.sql` exactly once, verify historical rows remain and new columns exist, then deploy Functions. Never reverse this order. |
+| Build-370 preview and phone QA | Release Manager + Founder | **LOCAL AUTOMATION/390PX VISUAL PASS; PREVIEW PENDING** | Deploy the exact payload to Preview only after `0003`; test player-paced long/short win/loss, pause/background/backtrack, survey v2 receipt, cohort dashboard, and returning service worker. Founder judges physical trade feel. |
+| Next ten-person beta cohort | PM/CTO | **PENDING RELEASE APPROVAL** | After preview/device approval, generate one `b370-beta2` cohort and ten unique consonant-digit invite codes; share plain canonical links only after Build 370 is verified live. |
+| Historical application-data migration | Release Manager | **SEPARATE PENDING WORK** | Preserve the existing audited Build-369 account/data migration gates; this Build-370 experiment does not weaken or bypass them. |
 
 ## Blocked tasks
 
 | Item | Status | Evidence |
 |---|---|---|
-| Build 369 production deployment | **DO NOT DEPLOY** | Source export/import reconciliation, production schema proof, preview/live smoke, release manifest/lock/gate, and rollback evidence are incomplete. |
-| Historical tester and survey visibility | **BLOCKED ON SUPABASE EXPORT** | Build 367 is instrumented to send results to the historical project; current row presence/count is unverified. This work performed no source deletion, and no recent row is yet imported into Cloudflare. |
-| Supabase retirement | **DESIGNED, NOT EXECUTED** | Build 369 has no production-runtime Supabase dependency, but the historical project must remain untouched until complete export, D1 reconciliation, account claims, and rollback evidence pass. |
+| Build 370 production deployment | **DO NOT DEPLOY** | `0003` is not applied, Preview and physical-device QA are incomplete, and no release manifest/lock/served fingerprint exists. |
+| Next tester links | **DO NOT SEND YET** | The current public site still serves Build 367; invite attribution and Q6/Q7 exist only in the local candidate. |
+| Full Cloudflare application migration | **SEPARATE RELEASE GATE** | Build 370 inherits the Build-369 local candidate but does not itself prove production APP_DB migration, account restoration, or historical application-data reconciliation. |
 
 ## Completed tasks
 
 | Task | Result | Evidence |
 |---|---|---|
+| Build-370 player-paced trade and next-beta learning payload | **APPROVED LOCALLY; RELEASE HELD** | Exact payload `08d3b3c`; game artifacts `b615adb1...`; verifier 27/0/0/1; trade 11/11; UI 5/5; survey 4/4; beta service 26/26; client 15/15; Founder beta 8/8; independent final review APPROVE |
 | Build-369 full Cloudflare application/data client | **APPROVED LOCALLY** | Payload `df0053c`; `handoffs/CLOUDFLARE_GAME_CUTOVER_IMPLEMENTATION.md`; app 31/31, adapter 22/22, cutover 7/7 |
 | Build-369 auditable historical importer/reconciler | **APPROVED LOCALLY; REAL EXPORT PENDING** | `handoffs/CLOUDFLARE_MIGRATION_TOOLING.md`; importer 27/27 |
 | Build-369 private all-data dashboard and insight engine | **APPROVED LOCALLY; REAL DATA PENDING** | Founder APP snapshot/analysis 7/7; separately validated beta feeds; private fields masked by default |
@@ -87,15 +80,15 @@ evidence prove Build 369 safe.
 
 ## Founder decisions required
 
-No product-design decision is required. The Founder has approved a complete Cloudflare migration
-and one-login dashboard. The next external action belongs to Supabase Support: restore read-only
-project access or deliver the complete export. If Support sends a secure download or recovery link,
-the Release Manager must capture it without altering source rows and resume the audited import.
+No product-design decision is required before Preview. The Founder explicitly selected
+player-controlled traversal instead of a trade clock and required every adjacent trade rule to stay
+intact. The next Founder decision is subjective acceptance of physical-device trade feel after the
+Release Manager has applied the migration and produced a safe Preview.
 
 ## Release status
 
-**BUILD 369 PREVIEW CORE ACCOUNT SMOKE PASSED — DO NOT DEPLOY — SUPABASE SOURCE EXPORT, IMPORT RECONCILIATION, FULL PREVIEW/LIVE SMOKE, AND RELEASE CONTROLS PENDING — BUILD 367 REMAINS LIVE**
+**BUILD 370 LOCAL CANDIDATE APPROVED — DO NOT DEPLOY OR SEND LINKS — BETA_DB MIGRATION, PREVIEW/PHONE QA, RELEASE CONTROLS, AND LIVE FINGERPRINT PENDING — BUILD 367 REMAINS LIVE**
 
-Automated QA does not authorize production. Preserve both providers until every historical row and
-account is reconciled, verify Cloudflare in preview, then use the normal Release Manager
-manifest/lock/gate/fingerprint process for the authorized production cutover.
+Automated QA does not authorize production. Apply `0003` before Functions, verify Cloudflare in
+Preview and on a real phone, then use the normal Release Manager manifest/lock/gate/fingerprint
+process. Historical/account migration remains a separate no-loss gate.

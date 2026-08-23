@@ -1,5 +1,52 @@
 # Current Technical State
 
+## 2026-08-24 Build-370 next-beta local candidate — VERIFIED LOCALLY
+
+- Exact payload commit: `08d3b3c930f86ca4894ff9c26c813f78b43fb040` on
+  `codex/beta370-player-paced-trades`.
+- `chart-quest.html`, `index.html`, and `website/game.html` are byte-identical at SHA-256
+  `b615adb1c06558b5409111384c406053dfb9dee802eda86d7000db8b2e63103d`, stamped from parent
+  `54666ab248` at `2026-08-23T17:15:17Z`. Production remains Build 367; this branch was not pushed
+  or deployed.
+- Founder-directed pacing change: Level 1–3 guided trades print candles only as Finn reaches the
+  monotonic frontier. Wall time, idle state, resize, pause, guide/modal state, backgrounding, and
+  backtracking cannot move price or carry Finn. Automatic paths visibly touch their authored TP/SL
+  between candles 30 and 60; `CQ.priceTouched()` remains the one automatic resolver. Manual close,
+  economics, trade result/reward, music, replay, and all adjacent movement/boss/save rules remain
+  under their prior owners.
+- A live guided trade generates price terrain only. Shells, boxes, Lost Wisdom, portals, mega/world
+  events, cadence ledgers, collection, and behind-camera pruning are deferred until the position
+  closes. The actual deciding candle is stored before settlement and survives bounded replay
+  storage.
+- Teaching changes are bounded: the first-trade guide and intro lesson have scrollable mobile cards
+  with explicit Continue/Close owners; the Level-1 HUD connects dive to diamond smash; Home Market
+  selection explains candles before chart handoff.
+- The original five survey questions remain, followed by prior experience and a clearly labelled
+  proposed **$19 one-time early-access** intent question. Additive migration
+  `0003_beta_survey_research.sql` is SHA-256 `3283707a...` and leaves old rows nullable. The client
+  clears a draft only after a v2 response-specific stored-value receipt proves Q6/Q7 landed.
+- Next-cohort attribution accepts only `b<build>-beta<1..100>` plus eight issuer-generated
+  consonant-digit invite pairs. Name/email/phone-like values fail both client and server validation;
+  failed browser persistence leaves the link available for retry. The private Founder dashboard
+  reports cohort funnels, invite reuse, experience, and $19 intent without counting historical
+  not-asked rows as negative answers.
+- Local evidence: full verifier **27 pass / 0 fail / 0 warn / 1 optional Puppeteer skip**; trade
+  pacing 11/11; teaching UI 5/5; survey 4/4; beta service 26/26; client 15/15; Founder beta
+  dashboard 8/8; canonical/deployed model and all three game artifacts match. Independent final
+  review approved after trade-time pruning and name-like invite cases were added to the gates.
+- In-app Browser at 390×844 verified the seven-step survey and its offer distinction without
+  horizontal overflow, plus the Home Market chart bridge. The ordinary first-session route loaded;
+  subjective complete-trade feel still requires Founder physical-device QA. The inherited internal
+  `?dev=1` boot TDZ remains outside the plain tester path and is not claimed fixed here.
+- **Hard release order:** back up/count BETA_DB; inspect schema; apply `0003` exactly once to BETA_DB;
+  verify old rows and new columns; deploy Functions/static candidate to Preview; test survey v2,
+  dashboard, trade matrix, Access, old service worker, and rollback; only then prepare normal
+  manifest/lock/gate/live-fingerprint evidence. Leave additive columns in place on code rollback.
+- Decision: **BUILD 370 LOCAL CANDIDATE APPROVED — DO NOT DEPLOY OR SEND LINKS — BUILD 367 REMAINS
+  LIVE.**
+
+Lower sections are historical snapshots and do not override this Build-370 addendum.
+
 ## 2026-08-23 Build-369 Cloudflare-only local candidate — VERIFIED LOCALLY
 
 - Exact payload commit: `df0053c05506d6691b6545d96be6202dc685f1b6`, with D1 Studio-compatible

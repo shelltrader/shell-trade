@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-23
 **Target:** Build 370 local candidate
-**Status:** Founder-directed implementation; local verification in progress; **not production approval**
+**Status:** Approved locally on exact payload `08d3b3c`; **not production approval**
 
 ## Decision
 

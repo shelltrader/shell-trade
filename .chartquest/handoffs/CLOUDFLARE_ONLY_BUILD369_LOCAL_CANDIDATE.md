@@ -19,12 +19,13 @@ the historical provider before export/reconciliation and does not waive release 
 
 - Branch: `codex/cloudflare-only-beta`
 - Payload commit: `df0053c05506d6691b6545d96be6202dc685f1b6`
+- D1 compatibility follow-up: `1b8f4e53e42b3a91c9243f8ba7ee38a6dd120baa`
 - Build: 369
 - Game source/root/site SHA-256:
   `201682c415cb673e2ef24e524319dc5e5c194b94f039861200cf686e8ef0c702`
 - CQOPS parent stamp: `47cb1b866f` at `2026-08-23T10:35:13Z`
 - APP_DB schema SHA-256:
-  `3e874ca978dab0ad9ef411673a8838936048f3af9195ea414f0a151391b79b74`
+  `8d2be65b0ccc207aed5a6bf04f7f982bfd2210ce7480283b8055459a2c121a07`
 - Browser adapter SHA-256:
   `233d11547bad0a5548d71bc5168ec6589c8fdb5e0d94fd75e782e5a0f0dff904`
 - Tracker SHA-256:
@@ -74,7 +75,8 @@ the historical provider before export/reconciliation and does not waive release 
 | Additive save-key gate | 4/4 PASS |
 | Founder all-data dashboard | 7/7 PASS |
 | Founder beta dashboard | 5/5 PASS |
-| Full verifier | 26 pass / 0 fail / 0 warn / 1 optional Puppeteer skip |
+| Full verifier — payload `df0053c` | 26 pass / 0 fail / 0 warn / 1 optional Puppeteer skip |
+| Full verifier — schema follow-up `1b8f4e5` | 24 pass / 0 fail / 0 warn / 3 skip (two game-diff N/A + optional Puppeteer) |
 
 Independent review approved the exact payload after the final `/api/app/*` route defect was fixed.
 The staged secret audit found no private key, service credential, or high-confidence token.
@@ -86,12 +88,17 @@ The staged secret audit found no private key, service credential, or high-confid
 - **Release-Manager-observed in the signed-in Cloudflare dashboard on 2026-08-23; not independently
   reproduced by repository tests:** Pages project `chartquest` connected to GitHub `main`, output
   `website/`; BETA databases `chartquest-production` and `chartquest-preview`; APP databases
-  `chartquest-app-production` and `chartquest-app-preview`; production/preview bindings; encrypted
-  rate/auth secret names; Founder Access app/policy and issuer/audience settings for
+  `chartquest-app-production` and retained old `chartquest-app-preview`; production/preview bindings;
+  encrypted rate/auth secret names; Founder Access app/policy and issuer/audience settings for
   `playchartquest.com/founder/*`.
-- The final APP schema has not been applied/verified remotely. The observed empty preview APP
-  database was created with a superseded schema and must be replaced or explicitly migrated before
-  preview QA.
+- **Release-Manager-observed on 2026-08-23:** fresh preview database
+  `chartquest-app-preview-b369` (`038efb97-a6b5-457b-8681-7d71e31f826c`) was created and the exact
+  `0002_app.sql` schema was applied. Structural checks found 32 app tables, 8 guards/triggers, 20
+  named indexes, zero FK violations, and zero rows. Preview `APP_DB` now points to it. Preview
+  `BETA_DB` was verified at 3
+  tables, 2 guards/triggers, 9 named indexes, zero FK violations, and zero rows. The prior preview APP
+  database and all production databases were left untouched; runtime/trigger preview smoke and
+  production proof remain release gates.
 - Independently verified from Git: no Build-369 branch has been pushed. This task ran no provider
   import or source deletion; live row counts require provider/export verification.
 
@@ -114,8 +121,8 @@ engine is ready, but its real report must wait for reconciled data.
 
 1. Receive the source-generated complete Supabase export and completeness proof.
 2. Build and review the offline import bundle; resolve every blocking quarantine item.
-3. Replace the empty superseded preview APP database, apply exact schemas, and push only the feature
-   branch for a Cloudflare preview.
+3. Push only the feature branch for a Cloudflare preview and run the full preview smoke matrix
+   against the verified empty APP and beta databases.
 4. Run full preview account/save/survey/dashboard/Access/export/old-service-worker/rollback smoke.
 5. Apply the historical imports, independently export both D1 databases, reconcile exact business
    and audit evidence, then issue and test one-time account claims.

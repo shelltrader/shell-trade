@@ -2,7 +2,8 @@
 
 ## 2026-08-23 Build-369 Cloudflare-only local candidate — VERIFIED LOCALLY
 
-- Exact payload commit: `df0053c05506d6691b6545d96be6202dc685f1b6` on
+- Exact payload commit: `df0053c05506d6691b6545d96be6202dc685f1b6`, with D1 Studio-compatible
+  trigger follow-up `1b8f4e53e42b3a91c9243f8ba7ee38a6dd120baa`, on
   `codex/cloudflare-only-beta`.
 - The three game artifacts are byte-identical at SHA-256 `201682c4...`, stamped from parent
   `47cb1b866f` at `2026-08-23T10:35:13Z`; production still serves Build 367.
@@ -11,19 +12,26 @@
   visits, content events, and market data through same-origin Cloudflare Functions. Existing local
   gameplay/save keys remain authoritative and unchanged; writes require exact receipts and stay in
   account-scoped durable queues otherwise.
-- APP_DB schema identity is `3e874ca9...`. The private Founder dashboard reads APP_DB through one
+- APP_DB schema identity is `8d2be65b...`. The private Founder dashboard reads APP_DB through one
   coherent bounded snapshot and reads beta events/surveys through separately validated keyset pages;
   it does not claim a cross-database point-in-time snapshot. It masks private fields by default,
   supports protected exports, and produces deterministic evidence-backed suggestions. It has no
   imported recent tester data yet.
-- Local tests passed: application plane 31/31, adapter 22/22, importer/reconciler 27/27, beta plane
-  23/23, beta client 7/7, content handoff 3/3, game cutover 7/7, save-key gate 4/4, Founder all-data
-  dashboard 7/7, legacy Founder beta dashboard 5/5, full verifier 26/0/0/1 (optional Puppeteer skip).
+- Local tests passed on payload `df0053c`: application plane 31/31, adapter 22/22,
+  importer/reconciler 27/27, beta plane 23/23, beta client 7/7, content handoff 3/3, game cutover
+  7/7, save-key gate 4/4, Founder all-data dashboard 7/7, legacy Founder beta dashboard 5/5, and
+  full verifier 26/0/0/1 (optional Puppeteer skip). After schema-only follow-up `1b8f4e5`, app
+  31/31 and importer 27/27 still pass; the current full verifier is 24/0/0/3 because the two
+  game-diff gates are correctly N/A and Puppeteer remains optional.
 - **Release-Manager-observed external state (2026-08-23; not independently reproduced by repository
   tests):** the signed-in Cloudflare dashboard showed database resources, Pages bindings, encrypted
-  secret names, and Founder Access resources. The final APP schema has not been applied/verified
-  remotely; the observed empty preview APP database carries a superseded schema and must be replaced
-  or explicitly migrated before use.
+  secret names, and Founder Access resources. A new isolated preview database,
+  `chartquest-app-preview-b369` (`038efb97-a6b5-457b-8681-7d71e31f826c`), was created and verified
+  with 32 app tables, 8 guards/triggers, 20 named indexes, zero FK violations, and zero application
+  rows; the preview `APP_DB` binding now points to it. Preview `BETA_DB` was also verified with 3
+  tables, 2 guards/triggers, 9 named indexes, zero FK violations, and zero rows. The prior preview
+  APP database and all production databases remained untouched. Production schema verification is
+  still a release-time gate.
 - **Release-Manager-observed external state (2026-08-23; provider processing unverified):** the
   Supabase case flow showed identity verification and the Release Manager sent a reply in case
   `SU-452541` requesting a complete read-only export, urgently including `public.beta_events` and

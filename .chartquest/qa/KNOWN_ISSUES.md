@@ -4,10 +4,13 @@ Only repository-documented issues are listed below. The severity/status reflects
 
 ## Build-369 complete Cloudflare migration candidate
 
-No known local code P0 remains on exact payload commit `df0053c` (game artifact `201682c4...`,
-APP schema `3e874ca9...`). Independent migration/runtime review approved after the Functions route,
+No known local code P0 remains on exact payload commit `df0053c` plus D1 compatibility follow-up
+`1b8f4e5` (game artifact `201682c4...`, APP schema `8d2be65b...`). Independent migration/runtime
+review approved after the Functions route,
 content-key, versioning, Journal pagination, coherent APP_DB snapshot, mastery-owner, and source
-export completeness defects were fixed. Full regression evidence passes 26/0/0/1.
+export completeness defects were fixed. Payload regression evidence passed 26/0/0/1; the current
+schema-only follow-up passes app 31/31, importer 27/27, and verifier 24/0/0/3 (two game-diff N/A
+checks plus the optional Puppeteer skip).
 
 Production release remains blocked. A complete source-generated export for Supabase project
 `ymxppzhczvmiuoncuqqu` has not been delivered, so recent tester events/surveys and any historical
@@ -18,9 +21,10 @@ do not reset/delete rows.
 
 The Release Manager observed Cloudflare database resources, Pages bindings, encrypted secret names,
 and Founder Access resources in the signed-in dashboard on 2026-08-23; repository tests do not
-independently prove that external state. The exact final remote APP schema and beta schema still need
-proof. The observed empty preview APP database contains a superseded schema and must not be used as
-final evidence. Build 369
+independently prove that external state. The exact `0002_app.sql` schema was applied to a fresh empty
+preview APP database and structural inventory/FK/empty checks passed; the empty preview beta database
+also matches its expected table/trigger/index counts. Runtime and trigger behavior remain preview-smoke
+gates. Production schema proof remains a release gate. Build 369
 also requires feature-preview smoke, source import and independent D1 reconciliation, account-claim
 testing, release manifest/lock/gate, served fingerprint, returning-service-worker checks, and rollback
 evidence. Build 367 remains live.

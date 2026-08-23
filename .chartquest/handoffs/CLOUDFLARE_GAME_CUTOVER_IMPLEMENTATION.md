@@ -15,6 +15,8 @@ this work issued no Supabase deletion.
 - Build: **369**
 - Exact runtime/tooling payload commit:
   `df0053c05506d6691b6545d96be6202dc685f1b6`
+- D1 Studio compatibility follow-up:
+  `1b8f4e53e42b3a91c9243f8ba7ee38a6dd120baa`
 - `chart-quest.html`, `index.html`, `website/game.html`:
   `201682c415cb673e2ef24e524319dc5e5c194b94f039861200cf686e8ef0c702`
 - Cloudflare browser adapter, `website/assets/cq-cloud-data.js`:
@@ -24,7 +26,7 @@ this work issued no Supabase deletion.
 - Earliest-crash source, `website/assets/cq-boot-crash.js`:
   `2888116a550c6f14e8c65819e0af6329077fc4d32a466247f4b2d31b7ffa7465`
 - APP_DB schema:
-  `3e874ca978dab0ad9ef411673a8838936048f3af9195ea414f0a151391b79b74`
+  `8d2be65b0ccc207aed5a6bf04f7f982bfd2210ce7480283b8055459a2c121a07`
 
 Any later byte change requires proportional reruns and new fingerprints.
 
@@ -91,7 +93,8 @@ Supabase export/import/reconciliation tools were not modified by this client tas
 | QA-server and mobile-preview self-tests | **PASS** |
 | Canonical adapter/ops/tracker/boot sync checks | **PASS** |
 | Game syntax and three-artifact byte parity | **PASS** |
-| Full verifier | **PASS — 26 pass, 0 fail, 0 warn, 1 Puppeteer skip** |
+| Full verifier — payload `df0053c` | **PASS — 26 pass, 0 fail, 0 warn, 1 Puppeteer skip** |
+| Full verifier — schema follow-up `1b8f4e5` | **PASS — 24 pass, 0 fail, 0 warn, 3 skips (two game-diff N/A + optional Puppeteer)** |
 
 Gate 10 contains a narrow Build 369 exception for exactly the two adapter-owned durable
 queue/version metadata keys. Its focused tests prove that a third addition, a missing build/adapter
@@ -102,10 +105,12 @@ syntax, deterministic QA self-tests, and all focused runtime-contract suites pas
 ## Remaining external/release gates
 
 1. Release-Manager dashboard observation reports Cloudflare database resources, Pages bindings,
-   required secret names, and the deny-by-default Founder Access application. Independently reverify
-   them, apply and verify the exact final APP schema above in fresh preview and production databases,
-   verify the beta schema, and run live route/Access smoke tests. The observed empty preview APP
-   database contains a superseded schema and must not be treated as proof.
+   required secret names, and the deny-by-default Founder Access application. A fresh isolated
+   preview APP database received the exact `0002_app.sql` schema and passed structural inventory,
+   FK, and empty-row checks before being bound to Preview only; the preview beta database also passed
+   schema-shape and empty-row verification. Runtime/trigger behavior remains a preview-smoke gate.
+   Independently reverify production resources, apply the final APP schema to production only during
+   the approved release, and run live route/Access smoke tests.
 2. Obtain a complete authenticated Supabase export, run the offline importer/reconciliation proof,
    and issue one-time account claims. Historical source data must remain untouched until that proof
    passes.

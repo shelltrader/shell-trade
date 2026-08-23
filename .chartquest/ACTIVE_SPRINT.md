@@ -4,42 +4,50 @@
 
 ## Sprint objective
 
-Move new beta funnel events and surveys to a fresh Cloudflare D1 dataset, retain Supabase safely for
-accounts/cloud saves/history/fallback, and give the Founder one private dashboard for all new
-Cloudflare beta data. Preserve the serving Build 367 game until the provider configuration and live
-cutover evidence pass.
+Recover the complete historical ChartQuest dataset from Supabase, import and reconcile it into
+Cloudflare without deleting source or player-device data, cut every production game-data path over
+to Cloudflare, and give the Founder one private dashboard with complete player/survey views and an
+evidence-based improvement report. Preserve serving Build 367 until preview, import, and release
+evidence prove Build 369 safe.
 
 ## Current release/build
 
 - Isolated candidate branch: `codex/cloudflare-only-beta`.
-- Exact runtime payload commit: `b8f671adf4982bb2997a4bf2f5d02207b19cfe68`.
-- Build: **368**.
+- Exact runtime, migration-tooling, and dashboard payload commit:
+  `df0053c05506d6691b6545d96be6202dc685f1b6`.
+- Build: **369**.
 - Source, root mirror, and website game artifact are byte-identical at SHA-256
-  `4e11d01d9b5b5bc662ce153e880ce1466de529f77cef40152bbd525fb4e2b5ca`.
-- Browser bridge SHA-256:
-  `cf9c0cadc8b3cd7c45d4a411c475ba789893d5a8e0712e177fc39b352addd7c0`.
-- Production Build 367 remains live and unaffected. Build 368 has not been pushed or deployed.
+  `201682c415cb673e2ef24e524319dc5e5c194b94f039861200cf686e8ef0c702`.
+- Final APP_DB schema SHA-256:
+  `3e874ca978dab0ad9ef411673a8838936048f3af9195ea414f0a151391b79b74`.
+- Production Build 367 remains live and unaffected. Build 369 has not been pushed or deployed.
 
 ## Active tasks
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Cloudflare D1 + Pages binding | Release Manager | **PENDING EXTERNAL SETUP** | Create/migrate fresh D1 and bind `BETA_DB`. |
-| Founder Access policy | Release Manager | **PENDING EXTERNAL SETUP** | Set issuer/audience and exact deny-by-default `/founder` policy. |
-| Live Build-368 cutover smoke | Release Manager + Founder | **BLOCKED ON SETUP** | Prove empty baseline, write/read/export, upgrade privacy, returning player, and rollback. |
+| Complete Supabase source export | Supabase Support + Release Manager | **BLOCKED EXTERNALLY** | Release Manager observed the identity-verification flow and sent a complete read-only export request in case `SU-452541`; provider processing is unverified. Import nothing until approved source proof is present. |
+| Final Cloudflare schema verification | Release Manager | **READY, NOT RUN** | Replace the empty superseded preview APP database, apply exact `0002_app.sql`; verify/apply `0001_beta.sql`; leave production rows empty until import/cutover plan. |
+| Build-369 preview deployment and smoke | Release Manager | **PENDING LOCAL CANDIDATE CLOSEOUT** | Push feature branch only, then verify Functions routing, Access allow/deny, account/saves, survey, dashboard, exports, old service worker, and rollback. |
+| Historical import and reconciliation | Release Manager | **BLOCKED ON EXPORT** | Run offline attestation, apply idempotent split imports, export both D1 targets, compare counts/digests/quarantine, then mark reconciled. |
+| Real-data product report | PM/CTO | **BLOCKED ON RECONCILED DATA** | Capture protected BETA_DB and APP_DB exports at one recorded analysis cutoff; use the dashboard insights plus a human report based only on that fixed landed evidence. |
 
 ## Blocked tasks
 
 | Item | Status | Evidence |
 |---|---|---|
-| Build 368 deployment | **DO NOT DEPLOY** | D1, binding, secrets, Access application/policy, empty-cutover proof, live smoke, and release manifest/lock/gate are not complete. |
-| Historical beta visibility | Pending later Supabase import | The new dashboard reads Cloudflare D1 only. Existing Supabase rows remain untouched and are not yet displayed. |
-| Full Supabase retirement | Out of scope | Accounts/cloud saves and history still require Supabase; removing them needs a separate identity/data migration. |
+| Build 369 production deployment | **DO NOT DEPLOY** | Source export/import reconciliation, final remote schema proof, preview/live smoke, release manifest/lock/gate, and rollback evidence are incomplete. |
+| Historical tester and survey visibility | **BLOCKED ON SUPABASE EXPORT** | Build 367 is instrumented to send results to the historical project; current row presence/count is unverified. This work performed no source deletion, and no recent row is yet imported into Cloudflare. |
+| Supabase retirement | **DESIGNED, NOT EXECUTED** | Build 369 has no production-runtime Supabase dependency, but the historical project must remain untouched until complete export, D1 reconciliation, account claims, and rollback evidence pass. |
 
 ## Completed tasks
 
 | Task | Result | Evidence |
 |---|---|---|
+| Build-369 full Cloudflare application/data client | **APPROVED LOCALLY** | Payload `df0053c`; `handoffs/CLOUDFLARE_GAME_CUTOVER_IMPLEMENTATION.md`; app 31/31, adapter 22/22, cutover 7/7 |
+| Build-369 auditable historical importer/reconciler | **APPROVED LOCALLY; REAL EXPORT PENDING** | `handoffs/CLOUDFLARE_MIGRATION_TOOLING.md`; importer 27/27 |
+| Build-369 private all-data dashboard and insight engine | **APPROVED LOCALLY; REAL DATA PENDING** | Founder APP snapshot/analysis 7/7; separately validated beta feeds; private fields masked by default |
+| Build-369 independent review and regression gate | **APPROVED** | Exact payload `df0053c`; verifier 26 pass / 0 fail / 0 warn / 1 optional Puppeteer skip |
 | Build-368 analytics/dashboard investigation | **PASS — safe additive boundary defined** | `handoffs/BETA368_INVESTIGATION.md` |
 | Build-368 implementation and independent review | **APPROVED LOCALLY** | Runtime commit `b8f671a`; `handoffs/BETA368_IMPLEMENTATION.md`; `handoffs/BETA368_REVIEW.md` |
 | Build-368 exact-byte QA and Browser matrix | **PASS FOR LOCAL ENGINEERING CANDIDATE** | `handoffs/BETA368_QA.md`; contracts 23/23 + 7/7 + 5/5; verifier 26/0/0/1; Browser 37/37 and repeat 74/74 |
@@ -71,13 +79,15 @@ cutover evidence pass.
 
 ## Founder decisions required
 
-No product-design decision is required. The next Founder action is a single Cloudflare sign-in when
-provider setup is ready, followed by dashboard access and the live cutover smoke. The Founder is not
-required to recover Supabase access for the new post-cutover dashboard.
+No product-design decision is required. The Founder has approved a complete Cloudflare migration
+and one-login dashboard. The next external action belongs to Supabase Support: restore read-only
+project access or deliver the complete export. If Support sends a secure download or recovery link,
+the Release Manager must capture it without altering source rows and resume the audited import.
 
 ## Release status
 
-**BUILD 368 LOCAL ENGINEERING CANDIDATE APPROVED — DO NOT DEPLOY — CLOUDFLARE D1/ACCESS CONFIGURATION AND LIVE SMOKE PENDING — BUILD 367 REMAINS LIVE**
+**BUILD 369 LOCAL ENGINEERING CANDIDATE APPROVED — DO NOT DEPLOY — SUPABASE SOURCE EXPORT, REMOTE SCHEMA/IMPORT RECONCILIATION, PREVIEW/LIVE SMOKE, AND RELEASE CONTROLS PENDING — BUILD 367 REMAINS LIVE**
 
-Automated QA does not authorize production. Configure and verify Cloudflare first, then use the
-normal Release Manager manifest/lock/gate/fingerprint process for a separately authorized deploy.
+Automated QA does not authorize production. Preserve both providers until every historical row and
+account is reconciled, verify Cloudflare in preview, then use the normal Release Manager
+manifest/lock/gate/fingerprint process for the authorized production cutover.

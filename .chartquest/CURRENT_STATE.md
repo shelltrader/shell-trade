@@ -1,5 +1,42 @@
 # Current Technical State
 
+## 2026-08-23 Build-369 Cloudflare-only local candidate — VERIFIED LOCALLY
+
+- Exact payload commit: `df0053c05506d6691b6545d96be6202dc685f1b6` on
+  `codex/cloudflare-only-beta`.
+- The three game artifacts are byte-identical at SHA-256 `201682c4...`, stamped from parent
+  `47cb1b866f` at `2026-08-23T10:35:13Z`; production still serves Build 367.
+- Build 369 removes Supabase SDK/URLs/credentials/fallback writes from the published runtime and
+  routes beta telemetry, surveys, accounts/sessions, profile, Journal, streak, mastery, bug reports,
+  visits, content events, and market data through same-origin Cloudflare Functions. Existing local
+  gameplay/save keys remain authoritative and unchanged; writes require exact receipts and stay in
+  account-scoped durable queues otherwise.
+- APP_DB schema identity is `3e874ca9...`. The private Founder dashboard reads APP_DB through one
+  coherent bounded snapshot and reads beta events/surveys through separately validated keyset pages;
+  it does not claim a cross-database point-in-time snapshot. It masks private fields by default,
+  supports protected exports, and produces deterministic evidence-backed suggestions. It has no
+  imported recent tester data yet.
+- Local tests passed: application plane 31/31, adapter 22/22, importer/reconciler 27/27, beta plane
+  23/23, beta client 7/7, content handoff 3/3, game cutover 7/7, save-key gate 4/4, Founder all-data
+  dashboard 7/7, legacy Founder beta dashboard 5/5, full verifier 26/0/0/1 (optional Puppeteer skip).
+- **Release-Manager-observed external state (2026-08-23; not independently reproduced by repository
+  tests):** the signed-in Cloudflare dashboard showed database resources, Pages bindings, encrypted
+  secret names, and Founder Access resources. The final APP schema has not been applied/verified
+  remotely; the observed empty preview APP database carries a superseded schema and must be replaced
+  or explicitly migrated before use.
+- **Release-Manager-observed external state (2026-08-23; provider processing unverified):** the
+  Supabase case flow showed identity verification and the Release Manager sent a reply in case
+  `SU-452541` requesting a complete read-only export, urgently including `public.beta_events` and
+  `public.beta_surveys`. Current source row presence/count remains unknown. This work retrieved,
+  deleted, reset, imported, and analyzed no recent tester row.
+- The importer requires source-generated proof for every required table and leaves migration status
+  pending until independently exported D1 business/audit data matches. Supabase must remain intact
+  until that proof, account restoration, preview/live smoke, and rollback evidence pass.
+- Decision: **BUILD 369 LOCAL ENGINEERING CANDIDATE APPROVED — DO NOT DEPLOY — BUILD 367 REMAINS
+  LIVE; SOURCE EXPORT AND VERIFIED MIGRATION ARE THE DATA BLOCKER.**
+
+Lower sections are historical snapshots and do not override this Build-369 addendum.
+
 ## 2026-08-15 build-368 Cloudflare beta-data addendum — VERIFIED LOCALLY
 
 - Exact local runtime payload commit:

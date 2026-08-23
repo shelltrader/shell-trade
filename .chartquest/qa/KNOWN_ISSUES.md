@@ -2,20 +2,35 @@
 
 Only repository-documented issues are listed below. The severity/status reflects the cited document where available; it does not assert that the issue is currently live.
 
-## Build-368 Cloudflare beta-data candidate
+## Build-369 complete Cloudflare migration candidate
 
-No known local code P0 remains on runtime payload commit `b8f671a` (game artifact `4e11d01d...`,
-Browser bridge `cf9c0cad...`). Independent runtime and security reviews approved; dashboard Browser QA
-and the complete exact-byte regression evidence passed.
+No known local code P0 remains on exact payload commit `df0053c` (game artifact `201682c4...`,
+APP schema `3e874ca9...`). Independent migration/runtime review approved after the Functions route,
+content-key, versioning, Journal pagination, coherent APP_DB snapshot, mastery-owner, and source
+export completeness defects were fixed. Full regression evidence passes 26/0/0/1.
 
-Production release remains blocked until all external Cloudflare state is proven: migrated/bound D1,
-`BETA_RATE_SALT`, Access issuer/audience, an exact deny-by-default `/founder` policy, empty baseline,
-and live write/read/survey/export/v14-upgrade/returning-player/rollback smoke. Build 367 remains live.
+Production release remains blocked. A complete source-generated export for Supabase project
+`ymxppzhczvmiuoncuqqu` has not been delivered, so recent tester events/surveys and any historical
+account data are not yet visible or analyzed in Cloudflare. The Release Manager observed the
+identity-verification flow and sent the export request in case `SU-452541`; provider processing and
+current source row presence/count are unverified. Do not infer empty tables from missing access and
+do not reset/delete rows.
 
-The dashboard intentionally excludes Build 367/earlier Supabase history until a later authenticated
-import. Existing milestone latches will not re-emit completed milestones into the fresh D1. No
-historical row, account, save, or player ID was deleted. Supabase remains operationally required for
-accounts, cloud saves, history, and temporary telemetry fallback.
+The Release Manager observed Cloudflare database resources, Pages bindings, encrypted secret names,
+and Founder Access resources in the signed-in dashboard on 2026-08-23; repository tests do not
+independently prove that external state. The exact final remote APP schema and beta schema still need
+proof. The observed empty preview APP database contains a superseded schema and must not be used as
+final evidence. Build 369
+also requires feature-preview smoke, source import and independent D1 reconciliation, account-claim
+testing, release manifest/lock/gate, served fingerprint, returning-service-worker checks, and rollback
+evidence. Build 367 remains live.
+
+The private dashboard is implemented and locally verified across all beta/application datasets, but
+its improvement report cannot truthfully describe the real beta cohort until the historical import
+is reconciled. APP_DB loads are snapshot-consistent; beta events/surveys are separately validated
+keyset feeds and are not an atomic cross-database snapshot. A formal report therefore requires both
+protected exports at one recorded cutoff. This work did not modify existing player IDs, game saves,
+milestone latches, pending queues, accounts, or any source-provider row.
 
 ## Build-366 Founder final cosmetic-retest readiness
 

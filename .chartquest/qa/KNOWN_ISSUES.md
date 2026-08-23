@@ -5,12 +5,12 @@ Only repository-documented issues are listed below. The severity/status reflects
 ## Build-369 complete Cloudflare migration candidate
 
 No known local code P0 remains on exact payload commit `df0053c` plus D1 compatibility follow-up
-`1b8f4e5` (game artifact `201682c4...`, APP schema `8d2be65b...`). Independent migration/runtime
+`1b8f4e5` and preview runtime follow-ups `c0f0b5a`/`4298217` (game artifact `201682c4...`, APP schema `8d2be65b...`). Independent migration/runtime
 review approved after the Functions route,
 content-key, versioning, Journal pagination, coherent APP_DB snapshot, mastery-owner, and source
-export completeness defects were fixed. Payload regression evidence passed 26/0/0/1; the current
-schema-only follow-up passes app 31/31, importer 27/27, and verifier 24/0/0/3 (two game-diff N/A
-checks plus the optional Puppeteer skip).
+export completeness defects were fixed. Payload regression evidence passed 26/0/0/1; the unchanged
+importer remains 27/27; current preview HEAD `4298217` passes app 31/31 and verifier 24/0/0/3 (two
+game-diff N/A checks plus the optional Puppeteer skip).
 
 Production release remains blocked. A complete source-generated export for Supabase project
 `ymxppzhczvmiuoncuqqu` has not been delivered, so recent tester events/surveys and any historical
@@ -23,11 +23,13 @@ The Release Manager observed Cloudflare database resources, Pages bindings, encr
 and Founder Access resources in the signed-in dashboard on 2026-08-23; repository tests do not
 independently prove that external state. The exact `0002_app.sql` schema was applied to a fresh empty
 preview APP database and structural inventory/FK/empty checks passed; the empty preview beta database
-also matches its expected table/trigger/index counts. Runtime and trigger behavior remain preview-smoke
-gates. Production schema proof remains a release gate. Build 369
-also requires feature-preview smoke, source import and independent D1 reconciliation, account-claim
-testing, release manifest/lock/gate, served fingerprint, returning-service-worker checks, and rollback
-evidence. Build 367 remains live.
+also matches its expected table/trigger/index counts. Feature HEAD `4298217` then deployed as preview
+`297c2141`; one disposable account returned HTTP 201 with the expected identity/profile/session/
+receipt/outbox state. Exact cleanup restored six touched APP counts to zero with zero FK violations.
+This closes core account creation, but not the full preview matrix. Production schema proof, source
+import and independent D1 reconciliation, account claim/restore, remaining app routes, survey,
+Founder Access/dashboard/export, returning-service-worker, release manifest/lock/gate, served
+fingerprint, and rollback evidence remain release gates. Build 367 remains live.
 
 The private dashboard is implemented and locally verified across all beta/application datasets, but
 its improvement report cannot truthfully describe the real beta cohort until the historical import

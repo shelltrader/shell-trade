@@ -3,7 +3,9 @@
 ## 2026-08-23 Build-369 Cloudflare-only local candidate — VERIFIED LOCALLY
 
 - Exact payload commit: `df0053c05506d6691b6545d96be6202dc685f1b6`, with D1 Studio-compatible
-  trigger follow-up `1b8f4e53e42b3a91c9243f8ba7ee38a6dd120baa`, on
+  trigger follow-up `1b8f4e53e42b3a91c9243f8ba7ee38a6dd120baa`, Cloudflare password-runtime
+  compatibility follow-up `c0f0b5ab1714a69fd72cf9e631d1cadd7f3da3ab`, and privacy-safe account-stage
+  logging follow-up `42982171ecf8942a223ec83702ef92448ef00902`, on
   `codex/cloudflare-only-beta`.
 - The three game artifacts are byte-identical at SHA-256 `201682c4...`, stamped from parent
   `47cb1b866f` at `2026-08-23T10:35:13Z`; production still serves Build 367.
@@ -20,9 +22,9 @@
 - Local tests passed on payload `df0053c`: application plane 31/31, adapter 22/22,
   importer/reconciler 27/27, beta plane 23/23, beta client 7/7, content handoff 3/3, game cutover
   7/7, save-key gate 4/4, Founder all-data dashboard 7/7, legacy Founder beta dashboard 5/5, and
-  full verifier 26/0/0/1 (optional Puppeteer skip). After schema-only follow-up `1b8f4e5`, app
-  31/31 and importer 27/27 still pass; the current full verifier is 24/0/0/3 because the two
-  game-diff gates are correctly N/A and Puppeteer remains optional.
+  full verifier 26/0/0/1 (optional Puppeteer skip). The unchanged importer remains 27/27; current
+  preview HEAD `4298217` passes app 31/31 and full verifier 24/0/0/3 because the two game-diff gates
+  are correctly N/A and Puppeteer remains optional.
 - **Release-Manager-observed external state (2026-08-23; not independently reproduced by repository
   tests):** the signed-in Cloudflare dashboard showed database resources, Pages bindings, encrypted
   secret names, and Founder Access resources. A new isolated preview database,
@@ -32,6 +34,15 @@
   tables, 2 guards/triggers, 9 named indexes, zero FK violations, and zero rows. The prior preview
   APP database and all production databases remained untouched. Production schema verification is
   still a release-time gate.
+- **Release-Manager-observed preview evidence (2026-08-23):** feature HEAD `4298217` deployed
+  successfully to Preview as deployment `297c2141`. A disposable account request returned HTTP 201
+  and produced the expected identity, profile, session, exact mutation receipt, and outbox state.
+  Cleanup deleted only those disposable preview rows plus preview rate-limit buckets. Post-clean
+  `app_identities/app_profiles/app_sessions/app_mutation_receipts/app_outbox/app_rate_limits` counts
+  were `0/0/0/0/0/0`, with zero FK violations. The new `account.create_failed` diagnostic emits only
+  a fixed stage label and exception class; it does not include email, password, payload, token, hash,
+  or user ID. Full route/Access/dashboard/save/rollback preview smoke remains pending; production
+  and Supabase were untouched.
 - **Release-Manager-observed external state (2026-08-23; provider processing unverified):** the
   Supabase case flow showed identity verification and the Release Manager sent a reply in case
   `SU-452541` requesting a complete read-only export, urgently including `public.beta_events` and
@@ -40,8 +51,8 @@
 - The importer requires source-generated proof for every required table and leaves migration status
   pending until independently exported D1 business/audit data matches. Supabase must remain intact
   until that proof, account restoration, preview/live smoke, and rollback evidence pass.
-- Decision: **BUILD 369 LOCAL ENGINEERING CANDIDATE APPROVED — DO NOT DEPLOY — BUILD 367 REMAINS
-  LIVE; SOURCE EXPORT AND VERIFIED MIGRATION ARE THE DATA BLOCKER.**
+- Decision: **BUILD 369 PREVIEW CORE ACCOUNT-CREATION SMOKE PASSED — DO NOT DEPLOY — BUILD 367
+  REMAINS LIVE; SOURCE EXPORT AND VERIFIED MIGRATION ARE THE DATA BLOCKER.**
 
 Lower sections are historical snapshots and do not override this Build-369 addendum.
 

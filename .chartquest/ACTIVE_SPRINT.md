@@ -17,20 +17,24 @@ evidence prove Build 369 safe.
   `df0053c05506d6691b6545d96be6202dc685f1b6`.
 - D1 Studio compatibility follow-up:
   `1b8f4e53e42b3a91c9243f8ba7ee38a6dd120baa`.
+- Cloudflare runtime compatibility and privacy-safe diagnostic follow-ups:
+  `c0f0b5ab1714a69fd72cf9e631d1cadd7f3da3ab` and
+  `42982171ecf8942a223ec83702ef92448ef00902`.
 - Build: **369**.
 - Source, root mirror, and website game artifact are byte-identical at SHA-256
   `201682c415cb673e2ef24e524319dc5e5c194b94f039861200cf686e8ef0c702`.
 - Final APP_DB schema SHA-256:
   `8d2be65b0ccc207aed5a6bf04f7f982bfd2210ce7480283b8055459a2c121a07`.
-- Production Build 367 remains live and unaffected. Build 369 has not been pushed or deployed.
+- Production Build 367 remains live and unaffected. The Build-369 feature branch is pushed and its
+  preview deployment `297c2141` succeeded; no Build-369 production deployment occurred.
 
 ## Active tasks
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
 | Complete Supabase source export | Supabase Support + Release Manager | **BLOCKED EXTERNALLY** | Release Manager observed the identity-verification flow and sent a complete read-only export request in case `SU-452541`; provider processing is unverified. Import nothing until approved source proof is present. |
-| Final Cloudflare schema verification | Release Manager | **PREVIEW STRUCTURAL PASS; PRODUCTION HELD** | Exact `0002_app.sql` was applied to fresh preview APP_DB `chartquest-app-preview-b369`; it has 32 app tables, 8 guards/triggers, 20 named indexes, zero FK violations, and zero rows. Preview BETA_DB has 3 tables, 2 guards/triggers, 9 named indexes, zero FK violations, and zero rows. Preview bindings are correct; runtime/trigger smoke remains pending. Leave production unchanged until import/cutover gates pass. |
-| Build-369 preview deployment and smoke | Release Manager | **READY FOR FEATURE-BRANCH PUSH** | Push feature branch only, then verify Functions routing, Access allow/deny, account/saves, survey, dashboard, exports, old service worker, and rollback. |
+| Final Cloudflare schema verification | Release Manager | **PREVIEW STRUCTURAL + CORE ACCOUNT PASS; PRODUCTION HELD** | Exact `0002_app.sql` was applied to fresh preview APP_DB `chartquest-app-preview-b369`; it has 32 app tables, 8 guards/triggers, 20 named indexes, zero FK violations, and zero rows after smoke cleanup. Preview BETA_DB has 3 tables, 2 guards/triggers, 9 named indexes, zero FK violations, and zero rows. Account creation, exact receipt, and session-row creation passed; the remaining routes/triggers and production proof stay gated. |
+| Build-369 preview deployment and smoke | Release Manager | **CORE ACCOUNT-CREATION SMOKE PASS; FULL MATRIX PENDING** | Feature HEAD `4298217` is deployed in Preview. Continue Access allow/deny, sign-in/restore, profile bootstrap/Journal/streak/mastery, survey, dashboard/exports, old service worker, market, and rollback checks without changing production. |
 | Historical import and reconciliation | Release Manager | **BLOCKED ON EXPORT** | Run offline attestation, apply idempotent split imports, export both D1 targets, compare counts/digests/quarantine, then mark reconciled. |
 | Real-data product report | PM/CTO | **BLOCKED ON RECONCILED DATA** | Capture protected BETA_DB and APP_DB exports at one recorded analysis cutoff; use the dashboard insights plus a human report based only on that fixed landed evidence. |
 
@@ -49,8 +53,9 @@ evidence prove Build 369 safe.
 | Build-369 full Cloudflare application/data client | **APPROVED LOCALLY** | Payload `df0053c`; `handoffs/CLOUDFLARE_GAME_CUTOVER_IMPLEMENTATION.md`; app 31/31, adapter 22/22, cutover 7/7 |
 | Build-369 auditable historical importer/reconciler | **APPROVED LOCALLY; REAL EXPORT PENDING** | `handoffs/CLOUDFLARE_MIGRATION_TOOLING.md`; importer 27/27 |
 | Build-369 private all-data dashboard and insight engine | **APPROVED LOCALLY; REAL DATA PENDING** | Founder APP snapshot/analysis 7/7; separately validated beta feeds; private fields masked by default |
-| Build-369 independent review and regression gate | **APPROVED** | Exact payload `df0053c`: verifier 26/0/0/1; D1 follow-up `1b8f4e5`: app 31/31, importer 27/27, current verifier 24/0/0/3 (game-diff checks N/A plus optional Puppeteer skip) |
+| Build-369 independent review and regression gate | **APPROVED** | Exact payload `df0053c`: verifier 26/0/0/1; unchanged importer: 27/27; current preview HEAD `4298217`: app 31/31 and verifier 24/0/0/3 (game-diff checks N/A plus optional Puppeteer skip) |
 | Fresh Build-369 preview databases | **EMPTY SCHEMA PASS; PREVIEW ONLY** | Release-Manager verification on 2026-08-23: APP_DB 32 tables/8 triggers/20 indexes; BETA_DB 3 tables/2 triggers/9 indexes; both 0 FK violations/0 rows; preview bindings correct; production untouched |
+| Build-369 core preview account smoke | **PASS; DISPOSABLE ROWS REMOVED** | Feature HEAD `4298217`; deployment `297c2141`; account HTTP 201 with expected identity/profile/session/receipt/outbox state; post-clean APP counts `0/0/0/0/0/0` and 0 FK violations |
 | Build-368 analytics/dashboard investigation | **PASS — safe additive boundary defined** | `handoffs/BETA368_INVESTIGATION.md` |
 | Build-368 implementation and independent review | **APPROVED LOCALLY** | Runtime commit `b8f671a`; `handoffs/BETA368_IMPLEMENTATION.md`; `handoffs/BETA368_REVIEW.md` |
 | Build-368 exact-byte QA and Browser matrix | **PASS FOR LOCAL ENGINEERING CANDIDATE** | `handoffs/BETA368_QA.md`; contracts 23/23 + 7/7 + 5/5; verifier 26/0/0/1; Browser 37/37 and repeat 74/74 |
@@ -89,7 +94,7 @@ the Release Manager must capture it without altering source rows and resume the 
 
 ## Release status
 
-**BUILD 369 LOCAL ENGINEERING CANDIDATE APPROVED — DO NOT DEPLOY — SUPABASE SOURCE EXPORT, REMOTE SCHEMA/IMPORT RECONCILIATION, PREVIEW/LIVE SMOKE, AND RELEASE CONTROLS PENDING — BUILD 367 REMAINS LIVE**
+**BUILD 369 PREVIEW CORE ACCOUNT SMOKE PASSED — DO NOT DEPLOY — SUPABASE SOURCE EXPORT, IMPORT RECONCILIATION, FULL PREVIEW/LIVE SMOKE, AND RELEASE CONTROLS PENDING — BUILD 367 REMAINS LIVE**
 
 Automated QA does not authorize production. Preserve both providers until every historical row and
 account is reconciled, verify Cloudflare in preview, then use the normal Release Manager

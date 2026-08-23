@@ -17,6 +17,10 @@ this work issued no Supabase deletion.
   `df0053c05506d6691b6545d96be6202dc685f1b6`
 - D1 Studio compatibility follow-up:
   `1b8f4e53e42b3a91c9243f8ba7ee38a6dd120baa`
+- Cloudflare password-runtime compatibility follow-up:
+  `c0f0b5ab1714a69fd72cf9e631d1cadd7f3da3ab`
+- Privacy-safe account-stage logging follow-up:
+  `42982171ecf8942a223ec83702ef92448ef00902`
 - `chart-quest.html`, `index.html`, `website/game.html`:
   `201682c415cb673e2ef24e524319dc5e5c194b94f039861200cf686e8ef0c702`
 - Cloudflare browser adapter, `website/assets/cq-cloud-data.js`:
@@ -94,7 +98,7 @@ Supabase export/import/reconciliation tools were not modified by this client tas
 | Canonical adapter/ops/tracker/boot sync checks | **PASS** |
 | Game syntax and three-artifact byte parity | **PASS** |
 | Full verifier — payload `df0053c` | **PASS — 26 pass, 0 fail, 0 warn, 1 Puppeteer skip** |
-| Full verifier — schema follow-up `1b8f4e5` | **PASS — 24 pass, 0 fail, 0 warn, 3 skips (two game-diff N/A + optional Puppeteer)** |
+| Full verifier — current preview HEAD `4298217` | **PASS — 24 pass, 0 fail, 0 warn, 3 skips (two game-diff N/A + optional Puppeteer)** |
 
 Gate 10 contains a narrow Build 369 exception for exactly the two adapter-owned durable
 queue/version metadata keys. Its focused tests prove that a third addition, a missing build/adapter
@@ -108,9 +112,12 @@ syntax, deterministic QA self-tests, and all focused runtime-contract suites pas
    required secret names, and the deny-by-default Founder Access application. A fresh isolated
    preview APP database received the exact `0002_app.sql` schema and passed structural inventory,
    FK, and empty-row checks before being bound to Preview only; the preview beta database also passed
-   schema-shape and empty-row verification. Runtime/trigger behavior remains a preview-smoke gate.
-   Independently reverify production resources, apply the final APP schema to production only during
-   the approved release, and run live route/Access smoke tests.
+   schema-shape and empty-row verification. Feature HEAD `4298217` then passed a real preview account
+   creation smoke on deployment `297c2141`: HTTP 201 plus expected identity/profile/session/receipt/
+   outbox state. Exact cleanup restored the six touched APP tables/buckets to zero with zero FK
+   violations. This proves only the core account path; independently reverify production resources,
+   apply the final APP schema to production only during the approved release, and complete preview/
+   live sign-in/restore/save/survey/dashboard/Access/service-worker/market/rollback smoke.
 2. Obtain a complete authenticated Supabase export, run the offline importer/reconciliation proof,
    and issue one-time account claims. Historical source data must remain untouched until that proof
    passes.

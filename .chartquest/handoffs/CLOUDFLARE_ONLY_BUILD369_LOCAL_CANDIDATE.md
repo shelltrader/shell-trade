@@ -2,11 +2,11 @@
 
 ## Status
 
-**LOCAL ENGINEERING CANDIDATE APPROVED — DO NOT DEPLOY — BUILD 367 REMAINS LIVE.**
+**PREVIEW CORE ACCOUNT-CREATION SMOKE PASSED — DO NOT DEPLOY — BUILD 367 REMAINS LIVE.**
 
 Build 369 implements the complete Cloudflare runtime, auditable historical migration, private
 Founder dashboard, and deterministic improvement-insight engine requested by the Founder. It is not
-evidence that historical Supabase rows have been recovered or that Build 369 is serving.
+evidence that historical Supabase rows have been recovered or that Build 369 is serving in production.
 
 ## Founder decision
 
@@ -20,6 +20,8 @@ the historical provider before export/reconciliation and does not waive release 
 - Branch: `codex/cloudflare-only-beta`
 - Payload commit: `df0053c05506d6691b6545d96be6202dc685f1b6`
 - D1 compatibility follow-up: `1b8f4e53e42b3a91c9243f8ba7ee38a6dd120baa`
+- Password-runtime compatibility follow-up: `c0f0b5ab1714a69fd72cf9e631d1cadd7f3da3ab`
+- Privacy-safe account-stage logging follow-up: `42982171ecf8942a223ec83702ef92448ef00902`
 - Build: 369
 - Game source/root/site SHA-256:
   `201682c415cb673e2ef24e524319dc5e5c194b94f039861200cf686e8ef0c702`
@@ -36,6 +38,10 @@ the historical provider before export/reconciliation and does not waive release 
   `0ff2a1370f6269fa99119a0759299a7af4789e4e3eb4cf4a8f14422439c9f46b`
 - Founder app model SHA-256:
   `85b9c09a43a69bfd893788a75c7ee7c02ab9b41029dbe0cdabb2f58d65967991`
+- Cloudflare password helper SHA-256:
+  `c2708ab84c5e70e12a800b16d103b4723939c7e0881a3d9380fa78ef1dc8d982`
+- Account endpoint SHA-256:
+  `08a8acde50d61b64a740e709491879259d7c7001caf88811eb5604de216ae2d1`
 
 ## Implemented
 
@@ -76,7 +82,7 @@ the historical provider before export/reconciliation and does not waive release 
 | Founder all-data dashboard | 7/7 PASS |
 | Founder beta dashboard | 5/5 PASS |
 | Full verifier — payload `df0053c` | 26 pass / 0 fail / 0 warn / 1 optional Puppeteer skip |
-| Full verifier — schema follow-up `1b8f4e5` | 24 pass / 0 fail / 0 warn / 3 skip (two game-diff N/A + optional Puppeteer) |
+| Full verifier — current preview HEAD `4298217` | 24 pass / 0 fail / 0 warn / 3 skip (two game-diff N/A + optional Puppeteer) |
 
 Independent review approved the exact payload after the final `/api/app/*` route defect was fixed.
 The staged secret audit found no private key, service credential, or high-confidence token.
@@ -97,10 +103,16 @@ The staged secret audit found no private key, service credential, or high-confid
   named indexes, zero FK violations, and zero rows. Preview `APP_DB` now points to it. Preview
   `BETA_DB` was verified at 3
   tables, 2 guards/triggers, 9 named indexes, zero FK violations, and zero rows. The prior preview APP
-  database and all production databases were left untouched; runtime/trigger preview smoke and
-  production proof remain release gates.
-- Independently verified from Git: no Build-369 branch has been pushed. This task ran no provider
-  import or source deletion; live row counts require provider/export verification.
+  database and all production databases were left untouched; production proof remains a release
+  gate.
+- **Release-Manager-observed preview evidence on 2026-08-23:** feature HEAD `4298217` was pushed and
+  preview deployment `297c2141` succeeded. A disposable account returned HTTP 201 and created the
+  expected identity, profile, session, exact mutation receipt, and outbox state. Cleanup deleted
+  only those disposable preview rows plus preview rate-limit buckets; post-clean
+  identity/profile/session/receipt/outbox/rate-limit counts were `0/0/0/0/0/0`, with zero FK
+  violations. The new `account.create_failed` diagnostic emits only a fixed stage label and exception
+  class; it does not include email, password, payload, token, hash, or user ID. No production or
+  Supabase row was touched. The full preview matrix is not yet claimed.
 
 ## Historical-data blocker
 
@@ -121,9 +133,9 @@ engine is ready, but its real report must wait for reconciled data.
 
 1. Receive the source-generated complete Supabase export and completeness proof.
 2. Build and review the offline import bundle; resolve every blocking quarantine item.
-3. Push only the feature branch for a Cloudflare preview and run the full preview smoke matrix
-   against the verified empty APP and beta databases.
-4. Run full preview account/save/survey/dashboard/Access/export/old-service-worker/rollback smoke.
+3. Continue the full preview sign-in/restore/profile/Journal/streak/mastery/survey/dashboard/Access/
+   export/old-service-worker/market/rollback matrix against the clean preview databases.
+4. Record any remaining preview-route/trigger evidence without changing production.
 5. Apply the historical imports, independently export both D1 databases, reconcile exact business
    and audit evidence, then issue and test one-time account claims.
 6. Capture protected BETA_DB and APP_DB exports at one recorded analysis cutoff, generate the

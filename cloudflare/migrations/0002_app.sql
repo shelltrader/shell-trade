@@ -99,10 +99,16 @@ END;
 CREATE TRIGGER IF NOT EXISTS app_profiles_initial_sync_guard
 BEFORE UPDATE ON app_profiles
 WHEN NEW.initial_sync_receipt_id IS NOT OLD.initial_sync_receipt_id
+  AND (
+    OLD.initial_sync_receipt_id IS NOT NULL OR
+    OLD.version != 0 OR
+    OLD.shells != 0 OR
+    OLD.player_level != 1 OR
+    OLD.xp != 0 OR
+    OLD.source_updated_at IS NOT NULL
+  )
 BEGIN
-  SELECT CASE WHEN OLD.initial_sync_receipt_id IS NOT NULL OR OLD.version != 0 OR
-    OLD.shells != 0 OR OLD.player_level != 1 OR OLD.xp != 0 OR OLD.source_updated_at IS NOT NULL
-  THEN RAISE(ABORT, 'profile_bootstrap_conflict') END;
+  SELECT RAISE(ABORT, 'profile_bootstrap_conflict');
 END;
 
 -- One guarded version covers a complete journal snapshot (trades + notes).
@@ -126,11 +132,11 @@ CREATE TABLE IF NOT EXISTS app_journal_versions (
 
 CREATE TRIGGER IF NOT EXISTS app_journal_version_guard
 BEFORE INSERT ON app_journal_versions
-BEGIN
-  SELECT CASE WHEN NEW.base_version != COALESCE(
+WHEN NEW.base_version != COALESCE(
     (SELECT current_version FROM app_journal_heads WHERE user_id = NEW.user_id), 0
   ) OR NEW.version != NEW.base_version + 1
-  THEN RAISE(ABORT, 'journal_version_conflict') END;
+BEGIN
+  SELECT RAISE(ABORT, 'journal_version_conflict');
 END;
 
 CREATE TRIGGER IF NOT EXISTS app_journal_version_advance

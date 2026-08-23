@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
-  <title>ChartQuest · Founder Beta Command</title>
+  <title>ChartQuest · Founder Command Center</title>
   <link rel="stylesheet" href="./beta.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">CQ</div>
       <div>
-        <p class="eyebrow">FOUNDER ACCESS · BETA COMMAND</p>
+        <p class="eyebrow">FOUNDER ACCESS · CLOUDFLARE COMMAND</p>
         <h1>ChartQuest field report</h1>
       </div>
     </div>
@@ -25,9 +25,9 @@
   </header>
 
   <aside class="cutover-note" aria-label="Data history notice">
-    <strong>Cloudflare beta dataset only.</strong>
-    Build 367 and earlier Supabase test history is intentionally not merged into this view.
-    A verified empty result means no post-cutover activity—not zero all-time players.
+    <strong>Cloudflare is the source shown here.</strong>
+    Build 367 and earlier Supabase test history is intentionally not merged until its export is verified and reconciled.
+    An empty result means no verified Cloudflare rows—not zero all-time players.
   </aside>
 
   <section class="error-panel" id="errorPanel" role="alert" hidden>
@@ -77,9 +77,17 @@
 
   <nav class="tabs" aria-label="Beta report views">
     <button type="button" class="tab active" data-view="overview" aria-selected="true">Overview</button>
+    <button type="button" class="tab" data-view="insights" aria-selected="false">Insights &amp; next steps</button>
     <button type="button" class="tab" data-view="funnel" aria-selected="false">Funnel</button>
     <button type="button" class="tab" data-view="players" aria-selected="false">Players</button>
     <button type="button" class="tab" data-view="surveys" aria-selected="false">Surveys</button>
+    <button type="button" class="tab" data-view="accounts" aria-selected="false">Accounts</button>
+    <button type="button" class="tab" data-view="progress" aria-selected="false">Progress</button>
+    <button type="button" class="tab" data-view="journals" aria-selected="false">Journals</button>
+    <button type="button" class="tab" data-view="quality" aria-selected="false">Quality &amp; visits</button>
+    <button type="button" class="tab" data-view="content" aria-selected="false">Content</button>
+    <button type="button" class="tab" data-view="migration" aria-selected="false">Migration</button>
+    <button type="button" class="tab" data-view="catalog" aria-selected="false">Data catalog</button>
     <button type="button" class="tab" data-view="events" aria-selected="false">Raw events</button>
     <button type="button" class="tab" data-view="builds" aria-selected="false">Builds</button>
     <button type="button" class="tab" data-view="devices" aria-selected="false">Devices</button>
@@ -109,6 +117,133 @@
           <div id="overviewSignals"></div>
         </article>
       </div>
+    </section>
+
+    <section class="view" id="view-insights" data-view-panel="insights" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">EVIDENCE-BOUND REPORT</p><h2>Insights &amp; next steps</h2></div>
+        <p class="section-note">Calculated locally from the loaded Cloudflare rows. No player data is sent to an outside AI service.</p>
+      </div>
+      <div class="report-basis" id="insightBasis"></div>
+      <div class="recommendation-list" id="insightList"></div>
+      <div class="split-grid insight-grid">
+        <article class="panel">
+          <div class="panel-head"><h3>Written-feedback themes</h3><span class="quiet">keyword evidence</span></div>
+          <div id="themeRows" class="theme-list"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-head"><h3>How to read this report</h3><span class="quiet">guardrails</span></div>
+          <ul id="insightCaveats" class="caveat-list"></ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="view" id="view-accounts" data-view-panel="accounts" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">PLAYER ACCOUNTS</p><h2>Accounts and saved profiles</h2></div>
+        <p class="section-note">Email addresses stay masked until you explicitly reveal them.</p>
+      </div>
+      <div class="privacy-strip"><div><strong>Private account data</strong><span>Only you can open this Access-protected page.</span></div><button class="button" id="revealEmailsButton" type="button">Reveal account emails</button></div>
+      <div class="kpi-grid compact-kpis" id="accountCards"></div>
+      <div class="panel table-panel"><div class="table-scroll"><table>
+        <thead><tr><th>Account</th><th>Email</th><th>Status</th><th>Source</th><th>Level</th><th>XP</th><th>Shells</th><th>Updated</th></tr></thead>
+        <tbody id="accountRows"></tbody>
+      </table></div><div class="empty" id="accountEmpty" hidden>No accounts match this search.</div></div>
+    </section>
+
+    <section class="view" id="view-progress" data-view-panel="progress" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">LEARNING PROGRESS</p><h2>Levels, streaks and mastery</h2></div>
+        <p class="section-note">All-time Cloudflare application rows; the beta time and build filters do not alter saved progress.</p>
+      </div>
+      <div class="kpi-grid compact-kpis" id="progressCards"></div>
+      <div class="split-grid">
+        <article class="panel"><div class="panel-head"><h3>Player levels</h3></div><div id="levelDistribution" class="distribution-list"></div></article>
+        <article class="panel"><div class="panel-head"><h3>Current streaks</h3></div><div id="streakDistribution" class="distribution-list"></div></article>
+      </div>
+      <div class="panel table-panel spaced-panel"><div class="panel-head"><h3>Mastery by skill</h3><span class="quiet" id="masteryScope"></span></div><div class="table-scroll"><table>
+        <thead><tr><th>Skill</th><th>Measured players</th><th>Average</th><th>Median</th><th>Score</th></tr></thead>
+        <tbody id="masteryRows"></tbody>
+      </table></div><div class="empty" id="masteryEmpty" hidden>No mastery scores are stored yet.</div></div>
+    </section>
+
+    <section class="view" id="view-journals" data-view-panel="journals" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">TRADER JOURNALS</p><h2>Journal health and usage</h2></div>
+        <p class="section-note">Counts and version health appear first. Trade and note contents require an explicit reveal.</p>
+      </div>
+      <div class="kpi-grid compact-kpis" id="journalCards"></div>
+      <div class="panel table-panel"><div class="panel-head"><h3>Per-account journal metadata</h3><span class="quiet">contents hidden</span></div><div class="table-scroll"><table>
+        <thead><tr><th>Account</th><th>Active trades</th><th>Active notes</th><th>Versions</th><th>Changes</th><th>Latest version</th><th>Last updated</th></tr></thead>
+        <tbody id="journalUserRows"></tbody>
+      </table></div><div class="empty" id="journalUserEmpty" hidden>No journal activity is stored yet.</div></div>
+      <div class="privacy-strip journal-privacy"><div><strong>Private journal contents</strong><span>Reveal only when you need to inspect an individual record.</span></div><button class="button" id="revealJournalButton" type="button">Show private journal entries</button></div>
+      <div id="journalDetails" hidden>
+        <div class="split-grid">
+          <article class="panel"><div class="panel-head"><h3>Trade entries</h3></div><div id="journalTradeRows" class="private-record-list"></div></article>
+          <article class="panel"><div class="panel-head"><h3>Note entries</h3></div><div id="journalNoteRows" class="private-record-list"></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-quality" data-view-panel="quality" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">QUALITY &amp; REACH</p><h2>Bug reports and site visits</h2></div>
+        <p class="section-note">Raw visits and daily rollups are reported separately so the same visit is never counted twice.</p>
+      </div>
+      <div class="kpi-grid compact-kpis" id="qualityCards"></div>
+      <div class="split-grid">
+        <article class="panel"><div class="panel-head"><h3>Top paths</h3></div><div id="visitPaths" class="distribution-list"></div></article>
+        <article class="panel"><div class="panel-head"><h3>Visit devices</h3></div><div id="visitDevices" class="distribution-list"></div></article>
+      </div>
+      <div class="panel table-panel spaced-panel"><div class="panel-head"><h3>Player bug reports</h3><span class="quiet" id="bugScope"></span></div><div class="table-scroll"><table>
+        <thead><tr><th>Reported</th><th>Status</th><th>Player</th><th>Report</th><th>Private detail</th></tr></thead>
+        <tbody id="bugRows"></tbody>
+      </table></div><div class="empty" id="bugEmpty" hidden>No bug reports match this search.</div></div>
+    </section>
+
+    <section class="view" id="view-content" data-view-panel="content" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">CONTENT PIPELINE</p><h2>From gameplay moment to published post</h2></div>
+        <p class="section-note">Counts reflect stored Cloudflare workflow records, not estimates.</p>
+      </div>
+      <div class="pipeline-grid" id="contentPipeline"></div>
+      <div class="split-grid spaced-panel">
+        <article class="panel"><div class="panel-head"><h3>Event processing</h3></div><div id="contentEventStatus" class="distribution-list"></div></article>
+        <article class="panel"><div class="panel-head"><h3>Outbox delivery</h3></div><div id="outboxStatus" class="distribution-list"></div></article>
+      </div>
+      <div class="panel table-panel spaced-panel"><div class="panel-head"><h3>Recent content moments</h3><span class="quiet" id="contentEventScope"></span></div><div class="table-scroll"><table>
+        <thead><tr><th>Time</th><th>Type</th><th>Player</th><th>Score</th><th>Status</th><th>Detail</th></tr></thead>
+        <tbody id="contentEventRows"></tbody>
+      </table></div><div class="empty" id="contentEventEmpty" hidden>No content moments are stored yet.</div></div>
+    </section>
+
+    <section class="view" id="view-migration" data-view-panel="migration" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">DATA CUTOVER</p><h2>Migration and reconciliation</h2></div>
+        <p class="section-note">Supabase can only be retired after every imported dataset has count-and-digest parity or an explained quarantine.</p>
+      </div>
+      <div class="migration-state" id="migrationState"></div>
+      <div class="kpi-grid compact-kpis" id="migrationCards"></div>
+      <div class="panel table-panel"><div class="panel-head"><h3>Import runs</h3></div><div class="table-scroll"><table>
+        <thead><tr><th>Started</th><th>Dataset</th><th>Status</th><th>Source</th><th>Imported</th><th>Quarantine</th><th>Finished</th></tr></thead>
+        <tbody id="migrationRunRows"></tbody>
+      </table></div><div class="empty" id="migrationRunEmpty" hidden>No historical import has run yet.</div></div>
+      <div class="panel table-panel spaced-panel"><div class="panel-head"><h3>Reconciliation checks</h3></div><div class="table-scroll"><table>
+        <thead><tr><th>Checked</th><th>Dataset</th><th>Source</th><th>Cloudflare</th><th>Quarantine</th><th>Digest parity</th></tr></thead>
+        <tbody id="reconciliationRows"></tbody>
+      </table></div><div class="empty" id="reconciliationEmpty" hidden>No reconciliation evidence is stored yet.</div></div>
+    </section>
+
+    <section class="view" id="view-catalog" data-view-panel="catalog" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">CLOUDFLARE SOURCE MAP</p><h2>Every application dataset</h2></div>
+        <p class="section-note">Loaded count must equal the protected API summary. Exports include the complete selected dataset.</p>
+      </div>
+      <div class="panel table-panel"><div class="table-scroll"><table>
+        <thead><tr><th>Area</th><th>Dataset</th><th>What it contains</th><th>Verified rows</th><th>Loaded rows</th><th>Export</th></tr></thead>
+        <tbody id="catalogRows"></tbody>
+      </table></div></div>
     </section>
 
     <section class="view" id="view-funnel" data-view-panel="funnel" hidden>
@@ -194,11 +329,12 @@
   </dialog>
 
   <footer>
-    <span>ChartQuest Founder Beta Command</span>
+    <span>ChartQuest Founder Cloudflare Command</span>
     <span id="footerFreshness">Awaiting verified data</span>
   </footer>
 
   <script src="./beta-model.js"></script>
+  <script src="./app-model.js"></script>
   <script src="./beta.js"></script>
 </body>
 </html>

@@ -26,64 +26,78 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>ChartQuest</title>
 <script>
-/* BOOT-CRASH CAPTURE — deliberately in <head>, before everything else.
-   CQTrack installs its error listeners inside boot(), deferred to DOMContentLoaded, and in the
-   game that block is ~line 27,400 of 28,100. So the one failure that matters most — a parse-time
-   throw that white-screens the page — was structurally unrecordable: zero crash rows in 118
-   events is not evidence of no crashes, it is evidence we cannot see them.
-   Queues into window.__cqTrackQueue, which CQTrack drains on boot; and if CQTrack never boots at
-   all (the white-screen case) it posts the crash itself after 8s. Intentionally tiny and
-   dependency-free — this must run even when everything below it is broken. */
+/* CQBOOTCRASH:BEGIN — generated from website/assets/cq-boot-crash.js by scripts/sync_boot_crash.py — DO NOT EDIT HERE */
+/* ChartQuest earliest-crash capture. Inline this at the top of every production page. */
 (function(){
   var Q = (window.__cqTrackQueue = window.__cqTrackQueue || []), n = 0, sent = false;
+  var PENDING = 'cq_bt_pending';
   function cap(m, w) {
     if (n++ > 2) return;
     Q.push({ name: 'crash', props: { kind: 'boot', message: String(m || '').slice(0, 500), where: w || '' }, t: Date.now() });
+  }
+  function readPending() {
+    try { var value = JSON.parse(localStorage.getItem(PENDING) || '[]'); return Array.isArray(value) ? value : []; }
+    catch (e) { return []; }
+  }
+  function writePending(rows) {
+    try {
+      if (rows.length) localStorage.setItem(PENDING, JSON.stringify(rows));
+      else localStorage.removeItem(PENDING);
+      return true;
+    } catch (e) { return false; }
+  }
+  function persist(rows) {
+    var queue = readPending(), seen = {};
+    queue.forEach(function (row) { seen[row.event_id] = true; });
+    rows.forEach(function (row) { if (!seen[row.event_id]) queue.push(row); });
+    writePending(queue);
+  }
+  function acknowledged(response, count) {
+    if (!response || !response.ok) return Promise.resolve(false);
+    var type = response.headers && response.headers.get ? String(response.headers.get('Content-Type') || '') : '';
+    if (type.toLowerCase().indexOf('application/json') === -1) return Promise.resolve(false);
+    return response.json().then(function (receipt) {
+      return !!receipt && receipt.ok === true && Number(receipt.written) === count;
+    }).catch(function () { return false; });
+  }
+  function drain() {
+    var rows = readPending().slice(0, 40);
+    if (!rows.length) return;
+    fetch('/api/beta-ingest', {
+      method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'events', rows: rows })
+    }).then(function (response) { return acknowledged(response, rows.length); }).then(function (ok) {
+      if (!ok) return;
+      var done = {}; rows.forEach(function (row) { done[row.event_id] = true; });
+      writePending(readPending().filter(function (row) { return !done[row.event_id]; }));
+      if (readPending().length) setTimeout(drain, 0);
+    }).catch(function () {});
   }
   try {
     addEventListener('error', function (e) { cap(e && e.message, e && e.filename ? e.filename + ':' + e.lineno : ''); });
     addEventListener('unhandledrejection', function (e) { var r = e && e.reason; cap((r && (r.message || r)) || 'unhandledrejection', ''); });
   } catch (e) {}
-  /* Fallback: if CQTrack never came up, nobody will ever drain the queue. Send it ourselves. */
   setTimeout(function () {
     try {
       if (sent || window.CQTrack || !Q.length) return;
       sent = true;
-      var K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
       var pid = 'anon'; try { pid = localStorage.getItem('cq_pid') || 'anon'; } catch (e) {}
+      var stamp = Date.now();
       var rows = Q.slice(0, 3).map(function (q, i) {
-        return { event_id: 'boot-' + Date.now() + '-' + i, player_id: pid, session_id: 'boot',
-                 name: 'crash', ts: new Date().toISOString(), props: q.props };
+        return { event_id: 'boot-' + stamp + '-' + i, player_id: pid, session_id: 'boot',
+          name: 'crash', ts: new Date().toISOString(), props: q.props };
       });
-      var body = JSON.stringify({ kind: 'events', rows: rows });
-      function acknowledged(r) {
-        if (!r || !r.ok) return Promise.resolve(false);
-        var type = r.headers && r.headers.get ? String(r.headers.get('Content-Type') || '') : '';
-        if (type.toLowerCase().indexOf('application/json') === -1) return Promise.resolve(false);
-        return r.json().then(function (receipt) {
-          return !!receipt && receipt.ok === true && Number(receipt.written) === rows.length;
-        }).catch(function () { return false; });
-      }
-      fetch('/api/beta-ingest', {
-        method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: body
-      }).then(acknowledged).then(function (ok) {
-        if (ok) return true;
-        throw new Error('Cloudflare beta ingest did not confirm this crash');
-      }).catch(function () {
-        /* Migration overlap only: a Cloudflare/D1 configuration failure must not erase the
-           one crash that explains a white screen. Old Supabase data remains untouched. */
-        return fetch('https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest', {
-          method: 'POST', keepalive: true,
-          headers: { apikey: K, Authorization: 'Bearer ' + K, 'Content-Type': 'application/json' },
-          body: body
-        }).catch(function () {});
-      });
+      // Durable first. If the POST fails or its receipt is misleading, the exact rows stay for
+      // CQTrack (or this tiny fallback on a later load) to retry.
+      persist(rows);
+      drain();
     } catch (e) {}
   }, 8000);
 })();
+/* CQBOOTCRASH:END */
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="5416a60174" data-built-at="2026-08-13T16:26:55Z">
+<meta name="cq-build" content="47cb1b866f" data-built-at="2026-08-23T10:35:13Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -105,11 +119,10 @@
        CQOPS.flags    feature flags, resolvable from URL / localStorage / environment
        CQOPS.health   the founder-observability counters + CQOPS.report()
 
-   ── WHAT THIS IS NOT (Phase 1 discipline) ────────────────────────────────────────────────
-   It is NOT a migration. Nothing in the game was rewritten to use it. Analytics still posts
-   the way it always did; the survey still submits the way it always did; cinematics still play
-   the way they always did. This sprint builds the road, it does not move the traffic onto it.
-   Adoption is incremental and documented in docs/operations/IntegrationGuide.md.
+   ── CUTOVER BOUNDARY ──────────────────────────────────────────────────────────────────────
+   Build 369 routes production analytics and app data through same-origin Cloudflare Pages
+   Functions. Gameplay and cinematics remain independent of the data plane and keep working
+   from the on-device save whenever the network is unavailable.
 
    THE ONE THING THAT WOULD DESTROY TRUST IN THIS SYSTEM is a feature flag that looks like it
    works and does nothing. So flags carry a `wired` bit: a flag is `wired` only once a real call
@@ -169,14 +182,13 @@
      laptop, on the LAN QR, on a Cloudflare preview and on playchartquest.com, with no build
      flags and no separate bundles.
 
-     BUILD 368 HONESTY: beta analytics now enters through the same-origin Cloudflare Pages
-     Function. The separate apiBase intentionally remains Supabase during the overlap because
-     signed-in accounts and cloud saves have not been migrated yet. Do not confuse an analytics
-     cutover with an account-data migration. */
+     BUILD 369: analytics, accounts, cloud saves, content and market lookups all enter through
+     same-origin Cloudflare Pages Functions. No browser credential or third-party database URL
+     belongs in this configuration. */
   var ENV_CONFIG = {
     development: {
       analyticsEndpoint: '/api/beta-ingest',
-      apiBase:           'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1',
+      apiBase:           '/api/app',
       surveyUrl:         'survey.html',
       logLevel:          'debug',
       debugOverlays:     true,
@@ -184,7 +196,7 @@
     },
     staging: {
       analyticsEndpoint: '/api/beta-ingest',
-      apiBase:           'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1',
+      apiBase:           '/api/app',
       surveyUrl:         'survey.html',
       logLevel:          'info',
       debugOverlays:     true,
@@ -192,7 +204,7 @@
     },
     production: {
       analyticsEndpoint: '/api/beta-ingest',
-      apiBase:           'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1',
+      apiBase:           '/api/app',
       surveyUrl:         'survey.html',
       logLevel:          'warn',
       debugOverlays:     false,
@@ -2047,10 +2059,12 @@
     <div id="authTabs">
       <button id="authTabSignin" class="active">SIGN IN</button>
       <button id="authTabSignup">SIGN UP</button>
+      <button id="authTabClaim">RESTORE</button>
     </div>
     <div id="authTitle">Welcome back</div>
     <form id="authForm" onsubmit="return false;">
       <input id="authEmail" type="email" placeholder="Email" autocomplete="email">
+      <input id="authClaimToken" type="password" placeholder="One-time restore code" autocomplete="off" style="display:none;">
       <input id="authPass"  type="password" placeholder="Password" autocomplete="current-password">
       <label id="authConsent" style="display:none;font-size:11px;color:#9fb0c8;text-align:left;line-height:1.45;margin:2px 2px 6px;cursor:pointer;">
         <input id="authConsentBox" type="checkbox" style="vertical-align:middle;margin-right:6px;">
@@ -2425,7 +2439,992 @@
 
 </div><!-- /#stage -->
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+/* CQCLOUDDATA:BEGIN — generated from website/assets/cq-cloud-data.js by scripts/sync_cloud_data.py — DO NOT EDIT HERE */
+/* ChartQuest Cloud Data — production same-origin client adapter.
+   Local game state remains authoritative unless a caller explicitly applies a remote read.
+   Writes are durable-before-send and leave the queue only after an exact JSON receipt. */
+(function (root) {
+  'use strict';
+
+  var VERSION = '1.0.0';
+  var QUEUE_KEY = 'cq_cloud_data_queue_v1';
+  var META_KEY = 'cq_cloud_data_meta_v1';
+  var MAX_QUEUE_ENTRIES = 512;
+  var MAX_OPERATION_CHARS = 220000;
+  var MAX_CONTENT_ROWS = 100;
+  var MAX_JOURNAL_ROWS = 200;
+  var MAX_JOURNAL_CHARS = 100000;
+  var JOURNAL_PAGE_LIMIT = 100;
+  var MAX_MASTERY_ROWS = 40;
+  var MAX_QUOTE_MARKETS = 8;
+  var MAX_FLUSH_ATTEMPTS = 32;
+  var RETRY_MIN_MS = 2000;
+  var RETRY_MAX_MS = 60000;
+
+  var LOCAL_KEYS = Object.freeze({
+    playerId: 'cq_pid',
+    profile: 'cq_player_v1',
+    trades: 'shellTradeJournal_v1',
+    notes: 'shellTradeNotes_v1',
+    streak: 'shellTradeDaily_v1',
+    mastery: 'cq_mastery_v1'
+  });
+
+  var ENDPOINTS = Object.freeze({
+    session: '/api/app/session',
+    account: '/api/app/account',
+    claim: '/api/app/claim',
+    profile: '/api/app/profile',
+    journal: '/api/app/journal',
+    streak: '/api/app/streak',
+    mastery: '/api/app/mastery',
+    bug: '/api/app/bug',
+    visit: '/api/app/visit',
+    content: '/api/app/content',
+    marketPrice: '/api/app/market-price'
+  });
+
+  var CONTENT_TABLES = Object.freeze([
+    'content_events', 'content_replays', 'content_briefs',
+    'content_exports', 'content_generated'
+  ]);
+  var QUOTE_MARKETS = Object.freeze(['BTC', 'ETH', 'SOL', 'GOLD', 'AAPL', 'TSLA', 'NVDA', 'SPX']);
+  var CANDLE_SYMBOLS = Object.freeze(['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'PAXGUSDT']);
+  var CANDLE_INTERVALS = Object.freeze(['1m', '3m', '5m', '15m', '30m', '1h', '4h', '1d']);
+  var QUEUE_ENDPOINTS = Object.freeze([
+    ENDPOINTS.profile, ENDPOINTS.journal, ENDPOINTS.streak, ENDPOINTS.mastery,
+    ENDPOINTS.bug, ENDPOINTS.visit, ENDPOINTS.content
+  ]);
+  var MASTERY_WEIGHTS = Object.freeze({ mg: 0.35, boss: 0.25, trade: 0.25, lesson: 0.15 });
+
+  function queueEntryAllowed(item) {
+    if (QUEUE_ENDPOINTS.indexOf(item.endpoint) < 0) return false;
+    var authBound = item.auth === true && typeof item.user_id === 'string' && item.user_id.length >= 1 && item.user_id.length <= 64;
+    if (item.endpoint === ENDPOINTS.profile) {
+      return authBound && item.method === 'PUT' &&
+        ['profile.put', 'profile.bootstrap'].indexOf(item.operation) >= 0 &&
+        Number.isInteger(item.body.expected_version) && item.body.expected_version >= 0 &&
+        (item.operation === 'profile.bootstrap' ? item.body.bootstrap === true : item.body.bootstrap !== true);
+    }
+    if (item.endpoint === ENDPOINTS.journal) {
+      return authBound && item.method === 'PUT' && item.operation === 'journal.put' &&
+        Number.isInteger(item.body.base_version) && item.body.base_version >= 0 &&
+        Array.isArray(item.body.trades) && Array.isArray(item.body.notes) &&
+        Array.isArray(item.body.delete_trade_ids || []) && Array.isArray(item.body.delete_note_ids || []);
+    }
+    if (item.endpoint === ENDPOINTS.streak) {
+      return authBound && item.method === 'PUT' && item.operation === 'streak.put' &&
+        Number.isInteger(item.body.expected_version) && item.body.expected_version >= 0;
+    }
+    if (item.endpoint === ENDPOINTS.mastery) return authBound && item.method === 'PUT' && item.operation === 'mastery.put';
+    if (item.endpoint === ENDPOINTS.bug) {
+      return item.method === 'POST' && item.operation === 'bug.create' && item.body.request_id === item.id;
+    }
+    if (item.endpoint === ENDPOINTS.visit) {
+      return item.method === 'POST' && item.operation === 'visit.create' && item.body.visit_id === item.id;
+    }
+    if (item.endpoint === ENDPOINTS.content) {
+      return item.method === 'POST' && item.body.batch_id === item.id &&
+        CONTENT_TABLES.indexOf(item.body.table) >= 0 && item.operation === 'content.' + item.body.table;
+    }
+    return false;
+  }
+
+  var memoryStore = {};
+  var storage = (function () {
+    try {
+      if (root.localStorage && typeof root.localStorage.getItem === 'function') return root.localStorage;
+    } catch (_) {}
+    return {
+      getItem: function (key) { return Object.prototype.hasOwnProperty.call(memoryStore, key) ? memoryStore[key] : null; },
+      setItem: function (key, value) { memoryStore[key] = String(value); },
+      removeItem: function (key) { delete memoryStore[key]; }
+    };
+  })();
+
+  var authState = { user: null, csrfToken: null, expiresAt: null };
+  var flushPromise = null;
+  var retryTimer = null;
+  var retryMs = 0;
+  var receipts = Object.create(null);
+
+  function nowISO() { return new Date().toISOString(); }
+  function clone(value) {
+    if (value == null) return value;
+    try { return JSON.parse(JSON.stringify(value)); } catch (_) { return null; }
+  }
+  function safeParse(raw, fallback) {
+    if (raw == null || raw === '') return clone(fallback);
+    try { return JSON.parse(raw); } catch (_) { return clone(fallback); }
+  }
+  function readLocal(key, fallback) {
+    try { return safeParse(storage.getItem(key), fallback); } catch (_) { return clone(fallback); }
+  }
+  function localPlayerId() {
+    try { return storage.getItem(LOCAL_KEYS.playerId) || null; } catch (_) { return null; }
+  }
+  function localSnapshot() {
+    return {
+      player_id: localPlayerId(),
+      profile: readLocal(LOCAL_KEYS.profile, null),
+      trades: readLocal(LOCAL_KEYS.trades, []),
+      notes: readLocal(LOCAL_KEYS.notes, []),
+      streak: readLocal(LOCAL_KEYS.streak, null),
+      mastery: readLocal(LOCAL_KEYS.mastery, {})
+    };
+  }
+
+  function loadMeta() {
+    var value = readLocal(META_KEY, {});
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  }
+  function saveMeta(patch) {
+    var value = loadMeta();
+    Object.keys(patch || {}).forEach(function (key) { value[key] = patch[key]; });
+    try { storage.setItem(META_KEY, JSON.stringify(value)); return true; } catch (_) { return false; }
+  }
+  function accountVersion(kind, userId) {
+    var meta = loadMeta();
+    var accounts = meta.account_versions;
+    var row = accounts && typeof accounts === 'object' && !Array.isArray(accounts) ? accounts[userId] : null;
+    var value = row && row[kind];
+    if (value == null) return null;
+    return Number.isInteger(Number(value)) && Number(value) >= 0 ? Number(value) : null;
+  }
+  function saveAccountVersion(kind, version, userId) {
+    userId = String(userId || (authState.user && authState.user.id) || '');
+    version = Number(version);
+    if (!userId || !Number.isInteger(version) || version < 0) return false;
+    var meta = loadMeta();
+    var accounts = meta.account_versions;
+    if (!accounts || typeof accounts !== 'object' || Array.isArray(accounts)) accounts = {};
+    var row = accounts[userId];
+    if (!row || typeof row !== 'object' || Array.isArray(row)) row = {};
+    row[kind] = version;
+    accounts[userId] = row;
+    meta.account_versions = accounts;
+    try { storage.setItem(META_KEY, JSON.stringify(meta)); return true; } catch (_) { return false; }
+  }
+
+  function loadQueueResult() {
+    var raw;
+    try { raw = storage.getItem(QUEUE_KEY); } catch (_) { return { ok: false, queue: [], code: 'storage_unavailable' }; }
+    if (!raw) return { ok: true, queue: [] };
+    try {
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return { ok: false, queue: [], code: 'queue_corrupt' };
+      for (var i = 0; i < parsed.length; i += 1) {
+        var item = parsed[i];
+        if (!item || typeof item.id !== 'string' || typeof item.endpoint !== 'string' ||
+            QUEUE_ENDPOINTS.indexOf(item.endpoint) < 0 || ['POST', 'PUT'].indexOf(item.method) < 0 ||
+            typeof item.operation !== 'string' || !Number.isFinite(Number(item.expected)) ||
+            !item.body || typeof item.body !== 'object' || Array.isArray(item.body) || !queueEntryAllowed(item)) {
+          return { ok: false, queue: [], code: 'queue_corrupt' };
+        }
+      }
+      return { ok: true, queue: parsed };
+    } catch (_) {
+      return { ok: false, queue: [], code: 'queue_corrupt' };
+    }
+  }
+  function persistQueue(queue) {
+    try {
+      if (queue.length) storage.setItem(QUEUE_KEY, JSON.stringify(queue));
+      else storage.removeItem(QUEUE_KEY);
+      return true;
+    } catch (_) { return false; }
+  }
+
+  function uid(prefix) {
+    try {
+      if (root.crypto && typeof root.crypto.randomUUID === 'function') return prefix + root.crypto.randomUUID();
+    } catch (_) {}
+    return prefix + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+  }
+  function stableHash(value) {
+    var text = typeof value === 'string' ? value : JSON.stringify(value);
+    if (typeof text !== 'string') text = String(value);
+    var hash = 2166136261;
+    for (var i = 0; i < text.length; i += 1) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(36);
+  }
+  function finiteNumber(value, fallback) {
+    var number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+  function resultFailure(code, message, extra) {
+    return Object.assign({
+      ok: false,
+      confirmed: false,
+      playable: true,
+      code: code || 'cloud_unavailable',
+      message: message || 'Cloud save is unavailable right now. Your game can continue on this device.'
+    }, extra || {});
+  }
+  function resultSuccess(data, extra) {
+    return Object.assign({ ok: true, confirmed: true, playable: true, data: data == null ? null : data }, extra || {});
+  }
+
+  function responseJSON(response) {
+    if (!response || typeof response.json !== 'function') return Promise.resolve({ ok: false, code: 'invalid_response' });
+    var contentType = '';
+    try { contentType = response.headers && response.headers.get ? (response.headers.get('content-type') || '') : ''; } catch (_) {}
+    if (contentType.toLowerCase().indexOf('application/json') < 0) {
+      return Promise.resolve({ ok: false, code: 'invalid_response' });
+    }
+    return response.json().then(function (body) {
+      if (!body || typeof body !== 'object') return { ok: false, code: 'invalid_response' };
+      return { ok: !!response.ok && body.ok === true, status: response.status || 0, body: body };
+    }).catch(function () { return { ok: false, code: 'invalid_response' }; });
+  }
+
+  function rawRequest(endpoint, options) {
+    options = options || {};
+    var headers = Object.assign({ Accept: 'application/json' }, options.headers || {});
+    var request = {
+      method: options.method || 'GET',
+      headers: headers,
+      credentials: 'same-origin',
+      cache: 'no-store'
+    };
+    if (options.keepalive) request.keepalive = true;
+    if (options.body != null) {
+      headers['Content-Type'] = 'application/json';
+      request.body = JSON.stringify(options.body);
+    }
+    return root.fetch(endpoint, request).then(responseJSON).catch(function () {
+      return { ok: false, status: 0, code: 'network_error' };
+    });
+  }
+
+  function updateAuth(body) {
+    authState.user = body && body.user ? clone(body.user) : null;
+    authState.csrfToken = body && typeof body.csrf_token === 'string' ? body.csrf_token : null;
+    authState.expiresAt = body && body.expires_at ? body.expires_at : null;
+  }
+  function serverFailure(parsed, fallbackCode, fallbackMessage, extra) {
+    var body = parsed && parsed.body;
+    return resultFailure(
+      body && typeof body.error === 'string' ? body.error : (parsed && parsed.code) || fallbackCode,
+      body && typeof body.message === 'string' ? body.message : fallbackMessage,
+      Object.assign({ status: (parsed && parsed.status) || 0 }, extra || {})
+    );
+  }
+
+  async function session() {
+    var parsed = await rawRequest(ENDPOINTS.session);
+    if (!parsed.ok) return serverFailure(parsed, 'session_unavailable', 'Account check is unavailable. You can keep playing as a guest.', { user: null });
+    updateAuth(parsed.body);
+    return resultSuccess({ user: clone(authState.user), expires_at: authState.expiresAt }, { signedIn: !!authState.user });
+  }
+
+  function validateDirectReceipt(parsed, id, operation, accepted) {
+    if (!parsed || !parsed.ok || !parsed.body) return null;
+    var receipt = parsed.body.receipt;
+    if (!receipt || receipt.id !== id || receipt.operation !== operation || Number(receipt.accepted) !== accepted) return null;
+    return clone(receipt);
+  }
+
+  async function signIn(email, password) {
+    var parsed = await rawRequest(ENDPOINTS.session, { method: 'POST', body: { email: String(email || '').trim(), password: String(password || '') } });
+    if (!parsed.ok || !parsed.body.user) return serverFailure(parsed, 'sign_in_failed', 'Sign in failed. Your local game is still safe.');
+    updateAuth(parsed.body);
+    return resultSuccess({ user: clone(authState.user), expires_at: authState.expiresAt }, { signedIn: true });
+  }
+
+  async function accountWrite(endpoint, operation, input) {
+    var id = uid('auth-');
+    var parsed = await rawRequest(endpoint, {
+      method: 'POST',
+      headers: { 'X-Idempotency-Key': id },
+      body: input
+    });
+    var receipt = validateDirectReceipt(parsed, id, operation, 1);
+    if (!receipt || !parsed.body.user) return serverFailure(parsed, operation.replace('.', '_') + '_failed', 'Account setup was not confirmed. Your local game is still safe.');
+    updateAuth(parsed.body);
+    if (operation === 'account.create' && authState.user) {
+      saveAccountVersion('profile', 0, authState.user.id);
+      saveAccountVersion('journal', 0, authState.user.id);
+      saveAccountVersion('streak', 0, authState.user.id);
+    }
+    return resultSuccess({ user: clone(authState.user), expires_at: authState.expiresAt }, { receipt: receipt, signedIn: true });
+  }
+
+  function createAccount(email, password, consent) {
+    return accountWrite(ENDPOINTS.account, 'account.create', {
+      email: String(email || '').trim(), password: String(password || ''), consent: consent === true
+    });
+  }
+  function claimAccount(email, claimToken, password) {
+    return accountWrite(ENDPOINTS.claim, 'account.claim', {
+      email: String(email || '').trim(), claim_token: String(claimToken || ''), password: String(password || '')
+    });
+  }
+
+  async function signOut() {
+    var id = uid('signout-');
+    if (!authState.csrfToken) {
+      var checked = await session();
+      if (!checked.ok || !authState.csrfToken) return resultFailure('signout_unavailable', 'Sign out was not confirmed. You are still signed in on this browser.');
+    }
+    var parsed = await rawRequest(ENDPOINTS.session, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-Token': authState.csrfToken, 'X-Idempotency-Key': id }
+    });
+    var receipt = validateDirectReceipt(parsed, id, 'session.signout', 1);
+    if (!receipt) return serverFailure(parsed, 'signout_unconfirmed', 'Sign out was not confirmed. You are still signed in on this browser.');
+    updateAuth({ user: null });
+    return resultSuccess(null, { receipt: receipt, signedIn: false });
+  }
+
+  function makeEntry(spec) {
+    var id = spec.id || uid('write-');
+    var body = clone(spec.body || {});
+    if (!body || typeof body !== 'object' || Array.isArray(body)) body = {};
+    if (spec.idField) body[spec.idField] = id;
+    return {
+      id: id,
+      endpoint: spec.endpoint,
+      method: spec.method || 'POST',
+      operation: spec.operation,
+      expected: spec.expected,
+      auth: spec.auth === true,
+      lane: spec.lane || spec.endpoint,
+      body: body,
+      created_at: nowISO(),
+      attempts: 0,
+      last_status: null,
+      last_error: null
+    };
+  }
+
+  function enqueueEntries(entries) {
+    var loaded = loadQueueResult();
+    if (!loaded.ok) return { ok: false, code: loaded.code, ids: [] };
+    if (loaded.queue.length + entries.length > MAX_QUEUE_ENTRIES) return { ok: false, code: 'queue_full', ids: [] };
+    for (var i = 0; i < entries.length; i += 1) {
+      if (JSON.stringify(entries[i].body).length > MAX_OPERATION_CHARS) return { ok: false, code: 'payload_too_large', ids: [] };
+    }
+    var next = loaded.queue.concat(entries);
+    if (!persistQueue(next)) return { ok: false, code: 'storage_unavailable', ids: [] };
+    return { ok: true, ids: entries.map(function (entry) { return entry.id; }) };
+  }
+
+  async function ensureAuthenticatedWrite() {
+    if (authState.user && authState.csrfToken) return true;
+    var checked = await session();
+    return !!(checked.ok && authState.user && authState.csrfToken);
+  }
+
+  function exactReceipt(parsed, entry) {
+    if (!parsed || !parsed.ok || !parsed.body) return null;
+    var receipt = parsed.body.receipt;
+    if (!receipt || receipt.id !== entry.id || receipt.operation !== entry.operation ||
+        Number(receipt.accepted) !== Number(entry.expected)) return null;
+    return clone(receipt);
+  }
+
+  async function sendEntry(entry) {
+    if (entry.auth && !(await ensureAuthenticatedWrite())) {
+      return { ok: false, status: 401, code: 'account_required' };
+    }
+    if (entry.auth && (!authState.user || String(authState.user.id) !== entry.user_id)) {
+      return { ok: false, status: 409, code: 'account_scope_mismatch' };
+    }
+    var headers = { 'X-Idempotency-Key': entry.id };
+    if (entry.auth) headers['X-CSRF-Token'] = authState.csrfToken;
+    var parsed = await rawRequest(entry.endpoint, {
+      method: entry.method,
+      headers: headers,
+      body: entry.body,
+      keepalive: true
+    });
+    var receipt = exactReceipt(parsed, entry);
+    if (!receipt) {
+      return {
+        ok: false,
+        status: (parsed && parsed.status) || 0,
+        code: (parsed && parsed.body && parsed.body.error) || (parsed && parsed.code) || 'unconfirmed_receipt'
+      };
+    }
+    return { ok: true, receipt: receipt };
+  }
+
+  function updateQueuedFailure(id, failure) {
+    var loaded = loadQueueResult();
+    if (!loaded.ok) return false;
+    var changed = false;
+    loaded.queue.forEach(function (entry) {
+      if (entry.id !== id) return;
+      entry.attempts = (entry.attempts || 0) + 1;
+      entry.last_status = failure.status || 0;
+      entry.last_error = failure.code || 'cloud_unavailable';
+      changed = true;
+    });
+    return !changed || persistQueue(loaded.queue);
+  }
+  function removeConfirmed(id) {
+    var loaded = loadQueueResult();
+    if (!loaded.ok) return false;
+    var next = loaded.queue.filter(function (entry) { return entry.id !== id; });
+    if (next.length === loaded.queue.length) return true;
+    return persistQueue(next);
+  }
+
+  function scheduleRetry() {
+    if (retryTimer || typeof root.setTimeout !== 'function') return;
+    retryMs = Math.min(retryMs ? retryMs * 2 : RETRY_MIN_MS, RETRY_MAX_MS);
+    retryTimer = root.setTimeout(function () {
+      retryTimer = null;
+      flush();
+    }, retryMs);
+  }
+
+  async function runFlush() {
+    var attempted = 0, confirmed = 0, failed = 0;
+    var blockedLanes = Object.create(null);
+    var loaded = loadQueueResult();
+    if (!loaded.ok) return resultFailure(loaded.code, 'The cloud queue needs repair. Local game data is unchanged.', { attempted: 0, flushed: 0, remaining: 0 });
+    var candidates = loaded.queue.slice(0, MAX_FLUSH_ATTEMPTS);
+    for (var i = 0; i < candidates.length; i += 1) {
+      var entry = candidates[i];
+      if (blockedLanes[entry.lane]) continue;
+      attempted += 1;
+      var sent = await sendEntry(entry);
+      if (sent.ok) {
+        receipts[entry.id] = sent.receipt;
+        removeConfirmed(entry.id);
+        confirmed += 1;
+        if (sent.receipt.version != null && entry.user_id) {
+          if (entry.operation === 'journal.put') saveAccountVersion('journal', sent.receipt.version, entry.user_id);
+          if (entry.operation === 'profile.put' || entry.operation === 'profile.bootstrap') {
+            saveAccountVersion('profile', sent.receipt.version, entry.user_id);
+          }
+          if (entry.operation === 'streak.put') saveAccountVersion('streak', sent.receipt.version, entry.user_id);
+        }
+      } else {
+        updateQueuedFailure(entry.id, sent);
+        blockedLanes[entry.lane] = true;
+        failed += 1;
+      }
+    }
+    var remainingResult = loadQueueResult();
+    var remaining = remainingResult.ok ? remainingResult.queue.length : 0;
+    saveMeta({ last_flush_at: nowISO(), last_flush_confirmed: confirmed, last_flush_failed: failed });
+    if (remaining) scheduleRetry();
+    else retryMs = 0;
+    return resultSuccess({ attempted: attempted, flushed: confirmed, failed: failed, remaining: remaining });
+  }
+  function flush() {
+    if (flushPromise) return flushPromise;
+    flushPromise = runFlush().finally(function () { flushPromise = null; });
+    return flushPromise;
+  }
+
+  async function queueAndConfirm(entries, options) {
+    options = options || {};
+    var queued = enqueueEntries(entries);
+    if (!queued.ok) return resultFailure(queued.code, 'This cloud update could not be queued. Your on-device game is unchanged.', { queued: false, local: true });
+    await flush();
+    var confirmedReceipts = [], allConfirmed = true;
+    queued.ids.forEach(function (id) {
+      if (receipts[id]) confirmedReceipts.push(clone(receipts[id]));
+      else allConfirmed = false;
+    });
+    if (allConfirmed) {
+      queued.ids.forEach(function (id) { delete receipts[id]; });
+      return resultSuccess(null, {
+        receipt: confirmedReceipts.length === 1 ? confirmedReceipts[0] : null,
+        receipts: confirmedReceipts,
+        queued: false,
+        local: true
+      });
+    }
+    return resultFailure('cloud_unconfirmed', options.failureMessage, {
+      queued: true,
+      local: true,
+      request_ids: queued.ids.slice()
+    });
+  }
+
+  function accountRequiredFailure(code) {
+    return resultFailure(code || 'account_required', 'Cloud sync needs an account. Your game remains saved on this device.', {
+      queued: false, local: true
+    });
+  }
+  async function authenticatedUserId() {
+    if (!(await ensureAuthenticatedWrite())) {
+      return null;
+    }
+    var userId = String(authState.user.id || '');
+    return userId && userId.length <= 64 ? userId : null;
+  }
+  function bindAccountEntries(entries, userId) {
+    entries.forEach(function (entry) {
+      entry.user_id = userId;
+      entry.lane = entry.lane + ':' + userId;
+    });
+    return entries;
+  }
+  function queuedNextVersion(lane, userId, fallback) {
+    var loaded = loadQueueResult();
+    if (!loaded.ok) return null;
+    var next = fallback;
+    loaded.queue.forEach(function (entry) {
+      if (entry.user_id !== userId || entry.lane !== lane) return;
+      var value = entry.body && (entry.body.expected_version != null
+        ? entry.body.expected_version : entry.body.base_version);
+      value = Number(value);
+      if (Number.isInteger(value) && value >= 0) next = next == null ? value + 1 : Math.max(next, value + 1);
+    });
+    return next;
+  }
+  function queueForUser(entries, userId) {
+    bindAccountEntries(entries, userId);
+    return queueAndConfirm(entries);
+  }
+  async function queueAuthenticated(entries) {
+    var userId = await authenticatedUserId();
+    if (!userId) return accountRequiredFailure();
+    return queueForUser(entries, userId);
+  }
+
+  async function readRemote(endpoint, localFallback, dataKey) {
+    var parsed = await rawRequest(endpoint);
+    if (!parsed.ok || !Object.prototype.hasOwnProperty.call(parsed.body, dataKey)) {
+      return serverFailure(parsed, 'cloud_read_unavailable', 'Cloud data is unavailable. Using this device\'s save.', {
+        source: 'local', data: clone(localFallback), local: true
+      });
+    }
+    return resultSuccess(clone(parsed.body[dataKey]), { source: 'cloud', local: true });
+  }
+
+  function normalizeProfile(value) {
+    value = value || {};
+    return {
+      shells: Math.max(0, Math.round(finiteNumber(value.shells, 0))),
+      player_level: Math.max(1, Math.floor(finiteNumber(value.player_level != null ? value.player_level : value.level, 1))),
+      xp: Math.max(0, Math.round(finiteNumber(value.xp, 0)))
+    };
+  }
+  function requestedVersion(kind, lane, userId, explicit) {
+    var base = explicit == null ? NaN : Number(explicit);
+    if (!Number.isInteger(base) || base < 0) base = accountVersion(kind, userId);
+    return queuedNextVersion(lane + ':' + userId, userId, base);
+  }
+  async function pushProfile(value, options) {
+    var userId = await authenticatedUserId();
+    if (!userId) return accountRequiredFailure();
+    options = options || {};
+    var profile = normalizeProfile(value || localSnapshot().profile);
+    var version = requestedVersion('profile', 'profile', userId, options.expected_version);
+    if (version == null) return accountRequiredFailure('profile_version_required');
+    profile.expected_version = version;
+    return queueForUser([makeEntry({
+      endpoint: ENDPOINTS.profile, method: 'PUT', operation: 'profile.put', expected: 1,
+      auth: true, lane: 'profile', body: profile
+    })], userId);
+  }
+  async function bootstrapProfile(value) {
+    var userId = await authenticatedUserId();
+    if (!userId) return accountRequiredFailure();
+    var pending = queuedNextVersion('profile:' + userId, userId, 0);
+    if (pending !== 0) {
+      return resultFailure('profile_bootstrap_unavailable', 'Initial progress can only be synchronized once.', {
+        queued: false, local: true
+      });
+    }
+    var profile = normalizeProfile(value || localSnapshot().profile);
+    profile.expected_version = 0;
+    profile.bootstrap = true;
+    return queueForUser([makeEntry({
+      endpoint: ENDPOINTS.profile, method: 'PUT', operation: 'profile.bootstrap', expected: 1,
+      auth: true, lane: 'profile', body: profile
+    })], userId);
+  }
+  async function pullProfile() {
+    var userId = await authenticatedUserId();
+    if (!userId) return resultFailure('account_required', 'Cloud sync needs an account. Using this device\'s save.', {
+      source: 'local', data: normalizeProfile(localSnapshot().profile), queued: false, local: true
+    });
+    var result = await readRemote(ENDPOINTS.profile, normalizeProfile(localSnapshot().profile), 'profile');
+    if (result.ok && result.data && result.data.version != null) saveAccountVersion('profile', result.data.version, userId);
+    return result;
+  }
+
+  function normalizeTrades(values) {
+    return (Array.isArray(values) ? values : []).map(function (trade, index) {
+      var rawId = trade && (trade.trade_id != null ? trade.trade_id : trade.id);
+      var data = trade && trade.trade_data != null ? trade.trade_data : trade;
+      var row = { trade_id: normalizeJournalId(rawId, 'trade', index, data), trade_data: clone(data) };
+      if (trade && trade.created_at) row.created_at = trade.created_at;
+      return row;
+    });
+  }
+  function normalizeNotes(values) {
+    return (Array.isArray(values) ? values : []).map(function (note, index) {
+      var rawId = note && (note.note_id != null ? note.note_id : note.id);
+      var data = note && note.note_data != null ? note.note_data : note;
+      var row = { note_id: normalizeJournalId(rawId, 'note', index, data), note_data: clone(data) };
+      if (note && note.created_at) row.created_at = note.created_at;
+      return row;
+    });
+  }
+  function normalizeJournalId(rawId, kind, index, data) {
+    var explicit = rawId == null ? '' : String(rawId);
+    if (explicit && explicit.length <= 100) return explicit;
+    // Imported and server-issued IDs are already bounded. Legacy local saves are not,
+    // so shorten an oversized ID deterministically instead of queuing a write that the
+    // server can never accept. The index is used only when the legacy item has no ID,
+    // preserving distinct otherwise-identical local rows.
+    return 'local-' + kind + '-' + stableHash({
+      id: explicit || null,
+      index: explicit ? null : index,
+      data: data
+    });
+  }
+  function normalizeDeleteIds(values) {
+    if (values == null) return [];
+    if (!Array.isArray(values)) return null;
+    var seen = Object.create(null), result = [];
+    for (var index = 0; index < values.length; index += 1) {
+      var id = String(values[index] == null ? '' : values[index]);
+      if (!id || id.length > 100 || seen[id]) return null;
+      seen[id] = true;
+      result.push(id);
+    }
+    return result;
+  }
+  function packJournalChanges(trades, notes, deleteTrades, deleteNotes) {
+    var chunks = [], current = null, chars = 0;
+    function fresh() {
+      current = { trades: [], notes: [], delete_trade_ids: [], delete_note_ids: [] };
+      chars = 128;
+    }
+    function flushChunk() {
+      if (current && (current.trades.length || current.notes.length ||
+          current.delete_trade_ids.length || current.delete_note_ids.length)) chunks.push(current);
+      fresh();
+    }
+    function add(property, value, maxRows) {
+      var encoded;
+      try { encoded = JSON.stringify(value); } catch (_) { return false; }
+      if (typeof encoded !== 'string' || encoded.length + 128 > MAX_JOURNAL_CHARS) return false;
+      if (current[property].length >= maxRows || chars + encoded.length + 2 > MAX_JOURNAL_CHARS) flushChunk();
+      current[property].push(value);
+      chars += encoded.length + 2;
+      return true;
+    }
+    fresh();
+    for (var i = 0; i < trades.length; i += 1) if (!add('trades', trades[i], MAX_JOURNAL_ROWS)) return null;
+    for (var j = 0; j < notes.length; j += 1) if (!add('notes', notes[j], MAX_JOURNAL_ROWS)) return null;
+    for (var k = 0; k < deleteTrades.length; k += 1) if (!add('delete_trade_ids', deleteTrades[k], MAX_JOURNAL_ROWS)) return null;
+    for (var m = 0; m < deleteNotes.length; m += 1) if (!add('delete_note_ids', deleteNotes[m], MAX_JOURNAL_ROWS)) return null;
+    flushChunk();
+    if (!chunks.length) chunks.push({ trades: [], notes: [], delete_trade_ids: [], delete_note_ids: [] });
+    return chunks;
+  }
+  async function pushJournalSnapshot(input) {
+    var userId = await authenticatedUserId();
+    if (!userId) return accountRequiredFailure();
+    var local = localSnapshot();
+    input = input || {};
+    var trades = normalizeTrades(input.trades != null ? input.trades : local.trades);
+    var notes = normalizeNotes(input.notes != null ? input.notes : local.notes);
+    var deleteTrades = normalizeDeleteIds(input.delete_trade_ids);
+    var deleteNotes = normalizeDeleteIds(input.delete_note_ids);
+    var chunks = deleteTrades && deleteNotes ? packJournalChanges(trades, notes, deleteTrades, deleteNotes) : null;
+    if (!chunks) return resultFailure('journal_too_large', 'A Journal item is too large for cloud sync. The full Journal remains safe on this device.', {
+      queued: false, local: true
+    });
+    var version = requestedVersion('journal', 'journal', userId, input.base_version);
+    if (version == null) return accountRequiredFailure('journal_version_required');
+    var entries = chunks.map(function (chunk, index) {
+      return makeEntry({
+        endpoint: ENDPOINTS.journal, method: 'PUT', operation: 'journal.put',
+        expected: chunk.trades.length + chunk.notes.length + chunk.delete_trade_ids.length + chunk.delete_note_ids.length,
+        auth: true, lane: 'journal', body: {
+          base_version: version + index,
+          trades: chunk.trades, notes: chunk.notes,
+          delete_trade_ids: chunk.delete_trade_ids, delete_note_ids: chunk.delete_note_ids
+        }
+      });
+    });
+    return queueForUser(entries, userId);
+  }
+  async function pullJournalSnapshot() {
+    var local = localSnapshot();
+    var userId = await authenticatedUserId();
+    if (!userId) return resultFailure('account_required', 'Cloud sync needs an account. Using this device\'s Journal.', {
+      source: 'local', data: { version: 0, trades: clone(local.trades), notes: clone(local.notes) }, queued: false, local: true
+    });
+    for (var attempt = 0; attempt < 2; attempt += 1) {
+      var trades = [], notes = [], version = null, tradeCursor = 0, noteCursor = 0;
+      var seenTrades = Object.create(null), seenNotes = Object.create(null);
+      while (true) {
+        var endpoint = ENDPOINTS.journal;
+        if (tradeCursor || noteCursor || version != null) {
+          endpoint += '?limit=' + JOURNAL_PAGE_LIMIT + '&trade_cursor=' + tradeCursor +
+            '&note_cursor=' + noteCursor + '&version=' + version;
+        }
+        var parsed = await rawRequest(endpoint);
+        if (!parsed.ok) {
+          if (parsed.status === 409) break;
+          return serverFailure(parsed, 'cloud_read_unavailable', 'Cloud Journal is unavailable. Using this device\'s save.', {
+            source: 'local', data: { version: 0, trades: clone(local.trades), notes: clone(local.notes) }, local: true
+          });
+        }
+        var journal = parsed.body && parsed.body.journal;
+        if (!journal || !Array.isArray(journal.trades) || !Array.isArray(journal.notes) ||
+            !Number.isInteger(Number(journal.version)) || (version != null && Number(journal.version) !== version)) {
+          return resultFailure('invalid_response', 'Cloud Journal returned an invalid page. Using this device\'s save.', {
+            source: 'local', data: { version: 0, trades: clone(local.trades), notes: clone(local.notes) }, local: true
+          });
+        }
+        version = Number(journal.version);
+        for (var t = 0; t < journal.trades.length; t += 1) {
+          var tradeId = String(journal.trades[t].trade_id);
+          if (seenTrades[tradeId]) return resultFailure('invalid_response', 'Cloud Journal repeated a trade page.', { local: true });
+          seenTrades[tradeId] = true;
+          trades.push(journal.trades[t]);
+        }
+        for (var n = 0; n < journal.notes.length; n += 1) {
+          var noteId = String(journal.notes[n].note_id);
+          if (seenNotes[noteId]) return resultFailure('invalid_response', 'Cloud Journal repeated a note page.', { local: true });
+          seenNotes[noteId] = true;
+          notes.push(journal.notes[n]);
+        }
+        var page = journal.page;
+        if (!page || (!page.trade_has_more && !page.note_has_more)) {
+          saveAccountVersion('journal', version, userId);
+          return resultSuccess({ version: version, trades: trades, notes: notes }, { source: 'cloud', local: true });
+        }
+        var nextTrade = page.trade_has_more ? Number(page.trade_next_cursor) : tradeCursor + journal.trades.length;
+        var nextNote = page.note_has_more ? Number(page.note_next_cursor) : noteCursor + journal.notes.length;
+        if (!Number.isInteger(nextTrade) || !Number.isInteger(nextNote) ||
+            nextTrade < tradeCursor || nextNote < noteCursor ||
+            (nextTrade === tradeCursor && nextNote === noteCursor)) {
+          return resultFailure('invalid_response', 'Cloud Journal pagination stalled. Using this device\'s save.', { local: true });
+        }
+        tradeCursor = nextTrade;
+        noteCursor = nextNote;
+      }
+    }
+    return resultFailure('journal_version_conflict', 'Cloud Journal changed while loading. Please try again.', {
+      source: 'local', data: { version: 0, trades: clone(local.trades), notes: clone(local.notes) }, local: true
+    });
+  }
+
+  function normalizeStreak(value) {
+    value = value || {};
+    var streak = Math.max(0, Math.floor(finiteNumber(value.streak, 0)));
+    var best = Math.max(streak, Math.floor(finiteNumber(value.best_streak != null ? value.best_streak : value.best, 0)));
+    var date = value.last_drill_date != null ? value.last_drill_date : (value.lastDate || null);
+    if (date != null && !/^\d{4}-\d{2}-\d{2}$/.test(String(date))) date = null;
+    return {
+      streak: streak,
+      best_streak: best,
+      last_drill_date: date
+    };
+  }
+  async function pushStreak(value, options) {
+    var userId = await authenticatedUserId();
+    if (!userId) return accountRequiredFailure();
+    options = options || {};
+    var body = normalizeStreak(value || localSnapshot().streak);
+    var version = requestedVersion('streak', 'streak', userId, options.expected_version);
+    if (version == null) return accountRequiredFailure('streak_version_required');
+    body.expected_version = version;
+    return queueForUser([makeEntry({
+      endpoint: ENDPOINTS.streak, method: 'PUT', operation: 'streak.put', expected: 1,
+      auth: true, lane: 'streak', body: body
+    })], userId);
+  }
+  async function pullStreak() {
+    var userId = await authenticatedUserId();
+    if (!userId) return resultFailure('account_required', 'Cloud sync needs an account. Using this device\'s streak.', {
+      source: 'local', data: normalizeStreak(localSnapshot().streak), queued: false, local: true
+    });
+    var result = await readRemote(ENDPOINTS.streak, normalizeStreak(localSnapshot().streak), 'streak');
+    if (result.ok && result.data && result.data.version != null) saveAccountVersion('streak', result.data.version, userId);
+    return result;
+  }
+
+  function masteryScore(value) {
+    if (value && value.score != null) return Math.max(0, Math.min(100, Math.round(finiteNumber(value.score, 0))));
+    value = value || {};
+    var score = 0;
+    Object.keys(MASTERY_WEIGHTS).forEach(function (key) { score += MASTERY_WEIGHTS[key] * finiteNumber(value[key], 0); });
+    return Math.max(0, Math.min(100, Math.round(score)));
+  }
+  function normalizeMastery(value) {
+    if (Array.isArray(value)) {
+      return value.map(function (row) {
+        row = row || {};
+        var out = { category: String(row.category || ''), score: masteryScore(row) };
+        if (row.updated_at) out.updated_at = row.updated_at;
+        return out;
+      }).filter(function (row) { return !!row.category; });
+    }
+    value = value || {};
+    return Object.keys(value).map(function (category) {
+      return { category: category, score: masteryScore(value[category]) };
+    });
+  }
+  function pushMastery(value) {
+    var rows = normalizeMastery(value || localSnapshot().mastery);
+    if (!rows.length || rows.length > MAX_MASTERY_ROWS) {
+      return Promise.resolve(resultFailure('mastery_rows_invalid', 'Mastery remains safe on this device, but this cloud snapshot is invalid.', {
+        queued: false, local: true
+      }));
+    }
+    return queueAuthenticated([makeEntry({ endpoint: ENDPOINTS.mastery, method: 'PUT', operation: 'mastery.put', expected: rows.length, auth: true, lane: 'mastery', body: { rows: rows } })]);
+  }
+  function pullMastery() {
+    return readRemote(ENDPOINTS.mastery, { rows: normalizeMastery(localSnapshot().mastery) }, 'mastery');
+  }
+
+  function reportBug(message, context) {
+    var text = String(message || '').trim();
+    if (!text) return Promise.resolve(resultFailure('message_required', 'Please describe the problem before sending.', { queued: false, local: true }));
+    var entry = makeEntry({
+      endpoint: ENDPOINTS.bug, operation: 'bug.create', expected: 1, auth: false,
+      lane: 'bug', idField: 'request_id',
+      body: { player_id: localPlayerId(), message: text, context: clone(context || {}) || {} }
+    });
+    return queueAndConfirm([entry], { failureMessage: 'Your report is saved to retry, but it has not reached ChartQuest yet.' });
+  }
+
+  function recordVisit(input) {
+    input = input || {};
+    var path = input.path;
+    var referrer = input.referrer;
+    try { if (path == null && root.location) path = root.location.pathname || '/'; } catch (_) {}
+    try { if (referrer == null && root.document) referrer = root.document.referrer || null; } catch (_) {}
+    var entry = makeEntry({
+      endpoint: ENDPOINTS.visit, operation: 'visit.create', expected: 1, auth: false,
+      lane: 'visit', idField: 'visit_id',
+      body: {
+        player_id: input.player_id || localPlayerId(),
+        path: path || '/',
+        referrer: referrer || null,
+        build: input.build || null,
+        device: input.device || null
+      }
+    });
+    return queueAndConfirm([entry]);
+  }
+
+  function pushContent(table, rows) {
+    if (CONTENT_TABLES.indexOf(table) < 0) return Promise.resolve(resultFailure('content_table_invalid', 'This content type cannot be uploaded.', { queued: false, local: true }));
+    if (!Array.isArray(rows) || !rows.length) return Promise.resolve(resultFailure('rows_required', 'There is no content to upload.', { queued: false, local: true }));
+    var entries = [];
+    for (var offset = 0; offset < rows.length; offset += MAX_CONTENT_ROWS) {
+      var part = clone(rows.slice(offset, offset + MAX_CONTENT_ROWS));
+      if (!Array.isArray(part)) return Promise.resolve(resultFailure('payload_invalid', 'This content batch cannot be uploaded.', { queued: false, local: true }));
+      entries.push(makeEntry({
+        endpoint: ENDPOINTS.content, operation: 'content.' + table, expected: part.length,
+        auth: false, lane: 'content:' + table, idField: 'batch_id', body: { table: table, rows: part }
+      }));
+    }
+    return queueAndConfirm(entries);
+  }
+
+  async function marketPrice(symbol, options) {
+    options = options || {};
+    var cleanSymbol = String(symbol || '').toUpperCase();
+    if (CANDLE_SYMBOLS.indexOf(cleanSymbol) < 0) return resultFailure('symbol_invalid', 'That market symbol is not available.', { data: null, source: 'local' });
+    var interval = String(options.interval || '1m');
+    if (CANDLE_INTERVALS.indexOf(interval) < 0) interval = '1m';
+    var limit = Math.max(10, Math.min(200, Math.floor(finiteNumber(options.limit, 120))));
+    var endpoint = ENDPOINTS.marketPrice + '?symbol=' + encodeURIComponent(cleanSymbol) + '&interval=' + encodeURIComponent(interval) + '&limit=' + limit;
+    var parsed = await rawRequest(endpoint);
+    if (!parsed.ok) return serverFailure(parsed, 'market_unavailable', 'Live market data is unavailable. The game can continue with its built-in chart.', { data: null, source: 'local' });
+    return resultSuccess(clone(parsed.body.market != null ? parsed.body.market : parsed.body.data), { source: 'cloud' });
+  }
+
+  async function marketQuotes(markets) {
+    var values = Array.isArray(markets) ? markets : String(markets || '').split(',');
+    var clean = [];
+    values.forEach(function (value) {
+      var ticker = String(value || '').trim().toUpperCase();
+      if (QUOTE_MARKETS.indexOf(ticker) >= 0 && clean.indexOf(ticker) < 0) clean.push(ticker);
+    });
+    if (!clean.length || clean.length > MAX_QUOTE_MARKETS) {
+      return resultFailure('markets_invalid', 'Those market quotes are not available.', { data: null, source: 'local' });
+    }
+    var endpoint = ENDPOINTS.marketPrice + '?markets=' + encodeURIComponent(clean.join(','));
+    var parsed = await rawRequest(endpoint);
+    if (!parsed.ok || !parsed.body.market || typeof parsed.body.market.prices !== 'object') {
+      return serverFailure(parsed, 'market_unavailable', 'Live market data is unavailable. The game can continue with its built-in prices.', {
+        data: null, source: 'local'
+      });
+    }
+    return resultSuccess(clone(parsed.body.market), { source: 'cloud' });
+  }
+
+  function queueStatus() {
+    var loaded = loadQueueResult();
+    if (!loaded.ok) return { ok: false, code: loaded.code, count: null, entries: [] };
+    return {
+      ok: true,
+      count: loaded.queue.length,
+      limit: MAX_QUEUE_ENTRIES,
+      entries: loaded.queue.map(function (entry) {
+        return { id: entry.id, operation: entry.operation, lane: entry.lane, attempts: entry.attempts || 0, created_at: entry.created_at };
+      })
+    };
+  }
+
+  var account = Object.freeze({ session: session, signIn: signIn, create: createAccount, claim: claimAccount, signOut: signOut });
+  var profile = Object.freeze({ push: pushProfile, pull: pullProfile, bootstrap: bootstrapProfile });
+  var journal = Object.freeze({ pushSnapshot: pushJournalSnapshot, pullSnapshot: pullJournalSnapshot });
+  var streak = Object.freeze({ push: pushStreak, pull: pullStreak });
+  var mastery = Object.freeze({ push: pushMastery, pull: pullMastery });
+  var bugs = Object.freeze({ report: reportBug });
+  var visits = Object.freeze({ record: recordVisit });
+  var content = Object.freeze({ pushBatch: pushContent, tables: CONTENT_TABLES });
+  var markets = Object.freeze({ price: marketPrice, quotes: marketQuotes });
+
+  var api = {
+    version: VERSION,
+    endpoints: ENDPOINTS,
+    localKeys: LOCAL_KEYS,
+    account: account,
+    profile: profile,
+    journal: journal,
+    streak: streak,
+    mastery: mastery,
+    bugs: bugs,
+    visits: visits,
+    content: content,
+    markets: markets,
+    localSnapshot: localSnapshot,
+    flush: flush,
+    queueStatus: queueStatus,
+    isSignedIn: function () { return !!authState.user; }
+  };
+  root.CQCloudData = Object.freeze(api);
+
+  try {
+    if (root.addEventListener) {
+      root.addEventListener('online', function () { retryMs = 0; flush(); });
+      root.addEventListener('pagehide', function () { flush(); });
+    }
+    if (root.document && root.document.addEventListener) {
+      root.document.addEventListener('visibilitychange', function () {
+        if (root.document.visibilityState === 'hidden') flush();
+      });
+    }
+    if (loadQueueResult().ok && loadQueueResult().queue.length && root.setTimeout) root.setTimeout(flush, 0);
+  } catch (_) {}
+})(typeof window !== 'undefined' ? window : globalThis);
+/* CQCLOUDDATA:END */
+</script>
 <script>
 'use strict';
 
@@ -2494,8 +3493,8 @@ window._CQ_JQ = (function () { try { return /[?&]jq(=|&|$)/.test(location.search
 /* PLAYTEST RESET — DEV_ALWAYS_FRESH (above) OR a ?fresh=1 link wipes ALL local progress (intro
    flags, trades, journal, wisdom, streaks, mastery) so a phone can replay the true first-run
    experience without digging through Safari settings. The ?fresh param strips itself so a
-   mid-test reload doesn't re-wipe; the constant wipes on EVERY load unconditionally. Cloud auth
-   (sb-*) is untouched. */
+   mid-test reload doesn't re-wipe; the constant wipes on EVERY load unconditionally. The secure
+   server session cookie is untouched. */
 try {
   if (DEV_ALWAYS_FRESH || /[?&]fresh(=|&|$)/.test(location.search)) {
     // A ?fresh link re-tapped from a chat thread must never silently destroy a real save.
@@ -2537,177 +3536,244 @@ try {
 try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
 
 /* =========================================================
-   SUPABASE AUTH & CLOUD SYNC
-   - Auth overlay shown on load; user picks sign in / sign up / guest
-   - On sign-up: local data uploaded to cloud
-   - On sign-in: cloud data pulled (cloud wins)
-   - During play: trades/notes/streak/progress pushed on each save
+   CLOUDFLARE ACCOUNT & CLOUD SYNC
+   - Existing on-device keys remain the gameplay source of truth
+   - Account/session requests use secure same-origin cookies (never stored credentials)
+   - Writes leave the durable adapter queue only after an exact server receipt
+   - Failed remote reads never overwrite an on-device save
    ========================================================= */
-(function initSupabase() {
-  const SUPA_URL  = 'https://ymxppzhczvmiuoncuqqu.supabase.co';
-  const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
-  // NOTE: The anon key is intentionally public — it is safe for client-side use.
-  // The service-role key is NEVER used here and must never be added to this file.
-  // All data access is gated by Row Level Security in Supabase.
-  // ---- Host check (fail-OPEN) ----
-  // The game runs on ANY host so a player never hits a dead "NOT AUTHORIZED"
-  // screen. The anon key is public and every table is RLS-gated, so it is safe
-  // to initialise Supabase anywhere. (Previously this hard-blocked unknown
-  // hosts, which broke local files, previews, and any new domain.)
-  const _ALLOWED_HOSTS = ['chart-quest-game.netlify.app', 'localhost', '127.0.0.1', 'shelltrader.github.io'];
-  const _ALLOWED_HOST_SUFFIXES = ['--chart-quest-game.netlify.app'];
-  // (allowlist kept for reference / future analytics; it no longer blocks anything)
+(function initCloudData() {
+  const cloud = window.CQCloudData;
+  let _cloudUser = null;
+  let _journalDirty = false;
+  let _journalSyncing = false;
+  let _journalTimer = null;
+  let _journalKnownTrades = new Set();
+  let _journalKnownNotes = new Set();
+  let _journalObjectIds = new WeakMap();
+  let _journalTradeIdentity = new Map();
+  let _journalNoteIdentity = new Map();
+  let _claimToken = '';
 
-  // Resilient init: if the Supabase CDN failed to load (flaky mobile network,
-  // blocked CDN, offline), fall back to an inert stub so the game STILL boots
-  // and Guest mode always works. Cloud features simply no-op until reconnect.
-  function _makeSupaStub() {
-    const qb = { select() { return qb; }, insert() { return qb; }, update() { return qb; }, delete() { return qb; }, upsert() { return qb; }, eq() { return qb; }, neq() { return qb; }, order() { return qb; }, limit() { return qb; }, single() { return qb; }, maybeSingle() { return qb; }, then(res) { res({ data: null, error: { message: 'offline' } }); } };
-    const offErr = { data: { user: null, session: null }, error: { message: 'Offline — Supabase unavailable. Play as Guest.' } };
-    return {
-      rpc: () => Promise.resolve({ data: null, error: null }),
-      from: () => qb,
-      auth: {
-        getSession: () => Promise.resolve({ data: { session: null } }),
-        onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
-        signUp: () => Promise.resolve(offErr),
-        signInWithPassword: () => Promise.resolve(offErr),
-        signOut: () => Promise.resolve({ error: null }),
-      },
-    };
-  }
-  let _supa;
+  window._cloudSignedIn = () => !!_cloudUser;
+
+  // Claim tokens are one-use secrets. Keep them in memory only and scrub them from the URL
+  // immediately so browser history, screenshots and later analytics cannot retain them.
   try {
-    _supa = (typeof supabase !== 'undefined' && supabase.createClient)
-      ? supabase.createClient(SUPA_URL, SUPA_ANON)
-      : _makeSupaStub();
-  } catch (e) { _supa = _makeSupaStub(); }
-  let   _supaUser = null;
-  // Expose only the minimal API the rest of the game needs via named functions,
-  // not as raw globals — reduces the attack surface for console-based exfiltration.
-  window._supaSignedIn = () => !!_supaUser;
+    const params = new URLSearchParams(location.search);
+    _claimToken = params.get('claim_token') || params.get('claim') || '';
+    if (_claimToken) {
+      const email = params.get('email') || '';
+      const emailInput = document.getElementById('authEmail');
+      const tokenInput = document.getElementById('authClaimToken');
+      if (emailInput && email) emailInput.value = email;
+      if (tokenInput) tokenInput.value = _claimToken;
+      params.delete('claim_token'); params.delete('claim'); params.delete('email');
+      const clean = params.toString();
+      history.replaceState(null, '', location.pathname + (clean ? '?' + clean : '') + location.hash);
+    }
+  } catch (e) { _claimToken = ''; }
 
-  // ---- Anonymous visit counter (no PII, dashboard stat only) ----
-  // Fires once per page load; failures are silent and never block the game.
-  (async () => { try { await _supa.rpc('record_site_visit', {}); } catch(e) {} })();
-
-  // ---- Cloud push helpers (all fire-and-forget; failures are silent) ----
+  // Anonymous visit: a same-origin, durable request. It never blocks play.
+  setTimeout(() => {
+    try {
+      if (!cloud || !cloud.visits) return;
+      const build = (typeof BUILD_TAG === 'string' && (BUILD_TAG.match(/build \d+/) || [''])[0]) || '';
+      const device = innerWidth + 'x' + innerHeight + '@' + (window.devicePixelRatio || 1);
+      cloud.visits.record({ build, device });
+    } catch (e) {}
+  }, 0);
 
   window.cloudPushProgress = async function() {
-    if (!_supaUser) return;
+    if (!_cloudUser || !cloud || !cloud.profile) return { ok: false, local: true };
     try {
-      const { data: { session: _s } } = await _supa.auth.getSession();
-      if (!_s) return;
-      await fetch(SUPA_URL + '/functions/v1/update-progress', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + _s.access_token,
-          'Content-Type':  'application/json'
-        },
-        body: JSON.stringify({
-          shells:       player.shells,
-          player_level: player.level,
-          xp:           player.xp
-        })
+      return await cloud.profile.push({
+        shells: player.shells,
+        player_level: player.level,
+        xp: player.xp
       });
-    } catch(e) {}
+    } catch (e) { return { ok: false, local: true }; }
   };
 
-  window.cloudPushTrade = async function(trade) {
-    if (!_supaUser || !trade) return;
+  function journalQueued() {
     try {
-      await _supa.from('journal_trades').insert({
-        user_id:    _supaUser.id,
-        trade_data: trade
+      const status = cloud.queueStatus();
+      return status.ok && status.entries.some(entry => entry.operation === 'journal.put');
+    } catch (e) { return false; }
+  }
+  function journalHash(value) {
+    let text;
+    try { text = typeof value === 'string' ? value : JSON.stringify(value); } catch (e) { text = String(value); }
+    if (typeof text !== 'string') text = String(value);
+    let hash = 2166136261;
+    for (let i = 0; i < text.length; i++) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+    return (hash >>> 0).toString(36);
+  }
+  function resetJournalIdentity() {
+    _journalKnownTrades = new Set();
+    _journalKnownNotes = new Set();
+    _journalObjectIds = new WeakMap();
+    _journalTradeIdentity = new Map();
+    _journalNoteIdentity = new Map();
+  }
+  function rememberJournalIdentity(row, kind) {
+    const remoteId = row && (kind === 'trade' ? row.trade_id : row.note_id);
+    if (remoteId == null) return;
+    const id = String(remoteId);
+    const data = row && (kind === 'trade' ? row.trade_data : row.note_data);
+    const value = data !== undefined ? data : row;
+    if (value && typeof value === 'object') _journalObjectIds.set(value, { kind, id });
+    const explicit = value && (kind === 'trade'
+      ? (value.trade_id != null ? value.trade_id : value.id)
+      : (value.note_id != null ? value.note_id : value.id));
+    const identities = kind === 'trade' ? _journalTradeIdentity : _journalNoteIdentity;
+    const remember = key => {
+      if (!identities.has(key)) identities.set(key, id);
+      else if (identities.get(key) !== id) identities.set(key, null);
+    };
+    if (explicit != null) remember('id:' + String(explicit));
+    remember('hash:' + journalHash(value));
+  }
+  function journalItemId(value, index, kind) {
+    if (value && typeof value === 'object') {
+      const bound = _journalObjectIds.get(value);
+      if (bound && bound.kind === kind) return bound.id;
+    }
+    const explicit = value && (kind === 'trade'
+      ? (value.trade_id != null ? value.trade_id : value.id)
+      : (value.note_id != null ? value.note_id : value.id));
+    const data = value && (kind === 'trade' ? value.trade_data : value.note_data);
+    const legacy = data != null ? data : value;
+    const identities = kind === 'trade' ? _journalTradeIdentity : _journalNoteIdentity;
+    const mapped = explicit != null && identities.get('id:' + String(explicit));
+    const hashed = identities.get('hash:' + journalHash(legacy));
+    const id = String(mapped || hashed || (explicit != null ? explicit : 'local-' + index + '-' + journalHash(legacy)));
+    if (value && typeof value === 'object') _journalObjectIds.set(value, { kind, id });
+    return id;
+  }
+  function scheduleJournalSync() {
+    if (_journalTimer || !_cloudUser) return;
+    _journalTimer = setTimeout(() => { _journalTimer = null; flushJournalSnapshot(); }, 2500);
+  }
+  async function flushJournalSnapshot() {
+    if (!_cloudUser || !cloud || !cloud.journal || _journalSyncing || !_journalDirty) return;
+    _journalSyncing = true;
+    try {
+      await cloud.flush();
+      // Never queue a second full snapshot behind a stale base version. The latest local
+      // snapshot stays dirty until the prior exact receipt advances the version metadata.
+      if (journalQueued()) { scheduleJournalSync(); return; }
+      const trades = Array.isArray(journal) ? journal.slice() : [];
+      const notes = Array.isArray(journalNotes) ? journalNotes.slice() : [];
+      const tradeIds = new Set(trades.map((value, index) => journalItemId(value, index, 'trade')));
+      const noteIds = new Set(notes.map((value, index) => journalItemId(value, index, 'note')));
+      const deleteTrades = Array.from(_journalKnownTrades).filter(id => !tradeIds.has(id));
+      const deleteNotes = Array.from(_journalKnownNotes).filter(id => !noteIds.has(id));
+      _journalDirty = false;
+      const result = await cloud.journal.pushSnapshot({
+        trades, notes, delete_trade_ids: deleteTrades, delete_note_ids: deleteNotes
       });
-    } catch(e) {}
-  };
+      if (result && (result.ok || result.queued)) {
+        _journalKnownTrades = tradeIds;
+        _journalKnownNotes = noteIds;
+      } else _journalDirty = true;
+    } catch (e) { _journalDirty = true; }
+    finally {
+      _journalSyncing = false;
+      if (_journalDirty) scheduleJournalSync();
+    }
+  }
+  function markJournalDirty() {
+    if (!_cloudUser) return;
+    _journalDirty = true;
+    flushJournalSnapshot();
+  }
 
-  window.cloudPushNotes = async function() {
-    if (!_supaUser) return;
-    try {
-      await _supa.from('journal_notes').delete().eq('user_id', _supaUser.id);
-      if (journalNotes.length > 0) {
-        await _supa.from('journal_notes').insert(
-          journalNotes.map(n => ({ user_id: _supaUser.id, note_data: n }))
-        );
-      }
-    } catch(e) {}
+  window.cloudPushTrade = function(trade) {
+    if (!_cloudUser || !trade) return;
+    markJournalDirty();
   };
-
+  window.cloudPushNotes = function() {
+    if (!_cloudUser) return;
+    markJournalDirty();
+  };
   window.cloudPushStreak = async function() {
-    if (!_supaUser) return;
+    if (!_cloudUser || !cloud || !cloud.streak) return { ok: false, local: true };
     try {
-      await _supa.from('daily_streak').upsert({
-        id:             _supaUser.id,
-        streak:         daily.streak,
-        best_streak:    daily.best,
-        last_drill_date: daily.lastDate || null,
-        updated_at:     new Date().toISOString()
+      return await cloud.streak.push({
+        streak: daily.streak,
+        best_streak: daily.best,
+        last_drill_date: daily.lastDate || null
       });
-    } catch(e) {}
+    } catch (e) { return { ok: false, local: true }; }
+  };
+  window.cloudPushMastery = async function(value) {
+    if (!_cloudUser || !cloud || !cloud.mastery) return { ok: false, local: true };
+    try { return await cloud.mastery.push(value); }
+    catch (e) { return { ok: false, local: true }; }
   };
 
-  // ---- Pull all cloud data (cloud wins) ----
+  // Pull only confirmed Cloudflare reads. The established cloud-wins rule applies to data that
+  // actually exists; empty remote journals never erase a local guest journal.
   async function pullCloudData() {
-    if (!_supaUser) return;
+    if (!_cloudUser || !cloud) return;
     try {
-      // Progress
-      const { data: profile } = await _supa
-        .from('profiles').select('*').eq('id', _supaUser.id).single();
+      const profileResult = await cloud.profile.pull();
+      const profile = profileResult && profileResult.ok && profileResult.source === 'cloud' && profileResult.data;
       if (profile) {
         player.shells    = profile.shells;
         player.level     = profile.player_level;
         player.xp        = profile.xp;
         player.xpNeeded  = Math.round(100 * Math.pow(1.5, profile.player_level - 1));
-        session.startBal = profile.shells; // align hour fail/pass threshold
+        session.startBal = profile.shells;
+        try { localStorage.setItem('cq_player_v1', JSON.stringify(player)); } catch (e) {}
       }
 
-      // Trades
-      const { data: trades } = await _supa.from('journal_trades')
-        .select('trade_data').eq('user_id', _supaUser.id)
-        .order('created_at', { ascending: false }).limit(150);
-      if (trades && trades.length > 0) {
-        journal     = trades.map(t => t.trade_data);
-        journalSeq  = journal.reduce((m, e) => Math.max(m, e.id || 0), 0);
-        try { localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal)); } catch(e) {}
+      const journalResult = await cloud.journal.pullSnapshot();
+      const remoteJournal = journalResult && journalResult.ok && journalResult.source === 'cloud' && journalResult.data;
+      if (remoteJournal && Array.isArray(remoteJournal.trades)) {
+        _journalKnownTrades = new Set(remoteJournal.trades.map(row => String(row.trade_id)));
+        _journalTradeIdentity = new Map();
+        remoteJournal.trades.forEach(row => rememberJournalIdentity(row, 'trade'));
+      }
+      if (remoteJournal && Array.isArray(remoteJournal.notes)) {
+        _journalKnownNotes = new Set(remoteJournal.notes.map(row => String(row.note_id)));
+        _journalNoteIdentity = new Map();
+        remoteJournal.notes.forEach(row => rememberJournalIdentity(row, 'note'));
+      }
+      if (remoteJournal && Array.isArray(remoteJournal.trades) && remoteJournal.trades.length > 0) {
+        journal = remoteJournal.trades.map(row => row && row.trade_data !== undefined ? row.trade_data : row);
+        journalSeq = journal.reduce((m, e) => Math.max(m, e && e.id || 0), 0);
+        try { localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal)); } catch (e) {}
+      }
+      if (remoteJournal && Array.isArray(remoteJournal.notes) && remoteJournal.notes.length > 0) {
+        journalNotes = remoteJournal.notes.map(row => row && row.note_data !== undefined ? row.note_data : row);
+        noteSeq = journalNotes.reduce((m, n) => Math.max(m, n && n.id || 0), 0);
+        try { localStorage.setItem(NOTES_KEY, JSON.stringify(journalNotes)); } catch (e) {}
       }
 
-      // Notes
-      const { data: notes } = await _supa.from('journal_notes')
-        .select('note_data').eq('user_id', _supaUser.id)
-        .order('created_at', { ascending: false });
-      if (notes && notes.length > 0) {
-        journalNotes = notes.map(n => n.note_data);
-        noteSeq      = journalNotes.reduce((m, n) => Math.max(m, n.id || 0), 0);
-        try { localStorage.setItem(NOTES_KEY, JSON.stringify(journalNotes)); } catch(e) {}
-      }
-
-      // Streak
-      const { data: streak } = await _supa.from('daily_streak')
-        .select('*').eq('id', _supaUser.id).single();
+      const streakResult = await cloud.streak.pull();
+      const streak = streakResult && streakResult.ok && streakResult.source === 'cloud' && streakResult.data;
       if (streak) {
-        daily.streak   = streak.streak;
-        daily.best     = streak.best_streak;
+        daily.streak = streak.streak;
+        daily.best = streak.best_streak;
         daily.lastDate = streak.last_drill_date || '';
-        try { localStorage.setItem(DAILY_KEY, JSON.stringify(daily)); } catch(e) {}
+        try { localStorage.setItem(DAILY_KEY, JSON.stringify(daily)); } catch (e) {}
       }
-    } catch(e) {}
+    } catch (e) {}
   }
 
-  // ---- Upload local data (called on first sign-up) ----
   async function pushLocalDataToCloud() {
-    if (!_supaUser) return;
-    await window.cloudPushProgress();
+    if (!_cloudUser) return;
     try {
-      if (journal.length > 0) {
-        await _supa.from('journal_trades').insert(
-          journal.map(t => ({ user_id: _supaUser.id, trade_data: t }))
-        );
+      if (cloud && cloud.profile && cloud.profile.bootstrap) {
+        await cloud.profile.bootstrap({ shells: player.shells, player_level: player.level, xp: player.xp });
       }
-    } catch(e) {}
-    await window.cloudPushNotes();
+    } catch (e) {}
+    _journalDirty = true;
+    await flushJournalSnapshot();
     await window.cloudPushStreak();
+    try { await window.cloudPushMastery(JSON.parse(localStorage.getItem('cq_mastery_v1') || '{}')); } catch (e) {}
   }
 
   // ---- Auth UI helpers ----
@@ -2732,22 +3798,28 @@ try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
     const btn      = document.getElementById('authSubmitBtn');
     const siTab    = document.getElementById('authTabSignin');
     const suTab    = document.getElementById('authTabSignup');
+    const clTab    = document.getElementById('authTabClaim');
+    const tokenInput = document.getElementById('authClaimToken');
     const passInput = document.getElementById('authPass');
     const consent   = document.getElementById('authConsent');
+    [siTab, suTab, clTab].forEach(tab => { if (tab) tab.classList.remove('active'); });
+    if (tokenInput) tokenInput.style.display = mode === 'claim' ? '' : 'none';
+    if (consent) consent.style.display = mode === 'signup' ? 'block' : 'none';
     if (mode === 'signin') {
       if (title) title.textContent = 'Welcome back';
       if (btn)   btn.textContent   = 'SIGN IN';
       if (siTab) siTab.classList.add('active');
-      if (suTab) suTab.classList.remove('active');
       if (passInput) passInput.setAttribute('autocomplete', 'current-password');
-      if (consent) consent.style.display = 'none';
-    } else {
+    } else if (mode === 'signup') {
       if (title) title.textContent = 'Create your account';
       if (btn)   btn.textContent   = 'CREATE ACCOUNT';
-      if (siTab) siTab.classList.remove('active');
       if (suTab) suTab.classList.add('active');
       if (passInput) passInput.setAttribute('autocomplete', 'new-password');
-      if (consent) consent.style.display = 'block';
+    } else {
+      if (title) title.textContent = 'Restore your migrated account';
+      if (btn) btn.textContent = 'RESTORE ACCOUNT';
+      if (clTab) clTab.classList.add('active');
+      if (passInput) passInput.setAttribute('autocomplete', 'new-password');
     }
   }
 
@@ -2755,34 +3827,41 @@ try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
     const email = (document.getElementById('authEmail')?.value || '').trim();
     const pass  =  document.getElementById('authPass')?.value  || '';
     if (!email || !pass) { authSetError('Enter your email and password.'); return; }
-    if (pass.length < 6) { authSetError('Password must be at least 6 characters.'); return; }
+    const token = (document.getElementById('authClaimToken')?.value || _claimToken || '').trim();
+    if (pass.length < 8) { authSetError('Password must be at least 8 characters.'); return; }
+    if (authMode === 'claim' && !token) { authSetError('Enter the one-time restore code from your secure link.'); return; }
     if (authMode === 'signup' && !(document.getElementById('authConsentBox')?.checked)) {
       authSetError('Please tick the box to agree to the Privacy Policy and Terms.'); return;
     }
     authSetLoading(true);
     authSetError('');
-    let res;
-    if (authMode === 'signup') {
-      res = await _supa.auth.signUp({ email, password: pass });
-      if (!res.error && res.data.user) {
-        _supaUser = res.data.user;
-        await pushLocalDataToCloud();
-        resolveAuth();
+    let res = null;
+    try {
+      if (!cloud || !cloud.account) throw new Error('Account service is unavailable. Your on-device save is safe.');
+      if (authMode === 'signup') res = await cloud.account.create(email, pass, true);
+      else if (authMode === 'claim') res = await cloud.account.claim(email, token, pass);
+      else res = await cloud.account.signIn(email, pass);
+
+      const user = res && res.ok && res.confirmed && res.data && res.data.user;
+      if (!user) {
+        authSetError((res && res.message) || (authMode === 'signin' ? 'Incorrect email or password.' : 'Account setup was not confirmed. Your on-device save is safe.'));
       } else {
-        authSetError(res.error?.message || 'Sign up failed. Try again.');
-      }
-    } else {
-      res = await _supa.auth.signInWithPassword({ email, password: pass });
-      if (!res.error && res.data.user) {
-        _supaUser = res.data.user;
-        await pullCloudData();
+        _cloudUser = user;
+        resetJournalIdentity();
+        if (authMode === 'signup') await pushLocalDataToCloud();
+        else await pullCloudData();
+        _claimToken = '';
+        const tokenInput = document.getElementById('authClaimToken');
+        if (tokenInput) tokenInput.value = '';
         resolveAuth();
-      } else {
-        authSetError(res.error?.message || 'Incorrect email or password.');
       }
+    } catch (e) {
+      authSetError((e && e.message) || 'Account service is unavailable. Your on-device save is safe.');
     }
     authSetLoading(false);
   }
+
+  setAuthMode(_claimToken ? 'claim' : 'signin');
 
   // Cinematic-first onboarding: on a brand-new visit we play the opening
   // cinematic BEFORE the auth screen, then stash the chosen chain here so
@@ -2810,7 +3889,7 @@ try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
       if (window.ContentLog && !window._cqSessionLogged) {
         window._cqSessionLogged = true;
         window.ContentLog.emit('session_start', {
-          is_guest:   !_supaUser,
+          is_guest:   !_cloudUser,
           build:      (typeof BUILD_TAG === 'string' ? ((BUILD_TAG.match(/build \d+/) || [''])[0]) : ''),
           viewport:   innerWidth + 'x' + innerHeight,
           dpr:        window.devicePixelRatio || 1,
@@ -2867,7 +3946,7 @@ try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
   // investment. Guests are invited to save their shells, rank and journal;
   // already-signed-in players are skipped. Dismissing keeps the guest playing.
   window.promptSaveProgress = function () {
-    if (_supaUser) return;                 // already syncing to the cloud
+    if (_cloudUser) return;                 // already syncing to the cloud
     const overlay = document.getElementById('authOverlay');
     if (!overlay) return;
     _savePromptMode = true;
@@ -2882,10 +3961,10 @@ try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
   function updateAccountBtn() {
     const btn = document.getElementById('accountBtn');
     if (!btn) return;
-    if (_supaUser) {
-      const initial = (_supaUser.email || '?')[0].toUpperCase();
+    if (_cloudUser) {
+      const initial = (_cloudUser.email || '?')[0].toUpperCase();
       btn.textContent = '👤 ' + initial;
-      btn.title = _supaUser.email;
+      btn.title = _cloudUser.email;
     } else {
       btn.textContent = '👤 SIGN IN';
       btn.title = 'Sign in to save progress';
@@ -2897,7 +3976,7 @@ try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
     const emailEl  = document.getElementById('apEmail');
     const rankEl   = document.getElementById('apRank');
     const facEl    = document.getElementById('apFaction');
-    if (emailEl) emailEl.textContent = _supaUser ? _supaUser.email : 'Guest';
+    if (emailEl) emailEl.textContent = _cloudUser ? _cloudUser.email : 'Guest';
     if (rankEl && typeof rankForLevel !== 'undefined') {
       const rk = rankForLevel(player.level);
       rankEl.textContent = rk.emoji + ' ' + rk.name;
@@ -2931,27 +4010,40 @@ try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
     if (!msg) return;
     const btn = document.getElementById('apBugSubmit');
     if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+    let result = null;
     try {
-      await _supa.rpc('submit_bug_report', {
-        p_message: msg,
-        p_context: {
-          page:    location.href,
-          level:   (typeof player !== 'undefined' ? player.level : null),
-          faction: (typeof playerFaction !== 'undefined' && playerFaction ? playerFaction.ticker : null)
-        }
+      if (cloud && cloud.bugs) result = await cloud.bugs.report(msg, {
+        page: location.pathname,
+        level: (typeof player !== 'undefined' ? player.level : null),
+        faction: (typeof playerFaction !== 'undefined' && playerFaction ? playerFaction.ticker : null)
       });
     } catch(e) {}
-    if (textEl) textEl.value = '';
     const form   = document.getElementById('apBugForm');
     const thanks = document.getElementById('apBugThanks');
-    if (form)   form.style.display   = 'none';
-    if (thanks) thanks.style.display = 'block';
+    if (result && result.ok && result.confirmed) {
+      if (textEl) textEl.value = '';
+      if (form) form.style.display = 'none';
+      if (thanks) { thanks.textContent = 'Thanks — bug report received!'; thanks.style.color = '#3ddc6a'; thanks.style.display = 'block'; }
+    } else if (result && result.queued) {
+      if (thanks) { thanks.textContent = 'Saved on this device — it will retry when the connection returns.'; thanks.style.color = '#ffd45c'; thanks.style.display = 'block'; }
+    } else if (thanks) {
+      thanks.textContent = 'Not sent. Your report is still here — please try again.';
+      thanks.style.color = '#ff6b7d';
+      thanks.style.display = 'block';
+    }
     if (btn) { btn.disabled = false; btn.textContent = 'Submit'; }
   }
 
   async function doSignOut() {
-    await _supa.auth.signOut();
-    _supaUser = null;
+    let result = null;
+    try { if (cloud && cloud.account) result = await cloud.account.signOut(); } catch (e) {}
+    if (!result || !result.ok || !result.confirmed) {
+      const note = document.getElementById('apBugThanks');
+      if (note) { note.textContent = 'Sign out was not confirmed. You are still signed in.'; note.style.color = '#ff6b7d'; note.style.display = 'block'; }
+      return;
+    }
+    _cloudUser = null;
+    resetJournalIdentity();
     closeAccountPanel();
     updateAccountBtn();
     // Show auth overlay so they can sign back in
@@ -3302,9 +4394,7 @@ try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
 
   // ---- Boot ----
   // Wire ALL auth listeners IMMEDIATELY and synchronously, so Guest / Sign-in
-  // always work — even if the Supabase session check is slow, offline, or the
-  // CDN never loaded. (Previously these were wired inside getSession().then,
-  // so a hung/failed session check left every button dead on mobile.)
+  // always work even if the same-origin session check is slow or offline.
   (function wireAuthListeners() {
     const q = (id) => document.getElementById(id);
     // iOS-proof tap: fire on BOTH click and touchend (deduped). On iOS Safari a
@@ -3319,6 +4409,7 @@ try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
     }
     onTap(q('authTabSignin'), () => setAuthMode('signin'));
     onTap(q('authTabSignup'), () => setAuthMode('signup'));
+    onTap(q('authTabClaim'), () => setAuthMode('claim'));
     onTap(q('authSubmitBtn'), doAuth);
     q('authForm')?.addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); });
     const _authDismiss = () => {
@@ -3384,8 +4475,14 @@ try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
   function _handleSession(existing) {
     if (_bootHandled) return; _bootHandled = true;
     if (existing && existing.user) {
-      _supaUser = existing.user;
+      _cloudUser = existing.user;
+      resetJournalIdentity();
       pullCloudData().then(resolveAuth);
+    } else if (_claimToken) {
+      // A secure restore link owns this screen until the player claims it or explicitly exits.
+      // Do not auto-start first-run cinematics behind the restore form.
+      setAuthMode('claim');
+      const ov = document.getElementById('authOverlay'); if (ov) ov.style.display = 'flex';
     } else if (!localStorage.getItem('cq_played')) {
       // First-time visitor, no account → play the cinematic hook BEFORE the login
       // wall, then show auth once they've chosen a chain. resolveAuth finishes it.
@@ -3406,8 +4503,9 @@ try { if (_CQ_MUTE) localStorage.setItem('cq_music', 'off'); } catch (e) {}
     }
   }
   try {
-    _supa.auth.getSession()
-      .then(({ data: { session: existing } }) => _handleSession(existing))
+    if (!cloud || !cloud.account) throw new Error('Cloud adapter unavailable');
+    cloud.account.session()
+      .then(result => _handleSession(result && result.ok && result.data ? result.data : null))
       .catch(() => _handleSession(null));
   } catch (e) { _handleSession(null); }
   // Failsafe: if the session check never resolves (offline/slow mobile), proceed.
@@ -3813,7 +4911,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 368 - CLOUDFLARE BETA DATA PLANE. New beta events and survey answers write first to a same-origin, schema-validated Cloudflare endpoint with the existing Supabase route retained only as a confirmed-write fallback during migration. The durable queue now clears only the batch actually acknowledged and drains every remaining batch, so a mobile retry cannot delete unsent milestones. A Cloudflare Access-protected founder dashboard owns the complete new dataset and exports; player ids, local saves, signed-in account/cloud-save paths, gameplay, survey questions and historical Supabase rows remain unchanged. - build 367 - BOSS 1 CINEMATIC AUDIO POLISH. Five versioned full-timeline mixes start from the first rendered video frame and follow media time through pause, stall, seek and rate changes. A generation token cancels skip, error, mute, replacement and arena arrival exactly once; only this Gambler path suppresses the old sting, random roar, synth bed and delayed impact. Videos, visuals, game rules and every other Guardian are unchanged. - build 366 - FOUNDER COSMETIC CLOSEOUT. Guardian 1 now uses the current cinematic Gambler portrait in both the Journal and defeat card; Journal mastery closes on one compact premium book-and-reward card using the existing canonical Journal asset; and the versioned Gambler-defeat cinematic restores Finn’s mandatory compass necklace for every front-facing victory frame. Cosmetic only: no trade, curriculum, reward, save or boss-state logic changed. - build 365 - FINAL BETA SEND STRIKE. Trade portals now own a reward-free corridor: every unreached box at or beyond the entrance is deferred and its quota restored after the trade. Replay and recap Finn now visibly cross the exact take-profit or stop-loss line in the correct direction. The first-trade score is a warmer hand-authored pulse instead of a dense sawtooth arpeggio, and ordinary center-screen feedback uses one premium non-blocking ChartQuest toast treatment. - build 364 - FINAL BETA BLOCKER STRIKE. Reward interaction now defers only while a real ticket/position owns the screen; boxes and Lost Wisdom pages share Finn\'s swept body-aware collision so visible overlap and fast shell-rolls cannot miss. FIRST WIN is one premium ChartQuest-native vector milestone with a bespoke trophy, disciplined copy hierarchy and earned reward badge instead of a system emoji/text pile. The first real trade owns a louder 112 BPM score and a four-act near-stop to profit-surge to hard-give-back to target run, while safe preview links no longer force or persist mute. - build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 369 - CLOUDFLARE-ONLY GAME DATA CUTOVER. Production accounts, secure session cookies, one-time account restore, cloud profile, Journal, streak, mastery, bug reports, visits, content events, market quotes, beta analytics and surveys now use same-origin Cloudflare services only. Every existing gameplay save key remains unchanged and authoritative on-device; unconfirmed writes remain in their durable local queues and failed reads never overwrite local progress. Provider URLs, browser credentials, fallback writes and SDK allowances are removed from the production runtime and CSP. Historical provider records are not deleted by this release and receive no new runtime writes. - build 368 - CLOUDFLARE BETA DATA PLANE. New beta events and survey answers write first to a same-origin, schema-validated Cloudflare endpoint with the existing Supabase route retained only as a confirmed-write fallback during migration. The durable queue now clears only the batch actually acknowledged and drains every remaining batch, so a mobile retry cannot delete unsent milestones. A Cloudflare Access-protected founder dashboard owns the complete new dataset and exports; player ids, local saves, signed-in account/cloud-save paths, gameplay, survey questions and historical Supabase rows remain unchanged. - build 367 - BOSS 1 CINEMATIC AUDIO POLISH. Five versioned full-timeline mixes start from the first rendered video frame and follow media time through pause, stall, seek and rate changes. A generation token cancels skip, error, mute, replacement and arena arrival exactly once; only this Gambler path suppresses the old sting, random roar, synth bed and delayed impact. Videos, visuals, game rules and every other Guardian are unchanged. - build 366 - FOUNDER COSMETIC CLOSEOUT. Guardian 1 now uses the current cinematic Gambler portrait in both the Journal and defeat card; Journal mastery closes on one compact premium book-and-reward card using the existing canonical Journal asset; and the versioned Gambler-defeat cinematic restores Finn’s mandatory compass necklace for every front-facing victory frame. Cosmetic only: no trade, curriculum, reward, save or boss-state logic changed. - build 365 - FINAL BETA SEND STRIKE. Trade portals now own a reward-free corridor: every unreached box at or beyond the entrance is deferred and its quota restored after the trade. Replay and recap Finn now visibly cross the exact take-profit or stop-loss line in the correct direction. The first-trade score is a warmer hand-authored pulse instead of a dense sawtooth arpeggio, and ordinary center-screen feedback uses one premium non-blocking ChartQuest toast treatment. - build 364 - FINAL BETA BLOCKER STRIKE. Reward interaction now defers only while a real ticket/position owns the screen; boxes and Lost Wisdom pages share Finn\'s swept body-aware collision so visible overlap and fast shell-rolls cannot miss. FIRST WIN is one premium ChartQuest-native vector milestone with a bespoke trophy, disciplined copy hierarchy and earned reward badge instead of a system emoji/text pile. The first real trade owns a louder 112 BPM score and a four-act near-stop to profit-surge to hard-give-back to target run, while safe preview links no longer force or persist mute. - build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -5473,44 +6571,16 @@ function fmtPriceStep(p, step) {
    (The previous fetch did BOTH jobs: it set the price anchor AND overwrote MARKET_DATA with real
    Binance candles, which is how live data was silently driving Level 4+ terrain.)
 
-   PROVIDERS — chosen against what actually works from a browser, measured while authoring:
-     • Coinbase   CORS '*', keyless, US-reachable      → BTC / ETH / SOL, and GOLD via PAXG
-                  (PAXG is LBMA-redeemable and tracks spot XAU within a fraction of a percent)
-     • Binance    CORS '*', keyless, but GEO-BLOCKED in the US → fallback only, never primary
-     • Yahoo/Stooq send no Access-Control-Allow-Origin → unusable from a browser at any price
-     • Finnhub / Twelve Data / Polygon need an API KEY → a key in this file would be public, so
-                  equities go through the edge proxy in supabase/functions/market-price instead.
-   Equities therefore stay on their anchor until that proxy is deployed; they degrade to a labelled
-   anchor rather than to a wrong number. ═══════════════════════════════════════════════════════ */
+   PROVIDER BOUNDARY — the browser calls only the same-origin Cloudflare market adapter. Provider
+   URLs and optional provider credentials live at the edge, never in the game or its CSP. If the
+   edge is offline, every market degrades to its labelled built-in anchor. ══════════════════════ */
 const MarketPrice = (() => {
-  const SUPA = 'https://ymxppzhczvmiuoncuqqu.supabase.co';
-  const PROXY = SUPA + '/functions/v1/market-price';
-  // Flip to true once `supabase functions deploy market-price --no-verify-jwt` has run. Until then
-  // we never call it, so equity players see a clean anchor instead of a console full of 404s.
-  const PROXY_LIVE = false;
-  const TIMEOUT_MS = 2500;          // the game must never wait on a slow provider
   const TTL_MS = 5 * 60 * 1000;     // a training anchor does not need tick-by-tick refresh
-
-  // Per-market source. `cb` = Coinbase pair, `bn` = Binance symbol fallback, `proxy` = via edge fn.
-  const SRC = {
-    BTC:  { cb: 'BTC-USD',  bn: 'BTCUSDT'  },
-    ETH:  { cb: 'ETH-USD',  bn: 'ETHUSDT'  },
-    SOL:  { cb: 'SOL-USD',  bn: 'SOLUSDT'  },
-    GOLD: { cb: 'PAXG-USD', bn: 'PAXGUSDT' },
-    AAPL: { proxy: true }, TSLA: { proxy: true }, NVDA: { proxy: true }, SPX: { proxy: true },
-  };
+  const SUPPORTED = new Set(['BTC', 'ETH', 'SOL', 'GOLD', 'AAPL', 'TSLA', 'NVDA', 'SPX']);
 
   const state = {};                 // ticker -> {v, t, source, inflight}
   let timer = null;
 
-  function timed(url) {
-    const ctl = new AbortController();
-    const to = setTimeout(() => ctl.abort(), TIMEOUT_MS);
-    return fetch(url, { signal: ctl.signal })
-      .then(r => r.ok ? r.json() : null)
-      .catch(() => null)
-      .finally(() => clearTimeout(to));
-  }
   // A quote is only accepted if it is finite, positive, and within a sane band of the market's
   // anchor — so a mangled response or a wrong-symbol reply can never rewrite the ladder.
   function plausible(ticker, v) {
@@ -5520,29 +6590,12 @@ const MarketPrice = (() => {
   }
 
   async function quote(ticker) {
-    const s = SRC[ticker];
-    if (!s) return null;
-    if (s.cb) {
-      const d = await timed('https://api.coinbase.com/v2/prices/' + s.cb + '/spot');
-      const v = d && d.data && parseFloat(d.data.amount);
-      // Check WHICH asset answered, not just that the number looks sane. A magnitude band alone
-      // would happily accept an Ethereum price under the Gold key and cache it for a day.
-      const idOk = d && d.data && (!d.data.base || d.data.base === s.cb.split('-')[0]);
-      if (idOk && plausible(ticker, v)) return { v, source: 'coinbase' };
-    }
-    if (s.bn) {
-      const d = await timed('https://api.binance.com/api/v3/ticker/price?symbol=' + s.bn);
-      const v = d && parseFloat(d.price);
-      const idOk = d && (!d.symbol || d.symbol === s.bn);
-      if (idOk && plausible(ticker, v)) return { v, source: 'binance' };
-    }
-    if (s.proxy && PROXY_LIVE) {
-      const d = await timed(PROXY + '?markets=' + ticker);
-      const q = d && d.prices && d.prices[ticker];
-      const v = q && parseFloat(q.price);
-      if (plausible(ticker, v)) return { v, source: (q.source || 'proxy') };
-    }
-    return null;
+    if (!SUPPORTED.has(ticker) || !window.CQCloudData || !window.CQCloudData.markets) return null;
+    const result = await window.CQCloudData.markets.quotes([ticker]);
+    const q = result && result.ok && result.source === 'cloud' && result.data &&
+      result.data.prices && result.data.prices[ticker];
+    const v = q && parseFloat(q.price);
+    return plausible(ticker, v) ? { v, source: q.source || 'cloudflare' } : null;
   }
 
   // Shift the whole displayed ladder onto a new anchor. Every candle's .price was generated
@@ -5584,7 +6637,7 @@ const MarketPrice = (() => {
 
   function refresh(ticker, force) {
     ticker = ticker || (playerFaction && playerFaction.ticker);
-    if (!ticker || !SRC[ticker]) return Promise.resolve(null);
+    if (!ticker || !SUPPORTED.has(ticker)) return Promise.resolve(null);
     const st = state[ticker];
     if (st && st.inflight) return st.inflight;
     if (!force && st && Date.now() - st.t < TTL_MS) return Promise.resolve(st.v);
@@ -7726,12 +8779,7 @@ function syncMastery() {
   if (_masterySyncT) return;
   _masterySyncT = setTimeout(() => {
     _masterySyncT = null;
-    try {
-      const pid = localStorage.getItem('cq_pid') || 'anon';
-      const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
-      const rows = MASTERY_CATS.map(c => ({ player_id: pid, category: c, score: masteryScore(c), updated_at: new Date().toISOString() }));
-      fetch('https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/ingest', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ table: 'player_mastery', rows: rows }), keepalive: true }).catch(() => {});
-    } catch (e) {}
+    try { if (window.cloudPushMastery) window.cloudPushMastery(mastery); } catch (e) {}
   }, 4000);
 }
 
@@ -28624,15 +29672,14 @@ return {run:MG_run,REG:REG};
    every meaningful action, scores each (priority / content / virality /
    educational → significance), flags content-worthy "special" moments,
    stores them storage-efficiently in a capped localStorage ring buffer, and
-   best-effort mirrors them to Supabase (content_events). Exposes
+   durably mirrors them through the same-origin Cloudflare content endpoint. Exposes
    window.ContentLog and a postMessage bridge ('cq-content') for the Dashboard.
    localStorage-first by design: never blocks gameplay, never loses an event.
    ══════════════════════════════════════════════════════════════════════════ */
 window.ContentLog = (function () {
-  const SUPA_URL = 'https://ymxppzhczvmiuoncuqqu.supabase.co';
-  const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
   const EVENTS_KEY = 'cq_content_events_v1', REPLAYS_KEY = 'cq_content_replays_v1', QUEUE_KEY = 'cq_content_queue_v1', MON_KEY = 'cq_content_mon_v1';
-  // Local storage is a CACHE for instant display only. Supabase is the SOURCE OF TRUTH.
+  // Local storage is the instant display cache and first durable handoff. Cloudflare becomes
+  // the cross-device source only after its adapter has durably accepted the exact rows.
   // The durable outbound QUEUE holds every unconfirmed row and is NEVER dropped by a
   // display cap — rows leave the queue ONLY after a confirmed 2xx write (see flush()).
   const CACHE_EVENTS = 600, CACHE_REPLAYS = 60;   // display-cache caps (cache only; cloud keeps all)
@@ -28653,7 +29700,12 @@ window.ContentLog = (function () {
   function logEnabled() { try { return store.getItem('cq_content_enabled') !== '0'; } catch (e) { return false; } }
   function setLogEnabled(on) { try { store.setItem('cq_content_enabled', on ? '1' : '0'); } catch (e) {} }
   function enqueue(table, row) {
-    queue.push({ qid: 'q-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7), table: table, row: row, tries: 0 });
+    const qid = 'q-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+    const stableRow = Object.assign({}, row || {});
+    if (table === 'content_briefs' && !stableRow.brief_key && stableRow.event_id) stableRow.brief_key = 'brief:' + stableRow.event_id;
+    if (table === 'content_exports' && !stableRow.export_key) stableRow.export_key = 'export:' + qid;
+    if (table === 'content_generated' && !stableRow.generated_key) stableRow.generated_key = 'generated:' + qid;
+    queue.push({ qid: qid, table: table, row: stableRow, tries: 0 });
     mon.enqueued++;
     if (queue.length > QUEUE_MAX) { const drop = queue.length - QUEUE_MAX; queue.splice(0, drop); mon.dropped += drop; mon.lastError = 'queue overflow — dropped ' + drop + ' oldest after prolonged cloud outage'; }
     save(QUEUE_KEY, queue); persistMon();
@@ -28771,21 +29823,27 @@ window.ContentLog = (function () {
     return rid;
   }
 
-  /* ── P5: durable cloud sync — retry queue, exponential backoff, confirm-before-remove,
-        failure logging, automatic recovery on reconnect. Nothing leaves the queue
-        until Supabase confirms (2xx, or 409 = already-persisted duplicate). ── */
+  /* ── P5: two-stage durable Cloudflare sync. The legacy queue remains byte-compatible for
+        existing players. A row leaves it only after the Cloud adapter has either confirmed the
+        exact receipt or durably accepted the same stable-key row into its own retry queue. ── */
   let backoff = 0, flushTimer = null, flushing = false;
   const online = () => (typeof navigator === 'undefined' || navigator.onLine !== false);
   function scheduleFlush(ms) { if (flushTimer || flushing) return; flushTimer = setTimeout(() => { flushTimer = null; flush(); }, ms != null ? ms : 1000); }
-  function postRows(table, rows) {
-    // Writes go through the validated `ingest` Edge Function (service-role,
-    // sanitizes + rate-limits), NOT direct REST. Anon INSERT on these tables is
-    // removed in migration 0009 once this client is deployed.
-    return fetch(SUPA_URL + '/functions/v1/ingest', {
-      method: 'POST', keepalive: true,
-      headers: { apikey: SUPA_ANON, Authorization: 'Bearer ' + SUPA_ANON, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ table: table, rows: rows }),
-    }).then(r => ({ ok: r.ok || r.status === 409, status: r.status })).catch(() => ({ ok: false, status: 0 }));
+  async function postRows(table, items) {
+    try {
+      if (!window.CQCloudData || !window.CQCloudData.content) return { ok: false, status: 'adapter_unavailable' };
+      // Repair stable keys for queues created by an older build before handing them off. This is
+      // additive only: the original qid/table/row and localStorage key are never remapped.
+      const rows = items.map(item => {
+        const row = Object.assign({}, item.row || {});
+        if (table === 'content_briefs' && !row.brief_key && row.event_id) row.brief_key = 'brief:' + row.event_id;
+        if (table === 'content_exports' && !row.export_key) row.export_key = 'export:' + item.qid;
+        if (table === 'content_generated' && !row.generated_key) row.generated_key = 'generated:' + item.qid;
+        return row;
+      });
+      const result = await window.CQCloudData.content.pushBatch(table, rows);
+      return { ok: !!(result && (result.ok || result.queued)), status: result && (result.code || (result.ok ? 200 : 'queued')) };
+    } catch (e) { return { ok: false, status: 0 }; }
   }
   async function flush() {
     if (flushing || !queue.length) return;
@@ -28797,7 +29855,7 @@ window.ContentLog = (function () {
       let anyFail = false;
       for (const table of Object.keys(byTable)) {
         const items = byTable[table].slice(0, 100);
-        const res = await postRows(table, items.map(i => i.row));
+        const res = await postRows(table, items);
         if (res.ok) {                                   // CONFIRM before removal
           const ids = new Set(items.map(i => i.qid));
           queue = queue.filter(q => !ids.has(q.qid)); save(QUEUE_KEY, queue);
@@ -30164,10 +31222,9 @@ window.SocialAgents = (function () {
      stage, not a counter. Replays must not inflate it.
    • Every event carries a client-generated event_id, and the edge function upserts on it,
      so a retry after a flaky mobile connection can never double-count a stage.
-   • Buffered and flushed in batches; flushed hard on pagehide with keepalive. The primary
-     Cloudflare endpoint is same-origin and needs no browser credential. During the migration
-     window only, an unconfirmed primary write falls back to the existing Supabase endpoint so
-     a Pages/D1 configuration mistake cannot eat a live tester's milestone.
+   • Buffered and flushed in batches; flushed hard on pagehide with keepalive. The Cloudflare
+     endpoint is same-origin and needs no browser credential. An unconfirmed write remains in
+     cq_bt_pending for retry; it never crosses to a second provider and never claims success.
    • Every public method is try/caught and non-throwing. Analytics must never be able to
      break a playtest — a dropped metric is a nuisance, a broken game is the beta.
    ══════════════════════════════════════════════════════════════════════════════════════════ */
@@ -30176,16 +31233,11 @@ window.SocialAgents = (function () {
   if (window.CQTrack) return;                      // never double-install
 
   var ENDPOINT = '/api/beta-ingest';
-  var FALLBACK_ENDPOINT = 'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest';
-  /* Supabase ANON key — a public, publishable key. It is already shipped in the game; it
-     grants nothing on its own (every beta table has RLS on with no anon policy, and the
-     only write path is the service-role edge function). */
-  var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
 
   var FLUSH_MS  = 4000;
   var MAX_BATCH = 40;
 
-  /* The closed set. Must stay identical to EVENT_NAMES in supabase/functions/beta-ingest. */
+  /* The closed set. Must stay identical to EVENT_NAMES in functions/_lib/beta.js. */
   var NAMES = ['session_start','session_end','return_visit','play_clicked','movement_tutorial_completed',
     'tutorial_started','tutorial_completed','tutorial_step_reached',
     'first_trade_started','first_trade_won','first_trade_lost','boss_started','boss_defeated',
@@ -30280,12 +31332,8 @@ window.SocialAgents = (function () {
   var ended   = false;
   var PENDING = 'cq_bt_pending';        // durable queue for rows whose POST has not been confirmed
 
-  function send(endpoint, kind, rows, keepalive, fallback) {
+  function send(endpoint, kind, rows, keepalive) {
     var headers = { 'Content-Type': 'application/json' };
-    if (fallback) {
-      headers.apikey = ANON;
-      headers.Authorization = 'Bearer ' + ANON;
-    }
     return fetch(endpoint, {
       method: 'POST',
       headers: headers,
@@ -30304,10 +31352,7 @@ window.SocialAgents = (function () {
   function post(kind, rows, keepalive) {
     if (!rows || !rows.length) return Promise.resolve(false);
     return safe(function () {
-      return send(ENDPOINT, kind, rows, keepalive, false).then(function (ok) {
-        if (ok) return true;
-        return send(FALLBACK_ENDPOINT, kind, rows, keepalive, true);
-      });
+      return send(ENDPOINT, kind, rows, keepalive);
     }, Promise.resolve(false));
   }
 
@@ -30322,7 +31367,6 @@ window.SocialAgents = (function () {
       var seen = {}; var i;
       for (i = 0; i < q.length; i++) seen[q[i].event_id] = 1;
       for (i = 0; i < rows.length; i++) if (!seen[rows[i].event_id]) q.push(rows[i]);
-      if (q.length > 200) q = q.slice(q.length - 200);      // bound it; never grow without limit
       set(PENDING, JSON.stringify(q));
     });
   }

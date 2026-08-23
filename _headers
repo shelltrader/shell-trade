@@ -7,10 +7,8 @@
 # (docs/operations/CloudflareDeployment.md) — i.e. it was NOT versioned with the
 # code, so a change to the allowlist could ship without the deploy following.
 #
-# That is not hypothetical here. The Market Identity System fetches live prices
-# from api.coinbase.com; if connect-src omits it, every market silently falls
-# back to its build-time anchor WHILE THE HUD STILL SAYS "live". The failure is
-# invisible locally, because the dev server sends no CSP at all.
+# Build 369 routes live-price and application data through same-origin Cloudflare
+# functions. Browser CSP therefore needs no database, SDK or market-provider host.
 #
 # RULE: any new outbound host must be added HERE and in netlify.toml in the same
 # commit. Keep the two policies identical.
@@ -29,4 +27,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com https://cloudflareinsights.com https://*.cloudflareinsights.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://cloudflareinsights.com https://*.cloudflareinsights.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'

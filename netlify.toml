@@ -27,14 +27,11 @@
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     # Content Security Policy
     # - default-src 'self'          → block all unlisted origins by default
-    # - script-src  jsdelivr CDN    → only the Supabase SDK allowed from CDN
-    # - connect-src supabase + coinbase + binance → only these external APIs.
-    #   Coinbase is the PRIMARY live-price source (CORS-open, keyless, US-reachable);
-    #   Binance is the fallback and is geo-blocked in the US. Omitting Coinbase silently
-    #   kills live pricing on the deployed site while the HUD still claims it is live.
+    # - application, analytics and live-price calls are same-origin Cloudflare functions
+    # - only Cloudflare Web Analytics and Google Fonts need external browser origins
     # - img-src data:               → canvas toDataURL() needs data: URIs
     # - frame-ancestors 'none'      → belt-and-suspenders clickjack protection
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com https://cloudflareinsights.com https://*.cloudflareinsights.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://cloudflareinsights.com https://*.cloudflareinsights.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
 
 # Redirect HTTP → HTTPS (Netlify handles this by default, but explicit is safer)
 [[redirects]]

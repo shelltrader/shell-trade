@@ -20,12 +20,13 @@
  *   22 Build-368 beta readiness + Boss1 audio/viewport/CQSAFE/RC invariants
  *   23 Build-368 local browser harness safety/syntax/self-test
  *   24 Build-368 Boss1 cinematic-audio media quality/parity/timing
- *   25 Build-368 Cloudflare beta data-plane + no-loss client contracts
+ *   25 Build-369 Cloudflare-only app/beta data-plane + no-loss client contracts
  */
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const cp = require('child_process');
+const saveKeyGate = require('./cloudflare_save_key_gate.js');
 
 const ROOT = path.resolve(__dirname, '..');
 process.chdir(ROOT);
@@ -49,7 +50,7 @@ function extractCFG(s) {
   while ((m = re.exec(block))) out[m[1]] = m[2];
   return out;
 }
-const cqKeys = s => [...new Set(s.match(/cq_[a-z_]+/g) || [])].sort();
+const cqKeys = saveKeyGate.keys;
 function lessonKeyCount(s) {
   const i = s.indexOf('const LESSONS = {'); if (i < 0) return 0;
   let d = 0, j = s.indexOf('{', i); const start = j;
@@ -229,14 +230,17 @@ function run() {
       if (!head) add('10', 'Protected systems unchanged', 'SKIP', 'no HEAD version to compare');
       else {
         const changed = [];
+        const saveKeys = saveKeyGate.check(head, s, buildNum(s));
         if (finnSig(head) !== finnSig(s)) changed.push('Finn render');
         if (JSON.stringify(extractCFG(head)) !== JSON.stringify(extractCFG(s))) changed.push('Movement CFG');
-        if (cqKeys(head).join() !== cqKeys(s).join()) changed.push('Save keys');
+        if (saveKeys.changed && !saveKeys.approved) changed.push('Save keys (' + saveKeys.detail + ')');
         if (lessonKeyCount(head) !== lessonKeyCount(s)) changed.push('Lesson set');
         const bossSig = x => `${/function openBoss\s*\(/.test(x)}|${/function bossRound\s*\(/.test(x)}|${/const BOSSES\s*=/.test(x)}`;
         if (bossSig(head) !== bossSig(s)) changed.push('Boss engine');
         const allow = process.env.CQ_ALLOW_PROTECTED === '1';
-        if (changed.length === 0) add('10', 'Protected systems unchanged', 'PASS', 'Finn / CFG / save keys / lesson set / boss engine identical to HEAD');
+        if (changed.length === 0) add('10', 'Protected systems unchanged', 'PASS',
+          'Finn / CFG / lesson set / boss engine identical to HEAD · ' +
+          (saveKeys.approved ? saveKeys.detail : 'save keys identical to HEAD'));
         else if (allow) add('10', 'Protected systems changed (APPROVED)', 'WARN', `changed: ${changed.join(', ')} — allowed via CQ_ALLOW_PROTECTED=1`);
         else add('10', 'Protected systems changed', 'FAIL', `changed: ${changed.join(', ')} — if explicitly approved, re-run with CQ_ALLOW_PROTECTED=1`);
       }
@@ -794,16 +798,22 @@ function run() {
     }
   }
 
-  // 25 — CLOUDFLARE BETA DATA PLANE. The public endpoint is write-only and schema-bound;
-  // founder reads fail closed behind a verified Access token; exports neutralise spreadsheet
-  // formula cells. The browser client proves Cloudflare-first/Supabase-fallback truthfulness,
-  // confirmed survey writes, complete 40-row queue draining and save/player-key preservation.
+  // 25 — CLOUDFLARE-ONLY DATA PLANE. Public beta writes are schema-bound; application data is
+  // account-scoped and versioned; founder reads fail closed behind a verified Access token; and
+  // exports neutralise spreadsheet formula cells. Browser clients use same-origin Cloudflare
+  // only, require exact receipts, drain durable queues, and preserve every established save key.
   {
     try {
       const checks = [
         ['cloudflare_beta.test.js', 'service/Access/D1 contracts'],
-        ['cloudflare_client.test.js', 'client fallback/queue/save contracts'],
+        ['cloudflare_client.test.js', 'same-origin analytics/queue/save contracts'],
+        ['cloudflare_app.test.js', 'account/app-data service contracts'],
+        ['cq_cloud_data.test.js', 'browser adapter/version/receipt contracts'],
+        ['cloudflare_game_content.test.js', 'legacy content handoff/no-loss contracts'],
+        ['cloudflare_game_cutover.test.js', 'game cutover/mirror/CSP contracts'],
+        ['cloudflare_save_key_gate.test.js', 'narrow additive save-key gate contracts'],
         ['founder_beta_dashboard.test.js', 'private dashboard/data-honesty contracts'],
+        ['founder_app_dashboard.test.js', 'all-data dashboard/insight/privacy contracts'],
       ];
       const failures = [], detail = [];
       for (const [file, label] of checks) {
@@ -817,10 +827,10 @@ function run() {
           detail.push(label + ' PASS' + (match ? ' (' + match[1] + ')' : ''));
         }
       }
-      add('25', 'Build-368 Cloudflare beta data plane + no-loss client', failures.length ? 'FAIL' : 'PASS',
+      add('25', 'Build-369 Cloudflare-only data plane + no-loss clients', failures.length ? 'FAIL' : 'PASS',
         failures.length ? failures.join(' · ') : detail.join(' · '));
     } catch (e) {
-      add('25', 'Build-368 Cloudflare beta data plane + no-loss client', 'FAIL',
+      add('25', 'Build-369 Cloudflare-only data plane + no-loss clients', 'FAIL',
         'Cloudflare data-plane checks could not run: ' + String(e && e.message || e).slice(0, 140));
     }
   }

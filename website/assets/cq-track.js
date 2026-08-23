@@ -25,10 +25,9 @@
      stage, not a counter. Replays must not inflate it.
    • Every event carries a client-generated event_id, and the edge function upserts on it,
      so a retry after a flaky mobile connection can never double-count a stage.
-   • Buffered and flushed in batches; flushed hard on pagehide with keepalive. The primary
-     Cloudflare endpoint is same-origin and needs no browser credential. During the migration
-     window only, an unconfirmed primary write falls back to the existing Supabase endpoint so
-     a Pages/D1 configuration mistake cannot eat a live tester's milestone.
+   • Buffered and flushed in batches; flushed hard on pagehide with keepalive. The Cloudflare
+     endpoint is same-origin and needs no browser credential. An unconfirmed write remains in
+     cq_bt_pending for retry; it never crosses to a second provider and never claims success.
    • Every public method is try/caught and non-throwing. Analytics must never be able to
      break a playtest — a dropped metric is a nuisance, a broken game is the beta.
    ══════════════════════════════════════════════════════════════════════════════════════════ */
@@ -37,16 +36,11 @@
   if (window.CQTrack) return;                      // never double-install
 
   var ENDPOINT = '/api/beta-ingest';
-  var FALLBACK_ENDPOINT = 'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest';
-  /* Supabase ANON key — a public, publishable key. It is already shipped in the game; it
-     grants nothing on its own (every beta table has RLS on with no anon policy, and the
-     only write path is the service-role edge function). */
-  var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
 
   var FLUSH_MS  = 4000;
   var MAX_BATCH = 40;
 
-  /* The closed set. Must stay identical to EVENT_NAMES in supabase/functions/beta-ingest. */
+  /* The closed set. Must stay identical to EVENT_NAMES in functions/_lib/beta.js. */
   var NAMES = ['session_start','session_end','return_visit','play_clicked','movement_tutorial_completed',
     'tutorial_started','tutorial_completed','tutorial_step_reached',
     'first_trade_started','first_trade_won','first_trade_lost','boss_started','boss_defeated',
@@ -141,12 +135,8 @@
   var ended   = false;
   var PENDING = 'cq_bt_pending';        // durable queue for rows whose POST has not been confirmed
 
-  function send(endpoint, kind, rows, keepalive, fallback) {
+  function send(endpoint, kind, rows, keepalive) {
     var headers = { 'Content-Type': 'application/json' };
-    if (fallback) {
-      headers.apikey = ANON;
-      headers.Authorization = 'Bearer ' + ANON;
-    }
     return fetch(endpoint, {
       method: 'POST',
       headers: headers,
@@ -165,10 +155,7 @@
   function post(kind, rows, keepalive) {
     if (!rows || !rows.length) return Promise.resolve(false);
     return safe(function () {
-      return send(ENDPOINT, kind, rows, keepalive, false).then(function (ok) {
-        if (ok) return true;
-        return send(FALLBACK_ENDPOINT, kind, rows, keepalive, true);
-      });
+      return send(ENDPOINT, kind, rows, keepalive);
     }, Promise.resolve(false));
   }
 
@@ -183,7 +170,6 @@
       var seen = {}; var i;
       for (i = 0; i < q.length; i++) seen[q[i].event_id] = 1;
       for (i = 0; i < rows.length; i++) if (!seen[rows[i].event_id]) q.push(rows[i]);
-      if (q.length > 200) q = q.slice(q.length - 200);      // bound it; never grow without limit
       set(PENDING, JSON.stringify(q));
     });
   }

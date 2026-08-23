@@ -5,59 +5,75 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <title>Play the ChartQuest Beta</title>
 <script>
-/* BOOT-CRASH CAPTURE — deliberately in <head>, before everything else.
-   CQTrack installs its error listeners inside boot(), deferred to DOMContentLoaded, and in the
-   game that block is ~line 27,400 of 28,100. So the one failure that matters most — a parse-time
-   throw that white-screens the page — was structurally unrecordable: zero crash rows in 118
-   events is not evidence of no crashes, it is evidence we cannot see them.
-   Queues into window.__cqTrackQueue, which CQTrack drains on boot; and if CQTrack never boots at
-   all (the white-screen case) it posts the crash itself after 8s. Intentionally tiny and
-   dependency-free — this must run even when everything below it is broken. */
+/* CQBOOTCRASH:BEGIN — generated from website/assets/cq-boot-crash.js by scripts/sync_boot_crash.py — DO NOT EDIT HERE */
+/* ChartQuest earliest-crash capture. Inline this at the top of every production page. */
 (function(){
   var Q = (window.__cqTrackQueue = window.__cqTrackQueue || []), n = 0, sent = false;
+  var PENDING = 'cq_bt_pending';
   function cap(m, w) {
     if (n++ > 2) return;
     Q.push({ name: 'crash', props: { kind: 'boot', message: String(m || '').slice(0, 500), where: w || '' }, t: Date.now() });
+  }
+  function readPending() {
+    try { var value = JSON.parse(localStorage.getItem(PENDING) || '[]'); return Array.isArray(value) ? value : []; }
+    catch (e) { return []; }
+  }
+  function writePending(rows) {
+    try {
+      if (rows.length) localStorage.setItem(PENDING, JSON.stringify(rows));
+      else localStorage.removeItem(PENDING);
+      return true;
+    } catch (e) { return false; }
+  }
+  function persist(rows) {
+    var queue = readPending(), seen = {};
+    queue.forEach(function (row) { seen[row.event_id] = true; });
+    rows.forEach(function (row) { if (!seen[row.event_id]) queue.push(row); });
+    writePending(queue);
+  }
+  function acknowledged(response, count) {
+    if (!response || !response.ok) return Promise.resolve(false);
+    var type = response.headers && response.headers.get ? String(response.headers.get('Content-Type') || '') : '';
+    if (type.toLowerCase().indexOf('application/json') === -1) return Promise.resolve(false);
+    return response.json().then(function (receipt) {
+      return !!receipt && receipt.ok === true && Number(receipt.written) === count;
+    }).catch(function () { return false; });
+  }
+  function drain() {
+    var rows = readPending().slice(0, 40);
+    if (!rows.length) return;
+    fetch('/api/beta-ingest', {
+      method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'events', rows: rows })
+    }).then(function (response) { return acknowledged(response, rows.length); }).then(function (ok) {
+      if (!ok) return;
+      var done = {}; rows.forEach(function (row) { done[row.event_id] = true; });
+      writePending(readPending().filter(function (row) { return !done[row.event_id]; }));
+      if (readPending().length) setTimeout(drain, 0);
+    }).catch(function () {});
   }
   try {
     addEventListener('error', function (e) { cap(e && e.message, e && e.filename ? e.filename + ':' + e.lineno : ''); });
     addEventListener('unhandledrejection', function (e) { var r = e && e.reason; cap((r && (r.message || r)) || 'unhandledrejection', ''); });
   } catch (e) {}
-  /* Fallback: if CQTrack never came up, nobody will ever drain the queue. Send it ourselves. */
   setTimeout(function () {
     try {
       if (sent || window.CQTrack || !Q.length) return;
       sent = true;
-      var K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlteHBwemhjenZtaXVvbmN1cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY4MDEsImV4cCI6MjA5NzA2MjgwMX0.aOHGPgBCEhQvS74n9Evl5gL9-dFBZwUE0yVw6gjtY0k';
       var pid = 'anon'; try { pid = localStorage.getItem('cq_pid') || 'anon'; } catch (e) {}
+      var stamp = Date.now();
       var rows = Q.slice(0, 3).map(function (q, i) {
-        return { event_id: 'boot-' + Date.now() + '-' + i, player_id: pid, session_id: 'boot',
-                 name: 'crash', ts: new Date().toISOString(), props: q.props };
+        return { event_id: 'boot-' + stamp + '-' + i, player_id: pid, session_id: 'boot',
+          name: 'crash', ts: new Date().toISOString(), props: q.props };
       });
-      var body = JSON.stringify({ kind: 'events', rows: rows });
-      function acknowledged(r) {
-        if (!r || !r.ok) return Promise.resolve(false);
-        var type = r.headers && r.headers.get ? String(r.headers.get('Content-Type') || '') : '';
-        if (type.toLowerCase().indexOf('application/json') === -1) return Promise.resolve(false);
-        return r.json().then(function (receipt) {
-          return !!receipt && receipt.ok === true && Number(receipt.written) === rows.length;
-        }).catch(function () { return false; });
-      }
-      fetch('/api/beta-ingest', {
-        method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: body
-      }).then(acknowledged).then(function (ok) {
-        if (ok) return true;
-        throw new Error('Cloudflare beta ingest did not confirm this crash');
-      }).catch(function () {
-        return fetch('https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1/beta-ingest', {
-          method: 'POST', keepalive: true,
-          headers: { apikey: K, Authorization: 'Bearer ' + K, 'Content-Type': 'application/json' },
-          body: body
-        }).catch(function () {});
-      });
+      // Durable first. If the POST fails or its receipt is misleading, the exact rows stay for
+      // CQTrack (or this tiny fallback on a later load) to retry.
+      persist(rows);
+      drain();
     } catch (e) {}
   }, 8000);
 })();
+/* CQBOOTCRASH:END */
 </script>
 
 <meta name="description" content="Play the ChartQuest beta free in your browser — run across a real candlestick chart and learn to trade.">
@@ -157,7 +173,7 @@
 <!-- Closed-beta analytics (ticket 3). The game frame reports its own milestones; this
      records the wrapper page so a tester who never gets the iframe to load is still visible
      in the funnel rather than silently missing. -->
-<script src="assets/cq-track.js?v=368"></script>
+<script src="assets/cq-track.js?v=369"></script>
 <script>
   var CQ_GAME = (window.CHARTQUEST_CONFIG && window.CHARTQUEST_CONFIG.gameUrl) || 'game.html';
   // Forward the query string into the iframe — without this, /play?fresh=1 (and ?guest,

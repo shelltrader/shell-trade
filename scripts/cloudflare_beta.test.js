@@ -560,7 +560,7 @@ function findFile(root, basename) {
     assert.match(sql, /NEW\.ingest_source = 'supabase_history'/i);
     assert.match(sql, /BETA_RATE_SALT/);
     const routes = JSON.parse(source('website/_routes.json'));
-    assert.deepStrictEqual(routes.include, ['/api/beta-ingest', '/founder', '/founder/*']);
+    assert.deepStrictEqual(routes.include, ['/api/beta-ingest', '/api/app/*', '/founder', '/founder/*']);
     assert.deepStrictEqual(routes.exclude, []);
     assert.strictEqual(findFile(path.join(ROOT, 'website'), 'beta-data.json'), false);
   });

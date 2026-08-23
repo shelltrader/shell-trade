@@ -1,0 +1,249 @@
+{
+  "_meta": {
+    "format": "chartquest-supabase-export-v1",
+    "source_provider": "supabase",
+    "project_ref": "ymxppzhczvmiuoncuqqu",
+    "export_evidence": {"export_id":"fixture-export-2026-08-20T12:00:00Z","format":"chartquest-supabase-export-proof-v1","generated_at":"2026-08-20T12:00:00Z","generated_by":"chartquest-approved-supabase-exporter-v1","project_ref":"ymxppzhczvmiuoncuqqu","snapshot_consistent":true,"snapshot_id":"fixture-snapshot-001","source_provider":"supabase","tables":{"auth.identities":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":["identity-1"],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"01655d2350a1b0d65416b462d8e178be37194374c388f489fcce56023bb19dff"}]},"source_row_count":1,"source_rows_sha256":"01655d2350a1b0d65416b462d8e178be37194374c388f489fcce56023bb19dff"},"auth.users":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":["11111111-1111-4111-8111-111111111111"],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"cc44eff9705d32e3c0c0779a9b17bb52280e8c8065389e59e25f5729ee0e526e"}]},"source_row_count":1,"source_rows_sha256":"cc44eff9705d32e3c0c0779a9b17bb52280e8c8065389e59e25f5729ee0e526e"},"public.admins":{"key_columns":["user_id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":["11111111-1111-4111-8111-111111111111"],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"bb5dae36f7f7e5c418a3b3f226e25f9f5f9a5751732c99e8a73bda11f5c14a89"}]},"source_row_count":1,"source_rows_sha256":"bb5dae36f7f7e5c418a3b3f226e25f9f5f9a5751732c99e8a73bda11f5c14a89"},"public.beta_events":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[101],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"40d7c45885d7ca6bdc39d78f8e242a61937d48d6f142409683a9889003df07e3"}]},"source_row_count":1,"source_rows_sha256":"40d7c45885d7ca6bdc39d78f8e242a61937d48d6f142409683a9889003df07e3"},"public.beta_surveys":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[201],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"f5a9d6e9cc5925cb299db071dd70514ef53904e8646abba29e0c1d9eca3f6185"}]},"source_row_count":1,"source_rows_sha256":"f5a9d6e9cc5925cb299db071dd70514ef53904e8646abba29e0c1d9eca3f6185"},"public.bug_reports":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[501],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"4286b13ba251bfb10b174ff37703a98d20d85502e4cfd3a47352a761d874d17e"}]},"source_row_count":1,"source_rows_sha256":"4286b13ba251bfb10b174ff37703a98d20d85502e4cfd3a47352a761d874d17e"},"public.content_assets":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[704],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"46b3cd3b0186c60cc4f005ef682677b02efb7a225e5d3c159be6d85c390dd809"}]},"source_row_count":1,"source_rows_sha256":"46b3cd3b0186c60cc4f005ef682677b02efb7a225e5d3c159be6d85c390dd809"},"public.content_briefs":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[703],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"bd36a9ab7e037d7fd4016efb9dbce0f555dfde105a43b93f43123f3442f37b54"}]},"source_row_count":1,"source_rows_sha256":"bd36a9ab7e037d7fd4016efb9dbce0f555dfde105a43b93f43123f3442f37b54"},"public.content_events":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[701],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"4d9a4b35f997dbac74dada1deb84f3e543ec77b8d2b043016fb83db7411b59b5"}]},"source_row_count":1,"source_rows_sha256":"4d9a4b35f997dbac74dada1deb84f3e543ec77b8d2b043016fb83db7411b59b5"},"public.content_exports":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[706],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"f55c4acbefde8fd08079be639d8817d7a9f38f3978d90315877c0baf7b8faa59"}]},"source_row_count":1,"source_rows_sha256":"f55c4acbefde8fd08079be639d8817d7a9f38f3978d90315877c0baf7b8faa59"},"public.content_generated":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[705],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"755d1140b811cd6d381f6394c75b4c3bc4837cef91098f8454001f530a9fce62"}]},"source_row_count":1,"source_rows_sha256":"755d1140b811cd6d381f6394c75b4c3bc4837cef91098f8454001f530a9fce62"},"public.content_replays":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[702],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"c8a58ad0b28bb64898488bf1e60e2831c416e5706828734992d5414da6eee8a3"}]},"source_row_count":1,"source_rows_sha256":"c8a58ad0b28bb64898488bf1e60e2831c416e5706828734992d5414da6eee8a3"},"public.daily_streak":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":["11111111-1111-4111-8111-111111111111"],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"6b118e60037e7c0aacf3a1ad4825ac55d027b0e24f0a7a71d8ab9db2d459be45"}]},"source_row_count":1,"source_rows_sha256":"6b118e60037e7c0aacf3a1ad4825ac55d027b0e24f0a7a71d8ab9db2d459be45"},"public.journal_notes":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[402],"has_more":false,"page_index":0,"row_count":2,"rows_sha256":"8775b47da6943ad3398eb72b8ec18c0641f01dd40313d5642c3feb455b4a0a3f"}]},"source_row_count":2,"source_rows_sha256":"8775b47da6943ad3398eb72b8ec18c0641f01dd40313d5642c3feb455b4a0a3f"},"public.journal_trades":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[302],"has_more":false,"page_index":0,"row_count":2,"rows_sha256":"85b17151769786ba5c665e50bf572d57b02c0e02cfd99ce7105599e1ce11a0dc"}]},"source_row_count":2,"source_rows_sha256":"85b17151769786ba5c665e50bf572d57b02c0e02cfd99ce7105599e1ce11a0dc"},"public.performance_snapshots":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[708],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"30bd13e4d3514d7c51db0695574d2d69dbfa07c6f9e450f3288469615cbf5215"}]},"source_row_count":1,"source_rows_sha256":"30bd13e4d3514d7c51db0695574d2d69dbfa07c6f9e450f3288469615cbf5215"},"public.player_mastery":{"key_columns":["player_id","category"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":["player-1","psychology"],"has_more":false,"page_index":0,"row_count":2,"rows_sha256":"3876503d0b2153baa242c9bcf993296ce6fba255248064927eb626b7e7510a91"}]},"source_row_count":2,"source_rows_sha256":"3876503d0b2153baa242c9bcf993296ce6fba255248064927eb626b7e7510a91"},"public.profiles":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":["11111111-1111-4111-8111-111111111111"],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"4b0b3bd67e3422d3d0c260ea2138bfe42b870ac831eebda5a5dd73e4efe939ce"}]},"source_row_count":1,"source_rows_sha256":"4b0b3bd67e3422d3d0c260ea2138bfe42b870ac831eebda5a5dd73e4efe939ce"},"public.published_posts":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[707],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"1072f79e7743bfb31a8c20e632a51e68e486986cde4c75b91cd6aaa4a7866973"}]},"source_row_count":1,"source_rows_sha256":"1072f79e7743bfb31a8c20e632a51e68e486986cde4c75b91cd6aaa4a7866973"},"public.site_visits":{"key_columns":["id"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":[603],"has_more":false,"page_index":0,"row_count":3,"rows_sha256":"bb29b98a6be3d2757248871d3bf7de8c544e3c79e59dc17eed132885a47312e0"}]},"source_row_count":3,"source_rows_sha256":"bb29b98a6be3d2757248871d3bf7de8c544e3c79e59dc17eed132885a47312e0"},"public.site_visits_daily":{"key_columns":["day"],"pagination":{"complete":true,"mode":"keyset","page_count":1,"pages":[{"cursor_in":null,"cursor_out":["2026-08-20"],"has_more":false,"page_index":0,"row_count":1,"rows_sha256":"86feaa2bdd4f63f3eb2d83db929e59bb970cd02c476afcdda956af56e2d47b01"}]},"source_row_count":1,"source_rows_sha256":"86feaa2bdd4f63f3eb2d83db929e59bb970cd02c476afcdda956af56e2d47b01"}}}
+  },
+  "auth": {
+    "users": [
+      {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "email": "beta@example.test",
+        "encrypted_password": "must-never-appear-in-output",
+        "recovery_token": "must-never-appear-either",
+        "raw_app_meta_data": {"provider": "email"},
+        "raw_user_meta_data": {"display_name": "Beta One"},
+        "created_at": "2026-08-20T10:00:00Z",
+        "updated_at": "2026-08-21T10:00:00Z",
+        "confirmed_at": "2026-08-20T10:05:00Z"
+      }
+    ],
+    "identities": [
+      {
+        "id": "identity-1",
+        "user_id": "11111111-1111-4111-8111-111111111111",
+        "provider": "email",
+        "provider_id": "beta@example.test",
+        "identity_data": {"sub": "11111111-1111-4111-8111-111111111111", "email": "beta@example.test"},
+        "created_at": "2026-08-20T10:00:00Z",
+        "updated_at": "2026-08-20T10:00:00Z"
+      }
+    ]
+  },
+  "public": {
+    "beta_events": [
+      {
+        "id": 101,
+        "event_id": "event-1",
+        "player_id": "player-1",
+        "session_id": "session-1",
+        "name": "session_start",
+        "ts": "2026-08-20T10:00:00Z",
+        "props": {"build": 367},
+        "device": "mobile",
+        "browser": "Safari",
+        "os": "iOS",
+        "screen": "390x844",
+        "viewport": "390x700",
+        "created_at": "2026-08-20T10:00:01Z"
+      }
+    ],
+    "beta_surveys": [
+      {
+        "id": 201,
+        "response_id": "survey-1",
+        "player_id": "player-1",
+        "session_id": "session-1",
+        "q1_rating": 8,
+        "q2_hook": "The candles",
+        "q3_improvement": "More levels",
+        "q4_continue": "immediately",
+        "q5_anything": "Great beta",
+        "seconds_taken": 42,
+        "created_at": "2026-08-20T10:20:00Z",
+        "updated_at": "2026-08-20T10:20:00Z"
+      }
+    ],
+    "profiles": [
+      {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "shells": 55,
+        "player_level": 2,
+        "xp": 80,
+        "display_name": "Beta One",
+        "created_at": "2026-08-20T10:00:00Z",
+        "updated_at": "2026-08-21T10:00:00Z"
+      }
+    ],
+    "journal_trades": [
+      {
+        "id": 301,
+        "user_id": "11111111-1111-4111-8111-111111111111",
+        "trade_data": {"id": 7, "side": "long", "result": "loss"},
+        "created_at": "2026-08-20T10:10:00Z"
+      },
+      {
+        "id": 302,
+        "user_id": "11111111-1111-4111-8111-111111111111",
+        "trade_data": {"id": 7, "side": "long", "result": "win"},
+        "created_at": "2026-08-20T10:12:00Z"
+      }
+    ],
+    "journal_notes": [
+      {
+        "id": 401,
+        "user_id": "11111111-1111-4111-8111-111111111111",
+        "note_data": {"id": 4, "text": "first version"},
+        "created_at": "2026-08-20T10:11:00Z"
+      },
+      {
+        "id": 402,
+        "user_id": "11111111-1111-4111-8111-111111111111",
+        "note_data": {"id": 4, "text": "second version"},
+        "created_at": "2026-08-20T10:13:00Z"
+      }
+    ],
+    "daily_streak": [
+      {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "streak": 2,
+        "best_streak": 3,
+        "last_drill_date": "2026-08-20",
+        "updated_at": "2026-08-20T12:00:00Z"
+      }
+    ],
+    "player_mastery": [
+      {
+        "player_id": "player-1",
+        "category": "RiskMgmt",
+        "score": 70,
+        "updated_at": "2026-08-20T12:00:00Z"
+      },
+      {
+        "player_id": "player-1",
+        "category": "psychology",
+        "score": 65,
+        "updated_at": "2026-08-20T12:00:00Z"
+      }
+    ],
+    "bug_reports": [
+      {
+        "id": 501,
+        "user_id": "11111111-1111-4111-8111-111111111111",
+        "message": "Replay line was unclear",
+        "context": {"build": 367},
+        "status": "open",
+        "created_at": "2026-08-20T11:00:00Z"
+      }
+    ],
+    "site_visits": [
+      {"id": 601, "created_at": "2026-08-20T09:00:00Z"},
+      {"id": 602, "created_at": "2026-08-20T10:00:00Z"},
+      {"id": 603, "created_at": "2026-08-21T09:00:00Z"}
+    ],
+    "site_visits_daily": [
+      {"day": "2026-08-20", "visits": 2}
+    ],
+    "content_events": [
+      {
+        "id": 701,
+        "event_id": "content-event-1",
+        "event_type": "boss_defeated",
+        "ts": "2026-08-20T10:30:00Z",
+        "player_id": "player-1",
+        "session_id": "session-1",
+        "payload": {"boss": 1},
+        "educational_metadata": {"lesson": "candles"},
+        "content_flags": {"special": true},
+        "significance_score": 90,
+        "processed_status": "new",
+        "created_at": "2026-08-20T10:30:00Z"
+      }
+    ],
+    "content_replays": [
+      {
+        "id": 702,
+        "replay_id": "replay-1",
+        "event_id": "content-event-1",
+        "kind": "boss",
+        "meta": {"boss": 1},
+        "data": {"seed": 44},
+        "created_at": "2026-08-20T10:31:00Z"
+      }
+    ],
+    "content_briefs": [
+      {
+        "id": 703,
+        "event_id": "content-event-1",
+        "pillar": "turtle-journey",
+        "platforms": ["tiktok"],
+        "urgency": "this-week",
+        "angle": "First guardian",
+        "format": "short",
+        "priority": 90,
+        "status": "proposed",
+        "created_at": "2026-08-20T10:32:00Z"
+      }
+    ],
+    "content_assets": [
+      {
+        "id": 704,
+        "brief_id": 703,
+        "event_id": "content-event-1",
+        "asset_type": "clip",
+        "storage_path": "clips/guardian-1.mp4",
+        "platform_variant": "vertical",
+        "meta": {"duration": 12},
+        "created_at": "2026-08-20T10:33:00Z"
+      }
+    ],
+    "content_generated": [
+      {
+        "id": 705,
+        "brief_id": 703,
+        "platform": "tiktok",
+        "body": "Finn beats the Gambler.",
+        "meta": {"version": 1},
+        "status": "draft",
+        "created_at": "2026-08-20T10:34:00Z"
+      }
+    ],
+    "content_exports": [
+      {
+        "id": 706,
+        "platform": "tiktok",
+        "event_count": 1,
+        "filter": {"boss": 1},
+        "exported_at": "2026-08-20T10:35:00Z"
+      }
+    ],
+    "published_posts": [
+      {
+        "id": 707,
+        "asset_id": 704,
+        "platform": "tiktok",
+        "post_url": "https://example.test/post/707",
+        "published_at": "2026-08-20T10:36:00Z"
+      }
+    ],
+    "performance_snapshots": [
+      {
+        "id": 708,
+        "post_id": 707,
+        "captured_at": "2026-08-21T10:36:00Z",
+        "metrics": {"views": 100}
+      }
+    ],
+    "content_future_experiment": [
+      {
+        "id": "future-1",
+        "created_at": "2026-08-21T11:00:00Z",
+        "payload": {"safe": true}
+      }
+    ],
+    "admins": [
+      {"user_id": "11111111-1111-4111-8111-111111111111", "role": "founder", "added_at": "2026-08-20T10:00:00Z"}
+    ]
+  }
+}

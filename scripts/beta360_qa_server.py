@@ -41,11 +41,6 @@ CSP = "; ".join((
     "form-action 'none'",
     "frame-ancestors 'self'",
 ))
-REMOTE_SUPABASE = (
-    '<script src="https://cdn.jsdelivr.net/npm/@supabase/'
-    'supabase-js@2/dist/umd/supabase.min.js"></script>'
-)
-LOCAL_SUPABASE = '<script src="/__qa__/supabase-offline-stub.js"></script>'
 ROOT_FILES = {
     "/icon-192.png", "/icon-512.png", "/manifest.json", "/journal-book.webp",
     "/logo-512.jpg", "/logo-512.webp", "/mm-poster.jpg",
@@ -75,9 +70,6 @@ def qa_game():
     raw = source_bytes()
     digest = hashlib.sha256(raw).hexdigest()
     text = raw.decode("utf-8")
-    if text.count(REMOTE_SUPABASE) != 1:
-        raise RuntimeError("expected one canonical Supabase CDN tag")
-    text = text.replace(REMOTE_SUPABASE, LOCAL_SUPABASE, 1)
     early = (
         '<meta name="beta360-canonical-sha256" content="' + digest + '">\n'
         '<meta name="beta360-network-policy" content="connect-src none; loopback assets only">\n'
@@ -200,7 +192,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             body = qa_game()
             return self.send_bytes(200, body, "text/html; charset=utf-8", {
                 "X-ChartQuest-Canonical-SHA256": source_hash(),
-                "X-ChartQuest-QA-Rewrite": "offline-supabase+early-errors",
+                "X-ChartQuest-QA-Rewrite": "early-errors-only",
                 "X-ChartQuest-Test-Mode": mode,
             })
         if path == HARNESS_URL:
@@ -215,8 +207,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self.serve_file(SURVEY)
         if path in SURVEY_DEPENDENCIES:
             return self.serve_file(SURVEY_DEPENDENCIES[path])
-        if path == "/__qa__/supabase-offline-stub.js":
-            return self.send_bytes(200, b"'use strict';window.__BETA360_SUPABASE_OFFLINE_STUB__=true;\n", "text/javascript")
         if path == "/sw.js":
             body = (
                 b"'use strict';self.addEventListener('install',function(){self.skipWaiting();});"
@@ -256,7 +246,10 @@ def self_test():
     rewritten = qa_game()
     check(raw == source_bytes(), "canonical bytes unchanged")
     check(source_hash().encode() in rewritten, "canonical hash reported")
-    check(REMOTE_SUPABASE.encode() not in rewritten and LOCAL_SUPABASE.encode() in rewritten, "offline CDN rewrite")
+    check(b"CQCLOUDDATA:BEGIN" in rewritten and b"/api/app/session" in rewritten,
+          "self-contained Cloudflare adapter retained")
+    check(b"supabase-js" not in rewritten.lower() and b".supabase.co" not in rewritten.lower(),
+          "no legacy database runtime")
     check(b"__BETA360_CONSOLE_ERRORS__" in rewritten and b"console.error=function" in rewritten,
           "early console.error capture")
     check(game_mode(parse_qs("qa=1&mute=1")) == "qa", "strict QA query")

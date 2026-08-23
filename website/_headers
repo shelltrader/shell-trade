@@ -43,10 +43,9 @@
 # ---------------------------------------------------------------------------------------------
 # THE CSP IS NOW ENFORCING. It shipped Report-Only first, and that was not ceremony.
 # ---------------------------------------------------------------------------------------------
-# A wrong CSP breaks the game silently and in production only. The root file's own comments record
-# the precedent: omit api.coinbase.com from connect-src and every market falls back to its
-# build-time anchor WHILE THE HUD STILL SAYS "live". So this followed the same observe-then-enforce
-# discipline CQBEAT used.
+# A wrong CSP breaks the game silently and in production only. Build 369 moves every game-data
+# request behind same-origin Cloudflare functions, so the browser no longer needs database, SDK,
+# market-provider or WebSocket origins. Keep the observe-then-enforce discipline CQBEAT used.
 #
 # The Report-Only round reported TWO sources that would have broken production, and NEITHER could
 # have been found by reading this repository:
@@ -62,10 +61,6 @@
 # ---------------------------------------------------------------------------------------------
 # ORIGIN ALLOWLIST — every external host the SERVED pages actually load
 # ---------------------------------------------------------------------------------------------
-#   cdn.jsdelivr.net        the Supabase JS SDK (script)
-#   *.supabase.co           auth, the beta-ingest edge function, realtime (https + wss)
-#   api.coinbase.com        live market prices (Market Identity System)
-#   api.binance.com         live market prices (fallback source)
 #   fonts.googleapis.com    the webfont STYLESHEET
 #   fonts.gstatic.com       the webfont FILES the stylesheet then requests
 #   static.cloudflareinsights.com  +  cloudflareinsights.com
@@ -119,4 +114,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.coinbase.com https://api.binance.com https://cloudflareinsights.com https://*.cloudflareinsights.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://cloudflareinsights.com https://*.cloudflareinsights.com; img-src 'self' data:; media-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'

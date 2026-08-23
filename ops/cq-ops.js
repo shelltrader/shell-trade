@@ -18,11 +18,10 @@
        CQOPS.flags    feature flags, resolvable from URL / localStorage / environment
        CQOPS.health   the founder-observability counters + CQOPS.report()
 
-   ── WHAT THIS IS NOT (Phase 1 discipline) ────────────────────────────────────────────────
-   It is NOT a migration. Nothing in the game was rewritten to use it. Analytics still posts
-   the way it always did; the survey still submits the way it always did; cinematics still play
-   the way they always did. This sprint builds the road, it does not move the traffic onto it.
-   Adoption is incremental and documented in docs/operations/IntegrationGuide.md.
+   ── CUTOVER BOUNDARY ──────────────────────────────────────────────────────────────────────
+   Build 369 routes production analytics and app data through same-origin Cloudflare Pages
+   Functions. Gameplay and cinematics remain independent of the data plane and keep working
+   from the on-device save whenever the network is unavailable.
 
    THE ONE THING THAT WOULD DESTROY TRUST IN THIS SYSTEM is a feature flag that looks like it
    works and does nothing. So flags carry a `wired` bit: a flag is `wired` only once a real call
@@ -82,14 +81,13 @@
      laptop, on the LAN QR, on a Cloudflare preview and on playchartquest.com, with no build
      flags and no separate bundles.
 
-     BUILD 368 HONESTY: beta analytics now enters through the same-origin Cloudflare Pages
-     Function. The separate apiBase intentionally remains Supabase during the overlap because
-     signed-in accounts and cloud saves have not been migrated yet. Do not confuse an analytics
-     cutover with an account-data migration. */
+     BUILD 369: analytics, accounts, cloud saves, content and market lookups all enter through
+     same-origin Cloudflare Pages Functions. No browser credential or third-party database URL
+     belongs in this configuration. */
   var ENV_CONFIG = {
     development: {
       analyticsEndpoint: '/api/beta-ingest',
-      apiBase:           'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1',
+      apiBase:           '/api/app',
       surveyUrl:         'survey.html',
       logLevel:          'debug',
       debugOverlays:     true,
@@ -97,7 +95,7 @@
     },
     staging: {
       analyticsEndpoint: '/api/beta-ingest',
-      apiBase:           'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1',
+      apiBase:           '/api/app',
       surveyUrl:         'survey.html',
       logLevel:          'info',
       debugOverlays:     true,
@@ -105,7 +103,7 @@
     },
     production: {
       analyticsEndpoint: '/api/beta-ingest',
-      apiBase:           'https://ymxppzhczvmiuoncuqqu.supabase.co/functions/v1',
+      apiBase:           '/api/app',
       surveyUrl:         'survey.html',
       logLevel:          'warn',
       debugOverlays:     false,

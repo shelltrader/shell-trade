@@ -33,15 +33,16 @@
    same miss as v12→v13. Bumping now so returning landing/play visitors get the new tracker.
    (The game itself is game.html, served network-first, so gameplay was never stale — only the
    precached assets/cq-track.js on the marketing pages were.)
-   v14 → v15 (build 368): analytics and surveys become Cloudflare-first with a verified
-   Supabase fallback during the no-loss overlap. The HTML also requests cq-track.js?v=368 so
-   even a still-controlling v14 worker misses its old unversioned cache on first navigation. */
-const CACHE = 'chartquest-site-v15';
+   v14 → v15 (build 368): analytics and surveys become Cloudflare-first.
+   v15 → v16 (build 369): every production data path is same-origin Cloudflare-only; tracker,
+   boot-crash capture and cloud-data adapter fail closed into their durable on-device queues. */
+const CACHE = 'chartquest-site-v16';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',
   OFFLINE_URL,
   './assets/site.css', './assets/site.js', './assets/config.js', './assets/cq-track.js',
+  './assets/cq-boot-crash.js', './assets/cq-cloud-data.js',
   './assets/chartquest-poster.jpg', './manifest.webmanifest',
   './assets/pwa/icon-192.png', './assets/pwa/icon-512.png', './assets/pwa/icon-180.png'
 ];

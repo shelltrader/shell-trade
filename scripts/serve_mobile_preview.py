@@ -2,9 +2,9 @@
 """Allowlisted, no-cache ChartQuest mobile preview server.
 
 Unlike the legacy repository-wide preview server, this listener exposes only the canonical game,
-its explicitly allowlisted runtime assets, the production-equivalent survey sibling, and the
-offline Supabase stub. Command-center files, Git data, scripts, reports, tokens, and the QA
-harness/bridge are never served.
+its explicitly allowlisted runtime assets and the production-equivalent survey sibling.
+Command-center files, Git data, scripts, reports, tokens, and the QA harness/bridge are never
+served. Same-origin Cloudflare calls fail closed while this intentionally offline preview runs.
 """
 from __future__ import annotations
 

@@ -2,14 +2,18 @@
   'use strict';
 
   var API_ROOT = '/founder/api/beta-data';
+  var APP_API_ROOT = '/founder/api/app-data';
   var PAGE_LIMIT = 500;
   var MAX_API_PAGES = 500;
   var EVENT_PAGE_SIZE = 100;
   var Model = window.BetaModel;
+  var AppModel = window.CQAppDataModel;
   var state = {
     rawEvents: null, rawSurveys: null, model: null, loadedAt: null, asOf: {},
+    rawApp: null, appSummary: null, appModel: null,
     activeView: 'overview', search: '', eventName: 'all', eventPage: 0, stale: false,
-    rangeTo: null, rangeDays: 7, committedRangeTo: null, committedRangeDays: null
+    rangeTo: null, rangeDays: 7, committedRangeTo: null, committedRangeDays: null,
+    revealEmails: false, revealJournal: false
   };
 
   function byId(id) { return document.getElementById(id); }
@@ -120,6 +124,75 @@
     return feeds;
   }
 
+  async function fetchAppJson(url, label) {
+    var response;
+    try {
+      response = await fetch(url.toString(), { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' } });
+    } catch (err) {
+      throw apiError(0, 'Cloudflare application data could not be reached.', err && err.message);
+    }
+    if (response.status === 401 || response.status === 403) {
+      throw apiError(response.status, 'Founder access was denied or has expired.', 'Cloudflare Access returned HTTP ' + response.status + '. Re-open this protected page through the approved identity provider.');
+    }
+    if (!response.ok) {
+      var snippet = '';
+      try { snippet = (await response.text()).slice(0, 240); } catch (_) {}
+      throw apiError(response.status, 'The ' + label + ' feed returned an error.', 'HTTP ' + response.status + (snippet ? ' · ' + snippet : ''));
+    }
+    var type = response.headers.get('content-type') || '';
+    if (type.indexOf('application/json') === -1) {
+      throw apiError(response.status, 'The protected application API did not return data.', 'Expected JSON from ' + url.pathname + '; received ' + (type || 'an unknown content type') + '.');
+    }
+    try { return await response.json(); } catch (err) { throw apiError(response.status, 'The ' + label + ' response was not valid JSON.', err.message); }
+  }
+
+  async function fetchAppSnapshot() {
+    var url = new URL(APP_API_ROOT, window.location.origin);
+    url.searchParams.set('dataset', 'snapshot');
+    var payload = await fetchAppJson(url, 'application snapshot');
+    var snapshot = payload && payload.snapshot;
+    if (!snapshot || snapshot.version !== 1 || !/^[a-f0-9]{64}$/.test(String(snapshot.token || '')) ||
+        !Array.isArray(snapshot.datasets) || !snapshot.counts || !snapshot.rows) {
+      throw apiError(0, 'The application snapshot has the wrong shape.', 'Expected a versioned, content-addressed snapshot with datasets, counts and rows.');
+    }
+    var expected = Object.keys(AppModel.DATASET_DESCRIPTIONS || {});
+    if (!expected.length || snapshot.datasets.join('|') !== expected.join('|')) {
+      throw apiError(0, 'The application snapshot catalog does not match this dashboard.', 'Reload after the dashboard and API are on the same release.');
+    }
+    var countKeys = Object.keys(snapshot.counts).sort().join('|');
+    var rowKeys = Object.keys(snapshot.rows).sort().join('|');
+    var expectedKeys = expected.slice().sort().join('|');
+    if (countKeys !== expectedKeys || rowKeys !== expectedKeys) {
+      throw apiError(0, 'The application snapshot contains an unexpected dataset.', 'Counts and rows must exactly match the protected data catalog.');
+    }
+    var total = 0;
+    expected.forEach(function (name) {
+      var count = snapshot.counts[name];
+      if (!Array.isArray(snapshot.rows[name]) || !Number.isSafeInteger(count) || count < 0 || snapshot.rows[name].length !== count) {
+        throw apiError(0, 'The ' + name + ' snapshot failed its integrity check.', 'The declared row count does not match the delivered rows.');
+      }
+      total += count;
+    });
+    if (!Number.isSafeInteger(snapshot.total) || snapshot.total < 0 || total !== snapshot.total) {
+      throw apiError(0, 'The application snapshot total failed its integrity check.', 'The declared total does not match the sum of dataset rows.');
+    }
+    return {
+      rows: snapshot.rows,
+      summary: { datasets: snapshot.datasets.slice(), counts: Object.assign({}, snapshot.counts) },
+      snapshotToken: snapshot.token
+    };
+  }
+
+  async function refreshEverything() {
+    var result = await Promise.all([loadAllFeeds(), fetchAppSnapshot()]);
+    commitFeeds(result[0]);
+    state.rawApp = result[1].rows;
+    state.appSummary = result[1].summary;
+    state.revealEmails = false;
+    state.revealJournal = false;
+    return result;
+  }
+
   function selectedRange() {
     var days = Number(byId('windowSelect').value), now = new Date(), from = null;
     if (days > 0) from = new Date(now.getTime() - days * 86400000).toISOString();
@@ -199,7 +272,7 @@
       document.querySelectorAll('[data-view-panel]').forEach(function (el) { el.hidden = true; });
     }
     try {
-      await refreshData();
+      await refreshEverything();
       state.loadedAt = new Date();
       state.eventPage = 0;
       applyModel(true);
@@ -208,7 +281,8 @@
       byId('loadingShell').hidden = true;
       byId('searchInput').disabled = false;
       byId('buildSelect').disabled = false;
-      setStatus('ready', 'Verified · ' + n(state.rawEvents.length) + ' events · ' + n(state.rawSurveys.length) + ' surveys');
+      var appRows = Object.keys(state.rawApp).reduce(function (total, key) { return total + state.rawApp[key].length; }, 0);
+      setStatus('ready', 'Verified · ' + n(state.rawEvents.length) + ' events · ' + n(state.rawSurveys.length) + ' surveys · ' + n(appRows) + ' app rows');
       byId('footerFreshness').textContent = 'Verified ' + date(state.loadedAt.toISOString());
     } catch (err) {
       state.stale = hadData;
@@ -242,6 +316,7 @@
     var requested = byId('buildSelect').value || 'all';
     state.model = buildViewModel(state.rawEvents, state.rawSurveys, requested);
     if (resetBuildOptions) populateBuilds(state.model.available_builds, requested);
+    state.appModel = AppModel.build(state.rawApp, state.appSummary, state.model);
     populateEventNames();
     renderAll();
     showView(state.activeView);
@@ -266,7 +341,9 @@
   }
 
   function renderAll() {
-    renderOverview(); renderFunnel(); renderPlayers(); renderSurveys(); renderEvents(); renderBuilds(); renderTech(); renderCrashes();
+    renderOverview(); renderInsights(); renderFunnel(); renderPlayers(); renderSurveys();
+    renderAccounts(); renderProgress(); renderJournals(); renderQuality(); renderContent(); renderMigration(); renderCatalog();
+    renderEvents(); renderBuilds(); renderTech(); renderCrashes();
   }
 
   function card(label, value, note, tone) {
@@ -293,12 +370,203 @@
     });
     byId('overviewJourney').innerHTML = '<div class="journey-list">' + rows.join('') + '</div>';
     var signals = [
-      ['API rows loaded', n(state.rawEvents.length + state.rawSurveys.length)],
+      ['Beta rows loaded', n(state.rawEvents.length + state.rawSurveys.length)],
+      ['Application rows loaded', n(state.appModel.catalog.reduce(function (total, row) { return total + row.loaded; }, 0))],
+      ['Cloudflare accounts', n(state.appModel.accounts.identities)],
       ['Entry builds seen', n(state.model.available_builds.length)],
       ['Crash groups', n(state.model.crashes.length)],
       ['Dashboard loaded', state.loadedAt ? date(state.loadedAt.toISOString()) : 'just now']
     ];
     byId('overviewSignals').innerHTML = '<div class="signal-list">' + signals.map(function (r) { return '<div class="signal"><span>' + esc(r[0]) + '</span><strong>' + esc(r[1]) + '</strong></div>'; }).join('') + '</div>';
+  }
+
+  function distributionHtml(map, emptyText) {
+    var keys = Object.keys(map || {}).sort(function (a, b) { return map[b] - map[a] || a.localeCompare(b); });
+    var max = Math.max.apply(Math, keys.map(function (key) { return map[key]; }).concat([1]));
+    if (!keys.length) return '<p class="muted">' + esc(emptyText || 'No stored values yet.') + '</p>';
+    return keys.map(function (key) {
+      return '<div class="distribution-row"><span>' + esc(key.replace(/_/g, ' ')) + '</span><div class="bar"><i style="width:' + ((map[key] / max) * 100) + '%"></i></div><strong>' + n(map[key]) + '</strong></div>';
+    }).join('');
+  }
+
+  function statusBadge(value) {
+    var text = String(value || 'unknown');
+    var cls = /failed|disabled|dead|mismatch|attention/i.test(text) ? ' danger' : (/pending|open|triaged|prepared|running|progress|awaiting/i.test(text) ? ' warn' : '');
+    return '<span class="status-badge' + cls + '">' + esc(text.replace(/_/g, ' ')) + '</span>';
+  }
+
+  function compactId(value) {
+    var text = String(value || 'unknown');
+    return text.length > 15 ? text.slice(0, 6) + '…' + text.slice(-6) : text;
+  }
+
+  function maskEmail(value) {
+    var text = String(value || 'Not stored'), parts = text.split('@');
+    if (parts.length !== 2) return '••••••';
+    return (parts[0].slice(0, 1) || '•') + '••••@' + parts[1];
+  }
+
+  function renderInsights() {
+    var report = state.appModel.insights, sampleLabels = { players: 'Players', surveys: 'Surveys', events: 'Events', accounts: 'Accounts', bug_reports: 'Bug reports' };
+    byId('insightBasis').innerHTML = Object.keys(sampleLabels).map(function (key) {
+      return '<div class="basis-chip"><span>' + esc(sampleLabels[key]) + '</span><strong>' + n(report.samples[key]) + '</strong></div>';
+    }).join('');
+    var tones = ['var(--red)', 'var(--gold)', 'var(--blue)', 'var(--cyan)', 'var(--muted)'];
+    byId('insightList').innerHTML = report.recommendations.map(function (item, index) {
+      return '<article class="recommendation" style="--recommendation-tone:' + tones[Math.min(item.severity, tones.length - 1)] + '">' +
+        '<div class="recommendation-rank">' + (index + 1) + '</div><div><h3>' + esc(item.title) + '</h3><p>' + esc(item.why) + '</p>' +
+        '<p class="next-action"><strong>Next:</strong> ' + esc(item.action) + '</p><span class="evidence-line">Evidence · ' + esc(item.evidence) + '</span></div>' +
+        '<span class="confidence ' + esc(item.confidence.key) + '" title="' + esc(item.confidence.note) + '">' + esc(item.confidence.label) + '</span></article>';
+    }).join('');
+    byId('themeRows').innerHTML = report.themes.length ? report.themes.map(function (theme) {
+      return '<div class="theme-row"><div class="theme-head"><strong>' + esc(theme.label) + '</strong><strong>' + n(theme.mentions) + ' / ' + n(theme.responses) + '</strong></div>' +
+        theme.excerpts.map(function (hit) { return '<blockquote>“' + esc(hit.excerpt) + '”</blockquote>'; }).join('') + '</div>';
+    }).join('') : '<p class="muted">No written-feedback theme has a verified keyword match in this selection.</p>';
+    byId('insightCaveats').innerHTML = report.caveats.map(function (text) { return '<li>' + esc(text) + '</li>'; }).join('');
+  }
+
+  function renderAccounts() {
+    var accounts = state.appModel.accounts;
+    byId('accountCards').innerHTML = [
+      card('Accounts', n(accounts.identities), 'Cloudflare identity rows', 'var(--blue)'),
+      card('Saved profiles', n(accounts.profiles), accounts.profile_coverage_pct == null ? 'coverage unavailable' : accounts.profile_coverage_pct + '% account coverage', 'var(--cyan)'),
+      card('Average XP', accounts.average_xp == null ? '—' : n(accounts.average_xp), n(accounts.profiles) + ' profiles', 'var(--gold)'),
+      card('Median shells', accounts.median_shells == null ? '—' : n(accounts.median_shells), 'per saved profile', 'var(--green)')
+    ].join('');
+    byId('revealEmailsButton').textContent = state.revealEmails ? 'Hide account emails' : 'Reveal account emails';
+    var roster = accounts.roster.filter(matches);
+    byId('accountEmpty').hidden = !!roster.length;
+    byId('accountRows').innerHTML = roster.map(function (entry) {
+      var identity = entry.identity || {}, profile = entry.profile || {};
+      var email = identity.email_original || identity.email_normalized;
+      return '<tr><td class="mono" title="' + esc(entry.user_id) + '">' + esc(compactId(entry.user_id)) + '</td><td class="' + (state.revealEmails ? '' : 'masked') + '">' + esc(state.revealEmails ? (email || 'Not stored') : maskEmail(email)) + '</td>' +
+        '<td>' + statusBadge(identity.status) + '</td><td>' + esc(identity.source_provider || 'unknown') + '</td><td class="mono">' + valueOrDash(profile.player_level) + '</td>' +
+        '<td class="mono">' + valueOrDash(profile.xp) + '</td><td class="mono">' + valueOrDash(profile.shells) + '</td><td>' + esc(date(profile.updated_at || identity.updated_at || identity.created_at)) + '</td></tr>';
+    }).join('');
+  }
+
+  function renderProgress() {
+    var progress = state.appModel.progress;
+    byId('progressCards').innerHTML = [
+      card('Saved profiles', n(progress.profile_count), 'level, XP and shells', 'var(--blue)'),
+      card('Active streaks', n(progress.active_streaks), n(progress.streak_rows) + ' streak rows', 'var(--gold)'),
+      card('Best streak', progress.best_streak == null ? '—' : n(progress.best_streak) + ' days', 'highest stored value', 'var(--green)'),
+      card('Mastery owners', n(progress.mastery_owners), n(progress.canonical_mastery_rows) + ' canonical skill scores', 'var(--cyan)')
+    ].join('');
+    byId('levelDistribution').innerHTML = distributionHtml(progress.levels, 'No saved profile levels yet.');
+    var streakDist = {};
+    (state.rawApp.streaks || []).forEach(function (row) {
+      var current = Number(row.streak) || 0;
+      var bucket = current === 0 ? '0 days' : current === 1 ? '1 day' : current <= 3 ? '2–3 days' : current <= 7 ? '4–7 days' : '8+ days';
+      streakDist[bucket] = (streakDist[bucket] || 0) + 1;
+    });
+    byId('streakDistribution').innerHTML = distributionHtml(streakDist, 'No streak rows yet.');
+    byId('masteryScope').textContent = n(progress.canonical_mastery_rows) + ' canonical scores from ' + n(progress.mastery_owners) + ' owners · ' +
+      n(progress.mastery_rows) + ' source rows · ' + n(progress.mastery_quarantine) + ' held for review';
+    byId('masteryEmpty').hidden = !!progress.mastery_categories.length;
+    byId('masteryRows').innerHTML = progress.mastery_categories.map(function (row) {
+      return '<tr><td><strong>' + esc(row.category.replace(/_/g, ' ')) + '</strong></td><td class="mono">' + n(row.players) + '</td><td class="mono">' + n(row.average_score) + '/100</td><td class="mono">' + n(row.median_score) + '/100</td>' +
+        '<td class="progress-cell"><div class="bar"><i style="width:' + Math.max(0, Math.min(100, row.average_score || 0)) + '%"></i></div></td></tr>';
+    }).join('');
+  }
+
+  function renderJournals() {
+    var journal = state.appModel.journal;
+    byId('journalCards').innerHTML = [
+      card('Active trades', n(journal.active_trades), n(journal.deleted_trades) + ' tombstoned', 'var(--green)'),
+      card('Active notes', n(journal.active_notes), n(journal.deleted_notes) + ' tombstoned', 'var(--blue)'),
+      card('Journal versions', n(journal.versions), n(journal.users.length) + ' accounts with activity', 'var(--gold)'),
+      card('Audit changes', n(journal.changes), n(journal.change_operations.delete || 0) + ' delete tombstones', 'var(--cyan)')
+    ].join('');
+    var users = journal.users.filter(matches);
+    byId('journalUserEmpty').hidden = !!users.length;
+    byId('journalUserRows').innerHTML = users.map(function (row) {
+      return '<tr><td class="mono" title="' + esc(row.user_id) + '">' + esc(compactId(row.user_id)) + '</td><td class="mono">' + n(row.trades) + '</td><td class="mono">' + n(row.notes) + '</td><td class="mono">' + n(row.versions) + '</td><td class="mono">' + n(row.changes) + '</td><td class="mono">' + n(row.latest_version) + '</td><td>' + esc(date(row.updated_at)) + '</td></tr>';
+    }).join('');
+    byId('revealJournalButton').textContent = state.revealJournal ? 'Hide private journal entries' : 'Show private journal entries';
+    byId('journalDetails').hidden = !state.revealJournal;
+    if (!state.revealJournal) { byId('journalTradeRows').innerHTML = ''; byId('journalNoteRows').innerHTML = ''; return; }
+    function privateRows(dataset, idKey, dataKey, emptyText) {
+      var source = (state.rawApp[dataset] || []).filter(matches);
+      if (!source.length) return '<p class="muted">' + esc(emptyText) + '</p>';
+      return source.map(function (row) {
+        return '<article class="private-record"><header><span class="mono">' + esc(compactId(row.user_id)) + ' · ' + esc(row[idKey]) + '</span><span>' + esc(row.deleted_at ? 'Deleted ' + date(row.deleted_at) : date(row.updated_at || row.created_at)) + '</span></header>' +
+          '<details><summary>Open private contents</summary><pre>' + esc(json(row[dataKey])) + '</pre></details></article>';
+      }).join('');
+    }
+    byId('journalTradeRows').innerHTML = privateRows('journal_trades', 'trade_id', 'trade_data', 'No trade entries match this search.');
+    byId('journalNoteRows').innerHTML = privateRows('journal_notes', 'note_id', 'note_data', 'No note entries match this search.');
+  }
+
+  function renderQuality() {
+    var quality = state.appModel.quality;
+    byId('qualityCards').innerHTML = [
+      card('Bug reports', n(quality.bugs.length), n(quality.open_bugs) + ' open or triaged', quality.open_bugs ? 'var(--red)' : 'var(--green)'),
+      card('Bug reporters', n(quality.bug_reporters), 'identified reporters', 'var(--orange)'),
+      card('Raw visits', n(quality.raw_visits), n(quality.visit_players) + ' identified players', 'var(--blue)'),
+      card('Daily rollup', n(quality.daily_rollup_visits), quality.rollup_matches_raw ? 'matches raw visit count' : 'reported separately; counts differ', quality.rollup_matches_raw ? 'var(--green)' : 'var(--gold)')
+    ].join('');
+    byId('visitPaths').innerHTML = distributionHtml(quality.paths, 'No raw site visits yet.');
+    byId('visitDevices').innerHTML = distributionHtml(quality.devices, 'No visit device values yet.');
+    var bugs = quality.bugs.filter(matches);
+    byId('bugScope').textContent = n(bugs.length) + ' shown · ' + n(quality.bugs.length) + ' stored';
+    byId('bugEmpty').hidden = !!bugs.length;
+    byId('bugRows').innerHTML = bugs.map(function (row) {
+      return '<tr><td>' + esc(date(row.created_at || row.source_created_at)) + '</td><td>' + statusBadge(row.status) + '</td><td class="mono">' + esc(compactId(row.user_id || row.player_id || 'anonymous')) + '</td>' +
+        '<td>' + esc(String(row.message || '').replace(/\s+/g, ' ').slice(0, 160)) + (String(row.message || '').length > 160 ? '…' : '') + '</td><td><details class="raw"><summary class="raw-button">Open</summary><pre>' + esc(json({ message: row.message, context: row.context, source: row.ingest_source })) + '</pre></details></td></tr>';
+    }).join('');
+  }
+
+  function renderContent() {
+    var content = state.appModel.content;
+    var stages = [
+      ['Moments', 'content_events'], ['Briefs', 'content_briefs'], ['Assets', 'content_assets'],
+      ['Generated', 'content_generated'], ['Published', 'published_posts']
+    ];
+    byId('contentPipeline').innerHTML = stages.map(function (stage) {
+      return '<article class="pipeline-step"><span>' + esc(stage[0]) + '</span><strong>' + n(content.counts[stage[1]]) + '</strong></article>';
+    }).join('');
+    byId('contentEventStatus').innerHTML = distributionHtml(content.event_status, 'No content events yet.');
+    byId('outboxStatus').innerHTML = distributionHtml(content.outbox_status, 'No outbox work yet.');
+    var events = content.events.filter(matches).slice(0, 200);
+    byId('contentEventScope').textContent = n(events.length) + ' shown · first 200 matching moments';
+    byId('contentEventEmpty').hidden = !!events.length;
+    byId('contentEventRows').innerHTML = events.map(function (row) {
+      return '<tr><td>' + esc(date(row.ts || row.created_at)) + '</td><td class="mono">' + esc(row.event_type || 'unknown') + '</td><td class="mono">' + esc(compactId(row.player_id || 'anonymous')) + '</td>' +
+        '<td class="mono">' + valueOrDash(row.significance_score) + '</td><td>' + statusBadge(row.processed_status) + '</td><td><details class="raw"><summary class="raw-button">Inspect</summary><pre>' + esc(json({ payload: row.payload, educational_metadata: row.educational_metadata, content_flags: row.content_flags })) + '</pre></details></td></tr>';
+    }).join('');
+  }
+
+  function renderMigration() {
+    var migration = state.appModel.migration, title, message, cls = '';
+    if (migration.status === 'stored_runs_reconciled') { title = 'Stored import runs pass reconciliation'; message = 'Every recorded run has a matching count-and-digest check. Confirm the source export manifest covers every expected Supabase table before retirement.'; cls = ' ready'; }
+    else if (migration.status === 'attention') { title = 'Migration needs attention'; message = 'At least one import run failed or rolled back. Supabase must remain available until the discrepancy is resolved.'; cls = ' attention'; }
+    else if (migration.status === 'in_progress') { title = 'Historical migration is in progress'; message = 'Import evidence exists, but not every run has completed with matching reconciliation.'; }
+    else { title = 'Historical import has not started'; message = 'Cloudflare can collect new data now. Supabase history cannot be declared migrated until a verified export is imported and reconciled.'; }
+    byId('migrationState').className = 'migration-state' + cls;
+    byId('migrationState').innerHTML = '<h3>' + esc(title) + '</h3><p>' + esc(message) + '</p>';
+    byId('migrationCards').innerHTML = [
+      card('Import runs', n(migration.runs.length), n(migration.open_runs) + ' not reconciled', 'var(--blue)'),
+      card('Ledger rows', n(migration.ledger_rows), 'per-row import evidence', 'var(--cyan)'),
+      card('Quarantine', n(migration.quarantine_rows), 'held for explicit review', migration.quarantine_rows ? 'var(--gold)' : 'var(--green)'),
+      card('Parity checks', n(migration.matched_checks) + ' / ' + n(migration.reconciliations.length), 'digest-and-count matches', migration.all_matched ? 'var(--green)' : 'var(--gold)')
+    ].join('');
+    byId('migrationRunEmpty').hidden = !!migration.runs.length;
+    byId('migrationRunRows').innerHTML = migration.runs.map(function (row) {
+      return '<tr><td>' + esc(date(row.started_at)) + '</td><td class="mono">' + esc(row.dataset) + '</td><td>' + statusBadge(row.status) + '</td><td class="mono">' + n(row.source_count) + '</td><td class="mono">' + n(row.imported_count) + '</td><td class="mono">' + n(row.quarantine_count) + '</td><td>' + esc(date(row.finished_at)) + '</td></tr>';
+    }).join('');
+    byId('reconciliationEmpty').hidden = !!migration.reconciliations.length;
+    byId('reconciliationRows').innerHTML = migration.reconciliations.map(function (row) {
+      return '<tr><td>' + esc(date(row.checked_at)) + '</td><td class="mono">' + esc(row.dataset) + '</td><td class="mono">' + n(row.source_count) + '</td><td class="mono">' + n(row.target_count) + '</td><td class="mono">' + n(row.quarantine_count) + '</td><td>' + statusBadge(Number(row.matched) === 1 ? 'matched' : 'mismatch') + '</td></tr>';
+    }).join('');
+  }
+
+  function renderCatalog() {
+    byId('catalogRows').innerHTML = state.appModel.catalog.map(function (row) {
+      var base = APP_API_ROOT + '?dataset=' + encodeURIComponent(row.name) + '&mode=export&format=';
+      return '<tr><td>' + esc(row.group) + '</td><td><strong class="mono">' + esc(row.name) + '</strong></td><td>' + esc(row.description) + '</td><td class="mono">' + n(row.count) + '</td><td class="mono ' + (row.count === row.loaded ? 'good' : 'danger') + '">' + n(row.loaded) + '</td>' +
+        '<td><a class="text-link" href="' + esc(base + 'csv') + '">CSV</a> · <a class="text-link" href="' + esc(base + 'json') + '">JSON</a></td></tr>';
+    }).join('');
   }
 
   function renderFunnel() {
@@ -428,6 +696,8 @@
     byId('buildSelect').addEventListener('change', function () { state.eventPage = 0; applyModel(false); });
     byId('searchInput').addEventListener('input', function (e) { state.search = e.target.value.trim().toLowerCase(); state.eventPage = 0; renderAll(); });
     byId('eventNameSelect').addEventListener('change', function (e) { state.eventName = e.target.value; state.eventPage = 0; renderEvents(); });
+    byId('revealEmailsButton').addEventListener('click', function () { state.revealEmails = !state.revealEmails; renderAccounts(); });
+    byId('revealJournalButton').addEventListener('click', function () { state.revealJournal = !state.revealJournal; renderJournals(); });
     document.querySelector('.tabs').addEventListener('click', function (e) { var tab = e.target.closest('[data-view]'); if (tab) showView(tab.getAttribute('data-view')); });
     document.body.addEventListener('click', function (e) {
       var go = e.target.closest('[data-go]'); if (go) showView(go.getAttribute('data-go'));
@@ -443,6 +713,8 @@
       fetchAll: fetchAll,
       loadAllFeeds: loadAllFeeds,
       refreshData: refreshData,
+      appApiRoot: APP_API_ROOT,
+      fetchAppSnapshot: fetchAppSnapshot,
       buildViewModel: buildViewModel,
       setRange: function (days, now) { state.rangeDays = days; state.rangeTo = now; },
       snapshot: function () {
@@ -454,10 +726,10 @@
     };
     return;
   }
-  if (!Model || typeof Model.build !== 'function') {
-    setStatus('error', 'Dashboard model failed to load');
+  if (!Model || typeof Model.build !== 'function' || !AppModel || typeof AppModel.build !== 'function') {
+    setStatus('error', 'Dashboard models failed to load');
     byId('loadingShell').hidden = true;
-    showError(apiError(0, 'The dashboard model failed to load.', 'beta-model.js was missing or invalid.'), false);
+    showError(apiError(0, 'The dashboard model failed to load.', 'beta-model.js or app-model.js was missing or invalid.'), false);
     return;
   }
   bind();

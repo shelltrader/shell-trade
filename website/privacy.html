@@ -26,7 +26,7 @@
 <body>
   <div class="wrap">
     <h1>Privacy Policy</h1>
-    <div class="meta">ChartQuest &middot; Last updated 15 August 2026</div>
+    <div class="meta">ChartQuest &middot; Last updated 23 August 2026</div>
 
     <p>ChartQuest is a game that teaches you about charts and trading. This page explains, in plain words, what information we keep and how we look after it. If anything here is unclear, email us at <a href="mailto:habitsimulator@gmail.com">habitsimulator@gmail.com</a>.</p>
 
@@ -37,9 +37,10 @@
     <h2>What we collect</h2>
     <ul>
       <li><strong>Beta progress marks.</strong> While the game is in beta we record when you reach each step — tutorial started, first trade, boss fight, Journal found, survey done — plus how long a visit lasted, whether you had been before, and whether the game crashed. Each mark is tied to a <strong>random string made up on your device</strong> (something like <code>p-4nb6ad7hgh</code>). It is not your name and it is not your email, and we cannot use it to work out who you are.</li>
+      <li><strong>Game-learning events.</strong> During the beta we may record practice outcomes, lesson/Guardian progress and compact replay details used to understand whether a teaching moment worked. These use the same random device string, not your name or email, and are visible only in the private ChartQuest dashboard.</li>
       <li><strong>Basic device facts.</strong> Whether you are on a phone, tablet or computer, which browser, and the size of your screen. This tells us if something is broken on, say, small iPhones.</li>
       <li><strong>Your beta survey answers</strong>, if you choose to fill the survey in. Please do not type anything private into the boxes — write about the game.</li>
-      <li><strong>If you make an account:</strong> your email address and a password. The password is handled by our sign-in provider (Supabase) and stored <strong>scrambled (hashed)</strong> — we never see or store your real password.</li>
+      <li><strong>If you make an account:</strong> your email address and a password. ChartQuest's account service stores only a strong one-way password hash — never your readable password. Sign-in uses a secure, same-site session cookie; the game does not save your password or a login token in browser storage.</li>
       <li><strong>Your game progress:</strong> your level, your in-game "shells" score, your practice-trade journal, notes and daily streak. This is only saved to our servers when you are signed in.</li>
       <li><strong>A count of visits</strong>, with no name or email attached.</li>
       <li><strong>Bug reports:</strong> if you send one, we keep the message you typed and basic game info so we can fix the problem.</li>
@@ -59,10 +60,10 @@
 
     <h2>Where your information is kept</h2>
     <ul>
-      <li><strong>Cloudflare</strong> — hosts the website and stores new beta progress marks and survey responses. The private results dashboard is restricted to the ChartQuest team.</li>
-      <li><strong>Supabase</strong> — still stores signed-in accounts and cloud progress while those features are being migrated. It also holds earlier beta records and may receive a fallback copy if the Cloudflare beta endpoint cannot confirm a write. Your account data is protected so that only your own signed-in account can read it.</li>
+      <li><strong>Cloudflare</strong> — hosts the website and stores accounts, signed-in game progress, beta progress marks, survey responses, bug reports and captured game-learning events. The private results dashboard is restricted to the ChartQuest team. The live game sends all new server data through same-origin Cloudflare services.</li>
+      <li><strong>Historical migration archive.</strong> Earlier beta/account records may temporarily remain with our previous database provider only while we verify recovery and reconciliation. The production game sends no new account, gameplay, survey or bug-report data there. We will remove that archive after the migration has been verified.</li>
       <li><strong>Google Fonts</strong> — delivers the lettering used on the site.</li>
-      <li><strong>Public market data</strong> — we read public market prices to draw the charts. We do <strong>not</strong> send any of your information to them.</li>
+      <li><strong>Public market data</strong> — Cloudflare reads public market prices for the game's display. Your browser does not contact those market providers, and we do <strong>not</strong> send them your information.</li>
     </ul>
 
     <h2>How long we keep it</h2>
@@ -74,6 +75,7 @@
       <li>You can skip the survey. Nothing in the game is locked behind it.</li>
       <li>You can ask us to show you, or delete, anything tied to your account by emailing <a href="mailto:habitsimulator@gmail.com">habitsimulator@gmail.com</a>.</li>
       <li>You can sign out at any time from the account menu in the game.</li>
+      <li>If your account was moved from the earlier system, you may receive a one-time restore link and choose a new password. The restore code is single-use and is removed from the address bar as soon as the game opens it.</li>
     </ul>
 
     <h2>Children and families</h2>

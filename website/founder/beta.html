@@ -26,8 +26,8 @@
 
   <aside class="cutover-note" aria-label="Data history notice">
     <strong>Cloudflare is the source shown here.</strong>
-    Build 367 and earlier Supabase test history is intentionally not merged until its export is verified and reconciled.
-    An empty result means no verified Cloudflare rows—not zero all-time players.
+    Recovered pre-cutover beta events and surveys appear only after their archive counts and hashes are verified.
+    Application and account history is tracked separately in Migration. An empty result means no verified Cloudflare rows—not zero all-time players.
   </aside>
 
   <section class="error-panel" id="errorPanel" role="alert" hidden>
@@ -113,7 +113,7 @@
           <div id="overviewJourney"></div>
         </article>
         <article class="panel">
-          <div class="panel-head"><h3>Signal check</h3><span class="quiet">post-cutover</span></div>
+          <div class="panel-head"><h3>Signal check</h3><span class="quiet">selected Cloudflare data</span></div>
           <div id="overviewSignals"></div>
         </article>
       </div>
@@ -220,15 +220,15 @@
 
     <section class="view" id="view-migration" data-view-panel="migration" hidden>
       <div class="section-heading">
-        <div><p class="eyebrow">DATA CUTOVER</p><h2>Migration and reconciliation</h2></div>
-        <p class="section-note">Supabase can only be retired after every imported dataset has count-and-digest parity or an explained quarantine.</p>
+        <div><p class="eyebrow">DATA CUTOVER</p><h2>Application and account migration</h2></div>
+        <p class="section-note">This panel covers application and account history. Recovered beta events and surveys are preserved and reconciled independently in the protected beta archive.</p>
       </div>
       <div class="migration-state" id="migrationState"></div>
       <div class="kpi-grid compact-kpis" id="migrationCards"></div>
       <div class="panel table-panel"><div class="panel-head"><h3>Import runs</h3></div><div class="table-scroll"><table>
         <thead><tr><th>Started</th><th>Dataset</th><th>Status</th><th>Source</th><th>Imported</th><th>Quarantine</th><th>Finished</th></tr></thead>
         <tbody id="migrationRunRows"></tbody>
-      </table></div><div class="empty" id="migrationRunEmpty" hidden>No historical import has run yet.</div></div>
+      </table></div><div class="empty" id="migrationRunEmpty" hidden>No application or account history import has run yet.</div></div>
       <div class="panel table-panel spaced-panel"><div class="panel-head"><h3>Reconciliation checks</h3></div><div class="table-scroll"><table>
         <thead><tr><th>Checked</th><th>Dataset</th><th>Source</th><th>Cloudflare</th><th>Quarantine</th><th>Digest parity</th></tr></thead>
         <tbody id="reconciliationRows"></tbody>

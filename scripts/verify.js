@@ -827,6 +827,15 @@ function run() {
           detail.push(label + ' PASS' + (match ? ' (' + match[1] + ')' : ''));
         }
       }
+      const archive = cp.spawnSync('python3', [path.join('scripts', 'cloudflare_beta_archive.test.py')], {
+        cwd: ROOT, encoding: 'utf8', timeout: 30000,
+      });
+      if (archive.status !== 0) {
+        failures.push('recovered beta archive contracts: ' + String(archive.stderr || archive.stdout || 'exit ' + archive.status).trim().slice(0, 180));
+      } else {
+        const match = String(archive.stderr || archive.stdout || '').match(/Ran (\d+) tests/);
+        detail.push('recovered beta archive contracts PASS' + (match ? ' (' + match[1] + ' tests)' : ''));
+      }
       add('25', 'Build-369 Cloudflare-only data plane + no-loss clients', failures.length ? 'FAIL' : 'PASS',
         failures.length ? failures.join(' · ') : detail.join(' · '));
     } catch (e) {

@@ -63,7 +63,7 @@
 })(function () {
   'use strict';
 
-  var VERSION = '1.0.0';
+  var VERSION = '1.0.1';
 
   /* ════════════════════════════════════════════════════════════════════════════════════════
      0 · CONSTANTS
@@ -314,6 +314,57 @@
     if (p == null) return {};
     if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { return {}; } }
     return (typeof p === 'object' && !Array.isArray(p)) ? p : {};
+  }
+
+  /* A developer browser normally mints the same ordinary `p-…` id as a real tester, so an
+     id-prefix filter can never catch it. The tracker therefore stamps every row from ?dev,
+     localhost, cq_dev or _CQ_DEV with props.dev. Older console-driven completion checks stamp
+     beta_completed.props.reason = 'dev'. Both signals exclude the WHOLE player: keeping the
+     untagged session_end or survey rows from the same browser would manufacture a partial real
+     journey out of a known test run.
+
+     This deliberately mirrors scripts/founder_report.py's dev_flagged() + dev_finishers().
+     Truthiness is a closed set — literal 0/'0'/false must remain real data. Prefix counts and
+     the two marker counts can overlap; excluded_players below is their set union. */
+  function exclusionIndex(events, surveys) {
+    var ids = {}, prefix = {}, dev = {}, devFinish = {};
+
+    function mark(pid, bucket) {
+      if (pid == null || pid === '') return;
+      pid = String(pid);
+      ids[pid] = 1;
+      bucket[pid] = 1;
+    }
+
+    var ev = arr(events), sv = arr(surveys), i, row, pid, props, flag;
+    for (i = 0; i < ev.length; i++) {
+      row = ev[i];
+      if (!row) continue;
+      pid = row.player_id;
+      if (isTestPlayer(pid)) mark(pid, prefix);
+      props = propsOf(row);
+      flag = props.dev;
+      if (flag === 1 || flag === '1' || flag === true || flag === 'true') mark(pid, dev);
+      if (String(row.name || '') === 'beta_completed' &&
+          String(props.reason == null ? '' : props.reason).toLowerCase() === 'dev') {
+        mark(pid, devFinish);
+      }
+    }
+    /* A survey-only QA identity still has to disappear even when it emitted no event in the
+       selected window. A survey has no dev marker of its own, so ordinary p-* survey-only rows
+       cannot safely be classified as development traffic without an accompanying event. */
+    for (i = 0; i < sv.length; i++) {
+      row = sv[i];
+      if (row && isTestPlayer(row.player_id)) mark(row.player_id, prefix);
+    }
+
+    return {
+      ids: ids,
+      players: Object.keys(ids),
+      prefix_players: Object.keys(prefix).length,
+      dev_players: Object.keys(dev).length,
+      dev_finish_players: Object.keys(devFinish).length
+    };
   }
 
   /* PARITY DECISION 1. `ts` first, `created_at` as the fallback. */
@@ -1582,18 +1633,33 @@
     }
 
     /* ── the pipeline, in this order, always: window → test exclusion → build cohort ────────
-       Order matters. Excluding test ids first is what makes meta.excluded_* mean "team testing
+       Order matters. Excluding test players first is what makes meta.excluded_* mean "team testing
        removed from THIS window"; filtering by build first would make the exclusion count depend
        on which build tab happened to be open. */
-    function excludeTest(rows) {
-      if (includeTest) return { rows: rows, ids: [], events: 0 };
-      var keep = [], removedPlayers = {}, removed = 0;
-      for (var i = 0; i < rows.length; i++) {
-        var pid = rows[i] && rows[i].player_id;
-        if (isTestPlayer(pid)) { removedPlayers[pid] = 1; removed++; continue; }
-        keep.push(rows[i]);
+    function excludeTest(raw) {
+      if (includeTest) {
+        return {
+          events: raw.events,
+          surveys: raw.surveys,
+          index: { ids: {}, players: [], prefix_players: 0, dev_players: 0, dev_finish_players: 0 },
+          excluded_events: 0,
+          excluded_surveys: 0
+        };
       }
-      return { rows: keep, ids: Object.keys(removedPlayers), events: removed };
+      var index = exclusionIndex(raw.events, raw.surveys), keepEv = [], keepSv = [], i;
+      for (i = 0; i < raw.events.length; i++) {
+        if (!index.ids[String(raw.events[i] && raw.events[i].player_id)]) keepEv.push(raw.events[i]);
+      }
+      for (i = 0; i < raw.surveys.length; i++) {
+        if (!index.ids[String(raw.surveys[i] && raw.surveys[i].player_id)]) keepSv.push(raw.surveys[i]);
+      }
+      return {
+        events: keepEv,
+        surveys: keepSv,
+        index: index,
+        excluded_events: raw.events.length - keepEv.length,
+        excluded_surveys: raw.surveys.length - keepSv.length
+      };
     }
 
     function applyBuildCohort(ev, sv, cohort) {
@@ -1610,28 +1676,24 @@
 
     function prepare(lo, hi) {
       var raw = sliceRows(lo, hi);
-      var evX = excludeTest(raw.events);
-      var svX = excludeTest(raw.surveys);
-      var cohort = entryBuildByPlayer(evX.rows);
-      var filtered = applyBuildCohort(evX.rows, svX.rows, cohort);
+      var clean = excludeTest(raw);
+      var cohort = entryBuildByPlayer(clean.events);
+      var filtered = applyBuildCohort(clean.events, clean.surveys, cohort);
       /* Re-derive the cohort from the KEPT rows once a build filter is on. Reusing the full map
          made the builds table render the other cohorts as ghost rows — "(unknown): 19 players,
          0 sessions, 0% completion" — while the rest of the dashboard correctly showed 2 players.
          A row that says 19 players completed nothing is a fabricated regression. */
       if (buildFilter) cohort = entryBuildByPlayer(filtered.events);
-      /* Union the excluded ids across BOTH tables. A team id that only ever submitted a survey
-         (GATE-B-003 rated the beta 9/10 and was being averaged in with the real testers) has no
-         events to be counted by, and would otherwise vanish from the exclusion notice entirely —
-         which is the one thing CONTRACT §0.7 forbids: exclusions are shown, never silent. */
-      var excludedIds = {}, i;
-      for (i = 0; i < evX.ids.length; i++) excludedIds[evX.ids[i]] = 1;
-      for (i = 0; i < svX.ids.length; i++) excludedIds[svX.ids[i]] = 1;
       return {
         events: filtered.events,
         surveys: filtered.surveys,
         cohort: cohort,
-        excluded_players: Object.keys(excludedIds).length,
-        excluded_events: evX.events
+        excluded_players: clean.index.players.length,
+        excluded_events: clean.excluded_events,
+        excluded_surveys: clean.excluded_surveys,
+        excluded_prefix_players: clean.index.prefix_players,
+        excluded_dev_players: clean.index.dev_players,
+        excluded_dev_finish_players: clean.index.dev_finish_players
       };
     }
 
@@ -1774,6 +1836,10 @@
         build_filter: buildFilter,
         excluded_players: cur.excluded_players,
         excluded_events: cur.excluded_events,
+        excluded_surveys: cur.excluded_surveys,
+        excluded_prefix_players: cur.excluded_prefix_players,
+        excluded_dev_players: cur.excluded_dev_players,
+        excluded_dev_finish_players: cur.excluded_dev_finish_players,
         event_count: cur.events.length,
         survey_count: cur.surveys.length
       },
@@ -1818,6 +1884,7 @@
     HEALTH_COMPONENTS: HEALTH_COMPONENTS,
     UNKNOWN_BUILD: UNKNOWN_BUILD,
     isTestPlayer: isTestPlayer,
+    exclusionIndex: exclusionIndex,
     build: build,
     playerTimeline: playerTimeline,
     healthScore: healthScore,

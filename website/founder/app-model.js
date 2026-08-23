@@ -385,7 +385,7 @@
         'Correlation in a small beta is not proof of cause. Confidence labels reflect sample size, not certainty.',
         app.migration.status === 'stored_runs_reconciled'
           ? 'Every stored import run reports parity; source-export completeness still requires a separate manifest check.'
-          : 'Supabase history is not yet fully reconciled, so this report may omit pre-cutover history.'
+          : 'Supabase application/account history is not yet fully reconciled. Recovered beta telemetry is handled through a separate protected import and verification process.'
       ]
     };
   }

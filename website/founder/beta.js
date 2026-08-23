@@ -214,8 +214,13 @@
     }
     var windowEvents = events.filter(function (row) { return row && inWindow(row, false); });
     var windowSurveys = surveys.filter(function (row) { return row && inWindow(row, true); });
-    var cleanEvents = windowEvents.filter(function (row) { return !Model.isTestPlayer(row.player_id); });
-    var cleanSurveys = windowSurveys.filter(function (row) { return !Model.isTestPlayer(row.player_id); });
+    /* Use the model's player-level exclusion index for the raw tabs too. A dev-tagged browser
+       has an ordinary p-* id and many untagged companion rows; filtering each row by prefix
+       left those rows (and its survey) visible while the headline model correctly removed the
+       player. One shared index keeps analytics, source views and exclusion counts identical. */
+    var exclusion = Model.exclusionIndex(windowEvents, windowSurveys);
+    var cleanEvents = windowEvents.filter(function (row) { return !exclusion.ids[String(row.player_id)]; });
+    var cleanSurveys = windowSurveys.filter(function (row) { return !exclusion.ids[String(row.player_id)]; });
     var cohort = Model.util.entryBuildByPlayer(cleanEvents);
     var includedEvents = build ? cleanEvents.filter(function (row) { return cohort[row.player_id] === build; }) : cleanEvents;
     var includedSurveys = build ? cleanSurveys.filter(function (row) { return cohort[row.player_id] === build; }) : cleanSurveys;
@@ -539,10 +544,10 @@
 
   function renderMigration() {
     var migration = state.appModel.migration, title, message, cls = '';
-    if (migration.status === 'stored_runs_reconciled') { title = 'Stored import runs pass reconciliation'; message = 'Every recorded run has a matching count-and-digest check. Confirm the source export manifest covers every expected Supabase table before retirement.'; cls = ' ready'; }
-    else if (migration.status === 'attention') { title = 'Migration needs attention'; message = 'At least one import run failed or rolled back. Supabase must remain available until the discrepancy is resolved.'; cls = ' attention'; }
-    else if (migration.status === 'in_progress') { title = 'Historical migration is in progress'; message = 'Import evidence exists, but not every run has completed with matching reconciliation.'; }
-    else { title = 'Historical import has not started'; message = 'Cloudflare can collect new data now. Supabase history cannot be declared migrated until a verified export is imported and reconciled.'; }
+    if (migration.status === 'stored_runs_reconciled') { title = 'Application imports pass reconciliation'; message = 'Every recorded application/account run has a matching count-and-digest check. Confirm the source export manifest covers every expected Supabase table before retirement.'; cls = ' ready'; }
+    else if (migration.status === 'attention') { title = 'Application migration needs attention'; message = 'At least one application/account import run failed or rolled back. Supabase must remain available until the discrepancy is resolved.'; cls = ' attention'; }
+    else if (migration.status === 'in_progress') { title = 'Application migration is in progress'; message = 'Application/account import evidence exists, but not every run has completed with matching reconciliation.'; }
+    else { title = 'Application history is not imported'; message = 'Recovered beta telemetry is handled by the separate protected beta archive. Application/account history still requires a complete verified source export before Supabase retirement.'; }
     byId('migrationState').className = 'migration-state' + cls;
     byId('migrationState').innerHTML = '<h3>' + esc(title) + '</h3><p>' + esc(message) + '</p>';
     byId('migrationCards').innerHTML = [

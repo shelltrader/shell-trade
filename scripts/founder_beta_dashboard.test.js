@@ -181,6 +181,41 @@ function survey(id, player, createdAt, rating = 9) {
     assert.equal(model.crashes[0].os, 'iOS');
   });
 
+  await test('ordinary p-* dev runs are excluded player-wide from analytics and raw views', () => {
+    const { hooks } = dashboardHarness(async () => { throw new Error('not used'); });
+    const now = '2026-08-15T12:00:00.000Z';
+    const recent = '2026-08-15T11:00:00.000Z';
+    const events = [
+      event(11, 'p-dev-tagged', 'session_start', recent, { build: '368', dev: 'true' }),
+      event(12, 'p-dev-tagged', 'first_trade_started', recent, { build: '368' }),
+      event(13, 'p-dev-finish', 'beta_completed', recent, { build: '368', reason: 'DEV' }),
+      event(14, 'p-dev-finish', 'session_end', recent, { build: '368', seconds: 3, page: 'game' }),
+      event(15, 'QA-dual-signal', 'session_start', recent, { build: '368', dev: 1 }),
+      event(16, 'p-real', 'session_start', recent, { build: '368' }),
+      event(17, 'p-false-marker', 'session_start', recent, { build: '368', dev: '0' }),
+    ];
+    const surveys = [
+      survey(11, 'p-dev-tagged', recent, 10),
+      survey(12, 'p-dev-finish', recent, 10),
+      survey(13, 'QA-dual-signal', recent, 10),
+      survey(14, 'p-real', recent, 8),
+      survey(15, 'p-false-marker', recent, 7),
+    ];
+    hooks.setRange(1, now);
+    const model = hooks.buildViewModel(events, surveys, 'all');
+    assert.equal(model.overview.players, 2);
+    assert.equal(model.meta.event_count, 2);
+    assert.equal(model.meta.survey_count, 2);
+    assert.equal(model.meta.excluded_players, 3, 'overlapping prefix/dev reasons count one player');
+    assert.equal(model.meta.excluded_events, 5);
+    assert.equal(model.meta.excluded_surveys, 3);
+    assert.equal(model.meta.excluded_prefix_players, 1);
+    assert.equal(model.meta.excluded_dev_players, 2);
+    assert.equal(model.meta.excluded_dev_finish_players, 1);
+    assert.deepStrictEqual(model.events.map((row) => row.id).sort((a, b) => a - b), [16, 17]);
+    assert.deepStrictEqual(model.raw_surveys.map((row) => row.id).sort((a, b) => a - b), [14, 15]);
+  });
+
   await test('page exposes complete server exports, cutover warning, required views, and responsive layout', () => {
     const html = fs.readFileSync(path.join(founderDir, 'beta.html'), 'utf8');
     const css = fs.readFileSync(path.join(founderDir, 'beta.css'), 'utf8');
@@ -188,7 +223,8 @@ function survey(id, player, createdAt, rating = 9) {
     for (const view of ['overview', 'funnel', 'players', 'surveys', 'events', 'builds', 'devices', 'crashes']) {
       assert.match(html, new RegExp(`data-view="${view}"`));
     }
-    assert.match(html, /Build 367 and earlier Supabase test history is intentionally not merged/);
+    assert.match(html, /Recovered pre-cutover beta events and surveys appear only after their archive counts and hashes are verified/);
+    assert.match(html, /Application and account migration/);
     for (const dataset of ['events', 'surveys']) {
       for (const format of ['json', 'csv']) {
         assert.match(html, new RegExp(`dataset=${dataset}&amp;mode=export&amp;format=${format}`));

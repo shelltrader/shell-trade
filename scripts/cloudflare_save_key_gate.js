@@ -1,15 +1,17 @@
 'use strict';
 
-/* Narrow protected-save exception for the Build 369 Cloudflare adapter.
-   This is intentionally data-only: every pre-existing key must remain present, no third key may
-   be added, and the canonical generated adapter/build markers must both be present. */
+/* Narrow protected-save exception for Build 370 beta-cohort attribution.
+   This is intentionally data-only: every pre-existing key must remain present, the one new key
+   may contain only opaque expiring attribution, and the generated tracker/build markers must be
+   present. */
 
-const APPROVED_BUILD = 369;
+const APPROVED_BUILD = 370;
 const APPROVED_ADDITIONS = Object.freeze([
-  'cq_cloud_data_meta_v1',
-  'cq_cloud_data_queue_v1',
+  'cq_bt_invite_v1',
+  'cq_cohort',
+  'cq_invite',
 ]);
-const ADAPTER_BEGIN = '/* CQCLOUDDATA:BEGIN — generated from website/assets/cq-cloud-data.js by scripts/sync_cloud_data.py — DO NOT EDIT HERE */';
+const TRACKER_BEGIN = '/* CQTRACK:BEGIN — generated from website/assets/cq-track.js by scripts/sync_track.py — DO NOT EDIT HERE */';
 
 function keys(source) {
   return [...new Set(String(source || '').match(/\bcq_[a-z0-9_]+\b/g) || [])].sort();
@@ -29,10 +31,10 @@ function check(headSource, currentSource, buildNumber) {
   const exactAdditions = added.length === APPROVED_ADDITIONS.length &&
     added.every((value, index) => value === APPROVED_ADDITIONS[index]);
   const markers = Number(buildNumber) === APPROVED_BUILD &&
-    currentSource.includes(ADAPTER_BEGIN) &&
-    currentSource.includes("var QUEUE_KEY = 'cq_cloud_data_queue_v1';") &&
-    currentSource.includes("var META_KEY = 'cq_cloud_data_meta_v1';") &&
-    /const BUILD_TAG\s*=\s*'build 369 - CLOUDFLARE-ONLY GAME DATA CUTOVER\./.test(currentSource);
+    currentSource.includes(TRACKER_BEGIN) &&
+    currentSource.includes("var INVITE_KEY = 'cq_bt_invite_v1';") &&
+    currentSource.includes('var INVITE_TTL_MS = 30 * 24 * 60 * 60 * 1000;') &&
+    /const BUILD_TAG\s*=\s*'build 370 - PLAYER-PACED NEXT-BETA LEARNING\./.test(currentSource);
   const approved = changed && removed.length === 0 && exactAdditions && markers;
   return {
     changed,
@@ -40,9 +42,9 @@ function check(headSource, currentSource, buildNumber) {
     added,
     removed,
     detail: approved
-      ? 'Build 369 approved additive keys only: ' + APPROVED_ADDITIONS.join(', ') + '; 0 existing keys removed'
+      ? 'Build 370 approved attribution signature only: one storage key plus two query names; 0 existing keys removed'
       : 'added=[' + added.join(', ') + '] removed=[' + removed.join(', ') + '] markers=' + markers,
   };
 }
 
-module.exports = { APPROVED_BUILD, APPROVED_ADDITIONS, ADAPTER_BEGIN, keys, check };
+module.exports = { APPROVED_BUILD, APPROVED_ADDITIONS, TRACKER_BEGIN, keys, check };

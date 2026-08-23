@@ -35,8 +35,10 @@
    precached assets/cq-track.js on the marketing pages were.)
    v14 → v15 (build 368): analytics and surveys become Cloudflare-first.
    v15 → v16 (build 369): every production data path is same-origin Cloudflare-only; tracker,
-   boot-crash capture and cloud-data adapter fail closed into their durable on-device queues. */
-const CACHE = 'chartquest-site-v16';
+   boot-crash capture and cloud-data adapter fail closed into their durable on-device queues.
+   v16 → v17 (build 370): the tracker captures expiring opaque cohort/invite attribution for the
+   next beta round, so returning testers must not keep the un-attributed v16 client. */
+const CACHE = 'chartquest-site-v17';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',

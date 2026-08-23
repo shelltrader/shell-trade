@@ -14,12 +14,13 @@ const prior = childProcess.spawnSync('git', ['show', 'HEAD:chart-quest.html'], {
 });
 assert.equal(prior.status, 0, prior.stderr || 'could not read HEAD game artifact');
 const withoutApprovedKeys = current
-  .split('cq_cloud_data_meta_v1').join('cloud_data_meta_placeholder')
-  .split('cq_cloud_data_queue_v1').join('cloud_data_queue_placeholder');
+  .split('cq_bt_invite_v1').join('bt_invite_placeholder')
+  .split('cq_cohort').join('cohort_placeholder')
+  .split('cq_invite').join('invite_placeholder');
 
 const tests = [
-  ['actual checkout is either unchanged or exactly the approved Build 369 delta', () => {
-    const result = gate.check(prior.stdout, current, 369);
+  ['actual checkout is either unchanged or exactly the approved Build 370 attribution delta', () => {
+    const result = gate.check(prior.stdout, current, 370);
     if (result.changed) {
       assert.equal(result.approved, true, result.detail);
       assert.deepEqual(result.added, gate.APPROVED_ADDITIONS);
@@ -29,7 +30,7 @@ const tests = [
     assert.deepEqual(result.removed, []);
   }],
   ['an unapproved third key fails the exception', () => {
-    const result = gate.check(prior.stdout, current + "\nlocalStorage.setItem('cq_unapproved_v1', 'x');", 369);
+    const result = gate.check(prior.stdout, current + "\nlocalStorage.setItem('cq_unapproved_v1', 'x');", 370);
     assert.equal(result.approved, false);
     assert(result.added.includes('cq_unapproved_v1'));
   }],
@@ -37,14 +38,16 @@ const tests = [
     const established = gate.keys(prior.stdout).find(key => prior.stdout.includes(key));
     assert(established, 'fixture needs an established key');
     const without = current.split(established).join('cq_replaced_key_v1');
-    const result = gate.check(prior.stdout, without, 369);
+    const result = gate.check(prior.stdout, without, 370);
     assert.equal(result.approved, false);
     assert(result.removed.includes(established));
   }],
   ['the exact build and generated-adapter markers are mandatory', () => {
-    assert.equal(gate.check(withoutApprovedKeys, current, 370).approved, false);
-    assert.equal(gate.check(withoutApprovedKeys, current.replace(gate.ADAPTER_BEGIN, 'missing-adapter-marker'), 369).approved, false);
-    assert.equal(gate.check(withoutApprovedKeys, current.replace('build 369 - CLOUDFLARE-ONLY GAME DATA CUTOVER.', 'build 369 - other.'), 369).approved, false);
+    assert.equal(gate.check(prior.stdout, current, 369).approved, false);
+    assert.equal(gate.check(prior.stdout, current.replace(gate.TRACKER_BEGIN, 'missing-tracker-marker'), 370).approved, false);
+    assert.equal(gate.check(prior.stdout, current.replace('build 370 - PLAYER-PACED NEXT-BETA LEARNING.', 'build 370 - other.'), 370).approved, false);
+    assert.equal(gate.check(prior.stdout, current.replace("var INVITE_KEY = 'cq_bt_invite_v1';", "var INVITE_KEY = 'missing';"), 370).approved, false);
+    assert.deepEqual(gate.check(withoutApprovedKeys, current, 370).added, gate.APPROVED_ADDITIONS);
   }],
 ];
 

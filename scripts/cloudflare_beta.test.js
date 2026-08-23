@@ -5,6 +5,7 @@
 
 const assert = require('assert');
 const cryptoNode = require('crypto');
+const childProcess = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -78,6 +79,7 @@ class FakeDB {
   constructor(options = {}) {
     this.rateCount = Object.prototype.hasOwnProperty.call(options, 'rateCount') ? options.rateCount : 1;
     this.rows = { events: options.events || [], surveys: options.surveys || [] };
+    this.ignoreSurveyWrites = !!options.ignoreSurveyWrites;
     this.calls = [];
     this.batches = [];
   }
@@ -86,7 +88,34 @@ class FakeDB {
 
   async batch(statements) {
     this.batches.push(statements.map((statement) => ({ sql: statement.sql, args: statement.args })));
-    return statements.map(() => ({ success: true }));
+    const results = [];
+    for (const statement of statements) {
+      if (/^INSERT INTO beta_surveys /i.test(statement.sql)) {
+        if (!this.ignoreSurveyWrites) {
+          const args = statement.args;
+          const existing = this.rows.surveys.find((row) => row.response_id === args[0]);
+          const stored = existing || { id: this.rows.surveys.length + 1, created_at: args[11] };
+          Object.assign(stored, {
+            response_id: args[0], player_id: args[1], session_id: args[2], q1_rating: args[3],
+            q2_hook: args[4], q3_improvement: args[5], q4_continue: args[6], q5_anything: args[7],
+            experience_level: args[8] == null && existing ? existing.experience_level : args[8],
+            purchase_intent_19: args[9] == null && existing ? existing.purchase_intent_19 : args[9],
+            seconds_taken: args[10], updated_at: args[12], ingest_source: 'cloudflare',
+          });
+          if (!existing) this.rows.surveys.push(stored);
+        }
+        results.push({ success: true, results: [] });
+        continue;
+      }
+      if (/^SELECT response_id, player_id, session_id, q1_rating/i.test(statement.sql)
+          && /FROM beta_surveys/i.test(statement.sql)) {
+        const row = this.rows.surveys.find((candidate) => candidate.response_id === statement.args[0]);
+        results.push({ success: true, results: row ? [Object.assign({}, row)] : [] });
+        continue;
+      }
+      results.push({ success: true, results: [] });
+    }
+    return results;
   }
 }
 
@@ -218,8 +247,47 @@ function findFile(root, basename) {
     assert.strictEqual(survey.q1_rating, 9);
     assert.strictEqual(survey.q4_continue, 'later');
     assert.strictEqual(survey.seconds_taken, 12);
+    assert.strictEqual(survey.experience_level, null, 'Build 369 and recovered surveys remain valid');
+    assert.strictEqual(survey.purchase_intent_19, null, 'Build 369 and recovered surveys remain valid');
+    const researchSurvey = beta.shapeSurvey({
+      response_id: 'r-3', player_id: 'p-3', session_id: 's-3',
+      q1_rating: 8, q4_continue: 'immediately', q2_hook: 'movement',
+      q3_improvement: 'more context', q5_anything: '', seconds_taken: 30,
+      experience_level: 'gamer_not_trader', purchase_intent_19: 'probably',
+    });
+    assert.strictEqual(researchSurvey.experience_level, 'gamer_not_trader');
+    assert.strictEqual(researchSurvey.purchase_intent_19, 'probably');
+    assert.strictEqual(beta.shapeSurvey({
+      response_id: 'r-array', player_id: 'p-array', session_id: 's-array',
+      q1_rating: 8, q4_continue: 'later', q2_hook: 'movement',
+      q3_improvement: 'context', seconds_taken: 30,
+      experience_level: ['gamer_not_trader'], purchase_intent_19: 'probably',
+    }), null, 'research enums must be scalar strings, not coercible containers');
+    assert.strictEqual(beta.shapeSurvey({
+      response_id: 'r-4', player_id: 'p-4', session_id: 's-4',
+      q1_rating: 8, q4_continue: 'later', q2_hook: 'movement',
+      q3_improvement: 'context', seconds_taken: 30, experience_level: '',
+    }), null, 'a present research field must match its closed vocabulary');
+    assert.strictEqual(beta.shapeSurvey({
+      response_id: 'r-5', player_id: 'p-5', session_id: 's-5',
+      q1_rating: 8, q4_continue: 'later', q2_hook: 'movement',
+      q3_improvement: 'context', seconds_taken: 30, purchase_intent_19: 'yes',
+    }), null, 'free-form purchase intent is rejected');
     assert.strictEqual(beta.shapeEvent({ event_id: 'e-2', player_id: '', session_id: 's', name: 'crash' }, now), null);
     assert.strictEqual(beta.shapeSurvey({ response_id: 'r-2', player_id: 'p', session_id: 's' }), null);
+    const attributed = beta.shapeEvent({
+      event_id: 'e-3', player_id: 'p-3', session_id: 's-3', name: 'session_start',
+      props: {
+        cohort: 'b370-beta2', invite: 'i-Z9Y8X7W6V5Q4R3T2',
+        cq_cohort: 'person@example.com', cq_invite: '15551234567', build: '370',
+      },
+    }, now);
+    assert.deepStrictEqual(attributed.props, { cohort: 'b370-beta2', invite: 'i-Z9Y8X7W6V5Q4R3T2', build: '370' });
+    const unsafeAttribution = beta.shapeEvent({
+      event_id: 'e-4', player_id: 'p-4', session_id: 's-4', name: 'session_start',
+      props: { cohort: 'b370-Alice1985', invite: 'i-SARAHLEE23456789', build: '370' },
+    }, now);
+    assert.deepStrictEqual(unsafeAttribution.props, { build: '370' });
   });
 
   await test('CSV neutralises formulas after whitespace and preserves JSON safely', () => {
@@ -274,18 +342,77 @@ function findFile(root, basename) {
         kind: 'survey', rows: [{
           response_id: 'r-p-1', player_id: 'p-1', session_id: 's-1', q1_rating: 9,
           q2_hook: 'the first win', q3_improvement: 'more music', q4_continue: 'later',
-          q5_anything: '', seconds_taken: 42,
+          q5_anything: '', experience_level: 'trader_not_gamer',
+          purchase_intent_19: 'definitely', seconds_taken: 42,
         }],
       }, 'https://playchartquest.com', { 'CF-Connecting-IP': '203.0.113.10' }),
       env: ingestEnv(db),
     });
     assert.strictEqual(response.status, 200);
+    assert.deepStrictEqual(await response.json(), {
+      ok: true,
+      written: 1,
+      survey_contract: 'chartquest-beta-survey-v2',
+      surveys: [{
+        response_id: 'r-p-1',
+        experience_level: 'trader_not_gamer',
+        purchase_intent_19: 'definitely',
+      }],
+    });
     const statement = db.batches[0][0];
     assert.match(statement.sql, /ON CONFLICT\(response_id\) DO UPDATE SET/i);
     assert.match(statement.sql, /updated_at = excluded\.updated_at/i);
     assert.match(statement.sql, /ingest_source = 'cloudflare'/i);
+    assert.match(statement.sql, /experience_level = COALESCE\(excluded\.experience_level, beta_surveys\.experience_level\)/i);
+    assert.match(statement.sql, /purchase_intent_19 = COALESCE\(excluded\.purchase_intent_19, beta_surveys\.purchase_intent_19\)/i);
     assert.strictEqual(statement.args[0], 'r-p-1');
-    assert.strictEqual(statement.args[9], statement.args[10]);
+    assert.strictEqual(statement.args[8], 'trader_not_gamer');
+    assert.strictEqual(statement.args[9], 'definitely');
+    assert.strictEqual(statement.args[11], statement.args[12]);
+  });
+
+  await test('old-client survey upserts bind null research fields without erasing stored answers', async () => {
+    const db = new FakeDB();
+    const response = await ingest.onRequest({
+      request: jsonRequest('https://playchartquest.com/api/beta-ingest', 'POST', {
+        kind: 'survey', rows: [{
+          response_id: 'r-old', player_id: 'p-old', session_id: 's-old', q1_rating: 7,
+          q2_hook: 'the boost', q3_improvement: 'more context', q4_continue: 'later',
+          q5_anything: '', seconds_taken: 51,
+        }],
+      }, 'https://playchartquest.com', { 'CF-Connecting-IP': '203.0.113.11' }),
+      env: ingestEnv(db),
+    });
+    assert.strictEqual(response.status, 200);
+    const statement = db.batches[0][0];
+    assert.strictEqual(statement.args[8], null);
+    assert.strictEqual(statement.args[9], null);
+    assert.match(statement.sql, /COALESCE\(excluded\.experience_level, beta_surveys\.experience_level\)/i);
+    assert.match(statement.sql, /COALESCE\(excluded\.purchase_intent_19, beta_surveys\.purchase_intent_19\)/i);
+  });
+
+  await test('survey receipt fails closed when an ignored update does not store submitted values', async () => {
+    const db = new FakeDB({
+      ignoreSurveyWrites: true,
+      surveys: [{
+        response_id: 'r-stale', player_id: 'p-stale', session_id: 's-old', q1_rating: 5,
+        q2_hook: 'old answer', q3_improvement: 'old improvement', q4_continue: 'later',
+        q5_anything: '', experience_level: null, purchase_intent_19: null,
+        seconds_taken: 20, created_at: '2026-08-23T00:00:00.000Z', updated_at: '2099-01-01T00:00:00.000Z',
+      }],
+    });
+    const response = await ingest.onRequest({
+      request: jsonRequest('https://playchartquest.com/api/beta-ingest', 'POST', {
+        kind: 'survey', rows: [{
+          response_id: 'r-stale', player_id: 'p-stale', session_id: 's-new', q1_rating: 9,
+          q2_hook: 'new answer', q3_improvement: 'new improvement', q4_continue: 'immediately',
+          q5_anything: '', experience_level: 'familiar_with_both',
+          purchase_intent_19: 'definitely', seconds_taken: 44,
+        }],
+      }, 'https://playchartquest.com', { 'CF-Connecting-IP': '203.0.113.12' }),
+      env: ingestEnv(db),
+    });
+    assert.strictEqual(response.status, 503, 'count-only acknowledgement must never survive a failed readback');
   });
 
   await test('ingest rejects invalid and oversized batches before writing', async () => {
@@ -322,6 +449,16 @@ function findFile(root, basename) {
       }, 'https://playchartquest.com'), env: ingestEnv(db),
     });
     assert.strictEqual(incompleteSurvey.status, 400);
+    const duplicateSurvey = await ingest.onRequest({
+      request: jsonRequest('https://playchartquest.com/api/beta-ingest', 'POST', {
+        kind: 'survey', rows: [0, 1].map(() => ({
+          response_id: 'r-duplicate', player_id: 'p-duplicate', session_id: 's-duplicate',
+          q1_rating: 8, q2_hook: 'movement', q3_improvement: 'context',
+          q4_continue: 'later', q5_anything: '', seconds_taken: 30,
+        })),
+      }, 'https://playchartquest.com'), env: ingestEnv(db),
+    });
+    assert.strictEqual(duplicateSurvey.status, 400);
     assert.strictEqual(db.batches.length, 0);
   });
 
@@ -488,7 +625,8 @@ function findFile(root, basename) {
   const surveyRows = [{
     id: 1, response_id: 'r-p-1', player_id: 'p-1', session_id: 's-1', q1_rating: 9,
     q2_hook: '=HYPERLINK("https://evil.test")', q3_improvement: '+CMD', q4_continue: 'later',
-    q5_anything: '@SUM(A:A)', seconds_taken: 42, created_at: '2026-08-15T00:11:00Z',
+    q5_anything: '@SUM(A:A)', experience_level: 'new_to_both', purchase_intent_19: 'unsure',
+    seconds_taken: 42, created_at: '2026-08-15T00:11:00Z',
     updated_at: '2026-08-15T00:11:00Z', ingest_source: 'cloudflare',
   }];
 
@@ -523,6 +661,7 @@ function findFile(root, basename) {
     assert.match(csvResponse.headers.get('Content-Disposition'), /attachment/);
     assert.match(csvResponse.headers.get('Cache-Control'), /no-store/);
     const csv = await csvResponse.text();
+    assert.match(csv.split('\r\n')[0], /"experience_level","purchase_intent_19"/);
     assert.match(csv, /"'=HYPERLINK\(""https:\/\/evil\.test""\)"/);
     assert.match(csv, /"'\+CMD"/);
     assert.match(csv, /"'@SUM\(A:A\)"/);
@@ -534,6 +673,8 @@ function findFile(root, basename) {
     const body = await jsonResponse.json();
     assert.strictEqual(body.count, 1);
     assert.strictEqual(body.rows[0].q2_hook, '=HYPERLINK("https://evil.test")');
+    assert.strictEqual(body.rows[0].experience_level, 'new_to_both');
+    assert.strictEqual(body.rows[0].purchase_intent_19, 'unsure');
   });
 
   await test('read API rejects invalid dataset, cursor, limit, and mutation methods', async () => {
@@ -549,6 +690,7 @@ function findFile(root, basename) {
 
   await test('D1 schema and Pages route manifest lock the intended surface', () => {
     const sql = source('cloudflare/migrations/0001_beta.sql');
+    const researchSql = source('cloudflare/migrations/0003_beta_survey_research.sql');
     assert.match(sql, /CREATE TABLE IF NOT EXISTS beta_events/i);
     assert.match(sql, /event_id\s+TEXT NOT NULL UNIQUE/i);
     assert.match(sql, /player_id\s+TEXT NOT NULL/i);
@@ -559,10 +701,39 @@ function findFile(root, basename) {
     assert.match(sql, /history_cannot_overwrite_cloudflare/i);
     assert.match(sql, /NEW\.ingest_source = 'supabase_history'/i);
     assert.match(sql, /BETA_RATE_SALT/);
+    assert.match(researchSql, /ALTER TABLE beta_surveys ADD COLUMN experience_level TEXT/i);
+    assert.match(researchSql, /experience_level IS NULL OR experience_level IN/i);
+    assert.match(researchSql, /ALTER TABLE beta_surveys ADD COLUMN purchase_intent_19 TEXT/i);
+    assert.match(researchSql, /purchase_intent_19 IS NULL OR purchase_intent_19 IN/i);
+    assert.doesNotMatch(researchSql, /NOT NULL/i, 'historical and Build 369 rows must remain valid');
     const routes = JSON.parse(source('website/_routes.json'));
     assert.deepStrictEqual(routes.include, ['/api/beta-ingest', '/api/app/*', '/founder', '/founder/*']);
     assert.deepStrictEqual(routes.exclude, []);
     assert.strictEqual(findFile(path.join(ROOT, 'website'), 'beta-data.json'), false);
+  });
+
+  await test('research migration preserves historical rows and is explicitly one-time', () => {
+    const dbPath = path.join(temp, 'beta-research.sqlite');
+    childProcess.execFileSync('sqlite3', [dbPath], {
+      input: source('cloudflare/migrations/0001_beta.sql'), encoding: 'utf8',
+    });
+    childProcess.execFileSync('sqlite3', [dbPath], {
+      input: "INSERT INTO beta_surveys (response_id,player_id,session_id,q1_rating,q2_hook,q3_improvement,q4_continue,q5_anything,seconds_taken) VALUES ('r-old','p-old','s-old',7,'old hook','old improvement','later','',30);",
+      encoding: 'utf8',
+    });
+    childProcess.execFileSync('sqlite3', [dbPath], {
+      input: source('cloudflare/migrations/0003_beta_survey_research.sql'), encoding: 'utf8',
+    });
+    const preserved = childProcess.execFileSync('sqlite3', ['-separator', '|', dbPath,
+      "SELECT count(*),coalesce(experience_level,'NULL'),coalesce(purchase_intent_19,'NULL') FROM beta_surveys WHERE response_id='r-old';"],
+    { encoding: 'utf8' }).trim();
+    assert.strictEqual(preserved, '1|NULL|NULL');
+    const columns = childProcess.execFileSync('sqlite3', [dbPath, 'PRAGMA table_info(beta_surveys);'], { encoding: 'utf8' });
+    assert.match(columns, /experience_level/);
+    assert.match(columns, /purchase_intent_19/);
+    assert.throws(() => childProcess.execFileSync('sqlite3', [dbPath], {
+      input: source('cloudflare/migrations/0003_beta_survey_research.sql'), encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'],
+    }), 'release manager must inspect table_info and apply 0003 exactly once');
   });
 
   await test('new data-plane files contain no Supabase dependency', () => {
@@ -570,6 +741,7 @@ function findFile(root, basename) {
       'functions/_lib/beta.js', 'functions/_lib/access.js',
       'functions/api/beta-ingest.js', 'functions/founder/_middleware.js',
       'functions/founder/api/beta-data.js', 'cloudflare/migrations/0001_beta.sql',
+      'cloudflare/migrations/0003_beta_survey_research.sql',
       'website/_routes.json',
     ]) assert.doesNotMatch(source(relative), /supabase\.co|SUPABASE_URL|supabase-js/i, relative);
   });

@@ -13,12 +13,15 @@ const TRACKER = path.join(ROOT, 'website', 'assets', 'cq-track.js');
 const TRACKER_SOURCE = fs.readFileSync(TRACKER, 'utf8');
 const PRIMARY = '/api/beta-ingest';
 
-function makeStorage(seed = {}) {
+function makeStorage(seed = {}, options = {}) {
   const data = new Map(Object.entries(seed).map(([key, value]) => [key, String(value)]));
   const removed = [];
   return {
     getItem(key) { return data.has(String(key)) ? data.get(String(key)) : null; },
-    setItem(key, value) { data.set(String(key), String(value)); },
+    setItem(key, value) {
+      if (options.throwOnSet) throw new Error('planned storage write failure');
+      data.set(String(key), String(value));
+    },
     removeItem(key) { removed.push(String(key)); data.delete(String(key)); },
     clear() { for (const key of data.keys()) removed.push(key); data.clear(); },
     key(index) { return Array.from(data.keys())[index] ?? null; },
@@ -31,12 +34,16 @@ function makeStorage(seed = {}) {
 function makeHarness(options = {}) {
   const calls = [];
   const fetchPlan = Array.from(options.fetchPlan || []);
-  const localStorage = makeStorage(options.localStorage || {});
-  const sessionStorage = makeStorage({ cq_bt_sid: 's-existing', ...(options.sessionStorage || {}) });
+  const localStorage = makeStorage(options.localStorage || {}, { throwOnSet: !!options.localStorageSetThrows });
+  const sessionStorage = makeStorage(
+    { cq_bt_sid: 's-existing', ...(options.sessionStorage || {}) },
+    { throwOnSet: !!options.sessionStorageSetThrows },
+  );
   const timeouts = [];
   const intervals = [];
   const windowListeners = new Map();
   const documentListeners = new Map();
+  const historyCalls = [];
   let timerId = 0;
 
   function addListener(registry, type, fn) {
@@ -53,18 +60,53 @@ function makeHarness(options = {}) {
       try { return Promise.resolve(outcome(url, request)); }
       catch (error) { return Promise.reject(error); }
     }
-    const rowCount = (() => {
-      try { return JSON.parse(String(request.body || '{}')).rows.length; }
-      catch (_) { return 0; }
+    const payload = (() => {
+      try { return JSON.parse(String(request.body || '{}')); }
+      catch (_) { return {}; }
     })();
+    const rows = Array.isArray(payload.rows) ? payload.rows : [];
+    const rowCount = rows.length;
+    const successReceipt = payload.kind === 'survey'
+      ? {
+          ok: true,
+          written: rowCount,
+          survey_contract: 'chartquest-beta-survey-v2',
+          surveys: rows.map(row => ({
+            response_id: row.response_id,
+            experience_level: row.experience_level ?? null,
+            purchase_intent_19: row.purchase_intent_19 ?? null,
+          })),
+        }
+      : { ok: true, written: rowCount };
     const response = (outcome && typeof outcome === 'object')
       ? outcome
       : new Response(
-        JSON.stringify(outcome === true ? { ok: true, written: rowCount } : { error: 'planned failure' }),
+        JSON.stringify(outcome === true ? successReceipt : { error: 'planned failure' }),
         { status: outcome === true ? 200 : 500, headers: { 'Content-Type': 'application/json' } },
       );
     return Promise.resolve(response);
   }
+
+  const browserLocation = {
+    host: 'playchartquest.com',
+    hostname: 'playchartquest.com',
+    pathname: '/play',
+    protocol: 'https:',
+    search: '',
+    hash: '',
+    ...(options.location || {}),
+  };
+  const browserHistory = {
+    state: options.historyState ?? null,
+    replaceState(state, title, url) {
+      historyCalls.push({ state, title, url: String(url) });
+      this.state = state;
+      const parsed = new URL(String(url), 'https://playchartquest.com');
+      browserLocation.pathname = parsed.pathname;
+      browserLocation.search = parsed.search;
+      browserLocation.hash = parsed.hash;
+    },
+  };
 
   const context = {
     console,
@@ -72,6 +114,8 @@ function makeHarness(options = {}) {
     Math,
     JSON,
     Promise,
+    URL,
+    URLSearchParams,
     localStorage,
     sessionStorage,
     navigator: {
@@ -81,15 +125,11 @@ function makeHarness(options = {}) {
     screen: { width: 390, height: 844 },
     innerWidth: 390,
     innerHeight: 844,
-    location: {
-      host: 'playchartquest.com',
-      hostname: 'playchartquest.com',
-      pathname: '/play',
-      protocol: 'https:',
-      search: '',
-    },
+    location: browserLocation,
+    history: browserHistory,
     document: {
       readyState: 'complete',
+      title: 'ChartQuest',
       referrer: '',
       visibilityState: 'visible',
       addEventListener(type, fn) { addListener(documentListeners, type, fn); },
@@ -125,7 +165,14 @@ function makeHarness(options = {}) {
     calls,
     localStorage,
     sessionStorage,
+    historyCalls,
     timeouts,
+    dispatchWindow(type, event = {}) {
+      for (const fn of windowListeners.get(type) || []) fn(event);
+    },
+    dispatchDocument(type, event = {}) {
+      for (const fn of documentListeners.get(type) || []) fn(event);
+    },
     runTimeout(ms) {
       const index = timeouts.findIndex(timer => ms == null || timer.ms === ms);
       assert.notEqual(index, -1, `expected a queued timeout${ms == null ? '' : ` at ${ms}ms`}`);
@@ -152,6 +199,13 @@ function requestBody(call) {
 
 function pendingRows(harness) {
   return JSON.parse(harness.localStorage.getItem('cq_bt_pending') || '[]');
+}
+
+const INVITE_KEY = 'cq_bt_invite_v1';
+const INVITE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+function inviteSeed(cohort, invite, capturedAt = Date.now()) {
+  return JSON.stringify({ cohort, invite, captured_at: capturedAt });
 }
 
 function queuedRows(count) {
@@ -185,6 +239,173 @@ function assertSentinelsPreserved(harness) {
 }
 
 const tests = [
+  ['opaque invite capture is last-valid-link wins and strips only attribution parameters', async () => {
+    const h = makeHarness({
+      fetchPlan: [true],
+      historyState: { modal: 'kept' },
+      localStorage: {
+        [INVITE_KEY]: inviteSeed('b369-beta1', 'i-B2C3D4F5G6H7J8K9', Date.now() - 1000),
+      },
+      location: {
+        pathname: '/play.html',
+        search: '?utm_source=friend%20one&cq_cohort=b370-beta2&empty=&cq_invite=i-B2C3D4F5G6H7J8K9&cq_invite=i-Z9Y8X7W6V5Q4R3T2&mode=fast',
+        hash: '#trade',
+      },
+    });
+
+    assert.equal(h.historyCalls.length, 1);
+    assert.deepEqual(h.historyCalls[0], {
+      state: { modal: 'kept' },
+      title: 'ChartQuest',
+      url: '/play.html?utm_source=friend%20one&empty=&mode=fast#trade',
+    });
+    assert.equal(h.context.location.search, '?utm_source=friend%20one&empty=&mode=fast');
+    assert.equal(h.context.location.hash, '#trade');
+
+    const saved = JSON.parse(h.localStorage.getItem(INVITE_KEY));
+    assert.equal(saved.cohort, 'b370-beta2');
+    assert.equal(saved.invite, 'i-Z9Y8X7W6V5Q4R3T2', 'the last explicit valid duplicate must win');
+    assert.ok(saved.captured_at > 0 && Date.now() - saved.captured_at < 5000);
+
+    assert.equal(h.context.CQTrack.event('tutorial_step_reached', {
+      step: 2,
+      cohort: 'person@example.com',
+      invite: '15551234567',
+      cq_cohort: 'person@example.com',
+      cq_invite: '15551234567',
+    }), true);
+    h.context.CQTrack.flush();
+    await settle();
+
+    const [row] = requestBody(h.calls[0]).rows;
+    assert.equal(row.props.step, 2);
+    assert.equal(row.props.cohort, 'b370-beta2', 'caller props cannot bypass URL sanitisation');
+    assert.equal(row.props.invite, 'i-Z9Y8X7W6V5Q4R3T2', 'caller props cannot inject a PII-shaped invite');
+    assert.equal(Object.hasOwn(row.props, 'cq_cohort'), false);
+    assert.equal(Object.hasOwn(row.props, 'cq_invite'), false);
+  }],
+
+  ['PII-shaped or unsafe query values are removed but cannot erase fresh attribution', async () => {
+    const existing = inviteSeed('b369-beta1', 'i-B2C3D4F5G6H7J8K9', Date.now() - 1000);
+    const h = makeHarness({
+      fetchPlan: [true],
+      localStorage: { [INVITE_KEY]: existing },
+      location: {
+        pathname: '/survey.html',
+        search: '?keep=a%20b&cq_cohort=b370-Alice1985&cq_invite=i-SARAHLEE23456789&keep=two',
+        hash: '#answers',
+      },
+    });
+
+    assert.equal(h.localStorage.getItem(INVITE_KEY), existing, 'invalid explicit values must not overwrite a valid record');
+    assert.equal(h.historyCalls[0].url, '/survey.html?keep=a%20b&keep=two#answers');
+
+    assert.equal(h.context.CQTrack.event('tutorial_step_reached', { step: 1 }), true);
+    h.context.CQTrack.flush();
+    await settle();
+    const [row] = requestBody(h.calls[0]).rows;
+    assert.equal(row.props.cohort, 'b369-beta1');
+    assert.equal(row.props.invite, 'i-B2C3D4F5G6H7J8K9');
+  }],
+
+  ['a mixed-validity link cannot erase either half of a stored invite pair', async () => {
+    const existing = inviteSeed('b369-beta1', 'i-B2C3D4F5G6H7J8K9', Date.now() - 1000);
+    const h = makeHarness({
+      fetchPlan: [true],
+      localStorage: { [INVITE_KEY]: existing },
+      location: {
+        pathname: '/play.html',
+        search: '?cq_cohort=b370-beta2&cq_invite=i-SARAHLEE23456789',
+      },
+    });
+    assert.equal(h.localStorage.getItem(INVITE_KEY), existing);
+    assert.equal(h.historyCalls.length, 1, 'invalid attribution is removed from the address bar');
+    assert.equal(h.context.CQTrack.event('tutorial_step_reached', { step: 1 }), true);
+    h.context.CQTrack.flush();
+    await settle();
+    const [row] = requestBody(h.calls[0]).rows;
+    assert.equal(row.props.cohort, 'b369-beta1');
+    assert.equal(row.props.invite, 'i-B2C3D4F5G6H7J8K9');
+  }],
+
+  ['session storage preserves and authorizes URL stripping when local storage rejects the invite', async () => {
+    const h = makeHarness({
+      fetchPlan: [true],
+      localStorageSetThrows: true,
+      location: {
+        pathname: '/play.html',
+        search: '?cq_cohort=b370-beta2&cq_invite=i-Z9Y8X7W6V5Q4R3T2&keep=1',
+      },
+    });
+    assert.equal(h.localStorage.getItem(INVITE_KEY), null);
+    assert.ok(h.sessionStorage.getItem(INVITE_KEY), 'the same-tab fallback must retain attribution');
+    assert.equal(h.historyCalls[0].url, '/play.html?keep=1');
+    assert.equal(h.context.CQTrack.event('tutorial_step_reached', { step: 2 }), true);
+    h.context.CQTrack.flush();
+    await settle();
+    const [row] = requestBody(h.calls[0]).rows;
+    assert.equal(row.props.cohort, 'b370-beta2');
+    assert.equal(row.props.invite, 'i-Z9Y8X7W6V5Q4R3T2');
+  }],
+
+  ['an invite URL remains available for retry when both persistent stores reject it', () => {
+    const h = makeHarness({
+      localStorageSetThrows: true,
+      sessionStorageSetThrows: true,
+      location: {
+        pathname: '/play.html',
+        search: '?cq_cohort=b370-beta2&cq_invite=i-Z9Y8X7W6V5Q4R3T2',
+      },
+    });
+    assert.equal(h.historyCalls.length, 0, 'do not irreversibly strip an unpersisted valid pair');
+    assert.equal(h.context.location.search, '?cq_cohort=b370-beta2&cq_invite=i-Z9Y8X7W6V5Q4R3T2');
+  }],
+
+  ['invite attribution expires at the exact 30-day boundary', async () => {
+    const h = makeHarness({
+      fetchPlan: [true],
+      localStorage: {
+        [INVITE_KEY]: inviteSeed('b369-beta1', 'i-B2C3D4F5G6H7J8K9', Date.now() - INVITE_TTL_MS),
+      },
+    });
+
+    assert.equal(h.context.CQTrack.event('tutorial_step_reached', { step: 3 }), true);
+    h.context.CQTrack.flush();
+    await settle();
+
+    const [row] = requestBody(h.calls[0]).rows;
+    assert.equal(Object.hasOwn(row.props, 'cohort'), false);
+    assert.equal(Object.hasOwn(row.props, 'invite'), false);
+    assert.equal(h.localStorage.getItem(INVITE_KEY), null);
+    assert.ok(h.localStorage.removed.includes(INVITE_KEY));
+  }],
+
+  ['session, return, end, and crash row builders all carry sanitized invite attribution', async () => {
+    const h = makeHarness({
+      fetchPlan: [true, true, true],
+      localStorage: {
+        [INVITE_KEY]: inviteSeed('b370-beta2', 'i-Z9Y8X7W6V5Q4R3T2'),
+        cq_bt_visits: '1',
+        cq_bt_first_seen: '2026-08-20T00:00:00.000Z',
+      },
+      sessionStorage: { cq_bt_sid: '' },
+    });
+
+    h.context.CQTrack.flush();
+    await settle();
+    h.dispatchWindow('pagehide');
+    await settle();
+    h.context.CQTrack.crash('error', 'bounded test', 'https://cdn.example.test/script.js:1');
+    await settle();
+
+    const rows = h.calls.flatMap(call => requestBody(call).rows);
+    assert.deepEqual(rows.map(row => row.name), ['session_start', 'return_visit', 'session_end', 'crash']);
+    for (const row of rows) {
+      assert.equal(row.props.cohort, 'b370-beta2', `${row.name} is missing cohort`);
+      assert.equal(row.props.invite, 'i-Z9Y8X7W6V5Q4R3T2', `${row.name} is missing invite`);
+    }
+  }],
+
   ['same-origin analytics has no provider credentials and exact 2xx ends the request', async () => {
     const h = makeHarness({ fetchPlan: [true], localStorage: SENTINELS });
     const ok = await h.context.CQTrack.survey({ q1_rating: 9, q4_continue: 'immediately' });
@@ -227,6 +448,23 @@ const tests = [
       assert.deepEqual(h.calls.map(call => call.url), [PRIMARY]);
       assertSentinelsPreserved(h);
     }
+  }],
+
+  ['a legacy count-only survey receipt cannot erase Build 370 research answers', async () => {
+    const legacy = new Response(JSON.stringify({ ok: true, written: 1 }), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    });
+    const h = makeHarness({ fetchPlan: [legacy], localStorage: SENTINELS });
+    const ok = await h.context.CQTrack.survey({
+      q1_rating: 8,
+      q4_continue: 'later',
+      experience_level: 'gamer_not_trader',
+      purchase_intent_19: 'probably',
+    });
+    await settle();
+    assert.equal(ok, false, 'Build 369 receipt must not confirm fields it never stored');
+    assert.equal(h.calls.length, 1);
+    assertSentinelsPreserved(h);
   }],
 
   ['survey resolves true only after an exact same-origin receipt', async () => {
@@ -292,7 +530,7 @@ const tests = [
     assertSentinelsPreserved(h);
   }],
 
-  ['all tracker tags are versioned and private founder/API data bypasses the v16 cache', async () => {
+  ['all tracker tags are versioned and private founder/API data bypasses the v17 cache', async () => {
     const website = path.join(ROOT, 'website');
     const htmlFiles = fs.readdirSync(website)
       .filter(name => name.endsWith('.html'))
@@ -311,11 +549,11 @@ const tests = [
       'the known tracker surfaces must all remain instrumented',
     );
     for (const item of found) {
-      assert.match(item.src, /cq-track\.js\?v=369$/, `${item.name} has an unversioned/stale tracker tag: ${item.src}`);
+      assert.match(item.src, /cq-track\.js\?v=370$/, `${item.name} has an unversioned/stale tracker tag: ${item.src}`);
     }
 
     const sw = fs.readFileSync(path.join(website, 'sw.js'), 'utf8');
-    assert.match(sw, /const CACHE = ['"]chartquest-site-v16['"];?/);
+    assert.match(sw, /const CACHE = ['"]chartquest-site-v17['"];?/);
     assert.match(sw, /requestURL\.pathname === ['"]\/api['"] \|\| requestURL\.pathname\.startsWith\(['"]\/api\/['"]\)/);
     assert.match(sw, /requestURL\.pathname === ['"]\/founder['"] \|\| requestURL\.pathname\.startsWith\(['"]\/founder\/['"]\)/);
     assert.match(sw, /requestURL\.origin !== self\.location\.origin/,

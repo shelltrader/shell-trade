@@ -97,7 +97,7 @@
 /* CQBOOTCRASH:END */
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="47cb1b866f" data-built-at="2026-08-23T10:35:13Z">
+<meta name="cq-build" content="54666ab248" data-built-at="2026-08-23T17:15:17Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -4911,7 +4911,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 369 - CLOUDFLARE-ONLY GAME DATA CUTOVER. Production accounts, secure session cookies, one-time account restore, cloud profile, Journal, streak, mastery, bug reports, visits, content events, market quotes, beta analytics and surveys now use same-origin Cloudflare services only. Every existing gameplay save key remains unchanged and authoritative on-device; unconfirmed writes remain in their durable local queues and failed reads never overwrite local progress. Provider URLs, browser credentials, fallback writes and SDK allowances are removed from the production runtime and CSP. Historical provider records are not deleted by this release and receive no new runtime writes. - build 368 - CLOUDFLARE BETA DATA PLANE. New beta events and survey answers write first to a same-origin, schema-validated Cloudflare endpoint with the existing Supabase route retained only as a confirmed-write fallback during migration. The durable queue now clears only the batch actually acknowledged and drains every remaining batch, so a mobile retry cannot delete unsent milestones. A Cloudflare Access-protected founder dashboard owns the complete new dataset and exports; player ids, local saves, signed-in account/cloud-save paths, gameplay, survey questions and historical Supabase rows remain unchanged. - build 367 - BOSS 1 CINEMATIC AUDIO POLISH. Five versioned full-timeline mixes start from the first rendered video frame and follow media time through pause, stall, seek and rate changes. A generation token cancels skip, error, mute, replacement and arena arrival exactly once; only this Gambler path suppresses the old sting, random roar, synth bed and delayed impact. Videos, visuals, game rules and every other Guardian are unchanged. - build 366 - FOUNDER COSMETIC CLOSEOUT. Guardian 1 now uses the current cinematic Gambler portrait in both the Journal and defeat card; Journal mastery closes on one compact premium book-and-reward card using the existing canonical Journal asset; and the versioned Gambler-defeat cinematic restores Finn’s mandatory compass necklace for every front-facing victory frame. Cosmetic only: no trade, curriculum, reward, save or boss-state logic changed. - build 365 - FINAL BETA SEND STRIKE. Trade portals now own a reward-free corridor: every unreached box at or beyond the entrance is deferred and its quota restored after the trade. Replay and recap Finn now visibly cross the exact take-profit or stop-loss line in the correct direction. The first-trade score is a warmer hand-authored pulse instead of a dense sawtooth arpeggio, and ordinary center-screen feedback uses one premium non-blocking ChartQuest toast treatment. - build 364 - FINAL BETA BLOCKER STRIKE. Reward interaction now defers only while a real ticket/position owns the screen; boxes and Lost Wisdom pages share Finn\'s swept body-aware collision so visible overlap and fast shell-rolls cannot miss. FIRST WIN is one premium ChartQuest-native vector milestone with a bespoke trophy, disciplined copy hierarchy and earned reward badge instead of a system emoji/text pile. The first real trade owns a louder 112 BPM score and a four-act near-stop to profit-surge to hard-give-back to target run, while safe preview links no longer force or persist mute. - build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 370 - PLAYER-PACED NEXT-BETA LEARNING. Guided Level 1-3 trades no longer advance on a wall clock or carry Finn forward: candles are authored only as Finn reaches the frontier, players may pause or backtrack, every automatic path stays within 30-60 visible candles, and honest wick/body Take Profit or Stop Loss first-touch remains the sole automatic outcome. Live trades still exclude shells, boxes, Lost Wisdom, portals and world events. The first-trade and intro teaching panels now scroll with explicit Continue and Close controls, the Level-1 HUD connects diving to diamond smashing, and the market bridge explains chart candles. The survey keeps its original five questions and adds experience level plus one-time $19 purchase intent; opaque expiring invite codes attribute the next cohort without names or emails. No adjacent movement physics, trade scoring, account, cloud-save, boss or reward behavior changes. - build 369 - CLOUDFLARE-ONLY GAME DATA CUTOVER. Production accounts, secure session cookies, one-time account restore, cloud profile, Journal, streak, mastery, bug reports, visits, content events, market quotes, beta analytics and surveys now use same-origin Cloudflare services only. Every existing gameplay save key remains unchanged and authoritative on-device; unconfirmed writes remain in their durable local queues and failed reads never overwrite local progress. Provider URLs, browser credentials, fallback writes and SDK allowances are removed from the production runtime and CSP. Historical provider records are not deleted by this release and receive no new runtime writes. - build 368 - CLOUDFLARE BETA DATA PLANE. New beta events and survey answers write first to a same-origin, schema-validated Cloudflare endpoint with the existing Supabase route retained only as a confirmed-write fallback during migration. The durable queue now clears only the batch actually acknowledged and drains every remaining batch, so a mobile retry cannot delete unsent milestones. A Cloudflare Access-protected founder dashboard owns the complete new dataset and exports; player ids, local saves, signed-in account/cloud-save paths, gameplay, survey questions and historical Supabase rows remain unchanged. - build 367 - BOSS 1 CINEMATIC AUDIO POLISH. Five versioned full-timeline mixes start from the first rendered video frame and follow media time through pause, stall, seek and rate changes. A generation token cancels skip, error, mute, replacement and arena arrival exactly once; only this Gambler path suppresses the old sting, random roar, synth bed and delayed impact. Videos, visuals, game rules and every other Guardian are unchanged. - build 366 - FOUNDER COSMETIC CLOSEOUT. Guardian 1 now uses the current cinematic Gambler portrait in both the Journal and defeat card; Journal mastery closes on one compact premium book-and-reward card using the existing canonical Journal asset; and the versioned Gambler-defeat cinematic restores Finn’s mandatory compass necklace for every front-facing victory frame. Cosmetic only: no trade, curriculum, reward, save or boss-state logic changed. - build 365 - FINAL BETA SEND STRIKE. Trade portals now own a reward-free corridor: every unreached box at or beyond the entrance is deferred and its quota restored after the trade. Replay and recap Finn now visibly cross the exact take-profit or stop-loss line in the correct direction. The first-trade score is a warmer hand-authored pulse instead of a dense sawtooth arpeggio, and ordinary center-screen feedback uses one premium non-blocking ChartQuest toast treatment. - build 364 - FINAL BETA BLOCKER STRIKE. Reward interaction now defers only while a real ticket/position owns the screen; boxes and Lost Wisdom pages share Finn\'s swept body-aware collision so visible overlap and fast shell-rolls cannot miss. FIRST WIN is one premium ChartQuest-native vector milestone with a bespoke trophy, disciplined copy hierarchy and earned reward badge instead of a system emoji/text pile. The first real trade owns a louder 112 BPM score and a four-act near-stop to profit-surge to hard-give-back to target run, while safe preview links no longer force or persist mute. - build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -6105,6 +6105,10 @@ const HomeMarketCeremony = (() => {
     sub.className='hmc-sub';
     sub.innerHTML='Every trader has a market they believe in.<br>Choose the market that represents your trading journey.';
 
+    const context=document.createElement('p');
+    context.className='hmc-context';
+    context.textContent='Candles show price moving over time. Finn runs across them; each trade asks what price may do next.';
+
     const note=document.createElement('p');
     note.className='hmc-note';
     note.textContent='This changes the look of your charts only. Every market teaches the exact same trading skills.';
@@ -6112,7 +6116,7 @@ const HomeMarketCeremony = (() => {
     const grid=document.createElement('div');
     grid.id='hmcCards';
 
-    inner.appendChild(eyebrow); inner.appendChild(h1); inner.appendChild(sub); inner.appendChild(note); inner.appendChild(grid);
+    inner.appendChild(eyebrow); inner.appendChild(h1); inner.appendChild(sub); inner.appendChild(context); inner.appendChild(note); inner.appendChild(grid);
     root.appendChild(inner);
 
     // one stylesheet for every card animation — CSS transforms/opacity only, so the idle motion
@@ -6130,8 +6134,10 @@ const HomeMarketCeremony = (() => {
   letter-spacing:-0.5px;line-height:1.15;opacity:0;animation:hmcUp .7s .18s ease forwards;}
 .hmc-sub{margin:0 auto 8px;max-width:520px;font-size:clamp(12.5px,2.5vw,15px);color:#8e9bb0;
   line-height:1.65;opacity:0;animation:hmcUp .7s .26s ease forwards;}
+.hmc-context{margin:0 auto 7px;max-width:520px;font-size:clamp(12px,2.3vw,14px);color:#d9e6f5;
+  line-height:1.55;opacity:0;animation:hmcUp .7s .31s ease forwards;}
 .hmc-note{margin:0 auto 26px;max-width:480px;font-size:11px;color:#55627a;line-height:1.6;
-  opacity:0;animation:hmcUp .7s .32s ease forwards;}
+  opacity:0;animation:hmcUp .7s .36s ease forwards;}
 #hmcCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
   gap:clamp(9px,1.6vw,15px);max-width:1080px;margin:0 auto;}
 .hmc-badge{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;
@@ -6203,6 +6209,7 @@ const HomeMarketCeremony = (() => {
   .hmc-eyebrow{font-size:9px;letter-spacing:3.6px;margin-bottom:8px;}
   .hmc-h1{margin:0 0 7px;font-size:25px;letter-spacing:-0.4px;}
   .hmc-sub{margin:0 auto 5px;font-size:12.5px;line-height:1.5;max-width:330px;}
+  .hmc-context{margin:0 auto 5px;font-size:11.5px;line-height:1.45;max-width:330px;}
   .hmc-note{margin:0 auto 13px;font-size:10px;line-height:1.5;max-width:320px;}
   #hmcCards{gap:8px;grid-template-columns:repeat(2,1fr);}
   .hmc-card{padding:12px 7px 11px;border-radius:14px;gap:3px;}
@@ -6219,6 +6226,7 @@ const HomeMarketCeremony = (() => {
 @media (max-width:560px) and (max-height:700px){
   .hmc-line{display:none;}
   .hmc-badge{width:40px;height:40px;}
+  .hmc-context{font-size:10.5px;line-height:1.38;}
   .hmc-note{margin-bottom:10px;}
 }
 @media (prefers-reduced-motion:reduce){
@@ -7153,6 +7161,8 @@ const DRIVE_EASE = 0.09;          // fraction of the remaining distance moved pe
 // may not be tagged before the trade has lasted MIN_TRADE_CANDLES. This also stretches the
 // road to Guardian 1 (3 guided trades × 30+ candles) — pacing only, outcomes unchanged.
 const MIN_TRADE_CANDLES = 30;
+const MAX_TRADE_CANDLES = 60;
+const TRADE_FINISH_WINDOW = 5;      // begin the final visible run by candle 55; touch by candle 60
 /* T-002 — the drive's own body floor (TMB). T-001 locked the free-roam floor at MKT.minBody (22px);
    the drive was still on the build-214 floors of 12/18px and could snap to a 0px body, so trades
    printed flatter candles than the market around them. One floor, matching the locked generator.
@@ -7233,6 +7243,17 @@ function tradeDrivenCandle() {
       if (trade._drivePhase === 'run') { target = trade.tpH; finalPhase = true; }
     }
   }
+  /* BOUNDED AUTHORING. Random candle variety may change the route, never its lesson length. Rare
+     seeds used to wander for 100-220 generated candles because the final phase had no ceiling.
+     From candle 55 the visible path heads to its authored line; candle 60 is the hard terminal
+     candle. This is price-path shaping, not a hidden outcome: the trade still remains open until
+     Finn physically passes the candle and the ordinary wick-inclusive resolver sees the touch. */
+  const _deadlineRun = trade._nCand >= MAX_TRADE_CANDLES - TRADE_FINISH_WINDOW;
+  if (_deadlineRun) {
+    target = trade._l1Outcome === 'win' ? trade.tpH : trade.slH;
+    finalPhase = true;
+    trade._drivePhase = trade._l1Outcome === 'win' ? 'run' : 'stopout';
+  }
   // SPRINT 1.5 — break the uniform "staircase". Vary the step size, and let the odd candle tick
   // slightly AGAINST the move (a realistic micro-pullback). The counter-move is ALWAYS the safe
   // direction (opposite the current target), so it can never push deeper toward the stop, and the
@@ -7295,14 +7316,12 @@ function tradeDrivenCandle() {
       nl = prev + _awaySafe * TMB * rand(1.0, 2.4);
     }
   }
-  /* T-002 — THE STANDOFF IS GONE. It existed only to stop price ending a trade "too early", by
-     hovering short of the deciding line while the resolver waited on MIN_TRADE_CANDLES. That is
-     precisely the mechanism that let the chart disagree with the trade. Duration is now produced by
-     the phase arc itself (dip → hold → recover → run), not by refusing to honour what price does.
-
-     HARD SAFETY stays, and is now the ONLY thing standing between the drive and the resolver: an
-     authored WIN must never let visible price reach the stop, and an authored LOSS must never reach
-     the target. These two clamps are what make the authored outcome and the honest resolver agree. */
+  /* MINIMUM-DURATION SHAPING. The chart may not draw its deciding TP/SL touch before the authored
+     floor. This never ignores a visible crossing: before MIN_TRADE_CANDLES the safe corridor keeps
+     price one beat inside the line; at the floor the corridor opens and the normal visible-price
+     resolver owns the result. Duration is therefore part of the price path, not a hidden delay. */
+  const mustDecide = trade._nCand >= MAX_TRADE_CANDLES;
+  const mayDecide = (finalPhase && trade._nCand >= MIN_TRADE_CANDLES) || mustDecide;
   /* ══ T-002 · THE SAFE CORRIDOR ═════════════════════════════════════════════════════════════
      One place decides where this candle is allowed to close. Two rules define it:
 
@@ -7311,9 +7330,9 @@ function tradeDrivenCandle() {
           the honest resolver and the authored outcome can both be true at once.
 
        2. THE ARC RULE (off on the deciding beat). Until the story reaches its last beat — `run` for
-          a win, `stopout` for a loss — the drive does not TAKE price to the deciding line. On that
-          beat the rule lifts and price goes to the line, where the resolver ends the trade the
-          instant it is touched.
+          a win, `stopout` for a loss — and until MIN_TRADE_CANDLES — the drive does not TAKE price
+          to the deciding line. Once both conditions are true, price goes to the line and the
+          resolver ends the trade when Finn physically reaches that candle.
 
      This replaces the old STANDOFF, which parked price AT the deciding line and then refused to
      resolve for MIN_TRADE_CANDLES. Shaping where price GOES is authored price action and the chart
@@ -7329,11 +7348,11 @@ function tradeDrivenCandle() {
      Price now reaches the line and can go no further; the press below holds it there and the resolver
      (keyed to Finn's own candle) ends the trade only once the turtle walks up to it. */
   if (trade._l1Outcome === 'win') {
-    if (long) { _lo = Math.max(_lo, trade.slH + R * 0.10); _hi = Math.min(_hi, finalPhase ? trade.tpH : trade.tpH - R * 0.20); }
-    else      { _hi = Math.min(_hi, trade.slH - R * 0.10); _lo = Math.max(_lo, finalPhase ? trade.tpH : trade.tpH + R * 0.20); }
+    if (long) { _lo = Math.max(_lo, trade.slH + R * 0.10); _hi = Math.min(_hi, mayDecide ? trade.tpH : trade.tpH - R * 0.20); }
+    else      { _hi = Math.min(_hi, trade.slH - R * 0.10); _lo = Math.max(_lo, mayDecide ? trade.tpH : trade.tpH + R * 0.20); }
   } else {
-    if (long) { _hi = Math.min(_hi, trade.tpH - R * 0.10); _lo = Math.max(_lo, finalPhase ? trade.slH : trade.slH + R * 0.20); }
-    else      { _lo = Math.max(_lo, trade.tpH + R * 0.10); _hi = Math.min(_hi, finalPhase ? trade.slH : trade.slH - R * 0.20); }
+    if (long) { _hi = Math.min(_hi, trade.tpH - R * 0.10); _lo = Math.max(_lo, mayDecide ? trade.slH : trade.slH + R * 0.20); }
+    else      { _lo = Math.max(_lo, trade.tpH + R * 0.10); _hi = Math.min(_hi, mayDecide ? trade.slH : trade.slH - R * 0.20); }
   }
   if (_hi < _lo) _hi = _lo;                                   // degenerate band — never invert
   const clampSafe = (v) => Math.max(_lo, Math.min(_hi, v));
@@ -7345,7 +7364,7 @@ function tradeDrivenCandle() {
      so there is always room for a real one. */
   if (Math.abs(nl - prev) < TMB) {
     const _mid = (_lo + _hi) / 2;
-    const _dir = finalPhase ? dirToT : (prev < _mid ? 1 : -1);
+    const _dir = mayDecide ? dirToT : (prev < _mid ? 1 : -1);
     nl = clampSafe(prev + _dir * TMB * rand(1.0, 2.3));
     if (Math.abs(nl - prev) < TMB) nl = clampSafe(prev - _dir * TMB * rand(1.0, 2.3));
   }
@@ -7356,7 +7375,7 @@ function tradeDrivenCandle() {
      OWN candle, not two ahead) then ends the trade exactly as he reaches the tagging candle, so the
      win/loss lands WITH the player instead of a few candles early. The line is never crossed, so the
      chart stays honest while it waits. */
-  if (finalPhase) {
+  if (mayDecide) {
     const _line = (trade._l1Outcome === 'win') ? trade.tpH : trade.slH;
     if (Math.abs(nl - _line) < TMB * 2.2 || Math.abs(prev - _line) < TMB * 2.2) {
       // safe side = the side price approached from (never the crossing side)
@@ -7373,18 +7392,13 @@ function tradeDrivenCandle() {
          founder saw: a giant candle already sitting on TARGET HIT with the turtle at its foot.
          Seeding it true makes the first windowed candle the PULL-BACK instead of the tag, so price
          visibly waits one body short of the line and the deciding candle becomes a normal 22-40
-         unit move printed as he gets there. Deliberately the minimal fix: it leaves the Trade Clock,
-         the body floors and the 6s press safety net untouched — gating the press on an arrival flag
-         instead would let that safety net resolve with the line visibly untouched, which is the
-         "chart lies" bug the T-002 resolver exists to prevent. */
+         unit move printed as he gets there. */
       if (trade._press == null) trade._press = true;
       trade._press = !trade._press;
       nl = trade._press ? _line : clampSafe(_line + _safe * TMB * rand(1.0, 1.8));
-      // stamp when the hold-at-the-line began, so the resolver can force the outcome as a LAST RESORT
-      // if the turtle somehow never walks up to it (safety net only — normal play resolves on arrival).
-      if (trade._pressStartT == null) { try { trade._pressStartT = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0; } catch (e) { trade._pressStartT = 0; } }
     }
   }
+  if (mustDecide) nl = (trade._l1Outcome === 'win') ? trade.tpH : trade.slH;
   const delta = nl - prev;
   market.level = nl;
   market.trendDir = delta >= 0 ? 1 : -1;
@@ -7700,25 +7714,16 @@ function candleW() {
 
 /* Keep generating candles ahead of the camera; drop ones far behind it.
 
-   THE MARKET RUNS ON A CLOCK, NOT ON YOUR FEET (founder finding, 2026-07-23).
-   Candles used to be extruded PURELY by camera position. Measured: standing still for 30 seconds
-   produced 0 new candles and $0 of price movement. The dashed line labelled "LIVE EDGE" was not a
-   live edge at all — it was the end of a corridor that unrolled as you walked into it. That single
-   fact did more to make the market feel fake than anything the generator could fix.
-   Now the live edge ALSO advances on wall-clock time: if no candle has printed for CLOCK_MS, the
-   market prints one anyway. Stand still and price keeps moving, because a market does.
-
-   WHAT THIS DELIBERATELY DOES NOT CHANGE — the hour clock. `session.candles` is incremented only in
-   onCandleEntered(), i.e. by candles Finn actually WALKS INTO. So level progression, setup arming and
-   the Guardian stay exactly as traversal-driven as before: idling grows the chart, never the level.
-   Live trades and forming setups are excluded outright, so the authored trade arc and its
-   MIN_TRADE_CANDLES pacing are byte-unchanged. And the edge is bounded to a few screens ahead, so
-   leaving the game running does not generate candles without limit. */
+   Free-roam market candles may print on the existing slow market clock. A LIVE guided trade is
+   deliberately different: it owns no wall-clock producer. Its authored candles are generated by
+   the same spatial rule as the chart beneath Finn, so ordinary movement controls the pace. Walking
+   forward reveals the trade; turning back lets the player review it; pausing/looking away never
+   advances price independently or carries Finn toward an unseen outcome. */
 const MARKET_CLOCK_MS = 1150;          // one market-minute of wall clock between printed candles
-/* T-002 CANONICAL — the beat of a LIVE trade. Price advances one candle per this many ms while a
-   Level 1-3 trade is open, so the authored arc (dip → hold → recover → run) always takes the same
-   real time for every player, whether they sprint, idle or boost. ~25-35 arc candles ≈ 13-18s. */
-const TRADE_CANDLE_MS = 520;
+function worldMotionAllowed() {
+  try { return !(typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden')); }
+  catch (e) { return true; }
+}
 function maintainCandles(cameraX, dt) {
   const _busy = (typeof trade !== 'undefined' && trade) ||
                 (typeof setupSeq !== 'undefined' && setupSeq) ||
@@ -7730,41 +7735,33 @@ function maintainCandles(cameraX, dt) {
   if (market._clockT == null) market._clockT = 0;
   if (_busy) market._clockT = 0;                                   // authored beats keep their own pace
   else market._clockT += Math.min(0.25, dt || 0) * 1000;           // clamp so a backgrounded tab can't burst
-  const _edge    = cameraX + W + 200;                              // the spatial rule, unchanged
+  const _edge    = cameraX + W + 200;                              // ordinary free-roam spatial edge
   const _maxTime = cameraX + W * 6;                                // the clock may not outrun this —
                                                                    // ~2 min of live market while idle,
                                                                    // then it waits for you (candles are
                                                                    // terrain: the chart cannot scroll out
                                                                    // from under Finn's feet).
-  /* ══ T-002 CANONICAL · THE TRADE CLOCK ═══════════════════════════════════════════════════════════
-     THE BUG THIS KILLS (one month of failed fixes). While a trade was live, `_busy` DISABLED the market
-     clock, so the only thing printing candles was the spatial rule `last.x + last.w < cameraX + W + 200`
-     — and cameraX follows Finn. The trade's entire emotional arc was therefore metered by the player's
-     FOOTSTEPS: stand still and the chart froze; boost and dip→recover→run flashed past in a second.
-     Every previous fix targeted candle COUNT (MIN_TRADE_CANDLES, phase caps, band size) — none of which
-     can control FELT duration. That is exactly why "the first trade ends immediately" kept coming back.
-
-     THE RULE: while a Level 1-3 trade is live, price advances on a CLOCK and on nothing else — one
-     candle per TRADE_CANDLE_MS, identical for every player however they move. The arc's duration is now
-     AUTHORED (≈ arc candles × TRADE_CANDLE_MS ≈ 25-35 candles ≈ 13-18s), not emergent from traversal.
-     Each clock candle is REVEALED as it prints (maxSeenCandleId advances), so the renderer draws it and
-     the one honest resolver may end the trade the instant visible price touches a line — Law 1 intact.
-     Finn rides the live edge (clamped in update), so the outcome still lands exactly where he stands. */
   let last = candles[candles.length - 1];
-  const _liveTrade = (typeof trade !== 'undefined' && trade) && (typeof session !== 'undefined' && session.level <= 3);
-  let _owed = 0;
-  if (_liveTrade) {
-    if (trade._clockT == null) trade._clockT = 0;
-    const _frozen = (typeof paused !== 'undefined' && paused) || (session && session.inModal) ||
-                    (typeof lessonOpen !== 'undefined' && lessonOpen) || (typeof firstTradeGuide !== 'undefined' && firstTradeGuide);
-    if (!_frozen) trade._clockT += Math.min(0.25, dt || 0) * 1000;   // the walkthrough/pause holds the arc
-    while (trade._clockT >= TRADE_CANDLE_MS) { trade._clockT -= TRADE_CANDLE_MS; _owed++; }
-    if (_owed > 3) _owed = 3;                                        // never burst after a hitch
-  }
-  while (_liveTrade ? (_owed > 0 && !!trade)
-                    : (last.x + last.w < _edge ||
-                       (market._clockT >= MARKET_CLOCK_MS && last.x + last.w < _maxTime))) {
-    if (_liveTrade) _owed--; else
+  const _guidedTrade = (typeof trade !== 'undefined' && trade) &&
+    (typeof session !== 'undefined' && session && session.level <= 3);
+  const _guidedTradeFrozen = _guidedTrade && (
+    (typeof paused !== 'undefined' && paused) ||
+    (typeof lessonOpen !== 'undefined' && lessonOpen) ||
+    (typeof firstTradeGuide !== 'undefined' && firstTradeGuide) ||
+    (typeof session !== 'undefined' && session && session.inModal) ||
+    !worldMotionAllowed()
+  );
+  if (_guidedTradeFrozen) return;   // a guide/modal/hidden frame is byte-still: no generation or pruning
+  /* A guided trade keeps exactly the same +2 printed frontier the renderer exposes. It does NOT
+     fill the viewport: doing that authored 15-17 candles after one pixel of movement, advanced the
+     emotional arc ahead of Finn, and could create candles beyond the first TP/SL touch. Each newly
+     reached candle opens exactly one new slot. Once a planned candle touches either line, generation
+     stops until Finn physically passes that candle and the one visible-price resolver closes it. */
+  const needsSpatialCandle = () => _guidedTrade
+    ? (!_guidedTradeFrozen && trade._terminalCandleId == null && last.id < maxSeenCandleId + 2)
+    : (last.x + last.w < _edge);
+  while (needsSpatialCandle() ||
+         (!_guidedTrade && market._clockT >= MARKET_CLOCK_MS && last.x + last.w < _maxTime)) {
     market._clockT = 0;                        // any printed candle restarts the wait
     const gap = rand(CFG.gapMin, CFG.gapMax);
     const w   = candleW();
@@ -7787,13 +7784,14 @@ function maintainCandles(cameraX, dt) {
     }
     pushCandle(last.x + last.w + gap, w, c.h, c.color, c.wick, c);
     last = candles[candles.length - 1];
-    /* T-002 CANONICAL — REVEAL the clock candle the moment it prints. The renderer draws to
-       maxSeenCandleId + 2 and the honest resolver ends the trade on what is visible, so advancing the
-       frontier here is what puts BOTH under the trade clock instead of under Finn's feet. The hour
-       clock stays consistent (these candles count once, here, instead of via onCandleEntered). */
-    if (_liveTrade && last.id > maxSeenCandleId) {
-      maxSeenCandleId = last.id;
-      if (session && !session.inModal) session.candles++;
+    if (_guidedTrade) {
+      const _bar = { open: last.open, h: last.h, wick: last.wick, wick2: last.wick2 };
+      const _hitSL = CQ.priceTouched(_bar, trade.slH, trade.dir, 'sl');
+      const _hitTP = CQ.priceTouched(_bar, trade.tpH, trade.dir, 'tp');
+      if (_hitSL || _hitTP) trade._terminalCandleId = last.id;
+      // TRADE FOCUS: authored trade terrain is price action only. Ambient shells, setup cadence,
+      // boxes, Lost Wisdom, mega poles, portals and every reward/event ledger remain byte-still.
+      continue;
     }
     // SPRINT 1.5 R3 — the every-10 SPIN POLE carries a shell on its tip: fun to twirl up and grab,
     // and a wordless seed for the liquidity-grab lesson (why a shell always sits atop a long wick).
@@ -7844,6 +7842,11 @@ function maintainCandles(cameraX, dt) {
     maybeSpawnWisdomPage(last);
     maybeSpawnBox(last);   // PHASE 2 — rare optional breakable data-box (free-roam only; all gating inside)
   }
+  /* A guided trade owns a byte-still world outside its visible price path. Pruning is a world
+     mutation too: allowing it here could delete a backtracked candle, shell, or uncollected Lost
+     Wisdom page merely because the camera moved during a position. Defer every cleanup until the
+     trade closes, just as placement and collection are deferred above. */
+  if (_guidedTrade) return;
   // Keep a generous buffer behind the camera so the player can turn
   // around and walk back to review what they passed
   while (candles.length && candles[0].x + candles[0].w < cameraX - 2500) {
@@ -9029,6 +9032,10 @@ function shellTuck() {
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; // don't eat auth typing
   if (window.cineActive) return;   // opening cinematic handles its own keys
+  if (firstTradeGuide) { // the guide owns its freeze; Escape must tear down state + DOM together
+    if (e.code === 'Escape') { e.preventDefault(); closeFirstTradeGuide(); }
+    return;
+  }
   if (lessonOpen) { // lesson card owns input — Space/Enter = OK
     if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); dismissLesson(); }
     return;
@@ -9062,12 +9069,10 @@ window.addEventListener('pointerdown', (e) => {
     candleAcademy.active = false;
     return;
   }
-  // FIX 6 — the guided first-trade walkthrough owns every tap while it's up.
+  // The guided first-trade walkthrough owns the canvas while its DOM card is open. Canvas taps,
+  // drags and attempted scrolls never advance it; only the explicit Continue/Close controls do.
   if (firstTradeGuide) {
     e.preventDefault();
-    if (firstTradeGuide.t < 0.55) return;          // brief delay so the entry tap doesn't skip step 0
-    firstTradeGuide.step++; firstTradeGuide.t = 0;
-    if (firstTradeGuide.step > 3) { firstTradeGuide = null; paused = false; _zoomWasTrade = false; }   // resume → trade plays out + MASTERPIECE re-arm the EP-1 exposure beat (the walkthrough pause flipped _zoomWasTrade true early, so the first trade was the ONLY one missing its 'here we go' entry swell)
     return;
   }
   // Intro Flow: route taps to the active checkpoint handler
@@ -13682,6 +13687,69 @@ function renderJournalList() {
 //    with toggle overlays (VWAP / Structure / OB / Levels). ──
 let reviewEntry = null;
 let firstTradeGuide = null;   // FIX 6 — the guided first-trade entry walkthrough (entry → SL → TP)
+function firstTradeGuideSteps() {
+  if (!trade) return [];
+  return [
+    { col: '#ffd60a', tag: 'YOUR ENTRY', title: 'You’re in — your first trade!',
+      body: trade.dir === 'short' ? 'You bet price goes DOWN here — the yellow line is your entry price.'
+                                  : 'You bet price goes UP here — the yellow line is your entry price.' },
+    { col: '#ea3943', tag: 'STOP LOSS', title: 'Your safety net',
+      body: trade.dir === 'short' ? 'If price climbs to this red line you exit automatically — your loss stays small.'
+                                  : 'If price falls to this red line you exit automatically — your loss stays small.' },
+    { col: '#16c784', tag: 'TAKE PROFIT', title: 'Your goal',
+      body: trade.dir === 'short' ? 'If price falls to this green line, you WIN.'
+                                  : 'If price climbs to this green line, you WIN.' },
+    { col: '#7fd6ff', tag: 'YOU’RE IN CONTROL', title: 'Move at your own pace',
+      body: 'Walk forward when you are ready, or turn back to review the chart. Price will not advance on a timer. You can still use CLOSE POSITION whenever you choose.' },
+  ];
+}
+function closeFirstTradeGuide() {
+  const el = document.getElementById('cqTradeGuide');
+  if (el) el.remove();
+  firstTradeGuide = null;
+  paused = false;
+  _zoomWasTrade = false;
+}
+function renderFirstTradeGuidePanel() {
+  if (!firstTradeGuide || !trade) return;
+  const steps = firstTradeGuideSteps();
+  const step = steps[Math.min(firstTradeGuide.step, steps.length - 1)];
+  let root = document.getElementById('cqTradeGuide');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'cqTradeGuide';
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-label', 'First trade guide');
+    root.style.cssText = 'position:fixed;inset:0;z-index:86;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;padding:16px max(16px,env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));font-family:var(--font-ui);';
+    root.innerHTML = '<section id="cqTradeGuideCard" style="pointer-events:auto;width:min(100%,360px);max-height:min(46vh,360px);display:flex;flex-direction:column;background:rgba(9,13,22,.98);border:1.5px solid #7fd6ff;border-radius:15px;box-shadow:0 14px 42px rgba(0,0,0,.55);overflow:hidden">'
+      + '<header style="display:flex;align-items:center;gap:10px;padding:12px 12px 8px 16px"><div id="cqTradeGuidePips" style="display:flex;gap:7px;flex:1"></div><button id="cqTradeGuideClose" type="button" aria-label="Close guide" style="min-width:44px;min-height:44px;border:0;border-radius:10px;background:rgba(255,255,255,.08);color:#dfe7f0;font-size:22px;cursor:pointer">×</button></header>'
+      + '<div id="cqTradeGuideScroll" tabindex="0" style="min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;padding:2px 18px 12px;text-align:center">'
+      + '<div id="cqTradeGuideTag" style="font:800 10px var(--font-ui);letter-spacing:.16em"></div><h2 id="cqTradeGuideTitle" style="font-size:18px;line-height:1.25;margin:8px 0;color:#fff"></h2><p id="cqTradeGuideBody" style="font-size:14px;line-height:1.55;color:#cfdae8;margin:0;white-space:pre-line"></p></div>'
+      + '<footer style="padding:10px 14px 14px"><button id="cqTradeGuideNext" type="button" style="width:100%;min-height:46px;border:0;border-radius:11px;background:#7fd6ff;color:#06101a;font:800 14px var(--font-ui);cursor:pointer">CONTINUE →</button></footer></section>';
+    document.body.appendChild(root);
+    document.getElementById('cqTradeGuideClose').addEventListener('click', closeFirstTradeGuide);
+    document.getElementById('cqTradeGuideNext').addEventListener('click', function () {
+      if (!firstTradeGuide) return;
+      if (firstTradeGuide.step >= firstTradeGuideSteps().length - 1) { closeFirstTradeGuide(); return; }
+      firstTradeGuide.step++; firstTradeGuide.t = 0; renderFirstTradeGuidePanel();
+    });
+  }
+  const pips = document.getElementById('cqTradeGuidePips');
+  pips.innerHTML = steps.map(function (_, i) { return '<span aria-hidden="true" style="width:8px;height:8px;border-radius:50%;background:' + (i <= firstTradeGuide.step ? step.col : 'rgba(255,255,255,.18)') + '"></span>'; }).join('');
+  const card = document.getElementById('cqTradeGuideCard');
+  card.style.borderColor = step.col;
+  document.getElementById('cqTradeGuideTag').style.color = step.col;
+  document.getElementById('cqTradeGuideTag').textContent = step.tag;
+  document.getElementById('cqTradeGuideTitle').textContent = step.title;
+  document.getElementById('cqTradeGuideBody').textContent = step.body;
+  document.getElementById('cqTradeGuideNext').textContent = firstTradeGuide.step === steps.length - 1 ? 'START MOVING →' : 'CONTINUE →';
+  document.getElementById('cqTradeGuideScroll').scrollTop = 0;
+}
+function openFirstTradeGuide() {
+  firstTradeGuide = { step: 0, t: 0 };
+  paused = true;
+  renderFirstTradeGuidePanel();
+}
 let reviewMode = 'replay';      // 'replay' | 'details'
 let replayTimer = null;
 let _replayAutoDetails = false;
@@ -14091,6 +14159,8 @@ const _wisSpawn = { level: -1, n: 0, placed: {} }; // per-level generated-candle
 const _megaState = { level: -1, n: 0, count: 0, nextAt: 0 };
 function maybeMegaCandle(c) {
   if (typeof session === 'undefined') return;
+  if ((typeof trade !== 'undefined' && trade) || (typeof pending !== 'undefined' && pending) ||
+      (typeof setupFlow !== 'undefined' && setupFlow)) return;
   if (_megaState.level !== session.level) {
     _megaState.level = session.level; _megaState.n = 0; _megaState.count = 0;
     _megaState.nextAt = 22 + ((session.level * 7) % 12);   // deterministic per level, never random
@@ -14101,8 +14171,6 @@ function maybeMegaCandle(c) {
   // never during a forming setup / open ticket / live trade (trade focus).
   if (c.color !== 'green' || Math.abs(c.h - c.open) < 90 || Math.max(c.open, c.h) > 430) return;
   if (c.bos || c.sweep) return;
-  if ((typeof trade !== 'undefined' && trade) || (typeof pending !== 'undefined' && pending) ||
-      (typeof setupFlow !== 'undefined' && setupFlow)) return;
   // Via CQREACH so any shell already anchored to this candle's shorter wick (the every-10
   // spin-pole shell placed back in maintainCandles) rides up the pole instead of stranding.
   CQREACH.setWick(c, Math.max(c.wick || 0, Math.round(rand(105, 145))));   // the cartoonishly long pole
@@ -14125,6 +14193,8 @@ function maybeMegaCandle(c) {
 // so a page never strands on an unreachable feature — same reachability rule as shells).
 function maybeSpawnWisdomPage(c) {
   if (typeof session === 'undefined') return;
+  if ((typeof trade !== 'undefined' && trade) || (typeof pending !== 'undefined' && pending) ||
+      (typeof setupFlow !== 'undefined' && setupFlow)) return;
   if (_wisSpawn.level !== session.level) { _wisSpawn.level = session.level; _wisSpawn.n = 0; _wisSpawn.placed = {}; }
   _wisSpawn.n++;
   // EARNED, NEVER WALKED THROUGH — terrain candles print AFTER a page is placed, and a giant
@@ -17711,11 +17781,18 @@ function commitTrade() {
          everything, which is the correct answer when no terrain survives. */
       const _lastKeptX = (function () { const k = candles.filter(c => c.id <= _keepMax); const l = k[k.length - 1]; return l ? l.x + l.w : -Infinity; })();
       candles = candles.filter(c => c.id <= _keepMax);                 // drop the free-roam overhang ahead of the live edge
+      /* Stable candle IDs are allowed to be reused here because the entire deleted suffix and every
+         world object anchored to it are removed atomically below. Without rewinding this allocator,
+         deleting 101-115 while nextCandleId remained 116 made Finn's first trade candle jump from
+         id 100 to 116: fog-of-war, event spacing and the +2 frontier all interpreted that as fifteen
+         candles of progress. The next authored candle must be the contiguous successor. */
+      const _lastKeptId = candles.reduce((m, c) => Math.max(m, c.id), -1);
+      nextCandleId = _lastKeptId + 1;
       // Cull EVERY collectible family past the truncated edge, not just coins: breakable boxes
       // and Lost Pages sat past it too, floating over deleted terrain.
       try { CQREACH.cullPast(_lastKeptX); } catch (e) {}
       market.level = trade.entryH;                                     // the drive continues cleanly from the entry, not the dropped tip
-      trade._lastTestedId = _keepMax;                                  // the resolver starts one candle past the entry
+      trade._lastTestedId = _lastKeptId;                               // the resolver starts one candle past the entry
     }
   }
 
@@ -17741,8 +17818,7 @@ function commitTrade() {
   // their ENTRY → STOP → TARGET with pointing arrows, so a beginner actually understands
   // they're in a trade. Only then resume and let it play out for the big win.
   if (introFlow.active && introFlow.awaitingTrade && !introFlow.tradesDone && !firstTradeGuide) {
-    firstTradeGuide = { step: 0, t: 0 };   // full ENTRY→STOP→TARGET walkthrough on the FIRST trade only
-    paused = true;
+    openFirstTradeGuide();   // scroll-safe ENTRY→STOP→TARGET walkthrough; explicit controls own progress
   }
 }
 $('btnConfirm').onclick = commitTrade;
@@ -18444,9 +18520,9 @@ function onCandleEntered(c) {
   }
 
   if (trade) {
-    // NOTE (T-002): lastPrice, the replay film and the touch test are all owned by the visible-candle
-    // frontier loop in update() — one place, so HUD, replay and resolution can never disagree.
-    tradeTouchCheck(c);   // T-002 — the ONE resolver, now driven by every VISIBLE candle (see below)
+    // The monotonic Finn-right-edge loop in update() is the sole owner of lastPrice, replay-film
+    // capture and TP/SL resolution. Do nothing here: this hook fires when Finn's centre enters a
+    // candle, before his body has crossed its close, and must never award an early result.
   } else if (session.level <= 2) {
     // PHASE 2 — Levels 1-2 use the OFFICIAL beginner framework (momentum → pullback →
     // confirmation → entry). It is recognised as the candles PRINT AHEAD of Finn (see the
@@ -18511,7 +18587,17 @@ function onCandleEntered(c) {
   if (setupCountdown > 0) setupCountdown--;
 }
 
+function truthPreservingTradePath(path, limit) {
+  const src = Array.isArray(path) ? path : [];
+  const cap = Math.max(2, Number(limit) || 100);
+  if (src.length <= cap) return src.slice();
+  // Storage stays bounded, but the real exit candle is non-negotiable: replay/status must show the
+  // same TP, SL or manual-close candle that ended the position. Dropping the tail made a TARGET HIT
+  // replay whose final visible candle never reached the target on trades longer than 60 candles.
+  return src.slice(0, cap - 1).concat(src[src.length - 1]);
+}
 function resolveTrade(result) {
+  if (typeof firstTradeGuide !== 'undefined' && firstTradeGuide) closeFirstTradeGuide();
   try { FinnLife.lookToward(result === 'win' ? 0.6 : -0.3, 1.6, 'trade'); } catch (e) {}   // Living Renderer — glance at the outcome
   // 'manual' closes at the current R-multiple — profit or loss
   const leveragedAmt = trade.riskAmt * (trade.leverage || 1);
@@ -18650,7 +18736,7 @@ function resolveTrade(result) {
   let candleSnap = null, snapEntryIdx = -1;
   if (trade.setupSnap && trade.setupSnap.length) {
     const _lead = trade.setupSnap.slice(-10);
-    candleSnap = _lead.concat((trade.path || []).slice(0, 60));
+    candleSnap = _lead.concat(truthPreservingTradePath(trade.path, 100));
     snapEntryIdx = _lead.length - 1;
   }
   if (!candleSnap) {
@@ -18663,7 +18749,7 @@ function resolveTrade(result) {
   // out after entry, with the index of the entry candle. Trimmed to keep storage sane.
   let replay = null;
   if (trade.setupSnap && trade.setupSnap.length) {
-    const path = (trade.path || []).slice(0, 60); // cap very long trades
+    const path = truthPreservingTradePath(trade.path, 100); // cap storage, always retain the real exit candle
     replay = { candles: trade.setupSnap.concat(path), entryIdx: trade.setupSnap.length - 1 };
   } else if (candleSnap && candleSnap.length) {
     /* P0d — EVERY TRADE MUST HAVE A REPLAY (founder RC pass). `setupSnap` is only captured at entry
@@ -19197,17 +19283,6 @@ function update(dt) {
   const prevFront = turtle.x + turtle.w;
   const prevBack  = turtle.x;
   if (!turtle.halt && finnDazedT <= 0) turtle.x += (CFG.walkSpeed + turtle.vxBoost) * dt * turtle.dir;   // dazed = a 1.7s lie-down, then he shakes it off
-  /* T-002 CANONICAL — RIDE THE TRADE. The chart advances on the TRADE CLOCK while a Level 1-3 trade is
-     live, so Finn is carried along WITH the live edge: he can never outrun it (clamped after the wall
-     pass) and never drifts far behind it. That is what keeps the outcome landing exactly where he is
-     standing now that the resolver runs on the clock rather than on his feet. He keeps full control of
-     jump/boost on top of this — only his forward carry is matched to the market's beat. Collisions are
-     unaffected: this runs BEFORE the wall-block pass, so candle walls still stop him normally. */
-  if (typeof trade !== 'undefined' && trade && session.level <= 3 && !turtle.halt && finnDazedT <= 0 && candles.length) {
-    const _lcw = candles[candles.length - 1];
-    const _behind = (_lcw.x + _lcw.w - turtle.w) - turtle.x;
-    if (_behind > 30) turtle.x += Math.min(_behind - 30, CFG.walkSpeed * 1.7 * dt);
-  }
   turtle.vxBoost = Math.max(0, turtle.vxBoost - CFG.spinBoostDecay * dt);
   // Keep a short trail going while the fling boost is still strong
   if (turtle.vxBoost > 120) {
@@ -19241,29 +19316,15 @@ function update(dt) {
      wall with no new candle entered, and the trade would hang. This is a bounded ANTI-HARD-LOCK
      BACKSTOP, in the spirit of the intro's existing stuck-watchdogs: only after Finn has been genuinely
      wall-blocked on the ground for 2.5s straight does one auto-hop fire. In normal play the player
-     jumps long before that, so it lies dormant and the trade's felt tempo is byte-unchanged; it exists
-     purely so a set-down phone can't freeze a trade. Traversal only — it never reads or writes price,
-     outcome, SL/TP or the resolver, so the chart still ends the trade honestly.
-     NOTE (founder decision, carried over from build 295): fully DECOUPLING the trade's story from
-     traversal — advancing the live edge on a clock with the camera following it, so the arc unfolds
-     smoothly even for a purely passive watcher — is the recommended next step and is deliberately NOT
-     done here, as it changes the trade's feel and is the founder's call. */
+     jumps long before that, so it lies dormant. Traversal only — it never reads or writes price,
+     outcome, SL/TP or the resolver, so the chart still ends the trade honestly. It also does nothing
+     while Finn is simply idle or reviewing prior candles; a set-down phone must not advance price. */
   if (typeof trade !== 'undefined' && trade && session.level <= 3 && !firstTradeGuide) {
     if (_fwdBlocked && turtle.onGround && !turtle.spinning) {
       turtle._tradeClimbT = (turtle._tradeClimbT || 0) + dt;
       if (turtle._tradeClimbT > 2.5) { try { jump(); } catch (e) {} turtle._tradeClimbT = 0; }   // genuinely stuck → a single hop frees the trade
     } else { turtle._tradeClimbT = 0; }
   } else { turtle._tradeClimbT = 0; }
-  /* T-002 CANONICAL — RIDE THE LIVE EDGE. While a Level 1-3 trade is live the chart advances on the
-     TRADE CLOCK, so Finn must not outrun it and walk off the end of the printed chart. He is held at
-     the newest candle instead: the price comes to HIM. That is also what keeps the outcome landing
-     exactly where he is standing, without the resolver having to wait on his feet. */
-  if (typeof trade !== 'undefined' && trade && session.level <= 3 && candles.length) {
-    const _lc = candles[candles.length - 1];
-    const _edgeX = _lc.x + _lc.w - turtle.w;
-    if (turtle.x > _edgeX) turtle.x = _edgeX;
-  }
-
   /* --- Jetpack timers + fuel (fuel still limits boosts — it's just HIDDEN, no HUD meter) --- */
   if (turtle.jetT   > 0) turtle.jetT   -= dt;
   if (turtle._boostReadyT > 0) turtle._boostReadyT -= dt;      // BOOST-READY sparkle timer (render-only)
@@ -19503,20 +19564,10 @@ function update(dt) {
        candle whose low happened to sit past the stop resolved the trade instantly, before a single
        post-entry candle had printed. Only candles that print AFTER entry can end this trade. */
     if (trade._lastTestedId == null) trade._lastTestedId = candles.length ? candles[candles.length - 1].id : -1;
-    /* FOUNDER (build 314) — A TRADE MAY ONLY END ON A CANDLE FINN HAS ACTUALLY REACHED.
-       This line used to read `maxSeenCandleId`, and its comment claimed that was "Finn's own
-       candle". It is not. maxSeenCandleId has TWO writers: Finn physically entering a candle,
-       and the TRADE CLOCK revealing one the instant it prints during a live trade. The clock
-       races ahead of him by design, so the resolver was free to end the trade on a candle he
-       was still several candles short of — the founder watched a trade close with TARGET HIT
-       sitting well ahead of the turtle, "way too fast and abruptly", with no way to understand
-       why it ended.
-       Resolution now reads Finn's OWN position and nothing else, so the deciding touch always
-       happens where the player can see him standing.
-       The trade clock is deliberately untouched: price still advances on TIME (build 298), it
-       simply PRESSES at the deciding line until he arrives — which is exactly what the drive
-       was already built to do (see the press note above). The 6s press safety net below still
-       guarantees a trade can never hang if he cannot get there. */
+    /* A TRADE MAY ONLY END ON A CANDLE FINN HAS ACTUALLY PASSED. Resolution reads Finn's own
+       position and nothing else, so the deciding touch lands where the player can see and control
+       it. A rendered candle ahead of Finn may press against TP/SL, but it cannot resolve the trade
+       until his body has crossed that candle's close. */
     const _finnX = turtle.x + turtle.w / 2;
     let _finnId = -1;
     /* Build 320 — `c.x <= _finnX` counted a candle the moment Finn's centre crossed its LEFT edge,
@@ -19531,14 +19582,6 @@ function update(dt) {
       if (trade.path) trade.path.push({ open: c.open, h: c.h, wick: c.wick, wick2: c.wick2,
         color: c.color, ob: !!c.ob, bos: !!c.bos, choch: !!c.choch, vwap: c.vwap || 0 });
       if (tradeTouchCheck(c)) break;                           // ends on the FIRST visible touch
-    }
-    /* SAFETY NET — a trade can NEVER hang. If price has been PRESSING the deciding line (waiting for
-       the turtle to walk up) for longer than PRESS_MAX_MS without resolving — e.g. the turtle is wall-
-       stuck in a way the anti-hard-lock hop can't free — force the authored outcome. In normal play the
-       turtle arrives in ~1-3s and this never fires; it exists only so the hold can't soft-lock. */
-    if (trade && trade._pressStartT != null && !paused && !session.inModal && !lessonOpen) {
-      const _pn = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
-      if (_pn - trade._pressStartT > 6000) { resolveTrade(trade._l1Outcome || 'win'); }
     }
   }
 
@@ -19595,6 +19638,7 @@ function update(dt) {
   const _reachY = turtle.h / 2 + 8;
   for (const coin of coins) {
     if (coin.collected) continue;
+    if (tradeInProgress()) continue;   // trade focus: even backtracking cannot trigger an ambient reward
     coin.bobT += dt * 2.8; // bob animation
     const _d = _segDist(coin.x, coin.y);
     if (_d.dx < _reachX + coin.r && _d.dy < _reachY + coin.r) {
@@ -22069,7 +22113,7 @@ function render(cameraX) {
     if (session.level <= 1 && !trade && !(typeof bossesDone !== 'undefined' && bossesDone.has(0))) {   // hidden during Trader Mode — let the chart breathe
       const ctrls = IS_DESKTOP_CTRL
         ? [['A / D', 'MOVE'], ['SPACE', 'JUMP'], ['W', 'BOOST']]
-        : [['TAP', 'JUMP'], ['SWIPE ↑', 'BOOST'], ['SWIPE ↓', 'DIVE']];
+        : [['TAP', 'JUMP'], ['SWIPE ↑', 'BOOST'], ['SWIPE ↓', 'SMASH 💎']];
       const gap = 8, chipH = 32, cyC = y0 + 40;     // POLISH: taller chips so the 2 lines breathe + center cleanly
       const rowW = Math.min(336, W - 88);          // centered, clear of the corner music button
       const chipW = (rowW - gap * 2) / 3;
@@ -22240,71 +22284,11 @@ function drawSetupSpotlight(cameraX) {
    with a pointing arrow to each live level, then resume so they watch it resolve. */
 function drawFirstTradeGuide() {
   if (!firstTradeGuide || !trade) return;
-  const g = firstTradeGuide; g.t += 1 / 60;
-  const steps = [
-    // SHOT 4 (CQ-0022) — no leading emoji in the title. A canvas center-aligned string that starts
-    // with an emoji + variation selector measures wrong on iOS Safari, shoving the visible header
-    // off-centre. Plain text centres cleanly above the body (colour + tag already carry the meaning).
-    /* PHASE 3B (build 270, founder-playthrough finding) — the walkthrough copy was written for a
-       LONG only: on a SHORT first trade it said "you bought / price falls to the stop / price
-       climbs to the target" while the stop sat ABOVE and the target BELOW — three side-unaware
-       strings actively mis-teaching ~half of first trades. Copy is now side-aware. */
-    { h: trade.entryH, col: '#ffd60a', tag: 'YOUR ENTRY',
-      title: 'You’re in — your first trade!',
-      body: (trade.dir === 'short' ? 'You bet price goes DOWN here — the yellow line is your entry price.'
-                                   : 'You bet price goes UP here — the yellow line is your entry price.') },
-    { h: trade.slH, col: '#ea3943', tag: 'STOP LOSS',
-      title: 'Your safety net',
-      body: (trade.dir === 'short' ? 'If price climbs to this red line you exit automatically — your loss stays small.'
-                                   : 'If price falls to this red line you exit automatically — your loss stays small.') },
-    { h: trade.tpH, col: '#16c784', tag: 'TAKE PROFIT',
-      title: 'Your goal',
-      body: (trade.dir === 'short' ? 'If price falls to this green line, you WIN.'
-                                   : 'If price climbs to this green line, you WIN.') },
-    // OBJ 3 (TEC AG-LAW-3) — teach the exit from the very first trade so agency is known from
-    // trade 1. The CLOSE button was hidden during this walkthrough, so a beginner never learned it
-    // existed. This 4th beat names it (points at the entry line, cyan, no price of its own).
-    { h: trade.entryH, col: '#7fd6ff', tag: 'YOU’RE IN CONTROL',
-      title: 'You can close any time',
-      body: 'See the glowing CLOSE button? Tap it whenever you want to bank your shells — or hold your plan and ride it to the target.\nYour call.' },
-  ];
-  const s = steps[Math.min(g.step, 3)];
+  firstTradeGuide.t += 1 / 60;
   ctx.save();
-  ctx.fillStyle = 'rgba(4,6,11,0.32)'; ctx.fillRect(0, 0, W, H);         // gentle dim so the REAL entry/SL/TP lines (drawn by render) stay readable
-  // SHOT 1 (CQ-0020) — the guide no longer draws its OWN highlight line + tag. That duplicated the
-  // real entry/SL/TP line (drawn by render at the true camera position) and, because it was clamped
-  // on-screen, showed a DIFFERENT value/height. The card below now points at the real line via its
-  // matching colour — a single source of truth for entry/stop/target.
-  // bottom teaching card — SIZED to its wrapped body so the text never overflows onto the footer
-  // (2026-07-24 founder hotfix: the long step-4 "you can close any time" copy overlapped the footer
-  // prompt, and that footer said "TAP TO WATCH IT PLAY OUT" — a message the founder wants gone. The
-  // footer is now always "TAP TO CONTINUE", and the card grows to fit the copy.)
-  const cardW = Math.min(W - 32, 360), cardX = (W - cardW) / 2;   /* SHOT 5 — capped width + explicit centering so the card sits centered on any screen */
-  ctx.textAlign = 'center';
-  ctx.font = '13px ' + SANS;
-  // Wrap each \n-separated segment on its own, so a body can force a hard break.
-  // Without this the greedy wrapper left orphan words ("call.") alone on the last line.
-  const _lines = [];
-  for (const _seg of s.body.split('\n')) {
-    const _words = _seg.split(' '); let _cur = '';
-    for (const w of _words) { const t = _cur + (_cur ? ' ' : '') + w; if (ctx.measureText(t).width > cardW - 34) { _lines.push(_cur); _cur = w; } else _cur = t; }
-    if (_cur) _lines.push(_cur);
-  }
-  const cardH = 54 + _lines.length * 17 + 20;                     // title area + body lines + footer area (no overlap at any length)
-  const cardY = H - cardH - 26;
-  ctx.fillStyle = 'rgba(9,13,22,0.97)'; rr(cardX, cardY, cardW, cardH, 14); ctx.fill();
-  ctx.strokeStyle = s.col; ctx.lineWidth = 1.5; rr(cardX, cardY, cardW, cardH, 14); ctx.stroke();
-  for (let i = 0; i < 4; i++) {   // step pips (4 — includes the "you're in control" beat)
-    ctx.fillStyle = i <= g.step ? s.col : 'rgba(255,255,255,0.18)';
-    ctx.beginPath(); ctx.arc(cardX + cardW / 2 + (i - 1.5) * 14, cardY + 13, 3.5, 0, Math.PI * 2); ctx.fill();
-  }
-  ctx.fillStyle = s.col; ctx.font = '800 17px ' + SANS; ctx.fillText(s.title, W / 2, cardY + 38);
-  ctx.fillStyle = '#cfdae8'; ctx.font = '13px ' + SANS;
-  let _ly = cardY + 58; for (const ln of _lines) { ctx.fillText(ln, W / 2, _ly); _ly += 17; }
-  if (g.t > 0.55) {
-    ctx.fillStyle = '#7fd6ff'; ctx.font = '800 11px ' + SANS;
-    ctx.fillText('👆 TAP TO CONTINUE', W / 2, cardY + cardH - 11);
-  }
+  // The chart remains the visual source of truth. The readable copy and all interaction live in the
+  // scroll-safe DOM card; the canvas only supplies a gentle focus dim and never advances the guide.
+  ctx.fillStyle = 'rgba(4,6,11,0.32)'; ctx.fillRect(0, 0, W, H);
   ctx.restore();
 }
 
@@ -23658,6 +23642,7 @@ function armFirstGuidedTrade() {
 }
 
 function triggerIntroBoss() {
+  if (typeof firstTradeGuide !== 'undefined' && firstTradeGuide) closeFirstTradeGuide();
   introFlow.phase = 'boss';
   introFlow.awaitingTrade = false;
   try { hideTradeIncoming(); } catch (e) {}
@@ -23670,6 +23655,7 @@ function triggerIntroBoss() {
 }
 
 function introComplete() {
+  if (typeof firstTradeGuide !== 'undefined' && firstTradeGuide) closeFirstTradeGuide();
   localStorage.setItem('cq_played', '1');
   introFlow.active = false;
   introFlow.phase = 'done';
@@ -27406,6 +27392,17 @@ const BossArena = (() => {
 /* ---------- Main loop ---------- */
 let lastTime = performance.now();
 let _dtEMA = 0;   // low-pass-filtered frame time (see frame()) — keeps the world scroll uniform under rAF jitter
+function resetWorldMotionFrameClock() {
+  try { lastTime = performance.now(); } catch (e) { lastTime = 0; }
+  _dtEMA = 0;
+  try { pointer = null; } catch (e) {}
+  try { if (_tapTimer) { clearTimeout(_tapTimer); _tapTimer = null; } } catch (e) {}
+}
+try {
+  document.addEventListener('visibilitychange', resetWorldMotionFrameClock, false);
+  window.addEventListener('pageshow', resetWorldMotionFrameClock, false);
+  window.addEventListener('pagehide', resetWorldMotionFrameClock, false);
+} catch (e) {}
 let camY = 0; // vertical camera offset (negative = looking up)
 // TRADER VIEW — the most important moment in the game. While a trade is live, the camera pulls
 // back (zoom out) with easing + a brief slow-mo so the player can SEE the whole trade (entry,
@@ -27486,6 +27483,15 @@ function enforceChartContinuity(baseCamX, dt) {
 }
 
 function frame(now) {
+  /* A hidden/backgrounded page is a hard world freeze. A throttled final rAF must not move Finn
+     across a candle, advance the trade path, or resolve TP/SL after the player looks away. The
+     visibility/pageshow listener also resets the frame clock and any pending gesture so returning
+     cannot replay hidden elapsed time or a stale tap. */
+  if (!worldMotionAllowed()) {
+    lastTime = now; _dtEMA = 0;
+    try { pointer = null; if (_tapTimer) { clearTimeout(_tapTimer); _tapTimer = null; } } catch (e) {}
+    requestAnimationFrame(frame); return;
+  }
   // FRAME PACING (fluid-motion fix): the world scrolls by turtle.x += walkSpeed·dt and the camera
   // is rigidly locked to turtle.x, so feeding RAW rAF frame time straight in turned every timing
   // jitter or heavy frame into a visible scroll stutter ("not fluid / glitchy sometimes"). Low-pass
@@ -29227,14 +29233,20 @@ function openIntroLesson(sceneKey, onDone){
   const _lTitle = _LTITLES[sceneKey] || (sceneKey ? sceneKey.charAt(0).toUpperCase() + sceneKey.slice(1) : 'Lesson');
   const ov = document.createElement('div');
   ov.id = 'cqLesson';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+  ov.setAttribute('aria-label', _lTitle + ' lesson');
   ov.style.cssText = 'position:fixed;inset:0;z-index:99990;display:flex;flex-direction:column;align-items:center;justify-content:center;'
     + 'background:radial-gradient(120% 90% at 50% 24%, #0a1422 0%, #07090e 64%, #000 100%);'
-    + 'font-family:' + FT + ';padding:max(20px,env(safe-area-inset-top)) 16px 22px;';
+    + 'font-family:' + FT + ';padding:max(20px,env(safe-area-inset-top)) 16px max(22px,env(safe-area-inset-bottom));overflow:hidden;';
   ov.innerHTML =
-      '<div style="font-size:11px;letter-spacing:.16em;color:#a855f7;text-transform:uppercase;opacity:.9;margin-bottom:8px">📈 Lesson · ' + _lTitle + '</div>'
-    + '<canvas id="cqlCv" style="width:100%;max-width:560px;height:42vh;min-height:0;border-radius:14px;background:rgba(8,12,20,.55);border:1px solid rgba(168,85,247,.22)"></canvas>'
-    + '<div style="max-width:520px;font-size:15px;line-height:1.5;color:#dfe7f0;text-align:center;margin:16px 4px 18px">' + cap + '</div>'
-    + '<button id="cqlGo" style="width:100%;max-width:300px;background:linear-gradient(180deg,#7c4dff,#5a32d6);color:#fff;border:0;font-weight:800;font-size:16px;letter-spacing:.03em;padding:15px 22px;border-radius:13px;cursor:pointer;box-shadow:0 7px 24px rgba(124,77,255,.34)">GOT IT →</button>';
+      '<button id="cqlX" type="button" aria-label="Close lesson" style="position:absolute;top:max(12px,env(safe-area-inset-top));right:12px;z-index:2;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(4,7,14,.88);color:#fff;font-size:24px;line-height:1;cursor:pointer">×</button>'
+    + '<div id="cqlScroll" style="width:100%;max-width:600px;max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:center;padding:4px 4px 10px">'
+    +   '<div style="font-size:11px;letter-spacing:.16em;color:#a855f7;text-transform:uppercase;opacity:.9;margin-bottom:8px">📈 Lesson · ' + _lTitle + '</div>'
+    +   '<canvas id="cqlCv" style="width:100%;max-width:560px;height:min(42vh,360px);min-height:180px;flex:0 0 auto;border-radius:14px;background:rgba(8,12,20,.55);border:1px solid rgba(168,85,247,.22)"></canvas>'
+    +   '<div style="max-width:520px;font-size:15px;line-height:1.5;color:#dfe7f0;text-align:center;margin:16px 4px 18px">' + cap + '</div>'
+    +   '<button id="cqlGo" type="button" style="width:100%;max-width:300px;flex:0 0 auto;background:linear-gradient(180deg,#7c4dff,#5a32d6);color:#fff;border:0;font-weight:800;font-size:16px;letter-spacing:.03em;padding:15px 22px;border-radius:13px;cursor:pointer;box-shadow:0 7px 24px rgba(124,77,255,.34)">GOT IT →</button>'
+    + '</div>';
   document.body.appendChild(ov);
   try { ov.animate([{ opacity: 0, transform: 'scale(0.975)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 340, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }); } catch (e) {}   // MASTERPIECE — the animated LEARN reveal blooms into being (Memory 2 wonder)
   let lc = null;
@@ -29242,6 +29254,7 @@ function openIntroLesson(sceneKey, onDone){
   const close = function(){ if (!ov.parentNode) return; try { lc && lc.stop && lc.stop(); } catch(e){} ov.remove();
     try { paused = prevPaused; session.inModal = false; turtle.halt = false; faceRight(); } catch(e){} finish(); };
   document.getElementById('cqlGo').addEventListener('click', close);
+  document.getElementById('cqlX').addEventListener('click', close);
 }
 
 function _seen(id){try{return store.getItem('cq_mgseen_'+id)==='1';}catch(e){return false;}}
@@ -29470,6 +29483,7 @@ return {run:MG_run,REG:REG};
   const CONCEPT_MAP  = { bos:'bos', choch:'choch', vwap:'vwap', trendlines:'trend', support:'support', resistance:'resistance', liquidity:'liquidity', risk:'rr', replay:'manage', pattern:'pattern', structure:'struct' };
 
   function closeOverlays() {
+    try { if (typeof closeFirstTradeGuide === 'function') closeFirstTradeGuide(); } catch (e) {}
     try { const bf = document.getElementById('bossFight'); if (bf) bf.classList.remove('open'); } catch (e) {}
     try { if (typeof stopBossVideoBg === 'function') stopBossVideoBg(); } catch (e) {}
     try { if (typeof BossArena !== 'undefined') BossArena.stop(); } catch (e) {}
@@ -31253,6 +31267,151 @@ window.SocialAgents = (function () {
   function safe(fn, dflt) { try { return fn(); } catch (e) { return dflt; } }
   function get(k)    { return safe(function () { return localStorage.getItem(k); }, null); }
   function set(k, v) { safe(function () { localStorage.setItem(k, v); }); }
+  function remove(k) { safe(function () { localStorage.removeItem(k); }); }
+
+  /* ── pseudonymous invite attribution ─────────────────────────────────────────────────────────────────────
+     Invite URLs carry opaque codes, never a person's name, email address or phone number. The
+     alphabet and length are intentionally smaller than the ingest props allowance: accepting a
+     free-form query value here would turn a pseudonymous funnel into an accidental PII channel.
+
+     Campaigns must use an issuer-owned `b<build>-beta<round>` code. Invitations use exactly eight
+     issuer-generated consonant+digit pairs after `i-`; vowels, ambiguous characters and any run of
+     name-like letters are excluded. This is deliberately stricter than merely removing @/spaces:
+     values such as a person's name plus birth year are not accepted as attribution.
+
+     Attribution is last-valid-link wins and expires after 30 days. The timestamp is revalidated
+     on every event so another tab following a newer invite immediately becomes authoritative.
+     Invalid explicit values are still removed from the address bar, but never erase a fresh valid
+     attribution. */
+  var INVITE_KEY = 'cq_bt_invite_v1';
+  var INVITE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+  var COHORT_TOKEN_RE = /^b\d{3,5}-beta(?:[1-9]|[1-9][0-9]|100)$/;
+  var INVITE_TOKEN_RE = /^i-(?:[BCDFGHJKMNPQRSTVWXYZ][2-9]){8}$/;
+  var INVITE_MEMORY = null;
+
+  function cohortToken(value) {
+    var token = typeof value === 'string' ? value : '';
+    if (!COHORT_TOKEN_RE.test(token)) return '';
+    return token;
+  }
+
+  function inviteToken(value) {
+    var token = typeof value === 'string' ? value : '';
+    if (!INVITE_TOKEN_RE.test(token)) return '';
+    var suffix = token.slice(2);
+    if (!/^(?:[BCDFGHJKMNPQRSTVWXYZ][2-9]){8}$/.test(suffix)) return '';
+    return token;
+  }
+
+  function validInviteRow(row, now) {
+    var capturedAt = row && Number(row.captured_at);
+    if (!row || !isFinite(capturedAt) || capturedAt <= 0 || capturedAt > now || now - capturedAt >= INVITE_TTL_MS) return null;
+    var cohort = cohortToken(row.cohort);
+    var invite = inviteToken(row.invite);
+    if (!cohort || !invite) return null;
+    return { cohort: cohort, invite: invite, captured_at: capturedAt };
+  }
+
+  function storedInvite(now) {
+    return safe(function () {
+      var localRaw = get(INVITE_KEY);
+      var sessionRaw = safe(function () { return sessionStorage.getItem(INVITE_KEY); }, null);
+      var candidates = [
+        validInviteRow(INVITE_MEMORY, now),
+        validInviteRow(safe(function () { return JSON.parse(localRaw || 'null'); }, null), now),
+        validInviteRow(safe(function () { return JSON.parse(sessionRaw || 'null'); }, null), now),
+      ];
+      if (localRaw && !candidates[1]) remove(INVITE_KEY);
+      if (sessionRaw && !candidates[2]) safe(function () { sessionStorage.removeItem(INVITE_KEY); });
+      var newest = null;
+      for (var i = 0; i < candidates.length; i++) {
+        if (candidates[i] && (!newest || candidates[i].captured_at > newest.captured_at)) newest = candidates[i];
+      }
+      return newest || {};
+    }, {});
+  }
+
+  function queryInviteToken(name, validator) {
+    return safe(function () {
+      var values = new URLSearchParams(location.search || '').getAll(name);
+      var newest = '';
+      for (var i = 0; i < values.length; i++) {
+        var valid = validator(values[i]);
+        if (valid) newest = valid;       // the last explicit VALID value wins
+      }
+      return newest;
+    }, '');
+  }
+
+  /* Remove only the two attribution parameters. Work on the raw query pieces instead of
+     serialising URLSearchParams so unrelated parameters retain their order and exact encoding. */
+  function stripInviteParams() {
+    safe(function () {
+      var search = String(location.search || '');
+      if (!search || typeof history === 'undefined' || typeof history.replaceState !== 'function') return;
+      var parts = search.replace(/^\?/, '').split('&');
+      var kept = [], changed = false;
+      for (var i = 0; i < parts.length; i++) {
+        var rawKey = parts[i].split('=', 1)[0] || '';
+        var key = safe(function () { return decodeURIComponent(rawKey.replace(/\+/g, ' ')); }, '');
+        if (key === 'cq_cohort' || key === 'cq_invite') changed = true;
+        else kept.push(parts[i]);
+      }
+      if (!changed) return;
+      var next = String(location.pathname || '/')
+        + (kept.length ? '?' + kept.join('&') : '')
+        + String(location.hash || '');
+      history.replaceState(history.state, safe(function () { return document.title || ''; }, ''), next);
+    });
+  }
+
+  function persistInvite(row) {
+    INVITE_MEMORY = row;
+    var encoded = JSON.stringify(row);
+    var localSaved = safe(function () {
+      localStorage.setItem(INVITE_KEY, encoded);
+      return localStorage.getItem(INVITE_KEY) === encoded;
+    }, false);
+    var sessionSaved = safe(function () {
+      sessionStorage.setItem(INVITE_KEY, encoded);
+      return sessionStorage.getItem(INVITE_KEY) === encoded;
+    }, false);
+    return !!(localSaved || sessionSaved);
+  }
+
+  function captureInvite() {
+    var params = safe(function () { return new URLSearchParams(location.search || ''); }, null);
+    var explicit = !!(params && (params.has('cq_cohort') || params.has('cq_invite')));
+    if (!explicit) return;
+    var cohort = queryInviteToken('cq_cohort', cohortToken);
+    var invite = queryInviteToken('cq_invite', inviteToken);
+    if (cohort && invite) {
+      /* One link is one atomic pair. A malformed or missing half cannot erase/mix with a valid
+         stored campaign. Strip a valid pair only after it survives in local or session storage;
+         if both stores reject it, leave the URL intact so navigation can retry the capture. */
+      if (persistInvite({ cohort: cohort, invite: invite, captured_at: Date.now() })) stripInviteParams();
+      return;
+    }
+    /* Invalid/PII-shaped explicit values are never useful attribution. Remove them from the URL
+       while leaving any previously valid stored pair untouched. */
+    stripInviteParams();
+  }
+
+  function inviteProps(props) {
+    var out = {}, key;
+    if (props && typeof props === 'object') {
+      for (key in props) if (Object.prototype.hasOwnProperty.call(props, key)
+          && key !== 'cohort' && key !== 'invite' && key !== 'cq_cohort' && key !== 'cq_invite') {
+        out[key] = props[key];
+      }
+    }
+    var attribution = storedInvite(Date.now());
+    if (attribution.cohort) out.cohort = attribution.cohort;
+    if (attribution.invite) out.invite = attribution.invite;
+    return out;
+  }
+
+  captureInvite();
 
   function uid(p) {
     return (p || '') + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
@@ -31344,7 +31503,17 @@ window.SocialAgents = (function () {
       var type = r.headers && r.headers.get ? String(r.headers.get('Content-Type') || '') : '';
       if (type.toLowerCase().indexOf('application/json') === -1) return false;
       return r.json().then(function (receipt) {
-        return !!receipt && receipt.ok === true && Number(receipt.written) === rows.length;
+        if (!receipt || receipt.ok !== true || Number(receipt.written) !== rows.length) return false;
+        if (kind !== 'survey') return true;
+        if (receipt.survey_contract !== 'chartquest-beta-survey-v2' || !Array.isArray(receipt.surveys)
+            || receipt.surveys.length !== rows.length) return false;
+        for (var i = 0; i < rows.length; i++) {
+          var stored = receipt.surveys[i] || {}, expected = rows[i] || {};
+          if (String(stored.response_id || '') !== String(expected.response_id || '')
+              || String(stored.experience_level || '') !== String(expected.experience_level || '')
+              || String(stored.purchase_intent_19 || '') !== String(expected.purchase_intent_19 || '')) return false;
+        }
+        return true;
       }).catch(function () { return false; });
     }).catch(function () { return false; });
   }
@@ -31429,7 +31598,7 @@ window.SocialAgents = (function () {
         if (get(k)) return false;
         set(k, String(Date.now()));
       }
-      var _p = props || {};
+      var _p = inviteProps(props || {});
       if (BUILD && _p.build == null) _p.build = BUILD;
       if (IS_DEV) _p.dev = 1;                              // mark dev/self-test sessions (see founder_report.py dev_flagged)
       buf.push({
@@ -31467,7 +31636,7 @@ window.SocialAgents = (function () {
       buf.push({
         event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'return_visit',
         ts: new Date().toISOString(),
-        props: { visit: visits, first_seen: get('cq_bt_first_seen'), page: page(), build: BUILD, dev: IS_DEV ? 1 : undefined },
+        props: inviteProps({ visit: visits, first_seen: get('cq_bt_first_seen'), page: page(), build: BUILD, dev: IS_DEV ? 1 : undefined }),
         device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
       });
       schedule();
@@ -31495,9 +31664,9 @@ window.SocialAgents = (function () {
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'session_end',
       ts: new Date().toISOString(),
-      props: { seconds: secs, page: page(), completion_seconds: completionSeconds(),
-               exit_stage: exitStage(), completed: !!get('cq_bt_beta_completed'), build: BUILD,
-               dev: IS_DEV ? 1 : undefined },
+      props: inviteProps({ seconds: secs, page: page(), completion_seconds: completionSeconds(),
+                           exit_stage: exitStage(), completed: !!get('cq_bt_beta_completed'), build: BUILD,
+                           dev: IS_DEV ? 1 : undefined }),
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);
@@ -31587,9 +31756,9 @@ window.SocialAgents = (function () {
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'crash',
       ts: new Date().toISOString(),
-      props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '',
-               page: page(), build: BUILD,
-               origin: org, source_host: host || null, dev: IS_DEV ? 1 : undefined },
+      props: inviteProps({ kind: kind, message: String(msg || '').slice(0, 500), where: extra || '',
+                           page: page(), build: BUILD,
+                           origin: org, source_host: host || null, dev: IS_DEV ? 1 : undefined }),
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);

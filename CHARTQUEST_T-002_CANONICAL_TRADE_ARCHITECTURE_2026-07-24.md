@@ -3,6 +3,12 @@
 **Date:** 2026-07-24 · **Build:** 298 · **Gate:** `node scripts/verify.js` → **13 pass / 0 fail** (no override)
 **Scope:** Trade 1 (the canonical reference implementation). Trades 2 and 3 inherit automatically — see §7.
 
+> **Historical architecture notice (2026-08-23):** Build 370 supersedes only this record's wall-clock
+> pacing decision. The current founder-directed rule is player-paced guided trade traversal, recorded
+> in `CHARTQUEST_T-002_PLAYER_PACED_TRADE_SUPERSESSION_2026-08-23.md`. The visible-candle truth,
+> TP/SL touch, manual close, replay, and other trade laws below remain historical context or continuing
+> invariants as specified by the superseding record.
+
 ---
 
 ## 1. WHY THE PREVIOUS FIRST TRADE FAILED

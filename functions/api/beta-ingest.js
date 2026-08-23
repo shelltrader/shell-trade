@@ -54,10 +54,10 @@ export async function onRequest(context) {
     if (!rate.allowed) {
       return response(429, { error: 'Rate limited' }, origin, { 'Retry-After': String(rate.retryAfter) });
     }
-    const written = await writeIngestRows(
+    const receipt = await writeIngestRows(
       context.env.BETA_DB, checked.kind, checked.rows, nowIso,
     );
-    return response(200, { ok: true, written }, origin);
+    return response(200, Object.assign({ ok: true }, receipt), origin);
   } catch (_) {
     // No database or SQL detail is exposed to the public write route.
     return response(503, { error: 'Beta data service unavailable' }, origin);

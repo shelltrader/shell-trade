@@ -21,6 +21,7 @@
  *   23 Build-368 local browser harness safety/syntax/self-test
  *   24 Build-368 Boss1 cinematic-audio media quality/parity/timing
  *   25 Build-369 Cloudflare-only app/beta data-plane + no-loss client contracts
+ *   26 Build-370 player-paced trades + teaching/survey research contracts
  */
 const fs = require('fs');
 const os = require('os');
@@ -841,6 +842,38 @@ function run() {
     } catch (e) {
       add('25', 'Build-369 Cloudflare-only data plane + no-loss clients', 'FAIL',
         'Cloudflare data-plane checks could not run: ' + String(e && e.message || e).slice(0, 140));
+    }
+  }
+
+  // 26 — BUILD 370 NEXT-BETA EXPERIMENT. The founder-directed pacing change is intentionally
+  // narrow: guided price follows Finn's reached frontier, never elapsed time, while the visible
+  // TP/SL truth, 30–60 candle envelope, replay exit candle and trade-focus freeze stay executable.
+  // The teaching and survey additions are gated separately so a future mirror/build operation
+  // cannot silently preserve the trade code while dropping the actual beta-learning changes.
+  {
+    try {
+      const checks = [
+        ['trade_pacing.test.js', 'player-paced trade/TP-SL/world-focus contracts'],
+        ['beta370_ui.test.js', 'scrollable teaching/explicit-control/chart-context contracts'],
+        ['survey_research.test.js', 'seven-step experience/$19 research-form contracts'],
+      ];
+      const failures = [], detail = [];
+      for (const [file, label] of checks) {
+        const result = cp.spawnSync(process.execPath, [path.join('scripts', file)], {
+          cwd: ROOT, encoding: 'utf8', timeout: 30000,
+        });
+        if (result.status !== 0) {
+          failures.push(label + ': ' + String(result.stderr || result.stdout || 'exit ' + result.status).trim().slice(0, 180));
+        } else {
+          const match = String(result.stdout || '').match(/(\d+\/\d+[^\n]*passed|all[^\n]*pass)/i);
+          detail.push(label + ' PASS' + (match ? ' (' + match[1] + ')' : ''));
+        }
+      }
+      add('26', 'Build-370 player-paced trades + next-beta learning', failures.length ? 'FAIL' : 'PASS',
+        failures.length ? failures.join(' · ') : detail.join(' · '));
+    } catch (e) {
+      add('26', 'Build-370 player-paced trades + next-beta learning', 'FAIL',
+        'Build-370 focused checks could not run: ' + String(e && e.message || e).slice(0, 140));
     }
   }
 

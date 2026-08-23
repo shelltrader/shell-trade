@@ -89,7 +89,7 @@
     <button type="button" class="tab" data-view="migration" aria-selected="false">Migration</button>
     <button type="button" class="tab" data-view="catalog" aria-selected="false">Data catalog</button>
     <button type="button" class="tab" data-view="events" aria-selected="false">Raw events</button>
-    <button type="button" class="tab" data-view="builds" aria-selected="false">Builds</button>
+    <button type="button" class="tab" data-view="builds" aria-selected="false">Cohorts &amp; builds</button>
     <button type="button" class="tab" data-view="devices" aria-selected="false">Devices</button>
     <button type="button" class="tab" data-view="crashes" aria-selected="false">Crashes</button>
   </nav>
@@ -263,7 +263,7 @@
         <p class="section-note" id="playerCount"></p>
       </div>
       <div class="panel table-panel"><div class="table-scroll"><table>
-        <thead><tr><th>Player</th><th>Last seen</th><th>Furthest stage</th><th>Sessions</th><th>Builds</th><th>Device</th><th>Rating</th><th>Crashes</th></tr></thead>
+        <thead><tr><th>Player</th><th>Cohort</th><th>Invite</th><th>Last seen</th><th>Furthest stage</th><th>Sessions</th><th>Builds</th><th>Device</th><th>Rating</th><th>Crashes</th></tr></thead>
         <tbody id="playerRows"></tbody>
       </table></div><div class="empty" id="playerEmpty" hidden>No players match this search.</div></div>
     </section>
@@ -295,10 +295,15 @@
 
     <section class="view" id="view-builds" data-view-panel="builds" hidden>
       <div class="section-heading">
-        <div><p class="eyebrow">ENTRY COHORTS</p><h2>Build performance</h2></div>
-        <p class="section-note">Each player belongs to the first build-bearing event in the selected window.</p>
+        <div><p class="eyebrow">ENTRY COHORTS</p><h2>Build and invite performance</h2></div>
+        <p class="section-note">Invite codes are private to this Cloudflare Access-protected dashboard. Attribution uses each player’s earliest attributed event in loaded Cloudflare history.</p>
       </div>
-      <div class="panel table-panel"><div class="table-scroll"><table>
+      <div class="privacy-strip" id="inviteReuseWarning" hidden><div><strong>Invite reuse detected</strong><span id="inviteReuseDetail"></span></div></div>
+      <div class="panel table-panel"><div class="panel-head"><h3>Private invite-cohort funnel</h3><span class="quiet">distinct player IDs · direct event evidence</span></div><div class="table-scroll"><table>
+        <thead><tr><th>Cohort</th><th>Players</th><th>First trade started</th><th>Beta completed</th><th>Survey response</th><th>Invite codes</th></tr></thead>
+        <tbody id="cohortRows"></tbody>
+      </table></div><div class="empty" id="cohortEmpty" hidden>No cohort players match this search.</div></div>
+      <div class="panel table-panel spaced-panel"><div class="panel-head"><h3>Entry-build performance</h3></div><div class="table-scroll"><table>
         <thead><tr><th>Build</th><th>Players</th><th>Sessions</th><th>Boss</th><th>Journal</th><th>Completed</th><th>Survey</th><th>Rating</th><th>Crashes</th></tr></thead>
         <tbody id="buildRows"></tbody>
       </table></div></div>

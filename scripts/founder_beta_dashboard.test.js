@@ -74,8 +74,8 @@ function event(id, player, name, ts, props = {}) {
   };
 }
 
-function survey(id, player, createdAt, rating = 9) {
-  return {
+function survey(id, player, createdAt, rating = 9, research = null) {
+  const row = {
     id,
     response_id: `response-${id}`,
     player_id: player,
@@ -90,6 +90,8 @@ function survey(id, player, createdAt, rating = 9) {
     updated_at: createdAt,
     ingest_source: 'cloudflare',
   };
+  if (research) Object.assign(row, research);
+  return row;
 }
 
 (async () => {
@@ -181,6 +183,111 @@ function survey(id, player, createdAt, rating = 9) {
     assert.equal(model.crashes[0].os, 'iOS');
   });
 
+  await test('research distributions exclude historical not-asked rows and response cards show every answer', () => {
+    const { hooks } = dashboardHarness(async () => { throw new Error('not used'); });
+    const now = '2026-08-15T12:00:00.000Z';
+    const recent = '2026-08-15T11:00:00.000Z';
+    const surveys = [
+      survey(21, 'p-historical', recent, 8),
+      survey(22, 'p-new-a', recent, 9, { experience_level: 'new_to_both', purchase_intent_19: 'definitely' }),
+      survey(23, 'p-new-b', recent, 7, { experience_level: 'familiar_with_both', purchase_intent_19: 'probably' }),
+    ];
+    hooks.setRange(1, now);
+    const model = hooks.buildViewModel([], surveys, 'all');
+
+    assert.equal(model.surveys.n, 3);
+    assert.equal(model.surveys.experience_answered, 2);
+    assert.equal(model.surveys.purchase_intent_19_answered, 2);
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(model.surveys.experience_dist)), {
+      new_to_both: 1,
+      gamer_not_trader: 0,
+      trader_not_gamer: 0,
+      familiar_with_both: 1,
+    });
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(model.surveys.purchase_intent_19_dist)), {
+      definitely: 1,
+      probably: 1,
+      unsure: 0,
+      probably_not: 0,
+      definitely_not: 0,
+    });
+    assert.equal(Object.values(model.surveys.purchase_intent_19_dist).reduce((sum, count) => sum + count, 0), 2);
+
+    const historical = model.surveys.responses.find((row) => row.player_id === 'p-historical');
+    assert.equal(historical.experience_level, null);
+    assert.equal(historical.purchase_intent_19, null);
+    const historicalMarkup = hooks.surveyResponseMarkup(model.raw_surveys.find((row) => row.player_id === 'p-historical'));
+    for (const label of ['Q1 · Overall rating', 'Q2 · What hooked you?', 'Q3 · What should improve?', 'Q4 · Would keep playing', 'Q5 · Anything else?', 'Q6 · Prior experience', 'Q7 · Proposed $19 early-access intent', 'Time to complete survey']) {
+      assert.match(historicalMarkup, new RegExp(label.replace(/[?$]/g, '\\$&')));
+    }
+    assert.equal((historicalMarkup.match(/\(not asked\)/g) || []).length, 2);
+
+    const summaryMarkup = hooks.surveySummaryMarkup(model.surveys);
+    assert.match(summaryMarkup, /Prior experience · 2 answered · 1 not asked/);
+    assert.match(summaryMarkup, /Proposed \$19 early-access intent · 2 answered · 1 not asked/);
+    assert.match(summaryMarkup, /Definitely 1 · Probably 1 · Unsure 0 · Probably not 0 · Definitely not 0/);
+  });
+
+  await test('entry attribution freezes the earliest tokens and builds a distinct-player cohort funnel', () => {
+    const { hooks } = dashboardHarness(async () => { throw new Error('not used'); });
+    const now = '2026-08-15T12:00:00.000Z';
+    const events = [
+      event(31, 'p-a', 'session_start', '2026-08-15T11:40:00.000Z', { build: '370', cohort: 'cohort-late', invite: 'invite-late' }),
+      event(32, 'p-a', 'session_start', '2026-08-10T11:05:00.000Z', { build: '369', cohort: 'cohort-alpha', invite: 'invite-shared' }),
+      event(33, 'p-a', 'first_trade_started', '2026-08-15T11:10:00.000Z', { build: '370' }),
+      event(34, 'p-a', 'beta_completed', '2026-08-15T11:20:00.000Z', { build: '370' }),
+      event(35, 'p-b', 'session_start', '2026-08-15T11:02:00.000Z', { build: '370', cohort: 'cohort-alpha', invite: 'invite-shared' }),
+      event(36, 'p-b', 'first_trade_started', '2026-08-15T11:15:00.000Z', { build: '370' }),
+      event(37, 'p-c', 'session_start', '2026-08-15T11:03:00.000Z', { build: '370', cohort: 'cohort-alpha' }),
+      event(38, 'p-unattributed', 'session_start', '2026-08-15T11:01:00.000Z', { build: '370' }),
+    ];
+    const surveys = [
+      survey(31, 'p-a', '2026-08-15T11:50:00.000Z', 9),
+      survey(32, 'p-b', '2026-08-15T11:51:00.000Z', 8),
+      survey(33, 'p-survey-only', '2026-08-15T11:52:00.000Z', 7),
+    ];
+    hooks.setRange(1, now);
+    const model = hooks.buildViewModel(events, surveys, 'all');
+
+    const playerA = model.players.find((row) => row.player_id === 'p-a');
+    assert.equal(playerA.entry_cohort, 'cohort-alpha');
+    assert.equal(playerA.entry_invite, 'invite-shared');
+    assert.equal(playerA.attributed_at, '2026-08-10T11:05:00.000Z', 'the time filter must not rewrite lifetime entry attribution');
+    assert.doesNotMatch(JSON.stringify(model.cohorts), /cohort-late|invite-late/, 'later links must not rewrite entry attribution');
+    const surveyOnly = model.players.find((row) => row.player_id === 'p-survey-only');
+    assert.equal(surveyOnly.entry_cohort, '(unknown)');
+    assert.equal(surveyOnly.entry_invite, '(unknown)');
+
+    const alpha = model.cohorts.rows.find((row) => row.cohort === 'cohort-alpha');
+    assert.deepStrictEqual(JSON.parse(JSON.stringify({
+      players: alpha.players,
+      first_trade_started: alpha.first_trade_started,
+      beta_completed: alpha.beta_completed,
+      survey_response: alpha.survey_response,
+    })), { players: 3, first_trade_started: 2, beta_completed: 1, survey_response: 2 });
+    const unknown = model.cohorts.rows.find((row) => row.cohort === '(unknown)');
+    assert.deepStrictEqual(JSON.parse(JSON.stringify({
+      players: unknown.players,
+      first_trade_started: unknown.first_trade_started,
+      beta_completed: unknown.beta_completed,
+      survey_response: unknown.survey_response,
+    })), { players: 2, first_trade_started: 0, beta_completed: 0, survey_response: 1 });
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(model.cohorts.duplicate_invites)), [{
+      invite: 'invite-shared',
+      players: 2,
+      player_ids: ['p-a', 'p-b'],
+      cohorts: ['cohort-alpha'],
+    }]);
+
+    const responseA = model.surveys.responses.find((row) => row.player_id === 'p-a');
+    assert.equal(responseA.entry_cohort, 'cohort-alpha');
+    assert.equal(responseA.entry_invite, 'invite-shared');
+    assert.match(hooks.playerRowMarkup(playerA), /cohort-alpha[\s\S]*invite-shared/);
+    assert.match(hooks.surveyResponseMarkup(surveys[0], playerA), /Cohort[\s\S]*cohort-alpha[\s\S]*Invite[\s\S]*invite-shared/);
+    assert.match(hooks.cohortRowsMarkup(model.cohorts.rows), /cohort-alpha[\s\S]*invite-shared[\s\S]*2 players/);
+    assert.match(hooks.inviteReuseMarkup(model.cohorts.duplicate_invites), /invite-shared[\s\S]*2[\s\S]*p-a, p-b/);
+  });
+
   await test('ordinary p-* dev runs are excluded player-wide from analytics and raw views', () => {
     const { hooks } = dashboardHarness(async () => { throw new Error('not used'); });
     const now = '2026-08-15T12:00:00.000Z';
@@ -235,6 +342,9 @@ function survey(id, player, createdAt, rating = 9) {
     assert.match(js, /entry-build cohort roster/);
     assert.match(js, /committedRangeDays/);
     assert.match(js, /windowSelect'\)\.value = String\(state\.committedRangeDays\)/);
+    assert.match(html, /id="cohortRows"/);
+    assert.match(html, /id="inviteReuseWarning"/);
+    assert.match(html, /Invite codes are private to this Cloudflare Access-protected dashboard/);
     assert.doesNotMatch(js, /supabase\.(auth|from)|beta-data\.json|localStorage/);
   });
 

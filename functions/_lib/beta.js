@@ -13,6 +13,16 @@ export const EVENT_NAMES = Object.freeze([
 
 const EVENT_NAME_SET = new Set(EVENT_NAMES);
 const CONTINUE_VALUES = new Set(['immediately', 'later', 'not_interested']);
+const EXPERIENCE_VALUES = new Set([
+  'new_to_both', 'gamer_not_trader', 'trader_not_gamer', 'familiar_with_both',
+]);
+const PURCHASE_INTENT_19_VALUES = new Set([
+  'definitely', 'probably', 'unsure', 'probably_not', 'definitely_not',
+]);
+const COHORT_TOKEN_RE = /^b\d{3,5}-beta(?:[1-9]|[1-9][0-9]|100)$/;
+const INVITE_TOKEN_RE = /^i-(?:[BCDFGHJKMNPQRSTVWXYZ][2-9]){8}$/;
+
+export const SURVEY_RECEIPT_CONTRACT = 'chartquest-beta-survey-v2';
 
 export const ALLOWED_ORIGINS = Object.freeze([
   'https://playchartquest.com',
@@ -74,8 +84,21 @@ function present(value) {
 
 function cleanProps(value) {
   if (value == null || typeof value !== 'object' || Array.isArray(value)) return {};
-  const encoded = JSON.stringify(value);
-  return encoded.length > 4096 ? {} : value;
+  const cleaned = {};
+  for (const [key, raw] of Object.entries(value)) {
+    if (key === 'cq_cohort' || key === 'cq_invite') continue;
+    if (key === 'cohort') {
+      if (typeof raw === 'string' && COHORT_TOKEN_RE.test(raw)) cleaned.cohort = raw;
+      continue;
+    }
+    if (key === 'invite') {
+      if (typeof raw === 'string' && INVITE_TOKEN_RE.test(raw)) cleaned.invite = raw;
+      continue;
+    }
+    cleaned[key] = raw;
+  }
+  const encoded = JSON.stringify(cleaned);
+  return encoded.length > 4096 ? {} : cleaned;
 }
 
 export function shapeEvent(raw, nowIso) {
@@ -105,6 +128,8 @@ export function shapeEvent(raw, nowIso) {
 export function shapeSurvey(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const continuation = String(raw.q4_continue ?? '');
+  const experience = raw.experience_level == null ? null : raw.experience_level;
+  const purchaseIntent = raw.purchase_intent_19 == null ? null : raw.purchase_intent_19;
   const rating = Number(raw.q1_rating);
   const seconds = Number(raw.seconds_taken);
   if (
@@ -116,6 +141,8 @@ export function shapeSurvey(raw) {
     !present(raw.q3_improvement) || raw.q3_improvement.length > 2000 ||
     !CONTINUE_VALUES.has(continuation) ||
     (raw.q5_anything != null && (typeof raw.q5_anything !== 'string' || raw.q5_anything.length > 2000)) ||
+    (experience != null && (typeof experience !== 'string' || !EXPERIENCE_VALUES.has(experience))) ||
+    (purchaseIntent != null && (typeof purchaseIntent !== 'string' || !PURCHASE_INTENT_19_VALUES.has(purchaseIntent))) ||
     !Number.isInteger(seconds) || seconds < 0 || seconds > 86400
   ) return null;
   return {
@@ -127,6 +154,8 @@ export function shapeSurvey(raw) {
     q3_improvement: str(raw.q3_improvement, 2000),
     q4_continue: continuation,
     q5_anything: str(raw.q5_anything, 2000),
+    experience_level: experience,
+    purchase_intent_19: purchaseIntent,
     seconds_taken: seconds,
   };
 }
@@ -152,6 +181,9 @@ export function validateIngestBody(body, nowIso) {
   if (rows.some((row) => !row)) {
     return { error: { status: 400, message: 'Invalid row' } };
   }
+  if (kind === 'survey' && new Set(rows.map((row) => row.response_id)).size !== rows.length) {
+    return { error: { status: 400, message: 'Duplicate survey response id' } };
+  }
   return { kind, rows };
 }
 
@@ -173,9 +205,10 @@ function surveyStatement(db, row, nowIso) {
   return db.prepare(`
     INSERT INTO beta_surveys (
       response_id, player_id, session_id, q1_rating, q2_hook,
-      q3_improvement, q4_continue, q5_anything, seconds_taken,
+      q3_improvement, q4_continue, q5_anything,
+      experience_level, purchase_intent_19, seconds_taken,
       created_at, updated_at, ingest_source
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cloudflare')
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cloudflare')
     ON CONFLICT(response_id) DO UPDATE SET
       player_id = excluded.player_id,
       session_id = excluded.session_id,
@@ -184,24 +217,82 @@ function surveyStatement(db, row, nowIso) {
       q3_improvement = excluded.q3_improvement,
       q4_continue = excluded.q4_continue,
       q5_anything = excluded.q5_anything,
+      experience_level = COALESCE(excluded.experience_level, beta_surveys.experience_level),
+      purchase_intent_19 = COALESCE(excluded.purchase_intent_19, beta_surveys.purchase_intent_19),
       seconds_taken = excluded.seconds_taken,
       updated_at = excluded.updated_at,
       ingest_source = 'cloudflare'
   `).bind(
     row.response_id, row.player_id, row.session_id, row.q1_rating,
     row.q2_hook, row.q3_improvement, row.q4_continue, row.q5_anything,
-    row.seconds_taken, nowIso, nowIso,
+    row.experience_level, row.purchase_intent_19, row.seconds_taken,
+    nowIso, nowIso,
   );
 }
 
+function surveyConfirmationStatement(db, row) {
+  return db.prepare(`
+    SELECT response_id, player_id, session_id, q1_rating, q2_hook,
+      q3_improvement, q4_continue, q5_anything,
+      experience_level, purchase_intent_19, seconds_taken
+    FROM beta_surveys
+    WHERE response_id = ?
+    LIMIT 1
+  `).bind(row.response_id);
+}
+
+function sameStoredSurvey(stored, expected) {
+  if (!stored) return false;
+  const text = (value) => value == null ? null : String(value);
+  if (
+    text(stored.response_id) !== text(expected.response_id) ||
+    text(stored.player_id) !== text(expected.player_id) ||
+    text(stored.session_id) !== text(expected.session_id) ||
+    Number(stored.q1_rating) !== expected.q1_rating ||
+    text(stored.q2_hook) !== text(expected.q2_hook) ||
+    text(stored.q3_improvement) !== text(expected.q3_improvement) ||
+    text(stored.q4_continue) !== text(expected.q4_continue) ||
+    text(stored.q5_anything) !== text(expected.q5_anything) ||
+    Number(stored.seconds_taken) !== expected.seconds_taken
+  ) return false;
+  if (expected.experience_level != null && text(stored.experience_level) !== expected.experience_level) return false;
+  if (expected.purchase_intent_19 != null && text(stored.purchase_intent_19) !== expected.purchase_intent_19) return false;
+  return true;
+}
+
 export async function writeIngestRows(db, kind, rows, nowIso) {
-  const statements = rows.map((row) => kind === 'events'
-    ? eventStatement(db, row, nowIso)
-    : surveyStatement(db, row, nowIso));
-  await db.batch(statements);
-  // This intentionally matches the previous endpoint: duplicates are accepted idempotently,
-  // and `written` reports the number of valid rows acknowledged rather than SQLite changes().
-  return rows.length;
+  if (kind === 'events') {
+    await db.batch(rows.map((row) => eventStatement(db, row, nowIso)));
+    // Event ids are idempotent; a duplicate is still an acknowledged durable event.
+    return { written: rows.length };
+  }
+
+  /* Each write and its readback execute in one ordered D1 batch. A count-only receipt cannot prove
+     a rolling backend actually knew about the Build-370 research columns, and an ignored older
+     update can otherwise look successful. Fail closed unless the stored survey matches every
+     submitted answer; nullable research fields from old clients may retain a newer stored value. */
+  const statements = [];
+  for (const row of rows) statements.push(
+    surveyStatement(db, row, nowIso),
+    surveyConfirmationStatement(db, row),
+  );
+  const results = await db.batch(statements);
+  const confirmations = [];
+  for (let index = 0; index < rows.length; index += 1) {
+    const result = results[index * 2 + 1];
+    const stored = result && Array.isArray(result.results) ? result.results[0] : null;
+    if (!sameStoredSurvey(stored, rows[index])) throw new Error('Survey write was not confirmed');
+    confirmations.push({
+      response_id: String(stored.response_id),
+      experience_level: stored.experience_level == null ? null : String(stored.experience_level),
+      purchase_intent_19: stored.purchase_intent_19 == null ? null : String(stored.purchase_intent_19),
+    });
+  }
+  return {
+    written: rows.length,
+    survey_contract: SURVEY_RECEIPT_CONTRACT,
+    surveys: confirmations,
+  };
 }
 
 function bytesToHex(bytes) {
@@ -260,6 +351,7 @@ export const DATASETS = Object.freeze({
     columns: Object.freeze([
       'id', 'response_id', 'player_id', 'session_id', 'q1_rating',
       'q2_hook', 'q3_improvement', 'q4_continue', 'q5_anything',
+      'experience_level', 'purchase_intent_19',
       'seconds_taken', 'created_at', 'updated_at', 'ingest_source',
     ]),
     jsonColumns: Object.freeze([]),

@@ -56,6 +56,151 @@
   function safe(fn, dflt) { try { return fn(); } catch (e) { return dflt; } }
   function get(k)    { return safe(function () { return localStorage.getItem(k); }, null); }
   function set(k, v) { safe(function () { localStorage.setItem(k, v); }); }
+  function remove(k) { safe(function () { localStorage.removeItem(k); }); }
+
+  /* ── pseudonymous invite attribution ─────────────────────────────────────────────────────────────────────
+     Invite URLs carry opaque codes, never a person's name, email address or phone number. The
+     alphabet and length are intentionally smaller than the ingest props allowance: accepting a
+     free-form query value here would turn a pseudonymous funnel into an accidental PII channel.
+
+     Campaigns must use an issuer-owned `b<build>-beta<round>` code. Invitations use exactly eight
+     issuer-generated consonant+digit pairs after `i-`; vowels, ambiguous characters and any run of
+     name-like letters are excluded. This is deliberately stricter than merely removing @/spaces:
+     values such as a person's name plus birth year are not accepted as attribution.
+
+     Attribution is last-valid-link wins and expires after 30 days. The timestamp is revalidated
+     on every event so another tab following a newer invite immediately becomes authoritative.
+     Invalid explicit values are still removed from the address bar, but never erase a fresh valid
+     attribution. */
+  var INVITE_KEY = 'cq_bt_invite_v1';
+  var INVITE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+  var COHORT_TOKEN_RE = /^b\d{3,5}-beta(?:[1-9]|[1-9][0-9]|100)$/;
+  var INVITE_TOKEN_RE = /^i-(?:[BCDFGHJKMNPQRSTVWXYZ][2-9]){8}$/;
+  var INVITE_MEMORY = null;
+
+  function cohortToken(value) {
+    var token = typeof value === 'string' ? value : '';
+    if (!COHORT_TOKEN_RE.test(token)) return '';
+    return token;
+  }
+
+  function inviteToken(value) {
+    var token = typeof value === 'string' ? value : '';
+    if (!INVITE_TOKEN_RE.test(token)) return '';
+    var suffix = token.slice(2);
+    if (!/^(?:[BCDFGHJKMNPQRSTVWXYZ][2-9]){8}$/.test(suffix)) return '';
+    return token;
+  }
+
+  function validInviteRow(row, now) {
+    var capturedAt = row && Number(row.captured_at);
+    if (!row || !isFinite(capturedAt) || capturedAt <= 0 || capturedAt > now || now - capturedAt >= INVITE_TTL_MS) return null;
+    var cohort = cohortToken(row.cohort);
+    var invite = inviteToken(row.invite);
+    if (!cohort || !invite) return null;
+    return { cohort: cohort, invite: invite, captured_at: capturedAt };
+  }
+
+  function storedInvite(now) {
+    return safe(function () {
+      var localRaw = get(INVITE_KEY);
+      var sessionRaw = safe(function () { return sessionStorage.getItem(INVITE_KEY); }, null);
+      var candidates = [
+        validInviteRow(INVITE_MEMORY, now),
+        validInviteRow(safe(function () { return JSON.parse(localRaw || 'null'); }, null), now),
+        validInviteRow(safe(function () { return JSON.parse(sessionRaw || 'null'); }, null), now),
+      ];
+      if (localRaw && !candidates[1]) remove(INVITE_KEY);
+      if (sessionRaw && !candidates[2]) safe(function () { sessionStorage.removeItem(INVITE_KEY); });
+      var newest = null;
+      for (var i = 0; i < candidates.length; i++) {
+        if (candidates[i] && (!newest || candidates[i].captured_at > newest.captured_at)) newest = candidates[i];
+      }
+      return newest || {};
+    }, {});
+  }
+
+  function queryInviteToken(name, validator) {
+    return safe(function () {
+      var values = new URLSearchParams(location.search || '').getAll(name);
+      var newest = '';
+      for (var i = 0; i < values.length; i++) {
+        var valid = validator(values[i]);
+        if (valid) newest = valid;       // the last explicit VALID value wins
+      }
+      return newest;
+    }, '');
+  }
+
+  /* Remove only the two attribution parameters. Work on the raw query pieces instead of
+     serialising URLSearchParams so unrelated parameters retain their order and exact encoding. */
+  function stripInviteParams() {
+    safe(function () {
+      var search = String(location.search || '');
+      if (!search || typeof history === 'undefined' || typeof history.replaceState !== 'function') return;
+      var parts = search.replace(/^\?/, '').split('&');
+      var kept = [], changed = false;
+      for (var i = 0; i < parts.length; i++) {
+        var rawKey = parts[i].split('=', 1)[0] || '';
+        var key = safe(function () { return decodeURIComponent(rawKey.replace(/\+/g, ' ')); }, '');
+        if (key === 'cq_cohort' || key === 'cq_invite') changed = true;
+        else kept.push(parts[i]);
+      }
+      if (!changed) return;
+      var next = String(location.pathname || '/')
+        + (kept.length ? '?' + kept.join('&') : '')
+        + String(location.hash || '');
+      history.replaceState(history.state, safe(function () { return document.title || ''; }, ''), next);
+    });
+  }
+
+  function persistInvite(row) {
+    INVITE_MEMORY = row;
+    var encoded = JSON.stringify(row);
+    var localSaved = safe(function () {
+      localStorage.setItem(INVITE_KEY, encoded);
+      return localStorage.getItem(INVITE_KEY) === encoded;
+    }, false);
+    var sessionSaved = safe(function () {
+      sessionStorage.setItem(INVITE_KEY, encoded);
+      return sessionStorage.getItem(INVITE_KEY) === encoded;
+    }, false);
+    return !!(localSaved || sessionSaved);
+  }
+
+  function captureInvite() {
+    var params = safe(function () { return new URLSearchParams(location.search || ''); }, null);
+    var explicit = !!(params && (params.has('cq_cohort') || params.has('cq_invite')));
+    if (!explicit) return;
+    var cohort = queryInviteToken('cq_cohort', cohortToken);
+    var invite = queryInviteToken('cq_invite', inviteToken);
+    if (cohort && invite) {
+      /* One link is one atomic pair. A malformed or missing half cannot erase/mix with a valid
+         stored campaign. Strip a valid pair only after it survives in local or session storage;
+         if both stores reject it, leave the URL intact so navigation can retry the capture. */
+      if (persistInvite({ cohort: cohort, invite: invite, captured_at: Date.now() })) stripInviteParams();
+      return;
+    }
+    /* Invalid/PII-shaped explicit values are never useful attribution. Remove them from the URL
+       while leaving any previously valid stored pair untouched. */
+    stripInviteParams();
+  }
+
+  function inviteProps(props) {
+    var out = {}, key;
+    if (props && typeof props === 'object') {
+      for (key in props) if (Object.prototype.hasOwnProperty.call(props, key)
+          && key !== 'cohort' && key !== 'invite' && key !== 'cq_cohort' && key !== 'cq_invite') {
+        out[key] = props[key];
+      }
+    }
+    var attribution = storedInvite(Date.now());
+    if (attribution.cohort) out.cohort = attribution.cohort;
+    if (attribution.invite) out.invite = attribution.invite;
+    return out;
+  }
+
+  captureInvite();
 
   function uid(p) {
     return (p || '') + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
@@ -147,7 +292,17 @@
       var type = r.headers && r.headers.get ? String(r.headers.get('Content-Type') || '') : '';
       if (type.toLowerCase().indexOf('application/json') === -1) return false;
       return r.json().then(function (receipt) {
-        return !!receipt && receipt.ok === true && Number(receipt.written) === rows.length;
+        if (!receipt || receipt.ok !== true || Number(receipt.written) !== rows.length) return false;
+        if (kind !== 'survey') return true;
+        if (receipt.survey_contract !== 'chartquest-beta-survey-v2' || !Array.isArray(receipt.surveys)
+            || receipt.surveys.length !== rows.length) return false;
+        for (var i = 0; i < rows.length; i++) {
+          var stored = receipt.surveys[i] || {}, expected = rows[i] || {};
+          if (String(stored.response_id || '') !== String(expected.response_id || '')
+              || String(stored.experience_level || '') !== String(expected.experience_level || '')
+              || String(stored.purchase_intent_19 || '') !== String(expected.purchase_intent_19 || '')) return false;
+        }
+        return true;
       }).catch(function () { return false; });
     }).catch(function () { return false; });
   }
@@ -232,7 +387,7 @@
         if (get(k)) return false;
         set(k, String(Date.now()));
       }
-      var _p = props || {};
+      var _p = inviteProps(props || {});
       if (BUILD && _p.build == null) _p.build = BUILD;
       if (IS_DEV) _p.dev = 1;                              // mark dev/self-test sessions (see founder_report.py dev_flagged)
       buf.push({
@@ -270,7 +425,7 @@
       buf.push({
         event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'return_visit',
         ts: new Date().toISOString(),
-        props: { visit: visits, first_seen: get('cq_bt_first_seen'), page: page(), build: BUILD, dev: IS_DEV ? 1 : undefined },
+        props: inviteProps({ visit: visits, first_seen: get('cq_bt_first_seen'), page: page(), build: BUILD, dev: IS_DEV ? 1 : undefined }),
         device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
       });
       schedule();
@@ -298,9 +453,9 @@
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'session_end',
       ts: new Date().toISOString(),
-      props: { seconds: secs, page: page(), completion_seconds: completionSeconds(),
-               exit_stage: exitStage(), completed: !!get('cq_bt_beta_completed'), build: BUILD,
-               dev: IS_DEV ? 1 : undefined },
+      props: inviteProps({ seconds: secs, page: page(), completion_seconds: completionSeconds(),
+                           exit_stage: exitStage(), completed: !!get('cq_bt_beta_completed'), build: BUILD,
+                           dev: IS_DEV ? 1 : undefined }),
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);
@@ -390,9 +545,9 @@
     buf.push({
       event_id: uid('e-'), player_id: pid(), session_id: SESSION, name: 'crash',
       ts: new Date().toISOString(),
-      props: { kind: kind, message: String(msg || '').slice(0, 500), where: extra || '',
-               page: page(), build: BUILD,
-               origin: org, source_host: host || null, dev: IS_DEV ? 1 : undefined },
+      props: inviteProps({ kind: kind, message: String(msg || '').slice(0, 500), where: extra || '',
+                           page: page(), build: BUILD,
+                           origin: org, source_host: host || null, dev: IS_DEV ? 1 : undefined }),
       device: ENV.device, browser: ENV.browser, os: ENV.os, screen: ENV.screen, viewport: ENV.viewport
     });
     flush(true);

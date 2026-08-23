@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ChartQuest Beta — 5 quick questions</title>
+<title>ChartQuest Beta — 7 quick questions</title>
 <script>
 /* CQBOOTCRASH:BEGIN — generated from website/assets/cq-boot-crash.js by scripts/sync_boot_crash.py — DO NOT EDIT HERE */
 /* ChartQuest earliest-crash capture. Inline this at the top of every production page. */
@@ -76,7 +76,7 @@
 /* CQBOOTCRASH:END */
 </script>
 
-<meta name="description" content="Five quick questions about the ChartQuest closed beta. Under a minute.">
+<meta name="description" content="Seven quick questions about the ChartQuest closed beta.">
 <meta name="theme-color" content="#060910">
 <meta name="robots" content="noindex">
 <link rel="icon" href="assets/pwa/icon-192.png">
@@ -87,7 +87,7 @@
 <style>
 /* ============================================================================
    ChartQuest — BETA SURVEY (ticket 3)
-   One question per screen. Five steps, three of them a single tap.
+   One question per screen. Seven steps, four of them a single tap.
    Mobile first: every control is >=52px, the primary action never moves, and
    nothing needs a zoom or a horizontal scroll at 320px.
    ============================================================================ */
@@ -213,7 +213,7 @@ footer a{color:var(--ink-faint)}
            two items and the container's gap:9px renders the brand as "Chart Quest". -->
       <span>Chart<b>Quest</b></span>
     </span>
-    <span class="step-n" id="stepN">1 / 5</span>
+    <span class="step-n" id="stepN">1 / 7</span>
   </div>
   <div class="bar"><i id="bar"></i></div>
 </div>
@@ -225,7 +225,7 @@ footer a{color:var(--ink-faint)}
 
     <!-- 1 ───────────────────────────────────────────────────────────────── -->
     <section class="step on" data-step="1">
-      <span class="eyebrow">Question 1 of 5</span>
+      <span class="eyebrow">Question 1 of 7</span>
       <h1>How was it, overall?</h1>
       <p class="hint">1 means you did not enjoy it. 10 means you loved it.</p>
       <div class="scale" id="scale" role="radiogroup" aria-label="Rate your experience from 1 to 10"></div>
@@ -235,7 +235,7 @@ footer a{color:var(--ink-faint)}
 
     <!-- 2 ───────────────────────────────────────────────────────────────── -->
     <section class="step" data-step="2">
-      <span class="eyebrow">Question 2 of 5</span>
+      <span class="eyebrow">Question 2 of 7</span>
       <h1>When did it click?</h1>
       <p class="hint">Was there a moment where you thought <b>“okay, this is actually fun”</b>? Tell us when.
         If that never happened, tell us why — that is just as useful.</p>
@@ -250,7 +250,7 @@ footer a{color:var(--ink-faint)}
 
     <!-- 3 ───────────────────────────────────────────────────────────────── -->
     <section class="step" data-step="3">
-      <span class="eyebrow">Question 3 of 5</span>
+      <span class="eyebrow">Question 3 of 7</span>
       <h1>Change one thing.</h1>
       <p class="hint">If you could fix or improve <b>one thing</b> before we launch, what would it be?</p>
       <textarea id="q3" maxlength="2000" rows="5"
@@ -264,7 +264,7 @@ footer a{color:var(--ink-faint)}
 
     <!-- 4 ───────────────────────────────────────────────────────────────── -->
     <section class="step" data-step="4">
-      <span class="eyebrow">Question 4 of 5</span>
+      <span class="eyebrow">Question 4 of 7</span>
       <h1>Would you keep going?</h1>
       <p class="hint">If World 2 were ready right now…</p>
       <div class="choices" id="cont" role="radiogroup" aria-label="Would you continue?">
@@ -280,7 +280,7 @@ footer a{color:var(--ink-faint)}
 
     <!-- 5 ───────────────────────────────────────────────────────────────── -->
     <section class="step" data-step="5">
-      <span class="eyebrow">Last one</span>
+      <span class="eyebrow">Question 5 of 7</span>
       <h1>Anything else?</h1>
       <p class="hint">Anything at all you want us to know. Bugs, ideas, things that confused you.</p>
       <p class="req">Optional — you can send without this.</p>
@@ -288,7 +288,42 @@ footer a{color:var(--ink-faint)}
       <div class="count"><span id="c5">0</span> / 2000</div>
       <div class="actions">
         <button type="button" class="btn btn-ghost" data-back>←</button>
-        <button type="submit" class="btn btn-primary" id="send">Send it →</button>
+        <button type="button" class="btn btn-primary" data-next>Next →</button>
+      </div>
+    </section>
+
+    <!-- 6 ───────────────────────────────────────────────────────────────── -->
+    <section class="step" data-step="6">
+      <span class="eyebrow">Question 6 of 7</span>
+      <h1>What experience did you bring in?</h1>
+      <p class="hint">Before playing ChartQuest, which sounded most like you?</p>
+      <div class="choices" id="experience" role="radiogroup" aria-label="Your prior gaming and trading experience">
+        <button type="button" class="choice" data-v="new_to_both"><span class="dot"></span>I was new to both trading and games like this.</button>
+        <button type="button" class="choice" data-v="gamer_not_trader"><span class="dot"></span>I play games, but I was new to trading.</button>
+        <button type="button" class="choice" data-v="trader_not_gamer"><span class="dot"></span>I know trading, but I do not usually play games.</button>
+        <button type="button" class="choice" data-v="familiar_with_both"><span class="dot"></span>I already had experience with both.</button>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="button" class="btn btn-primary" data-next disabled>Next →</button>
+      </div>
+    </section>
+
+    <!-- 7 ───────────────────────────────────────────────────────────────── -->
+    <section class="step" data-step="7">
+      <span class="eyebrow">Question 7 of 7</span>
+      <h1>Would a proposed $19 Founding Access offer interest you?</h1>
+      <p class="hint">We are researching a smaller early-access offer, separate from the $24.99 full-journey concept you may have seen. If it included a polished version of this beta plus World 2, how likely would you be to buy it for one <b>$19 payment</b> — not a subscription?</p>
+      <div class="choices" id="purchase" role="radiogroup" aria-label="Likelihood of buying one-time nineteen-dollar Founding Access">
+        <button type="button" class="choice" data-v="definitely"><span class="dot"></span>Definitely would buy.</button>
+        <button type="button" class="choice" data-v="probably"><span class="dot"></span>Probably would buy.</button>
+        <button type="button" class="choice" data-v="unsure"><span class="dot"></span>Not sure yet.</button>
+        <button type="button" class="choice" data-v="probably_not"><span class="dot"></span>Probably would not buy.</button>
+        <button type="button" class="choice" data-v="definitely_not"><span class="dot"></span>Definitely would not buy.</button>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="submit" class="btn btn-primary" id="send" disabled>Send it →</button>
       </div>
       <div class="err" id="err"></div>
     </section>
@@ -309,7 +344,7 @@ footer a{color:var(--ink-faint)}
 
 <footer>ChartQuest closed beta · <a href="index.html">playchartquest.com</a></footer>
 
-<script src="assets/cq-track.js?v=369"></script>
+<script src="assets/cq-track.js?v=370"></script>
 <script>
 (function () {
   'use strict';
@@ -323,13 +358,24 @@ footer a{color:var(--ink-faint)}
   var errEl = document.getElementById('err');
   var cur   = 0;
 
-  var answers = { q1: null, q2: '', q3: '', q4: null, q5: '' };
+  var answers = {
+    q1: null, q2: '', q3: '', q4: null, q5: '',
+    experience_level: null, purchase_intent_19: null
+  };
+  var EXPERIENCE_VALUES = ['new_to_both', 'gamer_not_trader', 'trader_not_gamer', 'familiar_with_both'];
+  var PURCHASE_VALUES = ['definitely', 'probably', 'unsure', 'probably_not', 'definitely_not'];
 
   /* Restore a draft — a survey that loses your typing when the browser reloads is a
      survey people abandon. */
   try {
     var saved = JSON.parse(localStorage.getItem(DRAFT) || '{}');
-    for (var k in answers) if (saved[k] != null) answers[k] = saved[k];
+    if (Number.isInteger(saved.q1) && saved.q1 >= 1 && saved.q1 <= 10) answers.q1 = saved.q1;
+    if (typeof saved.q2 === 'string') answers.q2 = saved.q2.slice(0, 2000);
+    if (typeof saved.q3 === 'string') answers.q3 = saved.q3.slice(0, 2000);
+    if (['immediately', 'later', 'not_interested'].indexOf(saved.q4) >= 0) answers.q4 = saved.q4;
+    if (typeof saved.q5 === 'string') answers.q5 = saved.q5.slice(0, 2000);
+    if (EXPERIENCE_VALUES.indexOf(saved.experience_level) >= 0) answers.experience_level = saved.experience_level;
+    if (PURCHASE_VALUES.indexOf(saved.purchase_intent_19) >= 0) answers.purchase_intent_19 = saved.purchase_intent_19;
   } catch (e) {}
   function saveDraft() { try { localStorage.setItem(DRAFT, JSON.stringify(answers)); } catch (e) {} }
 
@@ -354,16 +400,23 @@ footer a{color:var(--ink-faint)}
 
   /* ── choices ──────────────────────────────────────────────────────────── */
   var cont = document.getElementById('cont');
-  [].forEach.call(cont.querySelectorAll('.choice'), function (b) {
-    b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', 'false');
-    b.addEventListener('click', function () {
-      answers.q4 = b.getAttribute('data-v'); saveDraft();
-      [].forEach.call(cont.querySelectorAll('.choice'), function (c) { c.classList.remove('sel'); c.setAttribute('aria-checked', 'false'); });
-      b.classList.add('sel'); b.setAttribute('aria-checked', 'true');
-      sync();
-      setTimeout(function () { if (cur === 3) go(4); }, 260);
+  var experience = document.getElementById('experience');
+  var purchase = document.getElementById('purchase');
+  function bindChoices(group, answerKey, advanceFrom) {
+    [].forEach.call(group.querySelectorAll('.choice'), function (b) {
+      b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', 'false');
+      b.addEventListener('click', function () {
+        answers[answerKey] = b.getAttribute('data-v'); saveDraft();
+        [].forEach.call(group.querySelectorAll('.choice'), function (c) { c.classList.remove('sel'); c.setAttribute('aria-checked', 'false'); });
+        b.classList.add('sel'); b.setAttribute('aria-checked', 'true');
+        sync();
+        if (advanceFrom != null) setTimeout(function () { if (cur === advanceFrom) go(cur + 1); }, 260);
+      });
     });
-  });
+  }
+  bindChoices(cont, 'q4', 3);
+  bindChoices(experience, 'experience_level', 5);
+  bindChoices(purchase, 'purchase_intent_19', null);
 
   /* Re-render a restored draft. Previously only the textareas were repopulated, so after a
      mid-survey refresh the rating and the choice looked UNANSWERED while Next stayed enabled —
@@ -373,10 +426,14 @@ footer a{color:var(--ink-faint)}
       var b = scale.children[answers.q1 - 1];
       if (b) { b.classList.add('sel'); b.setAttribute('aria-checked', 'true'); }
     }
-    if (answers.q4 != null) {
-      var c = cont.querySelector('.choice[data-v="' + answers.q4 + '"]');
+    function paintChoice(group, value) {
+      if (value == null) return;
+      var c = group.querySelector('.choice[data-v="' + value + '"]');
       if (c) { c.classList.add('sel'); c.setAttribute('aria-checked', 'true'); }
     }
+    paintChoice(cont, answers.q4);
+    paintChoice(experience, answers.experience_level);
+    paintChoice(purchase, answers.purchase_intent_19);
   }
 
   /* ── text fields ──────────────────────────────────────────────────────── */
@@ -395,12 +452,15 @@ footer a{color:var(--ink-faint)}
     if (idx === 1) return answers.q2.trim().length > 0;
     if (idx === 2) return answers.q3.trim().length > 0;
     if (idx === 3) return answers.q4 != null;
-    return true;                                   // q5 optional
+    if (idx === 4) return true;                    // q5 optional
+    if (idx === 5) return answers.experience_level != null;
+    if (idx === 6) return answers.purchase_intent_19 != null;
+    return false;
   }
 
   function sync() {
     var s = steps[cur];
-    var next = s.querySelector('[data-next]');
+    var next = s.querySelector('[data-next], button[type="submit"]');
     if (next) next.disabled = !valid(cur);
     bar.style.width = Math.round(((cur + (valid(cur) ? 1 : 0)) / steps.length) * 100) + '%';
     stepN.textContent = (cur + 1) + ' / ' + steps.length;
@@ -432,7 +492,9 @@ footer a{color:var(--ink-faint)}
   var send = document.getElementById('send');
   form.addEventListener('submit', function (e) {
     e.preventDefault();
-    if (!valid(0) || !valid(1) || !valid(2) || !valid(3)) {
+    var complete = true;
+    for (var i = 0; i < steps.length; i++) if (!valid(i)) complete = false;
+    if (!complete) {
       errEl.textContent = 'Some answers are missing — use ← to go back and fill them in.';
       errEl.classList.add('on');
       return;
@@ -446,7 +508,9 @@ footer a{color:var(--ink-faint)}
       q3_improvement: answers.q3.trim(),
       q4_continue: answers.q4,
       q5_anything: (answers.q5 || '').trim(),
-      seconds_taken: Math.round((Date.now() - T0) / 1000)   // time in THIS sitting
+      experience_level: answers.experience_level,
+      purchase_intent_19: answers.purchase_intent_19,
+      seconds_taken: Math.min(86400, Math.max(0, Math.round((Date.now() - T0) / 1000)))   // time in THIS sitting; backend-safe even after a day-open tab
     };
 
     var p = (window.CQTrack && CQTrack.survey) ? CQTrack.survey(row) : Promise.resolve(false);

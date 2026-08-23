@@ -11,6 +11,13 @@ browser**. Nothing in the game was modified. No code was written.
 myself; every claim below marked **[verified]** I reproduced first-hand, and I separate those from
 static reasoning throughout.
 
+> **Build 370 supersession notice (2026-08-23).** This file is a historical Build-335 orientation.
+> Its I3 prohibition on traversal-paced trades and I5 reference to a trade clock were superseded by
+> the Founder's player-paced-trade decision in
+> `CHARTQUEST_T-002_PLAYER_PACED_TRADE_SUPERSESSION_2026-08-23.md`. Guided Level 1-3 candles now
+> advance only with Finn's reached frontier; wall-clock reveal, automatic carry and the live-edge
+> clamp must not be restored. The current Finn-frontier visible TP/SL resolver remains authoritative.
+
 ---
 
 ## 0 · THE THREE THINGS THAT MATTER TODAY

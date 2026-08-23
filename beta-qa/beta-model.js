@@ -163,6 +163,8 @@
   var HEALTH_MIN_N = 3;
 
   var CONTINUE_KEYS = ['immediately', 'later', 'not_interested'];
+  var EXPERIENCE_KEYS = ['new_to_both', 'gamer_not_trader', 'trader_not_gamer', 'familiar_with_both'];
+  var PURCHASE_INTENT_19_KEYS = ['definitely', 'probably', 'unsure', 'probably_not', 'definitely_not'];
 
   /* ════════════════════════════════════════════════════════════════════════════════════════
      1 · SMALL PURE HELPERS  (exported as BetaModel.util — one rounding rule for everyone)
@@ -550,11 +552,13 @@
     }
 
     /* Survey aggregates (the surveys block of the contract is assembled from these too). */
-    var ratings = [], contCounts = {}, ratingsByDay = {};
+    var ratings = [], contCounts = {}, experienceCounts = {}, purchaseIntent19Counts = {}, ratingsByDay = {};
     for (i = 0; i < CONTINUE_KEYS.length; i++) contCounts[CONTINUE_KEYS[i]] = 0;
+    for (i = 0; i < EXPERIENCE_KEYS.length; i++) experienceCounts[EXPERIENCE_KEYS[i]] = 0;
+    for (i = 0; i < PURCHASE_INTENT_19_KEYS.length; i++) purchaseIntent19Counts[PURCHASE_INTENT_19_KEYS[i]] = 0;
     var ratingDist = {};
     for (i = 1; i <= 10; i++) ratingDist[String(i)] = 0;
-    var contAnswered = 0, contPositive = 0;
+    var contAnswered = 0, contPositive = 0, experienceAnswered = 0, purchaseIntent19Answered = 0;
 
     for (i = 0; i < surveys.length; i++) {
       var s = surveys[i];
@@ -571,6 +575,16 @@
         contCounts[c] += 1;
         contAnswered++;
         if (c === 'immediately' || c === 'later') contPositive++;
+      }
+      var experience = s.experience_level == null ? '' : String(s.experience_level);
+      if (Object.prototype.hasOwnProperty.call(experienceCounts, experience)) {
+        experienceCounts[experience] += 1;
+        experienceAnswered++;
+      }
+      var purchaseIntent19 = s.purchase_intent_19 == null ? '' : String(s.purchase_intent_19);
+      if (Object.prototype.hasOwnProperty.call(purchaseIntent19Counts, purchaseIntent19)) {
+        purchaseIntent19Counts[purchaseIntent19] += 1;
+        purchaseIntent19Answered++;
       }
     }
 
@@ -591,6 +605,10 @@
       avg_rating: round1(mean(ratings)),
       rating_dist: ratingDist,
       continue_dist: contCounts,
+      experience_dist: experienceCounts,
+      purchase_intent_19_dist: purchaseIntent19Counts,
+      experience_answered: experienceAnswered,
+      purchase_intent_19_answered: purchaseIntent19Answered,
       rating_trend: null,            // filled by buildSurveys() — needs day ordering
       responses: null,
       _ratings_n: ratings.length,
@@ -918,7 +936,7 @@
     return m;
   })();
 
-  function buildPlayers(slice, surveysByPlayer) {
+  function buildPlayers(slice, surveysByPlayer, entryAttribution) {
     var i, p, e;
     var acc = {};
 
@@ -1018,9 +1036,13 @@
       var fk = (p in furthest) ? order[furthest[p]] : null;
 
       var builds = Object.keys(a.builds).sort(buildCompare);
+      var attribution = entryAttribution[p] || null;
 
       out.push({
         player_id: a.player_id,
+        entry_cohort: attribution ? attribution.cohort : UNKNOWN_ATTRIBUTION,
+        entry_invite: attribution ? attribution.invite : UNKNOWN_ATTRIBUTION,
+        attributed_at: attribution ? attribution.attributed_at : null,
         first_seen: toIso(a.first_ms),
         last_seen: toIso(a.last_ms),
         sessions: Object.keys(a.sessions).length,
@@ -1079,7 +1101,7 @@
      9 · SURVEYS BLOCK
      ════════════════════════════════════════════════════════════════════════════════════════ */
 
-  function buildSurveys(slice) {
+  function buildSurveys(slice, entryAttribution) {
     var b = slice.surveys_block;
 
     var trendDays = Object.keys(b._ratings_by_day).sort();
@@ -1102,14 +1124,19 @@
     var responses = [];
     for (i = 0; i < rows.length; i++) {
       var s = rows[i];
+      var attribution = entryAttribution && entryAttribution[s.player_id] || null;
       responses.push({
         player_id: s.player_id == null ? null : String(s.player_id),
+        entry_cohort: attribution ? attribution.cohort : UNKNOWN_ATTRIBUTION,
+        entry_invite: attribution ? attribution.invite : UNKNOWN_ATTRIBUTION,
         created_at: toIso(surveyMs(s)),
         q1_rating: num(s.q1_rating),
         q2_hook: s.q2_hook == null ? null : String(s.q2_hook),
         q3_improvement: s.q3_improvement == null ? null : String(s.q3_improvement),
         q4_continue: s.q4_continue == null ? null : String(s.q4_continue),
         q5_anything: s.q5_anything == null ? null : String(s.q5_anything),
+        experience_level: s.experience_level == null ? null : String(s.experience_level),
+        purchase_intent_19: s.purchase_intent_19 == null ? null : String(s.purchase_intent_19),
         seconds_taken: num(s.seconds_taken)
       });
     }
@@ -1119,6 +1146,10 @@
       avg_rating: b.avg_rating,
       rating_dist: b.rating_dist,
       continue_dist: b.continue_dist,
+      experience_dist: b.experience_dist,
+      purchase_intent_19_dist: b.purchase_intent_19_dist,
+      experience_answered: b.experience_answered,
+      purchase_intent_19_answered: b.purchase_intent_19_answered,
       rating_trend: trend,
       responses: responses
     };
@@ -1129,6 +1160,51 @@
      ════════════════════════════════════════════════════════════════════════════════════════ */
 
   var UNKNOWN_BUILD = '(unknown)';
+  var UNKNOWN_ATTRIBUTION = '(unknown)';
+
+  function attributionValue(value) {
+    if (value == null) return UNKNOWN_ATTRIBUTION;
+    var text = String(value).trim();
+    return text || UNKNOWN_ATTRIBUTION;
+  }
+
+  /* Invite links are deliberately pseudonymous and can be replaced by a later link. Reporting
+     the latest value would move a returning tester between acquisition cohorts after the fact,
+     so entry attribution is frozen to their earliest timestamped event carrying either token.
+     Players with events but no attribution remain visible in the explicit unknown bucket. */
+  function entryAttributionByPlayer(events) {
+    var seen = {}, best = {};
+    for (var i = 0; i < events.length; i++) {
+      var e = events[i];
+      if (!e || !e.player_id) continue;
+      var pid = String(e.player_id);
+      seen[pid] = 1;
+      var props = propsOf(e);
+      var cohort = attributionValue(props.cohort);
+      var invite = attributionValue(props.invite);
+      if (cohort === UNKNOWN_ATTRIBUTION && invite === UNKNOWN_ATTRIBUTION) continue;
+      var ms = eventMs(e);
+      if (ms == null) continue;
+      var tie = String(e.event_id != null ? e.event_id : e.id != null ? e.id : i);
+      if (!best[pid] || ms < best[pid].ms || (ms === best[pid].ms && tie < best[pid].tie)) {
+        best[pid] = { ms: ms, tie: tie, cohort: cohort, invite: invite };
+      }
+    }
+    var out = {};
+    for (var p in seen) {
+      if (!Object.prototype.hasOwnProperty.call(seen, p)) continue;
+      out[p] = best[p] ? {
+        cohort: best[p].cohort,
+        invite: best[p].invite,
+        attributed_at: toIso(best[p].ms)
+      } : {
+        cohort: UNKNOWN_ATTRIBUTION,
+        invite: UNKNOWN_ATTRIBUTION,
+        attributed_at: null
+      };
+    }
+    return out;
+  }
 
   /* CONTRACT §"Build attribution": a player belongs to the build of their FIRST event in the
      window that carries a non-empty props.build. An entry cohort, not a per-row tag — a tester
@@ -1252,6 +1328,102 @@
       return buildCompare(y.build, x.build);
     });
     return out;
+  }
+
+  /* Access-private acquisition view. Every count is a distinct player id; raw event volume can
+     never make an invite look more successful. Stage columns use direct evidence for the named
+     event, while survey reach comes from stored response rows. */
+  function buildInviteCohorts(slice, players, surveysByPlayer) {
+    var groups = {}, invitePlayers = {}, playerGroup = {};
+
+    function group(cohort) {
+      if (!groups[cohort]) {
+        groups[cohort] = {
+          cohort: cohort,
+          players: {},
+          first_trade_started: {},
+          beta_completed: {},
+          survey_response: {},
+          invites: {}
+        };
+      }
+      return groups[cohort];
+    }
+
+    function creditInvite(target, invite, pid) {
+      if (!target[invite]) target[invite] = {};
+      target[invite][pid] = 1;
+    }
+
+    var i, p;
+    for (i = 0; i < players.length; i++) {
+      var player = players[i];
+      p = player.player_id;
+      var cohort = player.entry_cohort || UNKNOWN_ATTRIBUTION;
+      var invite = player.entry_invite || UNKNOWN_ATTRIBUTION;
+      var g = group(cohort);
+      g.players[p] = 1;
+      creditInvite(g.invites, invite, p);
+      playerGroup[p] = g;
+      if (invite !== UNKNOWN_ATTRIBUTION) creditInvite(invitePlayers, invite, p);
+    }
+
+    for (i = 0; i < slice.events.length; i++) {
+      var e = slice.events[i];
+      if (!e || !e.player_id || !playerGroup[e.player_id]) continue;
+      if (e.name === 'first_trade_started') playerGroup[e.player_id].first_trade_started[e.player_id] = 1;
+      if (e.name === 'beta_completed') playerGroup[e.player_id].beta_completed[e.player_id] = 1;
+    }
+
+    for (p in surveysByPlayer) {
+      if (!Object.prototype.hasOwnProperty.call(surveysByPlayer, p) || !playerGroup[p]) continue;
+      playerGroup[p].survey_response[p] = 1;
+    }
+
+    var rows = [];
+    for (var key in groups) {
+      if (!Object.prototype.hasOwnProperty.call(groups, key)) continue;
+      var row = groups[key], invites = [];
+      for (var inviteKey in row.invites) {
+        if (!Object.prototype.hasOwnProperty.call(row.invites, inviteKey)) continue;
+        var inviteIds = Object.keys(row.invites[inviteKey]).sort();
+        invites.push({ invite: inviteKey, players: inviteIds.length, player_ids: inviteIds });
+      }
+      invites.sort(function (a, b) {
+        if (a.invite === UNKNOWN_ATTRIBUTION) return 1;
+        if (b.invite === UNKNOWN_ATTRIBUTION) return -1;
+        return a.invite < b.invite ? -1 : a.invite > b.invite ? 1 : 0;
+      });
+      rows.push({
+        cohort: row.cohort,
+        players: Object.keys(row.players).length,
+        first_trade_started: Object.keys(row.first_trade_started).length,
+        beta_completed: Object.keys(row.beta_completed).length,
+        survey_response: Object.keys(row.survey_response).length,
+        invites: invites
+      });
+    }
+    rows.sort(function (a, b) {
+      if (a.cohort === UNKNOWN_ATTRIBUTION) return 1;
+      if (b.cohort === UNKNOWN_ATTRIBUTION) return -1;
+      return a.cohort < b.cohort ? -1 : a.cohort > b.cohort ? 1 : 0;
+    });
+
+    var duplicateInvites = [];
+    for (var invite in invitePlayers) {
+      if (!Object.prototype.hasOwnProperty.call(invitePlayers, invite)) continue;
+      var ids = Object.keys(invitePlayers[invite]).sort();
+      if (ids.length < 2) continue;
+      var cohortSet = {};
+      for (i = 0; i < ids.length; i++) cohortSet[(playerGroup[ids[i]] && playerGroup[ids[i]].cohort) || UNKNOWN_ATTRIBUTION] = 1;
+      duplicateInvites.push({ invite: invite, players: ids.length, player_ids: ids, cohorts: Object.keys(cohortSet).sort() });
+    }
+    duplicateInvites.sort(function (a, b) {
+      if (a.players !== b.players) return b.players - a.players;
+      return a.invite < b.invite ? -1 : a.invite > b.invite ? 1 : 0;
+    });
+
+    return { rows: rows, duplicate_invites: duplicateInvites };
   }
 
   /* ════════════════════════════════════════════════════════════════════════════════════════
@@ -1715,11 +1887,15 @@
     var curFunnel = buildFunnel(curSlice);
     var prevFunnel = prevSlice ? buildFunnel(prevSlice) : null;
 
-    var curSurveysBlock = buildSurveys(curSlice);
-    var prevSurveysBlock = prevSlice ? buildSurveys(prevSlice) : null;
+    /* Acquisition attribution is lifetime-within-the-loaded-feed, not window-relative. A tester
+       who returns through a different link must not jump cohorts when the founder switches from
+       30 days to 24 hours. Only players in the selected analytics slice are rendered below. */
+    var entryAttribution = entryAttributionByPlayer(allEvents);
+    var curSurveysBlock = buildSurveys(curSlice, entryAttribution);
+    var prevSurveysBlock = prevSlice ? buildSurveys(prevSlice, entryAttribution) : null;
 
     var surveysByPlayer = indexSurveysByPlayer(cur.surveys);
-    var playersRoster = buildPlayers(curSlice, surveysByPlayer);
+    var playersRoster = buildPlayers(curSlice, surveysByPlayer, entryAttribution);
 
     /* Health for both windows through the identical function, on identical inputs. Passing the
        internal surveys block (which still carries _ratings_n) rather than the rendered one is an
@@ -1853,6 +2029,7 @@
       timeline: null,
       surveys: curSurveysBlock,
       builds: buildBuilds(curSlice, cur.cohort, surveysByPlayer),
+      cohorts: buildInviteCohorts(curSlice, playersRoster, surveysByPlayer),
       crashes: buildCrashes(curSlice),
       tech: buildTech(playersRoster)
     };
@@ -1883,6 +2060,7 @@
     GAME_PAGES: GAME_PAGES,
     HEALTH_COMPONENTS: HEALTH_COMPONENTS,
     UNKNOWN_BUILD: UNKNOWN_BUILD,
+    UNKNOWN_ATTRIBUTION: UNKNOWN_ATTRIBUTION,
     isTestPlayer: isTestPlayer,
     exclusionIndex: exclusionIndex,
     build: build,
@@ -1910,6 +2088,7 @@
       eventLabel: eventLabel,
       eventKind: eventKind,
       entryBuildByPlayer: entryBuildByPlayer,
+      entryAttributionByPlayer: entryAttributionByPlayer,
       DAY_MS: DAY_MS
     }
   };

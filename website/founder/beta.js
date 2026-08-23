@@ -582,40 +582,88 @@
     }).join('');
   }
 
+  function playerRowMarkup(p) {
+    return '<tr><td><button class="player-button" data-player="' + esc(encodeURIComponent(p.player_id)) + '">' + esc(p.player_id) + '</button></td>' +
+      '<td class="mono">' + esc(p.entry_cohort || Model.UNKNOWN_ATTRIBUTION) + '</td><td class="mono">' + esc(p.entry_invite || Model.UNKNOWN_ATTRIBUTION) + '</td>' +
+      '<td>' + esc(date(p.last_seen)) + '</td><td>' + valueOrDash(p.furthest_label) + '</td><td class="mono">' + n(p.sessions) + '</td>' +
+      '<td class="mono">' + (p.builds.length ? esc(p.builds.join(', ')) : '<span class="muted">unknown</span>') + '</td>' +
+      '<td>' + esc([p.device, p.browser, p.os].filter(Boolean).join(' · ') || 'Unknown') + '</td><td class="mono">' + valueOrDash(p.survey_rating) + '</td>' +
+      '<td class="mono ' + (p.crashes ? 'danger' : 'muted') + '">' + n(p.crashes) + '</td></tr>';
+  }
+
   function renderPlayers() {
     var rows = state.model.players.filter(matches);
     byId('playerCount').textContent = n(rows.length) + ' shown · ' + n(state.model.players.length) + ' in selected cohort';
     byId('playerEmpty').hidden = !!rows.length;
-    byId('playerRows').innerHTML = rows.map(function (p) {
-      return '<tr><td><button class="player-button" data-player="' + esc(encodeURIComponent(p.player_id)) + '">' + esc(p.player_id) + '</button></td>' +
-        '<td>' + esc(date(p.last_seen)) + '</td><td>' + valueOrDash(p.furthest_label) + '</td><td class="mono">' + n(p.sessions) + '</td>' +
-        '<td class="mono">' + (p.builds.length ? esc(p.builds.join(', ')) : '<span class="muted">unknown</span>') + '</td>' +
-        '<td>' + esc([p.device, p.browser, p.os].filter(Boolean).join(' · ') || 'Unknown') + '</td><td class="mono">' + valueOrDash(p.survey_rating) + '</td>' +
-        '<td class="mono ' + (p.crashes ? 'danger' : 'muted') + '">' + n(p.crashes) + '</td></tr>';
-    }).join('');
+    byId('playerRows').innerHTML = rows.map(playerRowMarkup).join('');
   }
 
-  function answer(label, value, wide) {
+  function answer(label, value, wide, emptyText) {
     var empty = value == null || String(value) === '';
-    return '<div class="answer' + (wide ? ' wide' : '') + '"><small>' + esc(label) + '</small><p class="' + (empty ? 'muted' : '') + '">' + esc(empty ? '(not answered)' : value) + '</p></div>';
+    return '<div class="answer' + (wide ? ' wide' : '') + '"><small>' + esc(label) + '</small><p class="' + (empty ? 'muted' : '') + '">' + esc(empty ? (emptyText || '(not answered)') : value) + '</p></div>';
+  }
+
+  function choiceLabel(value, choices) {
+    if (value == null || String(value) === '') return null;
+    for (var i = 0; i < choices.length; i++) if (choices[i][0] === value) return choices[i][1];
+    return String(value);
+  }
+
+  function distributionText(dist, choices) {
+    return choices.map(function (choice) {
+      return choice[1] + ' ' + n(dist && dist[choice[0]] || 0);
+    }).join(' · ');
+  }
+
+  var EXPERIENCE_CHOICES = [
+    ['new_to_both', 'New to both'],
+    ['gamer_not_trader', 'Gamer, new to trading'],
+    ['trader_not_gamer', 'Trader, new to games'],
+    ['familiar_with_both', 'Familiar with both']
+  ];
+  var PURCHASE_INTENT_19_CHOICES = [
+    ['definitely', 'Definitely'],
+    ['probably', 'Probably'],
+    ['unsure', 'Unsure'],
+    ['probably_not', 'Probably not'],
+    ['definitely_not', 'Definitely not']
+  ];
+
+  function surveySummaryMarkup(s) {
+    var continueText = [];
+    var experienceAnswered = Number(s.experience_answered) || 0;
+    var purchaseAnswered = Number(s.purchase_intent_19_answered) || 0;
+    Object.keys(s.continue_dist).forEach(function (key) { continueText.push(key.replace('_', ' ') + ' ' + s.continue_dist[key]); });
+    return '<div class="summary-card"><small>Responses</small><strong>' + n(s.n) + '</strong></div>' +
+      '<div class="summary-card"><small>Average rating</small><strong>' + (s.avg_rating == null ? '—' : esc(s.avg_rating) + ' / 10') + '</strong></div>' +
+      '<div class="summary-card"><small>Continue intent</small><strong style="font-size:14px;line-height:1.5">' + esc(continueText.join(' · ')) + '</strong></div>' +
+      '<div class="summary-card"><small>Prior experience · ' + n(experienceAnswered) + ' answered · ' + n(Math.max(0, s.n - experienceAnswered)) + ' not asked</small><strong style="font-size:14px;line-height:1.5">' + esc(distributionText(s.experience_dist, EXPERIENCE_CHOICES)) + '</strong></div>' +
+      '<div class="summary-card"><small>Proposed $19 early-access intent · ' + n(purchaseAnswered) + ' answered · ' + n(Math.max(0, s.n - purchaseAnswered)) + ' not asked</small><strong style="font-size:14px;line-height:1.5">' + esc(distributionText(s.purchase_intent_19_dist, PURCHASE_INTENT_19_CHOICES)) + '</strong></div>';
+  }
+
+  function surveyResponseMarkup(r, player) {
+    var cohort = player && player.entry_cohort || r.entry_cohort || Model.UNKNOWN_ATTRIBUTION;
+    var invite = player && player.entry_invite || r.entry_invite || Model.UNKNOWN_ATTRIBUTION;
+    return '<article class="response-card"><header class="response-head"><div><strong>' + esc(r.player_id || 'Anonymous player') + '</strong>' +
+      '<div class="muted">Rating ' + (r.q1_rating == null ? 'not answered' : esc(r.q1_rating) + ' / 10') + '</div>' +
+      '<div class="muted">Cohort <span class="mono">' + esc(cohort) + '</span> · Invite <span class="mono">' + esc(invite) + '</span></div></div><time>' + esc(date(r.created_at)) + '</time></header>' +
+      '<div class="answers">' + answer('Q1 · Overall rating', r.q1_rating) + answer('Q4 · Would keep playing', r.q4_continue) +
+      answer('Q2 · What hooked you?', r.q2_hook, true) + answer('Q3 · What should improve?', r.q3_improvement, true) +
+      answer('Q5 · Anything else?', r.q5_anything, true) +
+      answer('Q6 · Prior experience', choiceLabel(r.experience_level, EXPERIENCE_CHOICES), false, '(not asked)') +
+      answer('Q7 · Proposed $19 early-access intent', choiceLabel(r.purchase_intent_19, PURCHASE_INTENT_19_CHOICES), false, '(not asked)') +
+      answer('Time to complete survey', r.seconds_taken == null ? null : duration(r.seconds_taken)) + '</div>' +
+      '<details class="raw raw-survey"><summary>All stored fields · verbatim JSON</summary><pre>' + esc(json(r)) + '</pre></details></article>';
   }
 
   function renderSurveys() {
-    var s = state.model.surveys, responses = state.model.raw_surveys.filter(matches), continueText = [];
-    Object.keys(s.continue_dist).forEach(function (key) { continueText.push(key.replace('_', ' ') + ' ' + s.continue_dist[key]); });
-    byId('surveySummary').innerHTML = '<div class="summary-card"><small>Responses</small><strong>' + n(s.n) + '</strong></div>' +
-      '<div class="summary-card"><small>Average rating</small><strong>' + (s.avg_rating == null ? '—' : esc(s.avg_rating) + ' / 10') + '</strong></div>' +
-      '<div class="summary-card"><small>Continue intent</small><strong style="font-size:14px;line-height:1.5">' + esc(continueText.join(' · ')) + '</strong></div>';
+    var s = state.model.surveys, players = {};
+    state.model.players.forEach(function (player) { players[player.player_id] = player; });
+    var responses = state.model.raw_surveys.filter(function (row) { return matches({ survey: row, attribution: players[row.player_id] || null }); });
+    byId('surveySummary').innerHTML = surveySummaryMarkup(s);
     byId('surveyCount').textContent = n(responses.length) + ' shown · ' + n(state.model.raw_surveys.length) + ' loaded';
     byId('surveyEmpty').hidden = !!responses.length;
-    byId('surveyResponses').innerHTML = responses.map(function (r) {
-      return '<article class="response-card"><header class="response-head"><div><strong>' + esc(r.player_id || 'Anonymous player') + '</strong>' +
-        '<div class="muted">Rating ' + (r.q1_rating == null ? 'not answered' : esc(r.q1_rating) + ' / 10') + '</div></div><time>' + esc(date(r.created_at)) + '</time></header>' +
-        '<div class="answers">' + answer('Q1 · Overall rating', r.q1_rating) + answer('Q4 · Would keep playing', r.q4_continue) +
-        answer('Q2 · What hooked you?', r.q2_hook, true) + answer('Q3 · What should improve?', r.q3_improvement, true) +
-        answer('Q5 · Anything else?', r.q5_anything, true) + answer('Time to complete survey', r.seconds_taken == null ? null : duration(r.seconds_taken)) + '</div>' +
-        '<details class="raw raw-survey"><summary>All stored fields · verbatim JSON</summary><pre>' + esc(json(r)) + '</pre></details></article>';
-    }).join('');
+    byId('surveyResponses').innerHTML = responses.map(function (row) { return surveyResponseMarkup(row, players[row.player_id]); }).join('');
   }
 
   function filteredEvents() {
@@ -637,8 +685,36 @@
     byId('eventPager').innerHTML = '<button type="button" data-page="prev" ' + (state.eventPage === 0 ? 'disabled' : '') + '>← Previous</button><span>Page ' + (state.eventPage + 1) + ' / ' + pages + '</span><button type="button" data-page="next" ' + (state.eventPage + 1 >= pages ? 'disabled' : '') + '>Next →</button>';
   }
 
+  function cohortStageMarkup(value, players) {
+    var rate = players ? Math.round((value / players) * 100) : null;
+    return '<strong class="mono">' + n(value) + '</strong>' + (rate == null ? '' : ' <span class="muted">(' + n(rate) + '%)</span>');
+  }
+
+  function cohortRowsMarkup(rows) {
+    return rows.map(function (row) {
+      var invites = row.invites.map(function (invite) {
+        return '<div><code>' + esc(invite.invite) + '</code> <span class="' + (invite.invite !== Model.UNKNOWN_ATTRIBUTION && invite.players > 1 ? 'danger' : 'muted') + '">' + n(invite.players) + ' player' + (invite.players === 1 ? '' : 's') + '</span></div>';
+      }).join('');
+      return '<tr><td><strong class="mono">' + esc(row.cohort) + '</strong></td><td class="mono">' + n(row.players) + '</td>' +
+        '<td>' + cohortStageMarkup(row.first_trade_started, row.players) + '</td><td>' + cohortStageMarkup(row.beta_completed, row.players) + '</td>' +
+        '<td>' + cohortStageMarkup(row.survey_response, row.players) + '</td><td>' + (invites || '<span class="muted">' + esc(Model.UNKNOWN_ATTRIBUTION) + '</span>') + '</td></tr>';
+    }).join('');
+  }
+
+  function inviteReuseMarkup(rows) {
+    return rows.map(function (row) {
+      return '<code>' + esc(row.invite) + '</code> is attached to <strong>' + n(row.players) + '</strong> player IDs: <span class="mono">' + row.player_ids.map(esc).join(', ') + '</span>';
+    }).join('<br>');
+  }
+
   function renderBuilds() {
     var rows = state.model.builds.filter(matches);
+    var cohortRows = state.model.cohorts.rows.filter(matches);
+    var duplicateInvites = state.model.cohorts.duplicate_invites;
+    byId('cohortRows').innerHTML = cohortRowsMarkup(cohortRows);
+    byId('cohortEmpty').hidden = !!cohortRows.length;
+    byId('inviteReuseWarning').hidden = !duplicateInvites.length;
+    byId('inviteReuseDetail').innerHTML = inviteReuseMarkup(duplicateInvites);
     byId('buildRows').innerHTML = rows.map(function (b) {
       return '<tr><td><strong class="mono">' + esc(b.build) + '</strong></td><td class="mono">' + n(b.players) + '</td><td class="mono">' + n(b.sessions) + '</td>' +
         '<td>' + pct(b.boss_pct) + '</td><td>' + pct(b.journal_pct) + '</td><td>' + pct(b.completion_pct) + '</td><td>' + pct(b.survey_pct) + '</td>' +
@@ -686,7 +762,7 @@
     var player = state.model.players.find(function (p) { return p.player_id === pid; });
     if (!player) return;
     var detail = Model.playerTimeline(state.rawEvents, state.rawSurveys, pid), events = detail.events;
-    var chips = [player.furthest_label, player.sessions + ' sessions', duration(player.total_seconds), player.device, player.browser, player.os, player.builds.length ? 'Build ' + player.builds.join(', ') : 'Build unknown'].filter(Boolean);
+    var chips = ['Cohort ' + (player.entry_cohort || Model.UNKNOWN_ATTRIBUTION), 'Invite ' + (player.entry_invite || Model.UNKNOWN_ATTRIBUTION), player.furthest_label, player.sessions + ' sessions', duration(player.total_seconds), player.device, player.browser, player.os, player.builds.length ? 'Build ' + player.builds.join(', ') : 'Build unknown'].filter(Boolean);
     var surveyHtml = detail.survey ? '<h3>Survey response</h3><pre>' + esc(json(detail.survey)) + '</pre>' : '';
     byId('playerDialogBody').innerHTML = '<div class="dialog-body"><p class="eyebrow">PLAYER TIMELINE</p><h2 class="mono">' + esc(pid) + '</h2><div class="player-meta">' + chips.map(function (x) { return '<span class="meta-chip">' + esc(x) + '</span>'; }).join('') + '</div>' +
       '<div class="timeline">' + (events.length ? events.map(function (e) { return '<div class="timeline-item"><strong>' + esc(e.name || '(unnamed)') + '</strong><div class="timeline-time">+' + (e.offset_seconds == null ? '?' : e.offset_seconds) + 's · ' + esc(date(e.ts)) + '</div><details class="raw"><summary>Event properties</summary><pre>' + esc(json(e.props)) + '</pre></details></div>'; }).join('') : '<p class="muted">This player has a survey but no event rows in the selected window.</p>') + '</div>' + surveyHtml + '</div>';
@@ -721,6 +797,11 @@
       appApiRoot: APP_API_ROOT,
       fetchAppSnapshot: fetchAppSnapshot,
       buildViewModel: buildViewModel,
+      playerRowMarkup: playerRowMarkup,
+      surveySummaryMarkup: surveySummaryMarkup,
+      surveyResponseMarkup: surveyResponseMarkup,
+      cohortRowsMarkup: cohortRowsMarkup,
+      inviteReuseMarkup: inviteReuseMarkup,
       setRange: function (days, now) { state.rangeDays = days; state.rangeTo = now; },
       snapshot: function () {
         return {

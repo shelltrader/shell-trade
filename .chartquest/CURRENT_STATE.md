@@ -1,5 +1,52 @@
 # Current Technical State
 
+## 2026-08-25 Build-374 mandatory response-specific survey — VERIFIED LOCALLY; PREVIEW UPLOAD HELD
+
+- **DOCUMENTED — Founder direction:** every completed beta playtest must enter the seven-question
+  survey, and the player must not have a ChartQuest-owned way to leave it before completion. Closing
+  the game remains allowed. The earlier upload approval named exact old commit `da6198e`; the new
+  requirement necessarily produced different bytes and therefore requires a new exact-tip approval.
+- **VERIFIED — terminal authority:** `cq_beta_flow_v1` retains its established key and upgrades to
+  schema v2. The sole terminal authority is exact persisted equality between `surveyResponseId`,
+  `surveyReceipt`, and current canonical `r-<cq_pid>`. A generic `cq_bt_survey_submitted` analytics
+  flag, a v1 submitted row, a malformed/foreign response, or an old player's receipt cannot close
+  the current playtest; each recovers to `survey_due`.
+- **VERIFIED — route and exit lock:** terminal completion immediately owns a full-screen handoff and
+  retries same-origin top-level replacement indefinitely. Landing/play/game/offline/survey share the
+  gate; wrapper Home/Restart, application links, backdrop, Escape, browser Back, iframe origin/source
+  spoofing, public `beta=0`, and returning-worker/offline route recovery fail closed. No
+  `beforeunload` blocker is installed, so closing the browser/game remains possible.
+- **VERIFIED — no-loss form:** Q1-Q7 use an exact response-specific v2 draft containing answers,
+  current step, and an immutable completed pending row. Q5 remains optional. Reload, online,
+  foreground, timeout, rejection, and offline paths preserve/retry the same row. The form hides and
+  its Home link appears only after the Cloudflare survey call confirms the exact v2 receipt and the
+  matching local completion receipt is written and read back.
+- **VERIFIED — exact local identity:** branch `codex/build373-feedback-recovery`; runtime payload
+  `1f10dfc63c70f3a6c71a8e84e74e7d2718429ff2`; Build 374 source/root/site game artifacts are
+  byte-identical at SHA-256 `e0ae9ae618020b8ecb9327d0773355b722998bb7c9a0d8638c21061481837ca4`.
+  `website/sw.js` is `chartquest-site-v20`, SHA-256
+  `44b72ec95d9407a4599ebadfd2989543bf8afdec36fb1cee6dba1559411330e2`.
+- **VERIFIED — executable evidence:** full verifier 30 pass / 0 fail / 0 warn / 1 optional Puppeteer
+  skip; mandatory survey 15/15; survey research 7/7; restart/reward 8/8; Build-373 feedback 10/10;
+  marketing 8/8; music 10/10; pacing 13/13; save-key 4/4; cutover 7/7; Cloudflare client 15/15;
+  release controls 15/15; exact-runtime-tree verifier 28/0/0/3 with the optional browser plus two
+  HEAD-diff gates correctly N/A; inline/standalone syntax, generated parity, protected systems, and
+  diff checks pass.
+- **VERIFIED — scoped local Browser evidence:** at 390x844, all seven questions used explicit
+  progression, Q5 remained optional, reload restored the exact question and answers, and a failed
+  local receipt left the completed response visibly locked with saved automatic retry state.
+- **[UNKNOWN — REQUIRES VERIFICATION]:** exact served Preview bytes and real Cloudflare receipt;
+  physical-phone background/online/offline/close/reopen behavior; genuine v19-to-v20 worker return;
+  authenticated Founder views/export; and every inherited Build-373 release/device gate. Literal
+  100% delivery cannot be claimed across browser/OS termination or denied storage/network; supported
+  failures now fail closed rather than silently skipping the survey.
+- **RELEASE HOLD:** no GitHub upload, Preview deployment, provider/database mutation, migration,
+  `main` push, manifest, lock, tester link, recovered-archive change, or production fingerprint was
+  made. Preview `0003` is already applied and must not be reapplied. Build 367 remains production.
+
+See `handoffs/BETA374_MANDATORY_SURVEY_LOCAL_CANDIDATE.md`. The Build-373 section below is retained
+as inherited historical evidence; its generic survey-terminal wording is superseded by INV-021.
+
 ## 2026-08-24 Build-373 beta-feedback and restart recovery — VERIFIED LOCALLY; RELEASE HELD
 
 - **DOCUMENTED — Founder direction and source quality:** an anonymized skilled marketer reported

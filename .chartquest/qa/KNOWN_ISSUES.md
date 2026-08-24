@@ -2,6 +2,26 @@
 
 Only repository-documented issues are listed below. The severity/status reflects the cited document where available; it does not assert that the issue is currently live.
 
+## Build-374 mandatory-survey guarantee boundary
+
+**Missing/bypassable survey P0 — REPAIRED LOCALLY; EXACT PREVIEW/PHONE PROOF OPEN:** Build 374 makes
+`survey_due` a response-specific fail-closed state. Every ChartQuest-owned route redirects to the
+survey, application exits and Back/Escape are blocked while due, the service worker caches the
+survey recovery shell, and the form retains its exact step/answers/completed pending row across
+supported reload, foreground, offline, timeout, and rejection paths. Only the exact Cloudflare v2
+response receipt plus exact persisted local receipt reveals the post-completion Home link.
+
+Executable evidence passes verifier 30/0/0/1, mandatory 15/15, survey 7/7, restart/reward 8/8, and
+the retained save-key/cutover/client suites. At 390x844, local Browser QA restored the exact form
+state and kept an unreceipted completed response visibly locked. Exact Preview submission, physical
+offline/online/background/close/reopen, and genuine v19-to-v20 worker return remain unverified.
+No software can truthfully guarantee delivery after browser/OS termination, denied site storage,
+or permanent network loss; those supported failure surfaces now remain visibly due rather than
+silently claiming completion. Evidence: `handoffs/BETA374_MANDATORY_SURVEY_LOCAL_CANDIDATE.md`.
+
+The prior approval was exact to old commit `da6198e`. Build-374 runtime `1f10dfc` and its later
+command-center tip have not been uploaded or deployed; new exact-tip Preview approval is required.
+
 ## Build-373 tester restart and missing survey
 
 **Tester interruption P0 — OUTCOME REPAIRED LOCALLY; INITIATING CAUSE UNKNOWN:** an anonymized skilled

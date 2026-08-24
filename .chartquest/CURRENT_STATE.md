@@ -1,5 +1,53 @@
 # Current Technical State
 
+## 2026-08-24 Build-372 startup-music repair — VERIFIED LOCALLY; RELEASE HELD
+
+- **DOCUMENTED — Founder direction:** after a player reported hearing no music, the Founder directed
+  that music be enabled on every normal startup. Browser autoplay rules still require a permitted
+  player gesture; the executable contract is therefore enabled on ordinary load and audible startup
+  on the first permitted tap/key, not sound before interaction.
+- **VERIFIED — root cause and minimum repair:** an old `cq_music=off` value survived indefinitely in
+  browser storage, including after a historical `?mute=1` QA launch. Build 372 now writes `on` on
+  every ordinary game-document load. Explicit `?mute=1` writes `off` for that document only. The
+  music control can still mute the current document, while the next ordinary load intentionally
+  repairs that value to `on`.
+- **VERIFIED — browser gesture/audio ownership:** permanent capture-phase `pointerdown` and `keydown`
+  listeners reach `GameMusic`, `Boss1CineAudio`, and `CineAudio` on every browser-permitted gesture,
+  including after background/resume. Explore-bed startup remains one-shot; an active intro or boss
+  retains its existing audio ownership. The shared music toggle now mutes/unmutes all three owners.
+- **VERIFIED — exact local identity:** branch `codex/build372-music-startup`, runtime payload
+  `e3382414624ea571a28e2c887bbe8593545734cc`; Build 372 source, root mirror, and website game
+  artifact are byte-identical at SHA-256
+  `64c157e311f5d2bffde5682a7acfc48ab1907daf95842ff6e3af8827ac0d7b90`.
+- **VERIFIED — automated evidence:** `scripts/music_startup.test.js` 10/10. Before commit, the
+  parent-diff `scripts/verify.js` run passed 28/0/0/1 and exercised the Build-371→372 and protected-
+  system comparisons. The unchanged exact committed tree then passed 26/0/0/3, with Puppeteer absent
+  and the two HEAD-diff gates correctly N/A. Inline syntax passed 11/11; release controls 15/15;
+  CQSAFE 27/27; game cutover 7/7; trade pacing 13/13; teaching UI 5/5; survey 4/4; Boss1 media 5/5;
+  `git diff --check` was clean. Independent read-only review reported no P0–P2 finding.
+- **VERIFIED — local browser state only:** at the default in-app-browser viewport, an ordinary load
+  showed `🎵` / `Music on`; clicking the control showed `🔇` / `Music off`; reload returned to
+  `🎵` / `Music on`. `?fresh=1&mute=1` normalized to `?mute=1` and showed `🔇` / `Music off`;
+  a later ordinary URL showed `🎵` / `Music on`. The first `Enter the Market` gesture advanced the
+  intro and produced zero console errors. This verifies UI/storage/gesture state, not audible output.
+- **VERIFIED — service-worker boundary:** `website/sw.js` is unchanged at
+  `chartquest-site-v17` (SHA-256 `4da726985022a8ab518338b63e66e6e17df47a820edad20674690154e5a4d08b`).
+  It does not intercept online HTML navigation and treats explicit `game.html` fetches network-first;
+  it neither caused this persisted preference defect nor needs a version bump for game-document-only
+  bytes.
+- **RELEASE HOLD:** a physical-phone audible listen, true background/resume audio recovery, exact
+  Preview startup/intro/Guardian behavior, and subjective Founder acceptance remain unverified. All
+  inherited Build-371 blockers also remain: automatic long/short SL, authenticated Founder allow/
+  dashboard/export and fresh-entry cohort display, returning v16→v17 worker, Production `0003`,
+  account/data rollback and reconciliation, manifest/lock/gate, explicit production authorization,
+  `main`, deployment, double production fingerprint, and tester links.
+- **PROTECTION:** Build 367 remains production. No Preview or production deployment, database or
+  provider mutation, migration, manifest, lock, `main` push, tester link, recovered-archive change,
+  or service-worker change occurred.
+
+See `handoffs/BETA372_MUSIC_STARTUP_LOCAL_CANDIDATE.md`. All Build-371 evidence below remains valid
+and does not constitute Build-372 Preview or phone evidence.
+
 ## 2026-08-24 Build-371 Preview QA addendum — SERVED PACING P0 PASS; RELEASE HELD
 
 - **VERIFIED — exact non-production deployment:** control source

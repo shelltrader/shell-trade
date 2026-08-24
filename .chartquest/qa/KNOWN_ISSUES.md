@@ -2,6 +2,37 @@
 
 Only repository-documented issues are listed below. The severity/status reflects the cited document where available; it does not assert that the issue is currently live.
 
+## Build-372 startup music repair
+
+**Player-silent startup P0 — REPAIRED LOCALLY; AUDIBLE PHONE/PREVIEW PROOF OPEN:** a player reported
+hearing no music. Investigation verified that `cq_music=off` persisted indefinitely across later
+ordinary visits, including after a historical `?mute=1` QA launch. Build 372 makes every ordinary
+game-document load write music `on`; explicit `?mute=1` stays silent for that document, and a player
+can still mute the current document before the next ordinary load resets the preference.
+
+The repair also keeps permanent capture-phase pointer/key listeners so browser-permitted gestures
+unlock `GameMusic`, `Boss1CineAudio`, and `CineAudio`, including later gestures after background/
+resume. Explore playback remains one-shot, and the intro/boss retains its existing audio owner.
+Executable coverage passes 10/10; the parent-diff verifier passed 28/0/0/1 and the unchanged
+post-commit exact tree passed 26/0/0/3 (the optional browser plus two HEAD-diff gates correctly N/A).
+Independent read-only review found no P0–P2 issue. Local browser checks passed
+ordinary on, manual off, reload-on, explicit muted launch, later ordinary-on, first-gesture intro
+advance, and zero console errors. This is UI/storage/gesture evidence only; it does not prove that a
+physical speaker produced audible music.
+
+`website/sw.js` remains unchanged at `chartquest-site-v17`. It does not intercept online HTML
+navigation and uses network-first behavior for explicit `game.html` fetches, so it is not the cause
+of this persisted preference defect and no worker bump is required. Exact local game artifacts are
+byte-identical at `64c157e3...`.
+
+Release remains held. Physical-phone audible startup and true background/resume, exact Preview
+startup/intro/Guardian checks, and all inherited Build-371 device, automatic-loss, Founder Access/
+dashboard/export/fresh-entry cohort, returning-worker, Production `0003`, account/data rollback,
+manifest/lock/gate, authorization, production fingerprint, and tester-link gates remain open.
+Build 367 remains production; no Preview/production deployment, migration, `main` push, manifest,
+lock, provider change, service-worker change, recovered-archive change, or tester link occurred.
+Evidence: `handoffs/BETA372_MUSIC_STARTUP_LOCAL_CANDIDATE.md`.
+
 ## Build-370/371 player-paced next-beta candidate
 
 **Historical Build-370 P0 — CLOSED ON EXACT BUILD-371 PREVIEW BY SERVED EVIDENCE:** Build 370

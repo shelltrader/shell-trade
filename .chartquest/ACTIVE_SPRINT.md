@@ -7,16 +7,17 @@
 Prepare the next closed-beta experiment from the recovered evidence: restore player-paced guided
 trades without changing their price/outcome doctrine, improve the smallest confirmed teaching
 surfaces, add two bounded research questions, and attribute the next cohort with private opaque
-invites. Preserve Build 367 in production until the Build-370 migration, preview, device, release,
+invites. Preserve Build 367 in production until the Build-370/371 migration, preview, device, release,
 and served-fingerprint gates all pass.
 
 ## Current release/build
 
 - Isolated candidate branch: `codex/beta370-player-paced-trades`.
-- Exact Build-370 payload commit: `08d3b3c930f86ca4894ff9c26c813f78b43fb040`.
-- Build: **370**.
+- Exact Build-371 pacing-repair payload commit: `3019058b32c6acddc8fc5530569f24d95c76a98f`
+  (the Build-370 experiment payload remains `08d3b3c930f86ca4894ff9c26c813f78b43fb040`).
+- Build: **371 local candidate; Preview still serves failed Build 370**.
 - Source, root mirror, and website game artifact are byte-identical at SHA-256
-  `b615adb1c06558b5409111384c406053dfb9dee802eda86d7000db8b2e63103d`.
+  `3224c603255ee5d1210295b31151f7de04ca6c3b2a211b158f14627b76a0ab09`.
 - Additive survey migration SHA-256:
   `3283707ade48d84447cf003377613b897bb004d836b89a5175df082930032a4d`.
 - **Preview-only migration pass (2026-08-24):** `0003` is applied to Preview `BETA_DB`
@@ -26,7 +27,12 @@ and served-fingerprint gates all pass.
 - **Preview deployment (2026-08-24):** source `7bb0ed7` deployed successfully as Pages deployment
   `c8c138b1-3e77-45a5-bc5a-094c8f6a83f2`; the served `/game` artifact matches the Build-370 SHA-256
   `b615adb1...`. This is a non-production deployment only.
-- Production Build 367 remains live and unaffected. Build 370 has not been pushed to `main` or
+- **Build-371 local repair (2026-08-24):** the served idle-advance root cause is fixed locally by an
+  explicit one-action/one-boundary gate. Touching candles, abnormal movement spikes, guide close,
+  background/resume, backtracking, anti-hop, no-overhang entry, manual Close, free roam, and Level 4+
+  are covered by 13/13 pacing contracts. Independent re-review APPROVED; full verifier is 27/0/0/1.
+  See `handoffs/BETA371_LOCAL_REPAIR_CANDIDATE.md`.
+- Production Build 367 remains live and unaffected. Build 371 has not been pushed to `main` or
   deployed to production.
 
 ## Active tasks
@@ -34,15 +40,15 @@ and served-fingerprint gates all pass.
 | Task | Owner | State | Next action |
 |---|---|---|---|
 | Build-370 BETA_DB migration | Release Manager | **PASS — PREVIEW ONLY** | `0003` was applied once to the verified Preview `BETA_DB`; recovery bookmark, absent-before/present-after schema, constraints, and six-row aggregate are recorded in `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`. Do not apply it again or to production. |
-| Build-370 preview and phone QA | Release Manager + Founder | **FAIL — PREVIEW PLAYER-PACING GATE** | At 390×844, after the first-trade guide was dismissed with Escape and with no further input, the live-trade label changed from `−2 In the red` to `−4 In the red` over five seconds. This contradicts the no-idle-price-advance requirement. Do not advance release controls. See `handoffs/BETA370_PREVIEW_QA.md`. |
-| Next ten-person beta cohort | PM/CTO | **BLOCKED BY PREVIEW P0** | Do not generate or share a cohort while player-paced Preview QA is failing. After remediation and preview/device approval, generate one `b370-beta2` cohort and ten unique consonant-digit invite codes. |
+| Build-371 repair Preview and phone QA | Release Manager + Founder | **LOCAL PASS — PREVIEW RETEST PENDING** | Publish only exact payload `3019058` to the existing non-production branch, verify the served artifact equals `3224c603...`, then repeat the complete pacing/guide/background/terminal matrix. The failed Build-370 Preview remains the current external evidence until this passes. |
+| Next ten-person beta cohort | PM/CTO | **BLOCKED BY PREVIEW/DEVICE GATES** | Do not generate or share a cohort until the repaired candidate passes Preview and physical-device acceptance. After approval, generate one release-authorized cohort and ten unique consonant-digit invite codes. |
 | Historical application-data migration | Release Manager | **SEPARATE PENDING WORK** | Preserve the existing audited Build-369 account/data migration gates; this Build-370 experiment does not weaken or bypass them. |
 
 ## Blocked tasks
 
 | Item | Status | Evidence |
 |---|---|---|
-| Build 370 production deployment | **DO NOT DEPLOY** | Preview player-paced trade QA failed; physical-device QA, remaining Preview matrix items, and all release controls are incomplete. No production manifest/lock/served fingerprint exists. |
+| Build 371 production deployment | **DO NOT DEPLOY** | Build 371 is local only; repaired Preview/physical-device QA, remaining matrix items, and all release controls are incomplete. No production manifest/lock/served fingerprint exists. |
 | Next tester links | **DO NOT SEND YET** | The current public site still serves Build 367. Q6/Q7 are verified only in the blocked Preview candidate; valid invite attribution has not been exercised. |
 | Full Cloudflare application migration | **SEPARATE RELEASE GATE** | Build 370 inherits the Build-369 local candidate but does not itself prove production APP_DB migration, account restoration, or historical application-data reconciliation. |
 
@@ -50,6 +56,7 @@ and served-fingerprint gates all pass.
 
 | Task | Result | Evidence |
 |---|---|---|
+| Build-371 idle-gate repair and adversarial review | **APPROVED LOCALLY; PREVIEW/RELEASE HELD** | Exact payload `3019058`; game artifacts `3224c603...`; verifier 27/0/0/1; trade 13/13; UI 5/5; independent final review APPROVE |
 | Build-370 player-paced trade and next-beta learning payload | **APPROVED LOCALLY; RELEASE HELD** | Exact payload `08d3b3c`; game artifacts `b615adb1...`; verifier 27/0/0/1; trade 11/11; UI 5/5; survey 4/4; beta service 26/26; client 15/15; Founder beta 8/8; independent final review APPROVE |
 | Build-369 full Cloudflare application/data client | **APPROVED LOCALLY** | Payload `df0053c`; `handoffs/CLOUDFLARE_GAME_CUTOVER_IMPLEMENTATION.md`; app 31/31, adapter 22/22, cutover 7/7 |
 | Build-369 auditable historical importer/reconciler | **APPROVED LOCALLY; REAL EXPORT PENDING** | `handoffs/CLOUDFLARE_MIGRATION_TOOLING.md`; importer 27/27 |

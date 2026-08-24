@@ -1,5 +1,35 @@
 # Current Technical State
 
+## 2026-08-24 Build-371 local pacing repair — VERIFIED LOCALLY; RELEASE BLOCKED
+
+- **VERIFIED — root cause:** Build 370 removed its special wall-clock/carry path but inherited the
+  platformer's always-on horizontal walk. Closing the first-trade guide cleared `paused` without a
+  player-intent gate, so Finn crossed real candle frontiers and changed `lastPrice`, path, and P&L
+  while the phone was untouched. The former 11/11 suite held `maxSeenCandleId` fixed and did not run
+  production horizontal movement, so it could not reproduce the served defect.
+- **VERIFIED — exact local repair:** payload `3019058b32c6acddc8fc5530569f24d95c76a98f`,
+  Build 371. `chart-quest.html`, `index.html`, and `website/game.html` are byte-identical at SHA-256
+  `3224c603255ee5d1210295b31151f7de04ca6c3b2a211b158f14627b76a0ab09`.
+- **VERIFIED — behavior:** a Level 1–3 live trade begins halted. Each explicit keyboard/tap/swipe
+  action owns at most one touching-candle boundary, then Finn halts again. Guide Close/Escape,
+  entry, pointer cancel, blur, page hide, and background/resume clear stale intent. Backtracking
+  consumes one spatial step without changing price/progress. TP/SL still resolves on the first
+  traversed visible body/wick touch; every resolution, including manual Close, returns normal
+  free-roam movement. Level 4+ and no-trade auto-walk are unchanged.
+- **VERIFIED — terrain distinction:** the approved bounded `maxSeen + 2` collision/render lookahead
+  may author the two candles Finn needs to platform on, but idle time cannot grow it again and those
+  unreached candles cannot change resolved `lastPrice`, trade path, P&L, session progress, or outcome.
+- **VERIFIED — evidence:** player pacing 13/13 using production gap-zero geometry and an adversarial
+  movement spike; teaching UI 5/5; full verifier 27 pass / 0 fail / 0 warn / 1 optional Puppeteer
+  skip; diff check clean; two independent adversarial re-reviews APPROVE with no remaining finding.
+- **RELEASE HOLD:** Build 371 is not yet on Preview. The complete Preview/live-phone matrix,
+  Founder Access allow/dashboard/export, valid invite attribution, returning-service-worker,
+  rollback/provider proof, release manifest/lock, authorization, `main`, production, and double
+  served-fingerprint verification remain incomplete. Production remains Build 367.
+
+See `handoffs/BETA371_LOCAL_REPAIR_CANDIDATE.md`. The Build-370 Preview failure below remains the
+current external result until exact Build 371 passes a new Preview run.
+
 ## 2026-08-24 Build-370 Preview QA addendum — RELEASE BLOCKED
 
 - **VERIFIED — Preview only:** source `7bb0ed7` deployed successfully as Pages deployment

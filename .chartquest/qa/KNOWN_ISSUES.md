@@ -2,7 +2,7 @@
 
 Only repository-documented issues are listed below. The severity/status reflects the cited document where available; it does not assert that the issue is currently live.
 
-## Build-370 player-paced next-beta candidate
+## Build-370/371 player-paced next-beta candidate
 
 **P0 — Preview release blocker (2026-08-24):** the exact Build-370 artifact was served on Preview as
 deployment `c8c138b1-3e77-45a5-bc5a-094c8f6a83f2` (source `7bb0ed7`, `/game` SHA-256
@@ -11,6 +11,15 @@ with Escape. With no subsequent player input, the live `CLOSE POSITION` state ch
 red` to `−4 In the red` during five seconds of idle time. The required player-paced rule says an idle
 or set-down phone must not advance guided-trade price/outcome. This Preview observation overrides the
 prior local-code conclusion for release purposes. Evidence: `handoffs/BETA370_PREVIEW_QA.md`.
+
+**Local remediation exists; issue remains open pending served proof:** Build 371 payload
+`3019058b32c6acddc8fc5530569f24d95c76a98f` gates every guided movement action to one production
+touching-candle boundary, cancels stale intent on guide/background/input lifecycle changes, restores
+free roam after manual Close, and seeds the entry price cursor even when no future suffix exists.
+The three game artifacts match at `3224c603...`; pacing is 13/13, teaching UI 5/5, the full gate is
+27/0/0/1, and independent re-review APPROVED. This does not close the P0 until exact Build 371 is
+served on Preview and the idle/P&L, action-step, background/resume, backtrack, terminal, and physical
+phone paths pass. Evidence: `handoffs/BETA371_LOCAL_REPAIR_CANDIDATE.md`.
 
 The additive Preview-only `0003_beta_survey_research.sql` migration remains valid: it was applied once
 after backup/bookmark and inspection, leaving six historical rows unchanged and both nullable checked
@@ -22,9 +31,9 @@ their limited Preview checks. Unauthenticated Founder access correctly denied. T
 remaining founder-Allow/dashboard/export, valid invite attribution, returning-service-worker,
 long/short terminal, pause/background/backtrack, rollback, or physical-phone gates.
 
-Build 370 was published only to its non-production branch and Preview. `main` and production remain
-Build 367. Do not send cohort links or start release controls until the P0 is fixed and the full matrix
-passes.
+Build 370 was published only to its non-production branch and Preview; Build 371 is local only at
+this record. `main` and production remain Build 367. Do not send cohort links or start release
+controls until the P0 is closed by the full matrix.
 
 ## Build-369 complete Cloudflare migration candidate
 

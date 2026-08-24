@@ -10,7 +10,10 @@
 - **VERIFIED — marketing/entry repair:** the public subtext now speaks to rising costs and building
   income beyond the 9–5. Public language describes practice charts honestly and no longer implies
   that all markets trade alike. A fresh game gets one explicit Bitcoin confirmation card; returning
-  Change Chart keeps the full eight-market chooser.
+  Change Chart keeps the full eight-market chooser. After the Founder reported that the new subtext
+  was still too easy to miss, follow-up `f20bc481833bfa904017ab55452b06c9059889e0` promoted it into a
+  high-contrast glass panel before the Play CTA with a bold first sentence and readable normal-case
+  type.
 - **VERIFIED — Shell Smash teaching:** movement teaching and main-game follow-up use device-specific
   swipe/keyboard language, point to a visible box, and retain the cue until a real smash succeeds.
   Failed attempts do not silently retire the instruction.
@@ -30,15 +33,18 @@
 - **VERIFIED — restart/worker safety:** wrapper Restart and destructive Fresh/reset require
   confirmation; Fresh is one-shot and tester QR generation rejects fresh flags. A service-worker
   controller change defers reload while the beta flow is active. `website/sw.js` is now
-  `chartquest-site-v18`, SHA-256
-  `9e7b9e07c9db540098fcb2bf8f2e2af7d9ab8c34e5ca59c7e4074d5c5e827aaa`. This closes one known
+  `chartquest-site-v19`, SHA-256
+  `9c0c295c4519fb6057e02605012a4d17f38a24fd6558773080a67ea2e48e9934`. This closes one known
   reload source but does not prove it caused the tester's restart.
 - **VERIFIED — exact local identity:** branch `codex/build373-feedback-recovery`; runtime payload
   `291d3849e8aa1d27631792ead5271036184efc42`; Build 373 source, root mirror, and website game are
   byte-identical at SHA-256
-  `69eb93f0f97c60567cfd33c1e7654ec2a3e0bc76cc354ca426ad76145c1b3faa`.
-- **VERIFIED — executable and review evidence:** full verifier 29 pass / 0 fail / 0 warn / 1
-  optional Puppeteer skip; feedback/recovery 10/10; restart/survey/reward safety 7/7; marketing truth
+  `69eb93f0f97c60567cfd33c1e7654ec2a3e0bc76cc354ca426ad76145c1b3faa`. The exact marketing
+  visibility follow-up is `f20bc481833bfa904017ab55452b06c9059889e0`; landing-page SHA-256 is
+  `08b770b0a3fea5edd6c76c9215eb999908589569c9ce83faca4d202427a72ef0`.
+- **VERIFIED — executable and review evidence:** base-diff verifier 29 pass / 0 fail / 0 warn / 1
+  optional Puppeteer skip; exact follow-up tree 27/0/0/3 with the two HEAD-diff gates correctly N/A;
+  feedback/recovery 10/10; restart/survey/reward safety 7/7; marketing truth
   8/8; startup music 10/10; pacing 13/13; CQSAFE 27/27; save-key gate 4/4; game cutover 7/7;
   Cloudflare client 15/15; all three artifacts match; diff and syntax checks pass. The protected-key
   delta is exactly one new flow-ledger key plus four established CQTrack once-key literals, with no
@@ -49,6 +55,10 @@
   `market_selected` safe boundary were observed. The native restart confirmation also fired. The
   Browser did not submit a survey, prove speaker output, complete a physical smash, emulate a hidden
   phone, or prove a served Preview build.
+- **VERIFIED — visibility follow-up Browser evidence:** the prominent panel and complete CTA fit at
+  1440×900, 1366×768, 390×844, 375×667, 320×568, and landscape 844×390. The compact and landscape
+  overrides retain the pain point rather than hiding it, and all measured layouts had zero
+  horizontal overflow. Independent responsive re-review APPROVED.
 - **[UNKNOWN — REQUIRES VERIFICATION]:** the initiating tester restart cause; exact tester build;
   physical-phone audible output/background recovery; actual Smash completion and teaching
   retirement; W-L-W subjective feel and automatic stop truth; interruption at every checkpoint;

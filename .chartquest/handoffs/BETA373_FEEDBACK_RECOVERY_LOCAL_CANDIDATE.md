@@ -8,19 +8,21 @@
 
 - Branch: `codex/build373-feedback-recovery`
 - Control-plane base: `9ec219ef21ffceee51664270094b19bbfd4e5c67`
-- Exact runtime payload commit: `291d3849e8aa1d27631792ead5271036184efc42`
+- Exact gameplay/runtime payload commit: `291d3849e8aa1d27631792ead5271036184efc42`
+- Exact hero-visibility follow-up commit: `f20bc481833bfa904017ab55452b06c9059889e0`
 - Build: **373**
 - Source/root/site SHA-256:
   `69eb93f0f97c60567cfd33c1e7654ec2a3e0bc76cc354ca426ad76145c1b3faa`
 - The three game artifacts are byte-identical:
   `chart-quest.html`, `index.html`, and `website/game.html`.
-- Service worker: `chartquest-site-v18`, SHA-256
-  `9e7b9e07c9db540098fcb2bf8f2e2af7d9ab8c34e5ca59c7e4074d5c5e827aaa`
+- Landing page SHA-256:
+  `08b770b0a3fea5edd6c76c9215eb999908589569c9ce83faca4d202427a72ef0`
+- Service worker: `chartquest-site-v19`, SHA-256
+  `9c0c295c4519fb6057e02605012a4d17f38a24fd6558773080a67ea2e48e9934`
 - Deploy provenance stamp embedded in game bytes: parent `9ec219ef21` at
   `2026-08-24T16:11:16Z`.
-- The command-center closeout commit is the commit that first adds this handoff and the associated
-  `.chartquest` updates. Resolve that durable identity with
-  `git log --diff-filter=A -1 --format=%H -- .chartquest/handoffs/BETA373_FEEDBACK_RECOVERY_LOCAL_CANDIDATE.md`;
+- Resolve the latest command-center closeout identity with
+  `git log -1 --format=%H -- .chartquest/handoffs/BETA373_FEEDBACK_RECOVERY_LOCAL_CANDIDATE.md`;
   do not substitute the runtime payload when preparing a future control-plane manifest.
 - Production remains Build 367. No Preview/production deployment, provider/database mutation,
   migration, `main` push, manifest, lock, tester link, production fingerprint, or recovered-archive
@@ -49,6 +51,11 @@ The public landing subtext now speaks to rising costs and building income beyond
 copy calls the experience a practice chart and does not imply that Bitcoin, equities, forex, and
 other markets share one volatility or media/political behavior model. The old “free / no download /
 no signup” subtext is removed from the relevant public surface.
+
+Founder visibility follow-up `f20bc48` promotes that message from a small trust line into a
+high-contrast glass panel before the primary CTA. The first sentence is bold, normal-case type is
+14.5–18px across responsive layouts, and compact/landscape rules keep both the message and complete
+Play button visible.
 
 ### 2. Bitcoin-first without removing returning choice
 
@@ -105,8 +112,9 @@ approved protected-key delta is one new ledger key plus four already-established
 literals, with no removal or rename.
 
 Wrapper Restart and destructive Fresh/reset now require confirmation. A service-worker controller
-change defers reload during an active beta flow. The marketing cache moves from v17 to v18 so changed
-public assets have a distinct returning-client identity while private API/data bypass remains intact.
+change defers reload during an active beta flow. The marketing cache advances through v19 so changed
+public assets and the prominent landing root have a distinct returning-client identity while private
+API/data bypass remains intact.
 
 ### 6. Music and survey contract retained
 
@@ -133,6 +141,7 @@ rules remain intact.
 | Game artifact parity | **PASS — all three SHA-256 `69eb93f...`** |
 | Standalone/inline syntax and `git diff --check` | **PASS** |
 | Independent final review | **APPROVE — no actionable finding** |
+| Independent hero-visibility responsive review | **APPROVE after compact portrait/landscape fixes** |
 
 The optional Puppeteer package is unavailable; production inline and standalone syntax are the
 documented boot proxy. No test result is represented as physical-device, Preview, credentialed,
@@ -143,6 +152,8 @@ provider, or audible-speaker evidence.
 At 390×844 on loopback-only local bytes:
 
 - the landing page displayed the new income-pressure subtext and truthful market language;
+- the visibility follow-up kept the prominent panel and complete CTA in view at 1440×900,
+  1366×768, 390×844, 375×667, compact 320×568, and landscape 844×390, with no horizontal overflow;
 - a fresh wrapper run used the internal `hmc=1` UI-staging flag, stripped `fresh=1`, displayed only
   the Bitcoin confirmation card, and handed off to BTC; executable contracts own the ordinary
   no-flag first-run decision;
@@ -164,7 +175,7 @@ Limits:
 - native-confirm automation could not safely accept the dialog, so one-shot restart behavior is
   executable-contract evidence;
 - UI music state does not prove audible speaker output or physical-phone autoplay/background rules;
-- this did not emulate a genuine returning v17→v18 worker installation; and
+- this did not emulate a genuine prior-worker→v19 installation; and
 - an internal `?guest` development shortcut still exposes a pre-existing synchronous-boot TDZ. Plain
   tester entry does not use that flag; Build 373 does not claim it fixed.
 
@@ -221,7 +232,7 @@ Durable doctrine/control evidence is committed after the runtime payload:
    XP reward, no skipped unpaid boundary, and survey recovery from `survey_due` through a real Q1–Q7
    response-specific receipt.
 5. Verify valid invite/cohort attribution, authenticated Founder Access allow/deny, dashboard,
-   export, experience/$19 views, fresh-cohort display, and genuine returning v17→v18 worker behavior.
+   export, experience/$19 views, fresh-cohort display, and genuine prior-worker→v19 behavior.
 6. Complete formal TES/architecture re-ratification for ADR-TES-1 or explicitly reject/revise the
    placement before production authorization.
 7. Re-audit Preview/Production bindings, encrypted-secret presence, Access identity, retained

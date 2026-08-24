@@ -15,12 +15,14 @@ device, data, release-control, authorization, and served-fingerprint gates pass.
 ## Current release/build
 
 - Current isolated branch: `codex/build373-feedback-recovery`.
-- Exact Build-373 runtime payload commit: `291d3849e8aa1d27631792ead5271036184efc42`.
+- Exact Build-373 gameplay/runtime payload commit: `291d3849e8aa1d27631792ead5271036184efc42`.
+- Exact Build-373 hero-visibility follow-up commit:
+  `f20bc481833bfa904017ab55452b06c9059889e0`.
 - Build: **373 local engineering candidate; production remains Build 367**.
 - Build-373 source, root mirror, and website game artifact are byte-identical at SHA-256
   `69eb93f0f97c60567cfd33c1e7654ec2a3e0bc76cc354ca426ad76145c1b3faa`; service worker is
-  `chartquest-site-v18` at SHA-256
-  `9e7b9e07c9db540098fcb2bf8f2e2af7d9ab8c34e5ca59c7e4074d5c5e827aaa`.
+  `chartquest-site-v19` at SHA-256
+  `9c0c295c4519fb6057e02605012a4d17f38a24fd6558773080a67ea2e48e9934`.
 - **Founder direction (2026-08-24):** implement the marketer's beta findings: pain-point site copy,
   clearer Shell Smash, Bitcoin-first entry, and a 2–1 opening. Build 373 uses one-card Bitcoin
   confirmation for a fresh run while returning Change Chart keeps eight markets; its automatic
@@ -37,6 +39,11 @@ device, data, release-control, authorization, and served-fingerprint gates pass.
   eight-market chooser, ordinary-on/explicit-mute/reload-on music state, Q1–Q7 draft persistence,
   persistent device-specific Smash cue, and clean safe-boundary market resume. These are not
   physical-phone, audible-output, real-receipt, or Preview claims.
+- **Founder visibility follow-up:** the pain point is now a normal-case, high-contrast glass panel
+  before the primary CTA, with its first sentence emphasized. Local Browser checks pass at
+  1440×900, 1366×768, 390×844, 375×667, compact 320×568, and landscape 844×390; the panel remains
+  visible, the complete CTA stays inside the initial viewport, and no horizontal overflow occurs.
+  Marketing contracts remain 8/8 and independent responsive re-review APPROVED.
 - Build-373 doctrine record: `CHARTQUEST_T-002B_OPENING_FIRST_LOSS_SUPERSESSION_2026-08-24.md`.
   Formal architecture re-ratification remains a release gate; TES v1.1 remains formal canon until
   that gate completes.
@@ -56,8 +63,8 @@ device, data, release-control, authorization, and served-fingerprint gates pass.
   first-gesture intro advance, and zero console errors. Independent read-only review found no P0–P2
   issue. This is not audible phone evidence.
 - **Historical Build-372 boundary:** its `website/sw.js` remained byte-unchanged at
-  `chartquest-site-v17`; Build 373 separately advances the marketing cache to v18 for changed public
-  assets and active-flow controller safety.
+  `chartquest-site-v17`; Build 373 advances the marketing cache through v19 for changed public
+  assets, active-flow controller safety, and the prominent landing-page panel.
 - Prior pacing candidate branch: `codex/beta370-player-paced-trades`.
 - Exact prior Build-371 pacing-repair payload commit: `3019058b32c6acddc8fc5530569f24d95c76a98f`
   (the Build-370 experiment payload remains `08d3b3c930f86ca4894ff9c26c813f78b43fb040`).
@@ -114,7 +121,7 @@ device, data, release-control, authorization, and served-fingerprint gates pass.
 
 | Task | Result | Evidence |
 |---|---|---|
-| Build-373 feedback and interruption recovery runtime | **VERIFIED LOCALLY; RELEASE HELD** | Payload `291d384`; game artifacts `69eb93f...`; service worker v18 `9e7b9e07...`; verifier 29/0/0/1; focused 10/10 + 7/7 + 8/8; retained music 10/10 and pacing 13/13; save-key gate 4/4; independent final review APPROVE; local Browser checks passed scoped UI/state paths; exact Preview/phone/data/release gates remain open |
+| Build-373 feedback and interruption recovery runtime | **VERIFIED LOCALLY; RELEASE HELD** | Base payload `291d384`; hero-visibility follow-up `f20bc48`; game artifacts `69eb93f...`; service worker v19 `9c0c295c...`; verifier 29/0/0/1 on the base diff and 27/0/0/3 on exact follow-up tree; focused 10/10 + 7/7 + 8/8; retained music 10/10 and pacing 13/13; save-key gate 4/4; independent runtime and responsive reviews APPROVE; local Browser checks passed standard/compact/landscape UI paths; exact Preview/phone/data/release gates remain open |
 | Build-372 music-on-every-start repair | **VERIFIED LOCALLY; RELEASE HELD** | Payload `e338241`; game artifacts `64c157e3...`; startup audio 10/10; parent-diff verifier 28/0/0/1 and post-commit exact-tree verifier 26/0/0/3; independent review found no P0–P2 issue; local browser state/reload/explicit-mute checks passed with zero console errors; audible phone, exact Preview, and inherited Build-371 release gates remain open |
 | Build-371 exact Preview deployment and scoped browser QA | **SERVED PACING P0 PASS; RELEASE HELD** | Deployment `1c56b4ee-a726-4116-8e4c-cc6450b6f7cd`; `/game` `3224c603...`; Escape/idle/action/backtrack/manual/replay/free-roam, long TP, short TP, guide ×/Escape, Q1–Q7 receipt, and Founder deny passed; device/credential/opposite-terminal gates remain |
 | Build-371 provider, attribution, and rollback audit | **SCOPED PASS; RELEASE HELD** | Preview/Production bindings and required secrets re-audited; Access issuer/audience coherent; controlled invite persisted in Preview D1; retained Build-367 deployment `/game` exactly matches `1d97b906...` and `sw.js` v14; Production `0003` and account/data rollback remain pending |

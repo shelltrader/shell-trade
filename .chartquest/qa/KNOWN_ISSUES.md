@@ -14,7 +14,7 @@ Build 373 adds a versioned device-local `cq_beta_flow_v1` safe-boundary ledger. 
 after durable side effects, resumes at the next unpaid step, prevents completed trade/Guardian/
 Journal rewards from being paid again, and keeps `survey_due` recoverable until the confirmed survey
 receipt. Fresh/reset and wrapper Restart require confirmation, tester QR output rejects fresh flags,
-and controller-change reload waits while the flow is active. The v18 worker change closes one
+and controller-change reload waits while the flow is active. The Build-373 worker handler closes one
 controller-reload hazard; it does not prove that hazard caused this tester's restart.
 
 Executable coverage passes 10/10 feedback/recovery, 7/7 restart/reward safety, and 4/4 save-key
@@ -34,6 +34,14 @@ returning Change Chart, uses truthful practice-chart wording, keeps a device-spe
 success, adopts an authored WIN → LOSS → WIN opening, and replaces the site subtext with the approved
 income-pressure pain point. The later Level-2 loss injector is retired; every guided trade remains
 2:1 R:R.
+
+**Pain-point visibility P2 — REPAIRED LOCALLY:** the Founder then reported that the replacement
+subtext remained too easy to miss. Follow-up `f20bc48` moves it before the Play CTA, uses readable
+normal-case 14.5–18px type, emphasizes the first sentence, and gives it a high-contrast glass panel.
+Responsive checks pass at standard desktop/phone, compact 320×568, and landscape 844×390; the copy
+remains visible, the CTA is fully inside the initial viewport, and no horizontal overflow occurs.
+Service-worker v19 versions the precached landing root. Exact served Preview and physical-device
+acceptance remain open.
 
 Local contracts and scoped Browser checks pass. Exact Preview/physical-phone W-L-W, Smash completion,
 Bitcoin entry, and subjective copy/feel acceptance remain open. The TES placement amendment is
@@ -59,7 +67,7 @@ physical speaker produced audible music.
 
 In Build 372, `website/sw.js` remained unchanged at `chartquest-site-v17`. It did not intercept
 online HTML navigation and used network-first behavior for explicit `game.html` fetches, so that
-music repair made no service-worker change. Build 373 separately moves the marketing cache to v18.
+music repair made no service-worker change. Build 373 separately moves the marketing cache to v19.
 Exact Build-372 game artifacts were byte-identical at `64c157e3...`.
 
 Release remains held. Physical-phone audible startup and true background/resume, exact Preview

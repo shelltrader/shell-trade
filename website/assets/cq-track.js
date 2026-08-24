@@ -1,3 +1,243 @@
+/* CQSURVEYGATE:BEGIN
+   Shared, response-specific owner for the mandatory closed-beta survey. The game records the
+   earlier paid boundaries; this small owner is also available on landing/play/offline/survey
+   pages so browser Back, a wrapper restart, or a reload cannot turn an owed survey back into
+   gameplay. `cq_bt_survey_submitted` remains an analytics flag only. Terminal authorization is
+   the exact persisted equality surveyReceipt === surveyResponseId on the version-2 flow row. */
+(function (root) {
+  'use strict';
+  if (root.CQSurveyGate) return;
+
+  var FLOW_KEY = 'cq_beta_flow_v1';
+  var VERSION = 2;
+  var STAGES = ['new','movement_started','movement_complete','market_selected',
+    'trade_1_complete','trade_2_complete','trade_3_complete','boss_won',
+    'journal_due','journal_started','journal_completed','survey_due','survey_submitted'];
+  var STAGE_SET = {};
+  for (var si = 0; si < STAGES.length; si++) STAGE_SET[STAGES[si]] = true;
+  var memoryRow = null;
+  var installed = false;
+  var historyArmed = false;
+
+  function safe(fn, fallback) { try { return fn(); } catch (e) { return fallback; } }
+  function get(key) { return safe(function () { return root.localStorage.getItem(key); }, null); }
+  function clone(value) { return safe(function () { return JSON.parse(JSON.stringify(value)); }, null); }
+  function validId(value) {
+    return typeof value === 'string' && /^r-[A-Za-z0-9_-]{1,77}$/.test(value);
+  }
+  function newResponseId() {
+    var player = get('cq_pid');
+    if (!player || !/^[A-Za-z0-9_-]{1,77}$/.test(player)) {
+      player = 'p-' + Math.random().toString(36).slice(2, 12);
+      safe(function () { root.localStorage.setItem('cq_pid', player); });
+    }
+    return ('r-' + player).slice(0, 80);
+  }
+  function rawRow() {
+    var stored = safe(function () {
+      var value = JSON.parse(get(FLOW_KEY) || 'null');
+      return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+    }, null);
+    return stored || clone(memoryRow);
+  }
+  function normalize(raw) {
+    raw = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+    var row = {};
+    for (var key in raw) if (Object.prototype.hasOwnProperty.call(raw, key)) row[key] = raw[key];
+    row.version = VERSION;
+    row.stage = STAGE_SET[raw.stage] ? raw.stage : 'new';
+    row.tradeSlot = Math.max(0, Math.min(3, Number(raw.tradeSlot) || 0));
+    row.market = typeof raw.market === 'string' && /^[A-Z0-9]{2,8}$/.test(raw.market) ? raw.market : null;
+    row.updatedAt = typeof raw.updatedAt === 'string' ? raw.updatedAt : new Date().toISOString();
+    row.surveyResponseId = validId(raw.surveyResponseId) ? raw.surveyResponseId : null;
+    row.surveyReceipt = validId(raw.surveyReceipt) ? raw.surveyReceipt : null;
+    return row;
+  }
+  function exactReceipt(row) {
+    return !!row && validId(row.surveyResponseId) && row.surveyResponseId === newResponseId() &&
+      row.surveyReceipt === row.surveyResponseId;
+  }
+  function legacyOwed(raw, row) {
+    var stage = raw && raw.stage;
+    return stage === 'journal_completed' || stage === 'survey_due' || stage === 'survey_submitted' ||
+      row.stage === 'journal_completed' || row.stage === 'survey_due' || row.stage === 'survey_submitted' ||
+      get('cq_beta_done') === '1' || !!get('cq_bt_beta_completed');
+  }
+  function dispatch(row) {
+    safe(function () {
+      var event;
+      if (typeof root.CustomEvent === 'function') event = new root.CustomEvent('cq:beta-flow', { detail: clone(row) });
+      else { event = root.document.createEvent('CustomEvent'); event.initCustomEvent('cq:beta-flow', false, false, clone(row)); }
+      root.dispatchEvent(event);
+    });
+  }
+  function persist(row) {
+    var encoded = safe(function () { return JSON.stringify(row); }, '');
+    if (!encoded) return false;
+    var wrote = safe(function () { root.localStorage.setItem(FLOW_KEY, encoded); return true; }, false);
+    if (!wrote) return false;
+    var verified = safe(function () { return JSON.parse(root.localStorage.getItem(FLOW_KEY) || 'null'); }, null);
+    if (!verified || verified.version !== VERSION || verified.stage !== row.stage ||
+        verified.surveyResponseId !== row.surveyResponseId || verified.surveyReceipt !== row.surveyReceipt) return false;
+    memoryRow = verified;
+    dispatch(verified);
+    return true;
+  }
+  function state() {
+    var raw = rawRow();
+    var row = normalize(raw);
+    /* Version-1 submitted rows were authorized by a generic analytics flag. They deliberately
+       migrate back to due: only a response-specific version-2 receipt can close this gate. */
+    if (legacyOwed(raw, row) && !exactReceipt(row)) {
+      row.stage = 'survey_due';
+      row.surveyResponseId = newResponseId();
+      row.surveyReceipt = null;
+      row.updatedAt = new Date().toISOString();
+      if (!raw || raw.version !== VERSION || raw.stage !== row.stage ||
+          raw.surveyResponseId !== row.surveyResponseId || raw.surveyReceipt !== null) persist(row);
+    } else if (exactReceipt(row)) {
+      row.stage = 'survey_submitted';
+    }
+    return clone(row);
+  }
+  function ensureDue(meta) {
+    if (typeof meta === 'string') meta = { responseId: meta };
+    meta = meta || {};
+    var row = state();
+    var requested = meta.responseId || meta.response_id || null;
+    if (requested != null && !validId(requested)) return null;
+    var canonical = newResponseId();
+    if (requested && requested !== canonical) return null;
+    /* The explicit id must be the tracker's one canonical `r-<cq_pid>` identity. Repeated recovery
+       keeps that id stable; an unrelated or malformed receipt can never satisfy this player. */
+    if (exactReceipt(row) && (!requested || requested === row.surveyResponseId)) return row;
+    row.version = VERSION;
+    row.stage = 'survey_due';
+    row.surveyResponseId = requested || row.surveyResponseId || canonical;
+    row.surveyReceipt = null;
+    row.updatedAt = new Date().toISOString();
+    return persist(row) ? state() : null;
+  }
+  function isDue() {
+    var row = state();
+    return row.stage === 'survey_due' && !exactReceipt(row);
+  }
+  function responseId() {
+    var row = state();
+    return isDue() ? row.surveyResponseId : null;
+  }
+  function markSubmitted(response) {
+    var id = typeof response === 'string' ? response :
+      response && (response.response_id || response.responseId);
+    if (!validId(id)) return false;
+    var row = state();
+    if (row.stage !== 'survey_due' || row.surveyResponseId !== id) return false;
+    row.stage = 'survey_submitted';
+    row.surveyReceipt = id;
+    row.updatedAt = new Date().toISOString();
+    if (!persist(row)) return false;
+    var verified = rawRow();
+    return !!verified && verified.version === VERSION && verified.stage === 'survey_submitted' &&
+      verified.surveyResponseId === id && verified.surveyReceipt === id;
+  }
+  function isSurveyPage() {
+    return safe(function () { return /(?:^|\/)survey(?:\.html)?\/?$/.test(root.location.pathname || ''); }, false);
+  }
+  function surveyUrl() {
+    return safe(function () {
+      var here = new URL(root.location.href);
+      here.search = ''; here.hash = '';
+      /* Cloudflare clean URLs may spell /play as /play/. Strip that document-like slash, but
+         preserve a deploy root such as /shell-trade/ so its survey remains inside the subpath. */
+      if (/(?:^|\/)(?:play|game|offline|index)\/$/.test(here.pathname)) here.pathname = here.pathname.slice(0, -1);
+      return new URL('survey.html', here.href).href;
+    }, 'survey.html');
+  }
+  function redirectIfDue() {
+    if (!isDue()) return false;
+    var destination = root;
+    var inFrame = false;
+    safe(function () {
+      if (root.top && root.top !== root && root.top.location.origin === root.location.origin) {
+        destination = root.top;
+        inFrame = true;
+      }
+    });
+    /* A top-level survey is already the lock. A survey accidentally loaded inside the game
+       wrapper is not: promote it so the wrapper's Home and Restart controls disappear. */
+    if (isSurveyPage() && !inFrame) return false;
+    var target = surveyUrl();
+    var navigating = false;
+    try { destination.location.replace(target); navigating = true; }
+    catch (e) { try { destination.location.href = target; navigating = true; } catch (e2) {} }
+    return navigating;
+  }
+  function prevent(event) {
+    if (!event) return;
+    try { event.preventDefault(); } catch (e) {}
+    try { event.stopImmediatePropagation(); } catch (e) {}
+    try { event.stopPropagation(); } catch (e) {}
+  }
+  function armSurveyHistory() {
+    if (!isDue() || !isSurveyPage() || historyArmed) return;
+    safe(function () {
+      var marker = { cqSurveyGate: VERSION };
+      root.history.replaceState(marker, '', root.location.href);
+      root.history.pushState(marker, '', root.location.href);
+      historyArmed = true;
+    });
+  }
+  function installNavigationGuard() {
+    /* A direct survey visit can become due after this shared file first installs. Re-running the
+       owner must arm the same-document Back lock for that late transition, not return early. */
+    if (installed) {
+      if (!redirectIfDue()) armSurveyHistory();
+      return true;
+    }
+    installed = true;
+    safe(function () {
+      root.document.addEventListener('click', function (event) {
+        if (!isDue()) return;
+        if (!isSurveyPage()) { prevent(event); redirectIfDue(); return; }
+        var target = event.target;
+        var exit = target && target.closest ? target.closest('a[href], [data-survey-exit], [data-survey-backdrop]') : null;
+        if (exit) prevent(event);
+      }, true);
+      root.addEventListener('keydown', function (event) {
+        if (isDue() && event && (event.key === 'Escape' || event.key === 'Esc')) prevent(event);
+      }, true);
+      root.addEventListener('popstate', function (event) {
+        if (!isDue()) return;
+        prevent(event);
+        if (isSurveyPage()) { historyArmed = false; armSurveyHistory(); }
+        else redirectIfDue();
+      });
+      root.addEventListener('pageshow', function () { if (!redirectIfDue()) armSurveyHistory(); });
+      root.document.addEventListener('visibilitychange', function () {
+        if (root.document.visibilityState === 'visible' && !redirectIfDue()) armSurveyHistory();
+      });
+    });
+    if (!redirectIfDue()) armSurveyHistory();
+    return true;
+  }
+
+  root.CQSurveyGate = {
+    key: FLOW_KEY,
+    version: VERSION,
+    state: state,
+    ensureDue: ensureDue,
+    isDue: isDue,
+    responseId: responseId,
+    surveyUrl: surveyUrl,
+    redirectIfDue: redirectIfDue,
+    installNavigationGuard: installNavigationGuard,
+    markSubmitted: markSubmitted,
+    confirmReceipt: markSubmitted
+  };
+  installNavigationGuard();
+})(window);
+/* CQSURVEYGATE:END */
+
 /* ══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — CLOSED BETA ANALYTICS               window.CQTrack        (ticket 3, v1)
    ------------------------------------------------------------------------------------------

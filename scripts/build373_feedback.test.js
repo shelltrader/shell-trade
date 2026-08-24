@@ -362,7 +362,7 @@ const tests = [
   ['beta-flow ledger is schema-bounded, monotonic, idempotent, and terminal only on survey evidence', () => {
     const world = betaFlowWorld();
     const api = world.api;
-    for (const name of ['state', 'advance', 'hasReached', 'resumePlan', 'isActive', 'reset']) {
+    for (const name of ['state', 'advance', 'hasReached', 'resumePlan', 'isActive', 'markSubmitted', 'reset']) {
       assert.equal(typeof api[name], 'function', `CQBetaFlow.${name} must be public`);
     }
     assert.equal(api.key, 'cq_beta_flow_v1');
@@ -386,16 +386,29 @@ const tests = [
     assert.equal(api.hasReached('trade_2_complete'), false);
 
     const saved = JSON.parse(world.storage.getItem('cq_beta_flow_v1'));
-    assert.equal(saved.version, 1);
+    assert.equal(saved.version, 2);
     assert.equal(saved.stage, 'trade_1_complete');
     assert.equal(saved.tradeSlot, 1);
     assert.equal(saved.market, 'BTC');
+    assert.equal(saved.surveyResponseId, null);
+    assert.equal(saved.surveyReceipt, null);
     assert.match(saved.updatedAt, /^\d{4}-\d\d-\d\dT/);
 
     assert.equal(api.advance('survey_due'), true);
     assert.equal(api.isActive(), true, 'survey_due remains recoverable and non-terminal');
+    const due = api.state();
+    assert.match(due.surveyResponseId, /^r-[A-Za-z0-9_-]{1,77}$/);
+    assert.equal(due.surveyReceipt, null);
     world.storage.setItem('cq_bt_survey_submitted', '1');
-    assert.equal(api.state().stage, 'survey_submitted', 'confirmed survey evidence heals the ledger to terminal');
+    assert.equal(api.state().stage, 'survey_due', 'the generic analytics once-flag cannot close a new playtest');
+    assert.equal(api.advance('survey_submitted'), false, 'ordinary stage advance cannot forge a survey receipt');
+    assert.equal(api.markSubmitted('r-p-someone-else'), false, 'a foreign response receipt must fail closed');
+    assert.equal(api.isActive(), true);
+    assert.equal(api.markSubmitted(due.surveyResponseId), true, 'only the exact persisted response receipt may terminalize');
+    const terminal = api.state();
+    assert.equal(terminal.stage, 'survey_submitted');
+    assert.equal(terminal.surveyResponseId, due.surveyResponseId);
+    assert.equal(terminal.surveyReceipt, due.surveyResponseId);
     assert.equal(api.isActive(), false);
   }],
 

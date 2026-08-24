@@ -97,7 +97,7 @@
 /* CQBOOTCRASH:END */
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="9ec219ef21" data-built-at="2026-08-24T16:11:16Z">
+<meta name="cq-build" content="da6198eff1" data-built-at="2026-08-24T17:32:07Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3535,7 +3535,7 @@ try {
 window.CQBetaFlow = (function () {
   'use strict';
   var KEY = 'cq_beta_flow_v1';
-  var VERSION = 1;
+  var VERSION = 2;
   var STAGES = ['new','movement_started','movement_complete','market_selected',
     'trade_1_complete','trade_2_complete','trade_3_complete','boss_won',
     'journal_due','journal_started','journal_completed','survey_due','survey_submitted'];
@@ -3544,6 +3544,18 @@ window.CQBetaFlow = (function () {
 
   function safe(fn, dflt) { try { return fn(); } catch (e) { return dflt; } }
   function get(k) { return safe(function () { return localStorage.getItem(k); }, null); }
+  function responseId(value) {
+    return typeof value === 'string' && value.length <= 80 && /^r-[A-Za-z0-9_-]{1,77}$/.test(value)
+      ? value : null;
+  }
+  function expectedSurveyResponseId() {
+    var playerId = get('cq_pid');
+    if (!playerId || !/^[A-Za-z0-9_-]{1,77}$/.test(playerId)) {
+      playerId = 'p-' + Math.random().toString(36).slice(2, 12);
+      safe(function () { localStorage.setItem('cq_pid', playerId); });
+    }
+    return responseId(('r-' + playerId).slice(0, 80));
+  }
   function parsePlayer() { return safe(function () { return JSON.parse(get('cq_player_v1') || 'null'); }, null); }
   function hasBoss() {
     return safe(function () {
@@ -3552,17 +3564,39 @@ window.CQBetaFlow = (function () {
     }, false);
   }
   function valid(row) {
-    if (!row || row.version !== VERSION || !Object.prototype.hasOwnProperty.call(RANK, row.stage)) return null;
+    if (!row || (row.version !== 1 && row.version !== VERSION) ||
+        !Object.prototype.hasOwnProperty.call(RANK, row.stage)) return null;
+    var stage = row.stage;
     var slot = Math.max(0, Math.min(3, Number(row.tradeSlot) || 0));
-    if (row.stage === 'trade_1_complete') slot = Math.max(slot, 1);
-    if (row.stage === 'trade_2_complete') slot = Math.max(slot, 2);
-    if (row.stage === 'trade_3_complete' || RANK[row.stage] > RANK.trade_3_complete) slot = Math.max(slot, 3);
+    if (stage === 'trade_1_complete') slot = Math.max(slot, 1);
+    if (stage === 'trade_2_complete') slot = Math.max(slot, 2);
+    if (stage === 'trade_3_complete' || RANK[stage] > RANK.trade_3_complete) slot = Math.max(slot, 3);
+    var dueId = responseId(row.surveyResponseId);
+    var receipt = responseId(row.surveyReceipt);
+    if (RANK[stage] >= RANK.survey_due) {
+      var canonicalDueId = expectedSurveyResponseId();
+      /* Version 1 could call a generic once-flag a receipt. V2 intentionally reopens that terminal
+         state. A changed/corrected player id also invalidates an old response-specific receipt:
+         only exact equality with the current canonical due id may close this run. */
+      if (dueId !== canonicalDueId) {
+        dueId = canonicalDueId;
+        receipt = null;
+        if (stage === 'survey_submitted') stage = 'survey_due';
+      } else if (row.version === 1 || receipt !== dueId) {
+        receipt = null;
+        if (stage === 'survey_submitted') stage = 'survey_due';
+      }
+    } else {
+      dueId = null; receipt = null;              // a prior run can never terminalize a new one
+    }
     return {
       version: VERSION,
-      stage: row.stage,
+      stage: stage,
       tradeSlot: slot,
       market: typeof row.market === 'string' && /^[A-Z0-9]{2,8}$/.test(row.market) ? row.market : null,
-      updatedAt: typeof row.updatedAt === 'string' ? row.updatedAt : new Date().toISOString()
+      updatedAt: typeof row.updatedAt === 'string' ? row.updatedAt : new Date().toISOString(),
+      surveyResponseId: dueId,
+      surveyReceipt: receipt
     };
   }
   function legacy() {
@@ -3575,9 +3609,10 @@ window.CQBetaFlow = (function () {
     if ((player && player.jtut) || get('cq_bt_journal_discovery_started')) stage = 'journal_started';
     if (get('cq_bt_journal_discovery_completed')) stage = 'journal_completed';
     if (get('cq_beta_done') === '1' || get('cq_bt_beta_completed')) stage = 'survey_due';
-    if (get('cq_bt_survey_submitted')) stage = 'survey_submitted';
     return { version: VERSION, stage: stage, tradeSlot: RANK[stage] >= RANK.trade_3_complete ? 3 : 0,
-      market: market || null, updatedAt: new Date().toISOString() };
+      market: market || null, updatedAt: new Date().toISOString(),
+      surveyResponseId: RANK[stage] >= RANK.survey_due ? expectedSurveyResponseId() : null,
+      surveyReceipt: null };
   }
   function stored() {
     var row = safe(function () { return valid(JSON.parse(get(KEY) || 'null')); }, null);
@@ -3590,17 +3625,19 @@ window.CQBetaFlow = (function () {
   }
   function state() {
     var row = stored();
-    /* A confirmed survey receipt stamps cq_bt_survey_submitted before this module sees the next
-       launch. Heal the ledger to terminal; survey_due is otherwise intentionally never cleared. */
-    if (get('cq_bt_survey_submitted') && row.stage !== 'survey_submitted') {
+    /* V2 terminal evidence is the exact response id expected by this due record. A generic old
+       `cq_bt_survey_submitted` flag is deliberately ignored: it cannot close a new playtest. */
+    if (row.stage === 'survey_due' && row.surveyResponseId &&
+        row.surveyReceipt === row.surveyResponseId) {
       row.stage = 'survey_submitted'; row.updatedAt = new Date().toISOString(); persist(row);
-    } else if (!get(KEY)) {
-      persist(row);                         // one-time migration of legacy durable evidence
+    } else if (!get(KEY) || safe(function () { return JSON.parse(get(KEY) || '{}').version !== VERSION; }, true)) {
+      persist(row);                         // one-time migration of legacy durable evidence to v2
     }
     return JSON.parse(JSON.stringify(row));
   }
   function advance(stage, meta) {
     if (!Object.prototype.hasOwnProperty.call(RANK, stage)) return false;
+    if (stage === 'survey_submitted') return false;          // exact receipts use markSubmitted()
     var cur = state();
     if (RANK[stage] < RANK[cur.stage]) return true;          // monotonic: stale callbacks cannot regress
     var next = Object.assign({}, cur, { version: VERSION, stage: stage, updatedAt: new Date().toISOString() });
@@ -3610,7 +3647,21 @@ window.CQBetaFlow = (function () {
     if (stage === 'trade_2_complete') next.tradeSlot = Math.max(next.tradeSlot, 2);
     if (stage === 'trade_3_complete' || RANK[stage] > RANK.trade_3_complete) next.tradeSlot = Math.max(next.tradeSlot, 3);
     if (typeof meta.market === 'string' && /^[A-Z0-9]{2,8}$/.test(meta.market)) next.market = meta.market;
+    if (RANK[cur.stage] < RANK.survey_due && RANK[stage] >= RANK.survey_due) {
+      next.surveyResponseId = expectedSurveyResponseId();
+      next.surveyReceipt = null;
+    }
     return persist(valid(next));
+  }
+  function markSubmitted(submittedResponseId) {
+    var receipt = responseId(submittedResponseId);
+    if (!receipt) return false;
+    var cur = state();
+    if (cur.stage !== 'survey_due' || !cur.surveyResponseId || receipt !== cur.surveyResponseId) return false;
+    cur.stage = 'survey_submitted';
+    cur.surveyReceipt = receipt;
+    cur.updatedAt = new Date().toISOString();
+    return persist(valid(cur));
   }
   function hasReached(stage) {
     if (!Object.prototype.hasOwnProperty.call(RANK, stage)) return false;
@@ -3635,7 +3686,8 @@ window.CQBetaFlow = (function () {
   function reset() { return safe(function () { localStorage.removeItem(KEY); return true; }, false); }
 
   return { key: KEY, version: VERSION, stages: STAGES.slice(), state: state, advance: advance,
-    hasReached: hasReached, resumePlan: resumePlan, isActive: isActive, reset: reset };
+    hasReached: hasReached, resumePlan: resumePlan, isActive: isActive,
+    markSubmitted: markSubmitted, reset: reset };
 })();
 /* BETA_FLOW_CONTINUITY_V1:END */
 
@@ -5101,7 +5153,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 373 - BETA FEEDBACK RECOVERY. The closed-beta journey now checkpoints completed movement, Bitcoin entry, each paid guided trade, Guardian, Journal reward and survey boundaries so an interruption resumes at the next unpaid step without replaying shells. Fresh and Restart actions require confirmation, destructive tester links are rejected, and service-worker reload waits until the beta flow is complete. A first-time player explicitly starts with Bitcoin while returning players keep later chart choice. The next visible Shell Smash cube carries a device-specific reminder until a real smash, and the first three automatic guided trades follow win-loss-win with the single stop-protected First Loss on trade two. Public copy names income pressure without claiming markets behave alike. Music-on-start, player-paced TP/SL truth, manual-close truth, 2:1 risk and trade-time world-event suppression remain intact. - build 372 - MUSIC ON EVERY STARTUP. Every ordinary launch resets soundtrack intent to ON, so a stale mute choice or historical muted QA link cannot silently follow a returning player into later sessions. Explicit ?mute remains silent for that document; the music button can still mute the current visit. A permanent capture-phase gesture owner unlocks the game, cinematic and Guardian audio on every permitted tap or key, while the first eligible gesture starts the explore bed once and intro or boss audio ownership remains unchanged. No music composition, volume, gameplay, save-progress, service-worker or data-plane behavior changes. - build 371 - PLAYER-PACED IDLE GATE. Guided Level 1-3 trades require explicit movement intent for each candle boundary: one player action advances at most one candle, then Finn stops again. Trade entry, guide close and background/resume start halted. This closes the served Build-370 idle-advance blocker without changing free-roam movement, authored TP/SL paths, economics, manual close, replay, rewards, world-event suppression, survey research or cohort attribution. - build 370 - PLAYER-PACED NEXT-BETA LEARNING.';
+const BUILD_TAG = 'build 374 - MANDATORY SURVEY GATE. Every terminal closed-beta path now enters a full-screen non-dismissible survey handoff automatically, and an owed survey retries top-level replacement until the survey actually takes over. The public beta=0 bypass is disabled outside verified local/dev QA. CQBetaFlow keeps the established device key but upgrades its row to response-specific v2 evidence: only the exact response id expected by the current due record can terminalize that playtest, so an old generic submitted flag cannot suppress a new survey. Gameplay, rewards and completed-boundary resume remain unchanged. - build 373 - BETA FEEDBACK RECOVERY. The closed-beta journey now checkpoints completed movement, Bitcoin entry, each paid guided trade, Guardian, Journal reward and survey boundaries so an interruption resumes at the next unpaid step without replaying shells. Fresh and Restart actions require confirmation, destructive tester links are rejected, and service-worker reload waits until the beta flow is complete. A first-time player explicitly starts with Bitcoin while returning players keep later chart choice. The next visible Shell Smash cube carries a device-specific reminder until a real smash, and the first three automatic guided trades follow win-loss-win with the single stop-protected First Loss on trade two. Public copy names income pressure without claiming markets behave alike. Music-on-start, player-paced TP/SL truth, manual-close truth, 2:1 risk and trade-time world-event suppression remain intact. - build 372 - MUSIC ON EVERY STARTUP. Every ordinary launch resets soundtrack intent to ON, so a stale mute choice or historical muted QA link cannot silently follow a returning player into later sessions. Explicit ?mute remains silent for that document; the music button can still mute the current visit. A permanent capture-phase gesture owner unlocks the game, cinematic and Guardian audio on every permitted tap or key, while the first eligible gesture starts the explore bed once and intro or boss audio ownership remains unchanged. No music composition, volume, gameplay, save-progress, service-worker or data-plane behavior changes. - build 371 - PLAYER-PACED IDLE GATE. Guided Level 1-3 trades require explicit movement intent for each candle boundary: one player action advances at most one candle, then Finn stops again. Trade entry, guide close and background/resume start halted. This closes the served Build-370 idle-advance blocker without changing free-roam movement, authored TP/SL paths, economics, manual close, replay, rewards, world-event suppression, survey research or cohort attribution. - build 370 - PLAYER-PACED NEXT-BETA LEARNING.';
 /* Build 370 and earlier full served-change history retained below for audit. */
 /*
 const BUILD_TAG = 'build 370 - PLAYER-PACED NEXT-BETA LEARNING. Guided Level 1-3 trades no longer advance on a wall clock or carry Finn forward: candles are authored only as Finn reaches the frontier, players may pause or backtrack, every automatic path stays within 30-60 visible candles, and honest wick/body Take Profit or Stop Loss first-touch remains the sole automatic outcome. Live trades still exclude shells, boxes, Lost Wisdom, portals and world events. The first-trade and intro teaching panels now scroll with explicit Continue and Close controls, the Level-1 HUD connects diving to diamond smashing, and the market bridge explains chart candles. The survey keeps its original five questions and adds experience level plus one-time $19 purchase intent; opaque expiring invite codes attribute the next cohort without names or emails. No adjacent movement physics, trade scoring, account, cloud-save, boss or reward behavior changes. - build 369 - CLOUDFLARE-ONLY GAME DATA CUTOVER. Production accounts, secure session cookies, one-time account restore, cloud profile, Journal, streak, mastery, bug reports, visits, content events, market quotes, beta analytics and surveys now use same-origin Cloudflare services only. Every existing gameplay save key remains unchanged and authoritative on-device; unconfirmed writes remain in their durable local queues and failed reads never overwrite local progress. Provider URLs, browser credentials, fallback writes and SDK allowances are removed from the production runtime and CSP. Historical provider records are not deleted by this release and receive no new runtime writes. - build 368 - CLOUDFLARE BETA DATA PLANE. New beta events and survey answers write first to a same-origin, schema-validated Cloudflare endpoint with the existing Supabase route retained only as a confirmed-write fallback during migration. The durable queue now clears only the batch actually acknowledged and drains every remaining batch, so a mobile retry cannot delete unsent milestones. A Cloudflare Access-protected founder dashboard owns the complete new dataset and exports; player ids, local saves, signed-in account/cloud-save paths, gameplay, survey questions and historical Supabase rows remain unchanged. - build 367 - BOSS 1 CINEMATIC AUDIO POLISH. Five versioned full-timeline mixes start from the first rendered video frame and follow media time through pause, stall, seek and rate changes. A generation token cancels skip, error, mute, replacement and arena arrival exactly once; only this Gambler path suppresses the old sting, random roar, synth bed and delayed impact. Videos, visuals, game rules and every other Guardian are unchanged. - build 366 - FOUNDER COSMETIC CLOSEOUT. Guardian 1 now uses the current cinematic Gambler portrait in both the Journal and defeat card; Journal mastery closes on one compact premium book-and-reward card using the existing canonical Journal asset; and the versioned Gambler-defeat cinematic restores Finn’s mandatory compass necklace for every front-facing victory frame. Cosmetic only: no trade, curriculum, reward, save or boss-state logic changed. - build 365 - FINAL BETA SEND STRIKE. Trade portals now own a reward-free corridor: every unreached box at or beyond the entrance is deferred and its quota restored after the trade. Replay and recap Finn now visibly cross the exact take-profit or stop-loss line in the correct direction. The first-trade score is a warmer hand-authored pulse instead of a dense sawtooth arpeggio, and ordinary center-screen feedback uses one premium non-blocking ChartQuest toast treatment. - build 364 - FINAL BETA BLOCKER STRIKE. Reward interaction now defers only while a real ticket/position owns the screen; boxes and Lost Wisdom pages share Finn\'s swept body-aware collision so visible overlap and fast shell-rolls cannot miss. FIRST WIN is one premium ChartQuest-native vector milestone with a bespoke trophy, disciplined copy hierarchy and earned reward badge instead of a system emoji/text pile. The first real trade owns a louder 112 BPM score and a four-act near-stop to profit-surge to hard-give-back to target run, while safe preview links no longer force or persist mute. - build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
@@ -31596,6 +31648,246 @@ window.SocialAgents = (function () {
 </script>
 <script>
 /* CQTRACK:BEGIN — generated from website/assets/cq-track.js by scripts/sync_track.py — DO NOT EDIT HERE */
+/* CQSURVEYGATE:BEGIN
+   Shared, response-specific owner for the mandatory closed-beta survey. The game records the
+   earlier paid boundaries; this small owner is also available on landing/play/offline/survey
+   pages so browser Back, a wrapper restart, or a reload cannot turn an owed survey back into
+   gameplay. `cq_bt_survey_submitted` remains an analytics flag only. Terminal authorization is
+   the exact persisted equality surveyReceipt === surveyResponseId on the version-2 flow row. */
+(function (root) {
+  'use strict';
+  if (root.CQSurveyGate) return;
+
+  var FLOW_KEY = 'cq_beta_flow_v1';
+  var VERSION = 2;
+  var STAGES = ['new','movement_started','movement_complete','market_selected',
+    'trade_1_complete','trade_2_complete','trade_3_complete','boss_won',
+    'journal_due','journal_started','journal_completed','survey_due','survey_submitted'];
+  var STAGE_SET = {};
+  for (var si = 0; si < STAGES.length; si++) STAGE_SET[STAGES[si]] = true;
+  var memoryRow = null;
+  var installed = false;
+  var historyArmed = false;
+
+  function safe(fn, fallback) { try { return fn(); } catch (e) { return fallback; } }
+  function get(key) { return safe(function () { return root.localStorage.getItem(key); }, null); }
+  function clone(value) { return safe(function () { return JSON.parse(JSON.stringify(value)); }, null); }
+  function validId(value) {
+    return typeof value === 'string' && /^r-[A-Za-z0-9_-]{1,77}$/.test(value);
+  }
+  function newResponseId() {
+    var player = get('cq_pid');
+    if (!player || !/^[A-Za-z0-9_-]{1,77}$/.test(player)) {
+      player = 'p-' + Math.random().toString(36).slice(2, 12);
+      safe(function () { root.localStorage.setItem('cq_pid', player); });
+    }
+    return ('r-' + player).slice(0, 80);
+  }
+  function rawRow() {
+    var stored = safe(function () {
+      var value = JSON.parse(get(FLOW_KEY) || 'null');
+      return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+    }, null);
+    return stored || clone(memoryRow);
+  }
+  function normalize(raw) {
+    raw = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+    var row = {};
+    for (var key in raw) if (Object.prototype.hasOwnProperty.call(raw, key)) row[key] = raw[key];
+    row.version = VERSION;
+    row.stage = STAGE_SET[raw.stage] ? raw.stage : 'new';
+    row.tradeSlot = Math.max(0, Math.min(3, Number(raw.tradeSlot) || 0));
+    row.market = typeof raw.market === 'string' && /^[A-Z0-9]{2,8}$/.test(raw.market) ? raw.market : null;
+    row.updatedAt = typeof raw.updatedAt === 'string' ? raw.updatedAt : new Date().toISOString();
+    row.surveyResponseId = validId(raw.surveyResponseId) ? raw.surveyResponseId : null;
+    row.surveyReceipt = validId(raw.surveyReceipt) ? raw.surveyReceipt : null;
+    return row;
+  }
+  function exactReceipt(row) {
+    return !!row && validId(row.surveyResponseId) && row.surveyResponseId === newResponseId() &&
+      row.surveyReceipt === row.surveyResponseId;
+  }
+  function legacyOwed(raw, row) {
+    var stage = raw && raw.stage;
+    return stage === 'journal_completed' || stage === 'survey_due' || stage === 'survey_submitted' ||
+      row.stage === 'journal_completed' || row.stage === 'survey_due' || row.stage === 'survey_submitted' ||
+      get('cq_beta_done') === '1' || !!get('cq_bt_beta_completed');
+  }
+  function dispatch(row) {
+    safe(function () {
+      var event;
+      if (typeof root.CustomEvent === 'function') event = new root.CustomEvent('cq:beta-flow', { detail: clone(row) });
+      else { event = root.document.createEvent('CustomEvent'); event.initCustomEvent('cq:beta-flow', false, false, clone(row)); }
+      root.dispatchEvent(event);
+    });
+  }
+  function persist(row) {
+    var encoded = safe(function () { return JSON.stringify(row); }, '');
+    if (!encoded) return false;
+    var wrote = safe(function () { root.localStorage.setItem(FLOW_KEY, encoded); return true; }, false);
+    if (!wrote) return false;
+    var verified = safe(function () { return JSON.parse(root.localStorage.getItem(FLOW_KEY) || 'null'); }, null);
+    if (!verified || verified.version !== VERSION || verified.stage !== row.stage ||
+        verified.surveyResponseId !== row.surveyResponseId || verified.surveyReceipt !== row.surveyReceipt) return false;
+    memoryRow = verified;
+    dispatch(verified);
+    return true;
+  }
+  function state() {
+    var raw = rawRow();
+    var row = normalize(raw);
+    /* Version-1 submitted rows were authorized by a generic analytics flag. They deliberately
+       migrate back to due: only a response-specific version-2 receipt can close this gate. */
+    if (legacyOwed(raw, row) && !exactReceipt(row)) {
+      row.stage = 'survey_due';
+      row.surveyResponseId = newResponseId();
+      row.surveyReceipt = null;
+      row.updatedAt = new Date().toISOString();
+      if (!raw || raw.version !== VERSION || raw.stage !== row.stage ||
+          raw.surveyResponseId !== row.surveyResponseId || raw.surveyReceipt !== null) persist(row);
+    } else if (exactReceipt(row)) {
+      row.stage = 'survey_submitted';
+    }
+    return clone(row);
+  }
+  function ensureDue(meta) {
+    if (typeof meta === 'string') meta = { responseId: meta };
+    meta = meta || {};
+    var row = state();
+    var requested = meta.responseId || meta.response_id || null;
+    if (requested != null && !validId(requested)) return null;
+    var canonical = newResponseId();
+    if (requested && requested !== canonical) return null;
+    /* The explicit id must be the tracker's one canonical `r-<cq_pid>` identity. Repeated recovery
+       keeps that id stable; an unrelated or malformed receipt can never satisfy this player. */
+    if (exactReceipt(row) && (!requested || requested === row.surveyResponseId)) return row;
+    row.version = VERSION;
+    row.stage = 'survey_due';
+    row.surveyResponseId = requested || row.surveyResponseId || canonical;
+    row.surveyReceipt = null;
+    row.updatedAt = new Date().toISOString();
+    return persist(row) ? state() : null;
+  }
+  function isDue() {
+    var row = state();
+    return row.stage === 'survey_due' && !exactReceipt(row);
+  }
+  function responseId() {
+    var row = state();
+    return isDue() ? row.surveyResponseId : null;
+  }
+  function markSubmitted(response) {
+    var id = typeof response === 'string' ? response :
+      response && (response.response_id || response.responseId);
+    if (!validId(id)) return false;
+    var row = state();
+    if (row.stage !== 'survey_due' || row.surveyResponseId !== id) return false;
+    row.stage = 'survey_submitted';
+    row.surveyReceipt = id;
+    row.updatedAt = new Date().toISOString();
+    if (!persist(row)) return false;
+    var verified = rawRow();
+    return !!verified && verified.version === VERSION && verified.stage === 'survey_submitted' &&
+      verified.surveyResponseId === id && verified.surveyReceipt === id;
+  }
+  function isSurveyPage() {
+    return safe(function () { return /(?:^|\/)survey(?:\.html)?\/?$/.test(root.location.pathname || ''); }, false);
+  }
+  function surveyUrl() {
+    return safe(function () {
+      var here = new URL(root.location.href);
+      here.search = ''; here.hash = '';
+      /* Cloudflare clean URLs may spell /play as /play/. Strip that document-like slash, but
+         preserve a deploy root such as /shell-trade/ so its survey remains inside the subpath. */
+      if (/(?:^|\/)(?:play|game|offline|index)\/$/.test(here.pathname)) here.pathname = here.pathname.slice(0, -1);
+      return new URL('survey.html', here.href).href;
+    }, 'survey.html');
+  }
+  function redirectIfDue() {
+    if (!isDue()) return false;
+    var destination = root;
+    var inFrame = false;
+    safe(function () {
+      if (root.top && root.top !== root && root.top.location.origin === root.location.origin) {
+        destination = root.top;
+        inFrame = true;
+      }
+    });
+    /* A top-level survey is already the lock. A survey accidentally loaded inside the game
+       wrapper is not: promote it so the wrapper's Home and Restart controls disappear. */
+    if (isSurveyPage() && !inFrame) return false;
+    var target = surveyUrl();
+    var navigating = false;
+    try { destination.location.replace(target); navigating = true; }
+    catch (e) { try { destination.location.href = target; navigating = true; } catch (e2) {} }
+    return navigating;
+  }
+  function prevent(event) {
+    if (!event) return;
+    try { event.preventDefault(); } catch (e) {}
+    try { event.stopImmediatePropagation(); } catch (e) {}
+    try { event.stopPropagation(); } catch (e) {}
+  }
+  function armSurveyHistory() {
+    if (!isDue() || !isSurveyPage() || historyArmed) return;
+    safe(function () {
+      var marker = { cqSurveyGate: VERSION };
+      root.history.replaceState(marker, '', root.location.href);
+      root.history.pushState(marker, '', root.location.href);
+      historyArmed = true;
+    });
+  }
+  function installNavigationGuard() {
+    /* A direct survey visit can become due after this shared file first installs. Re-running the
+       owner must arm the same-document Back lock for that late transition, not return early. */
+    if (installed) {
+      if (!redirectIfDue()) armSurveyHistory();
+      return true;
+    }
+    installed = true;
+    safe(function () {
+      root.document.addEventListener('click', function (event) {
+        if (!isDue()) return;
+        if (!isSurveyPage()) { prevent(event); redirectIfDue(); return; }
+        var target = event.target;
+        var exit = target && target.closest ? target.closest('a[href], [data-survey-exit], [data-survey-backdrop]') : null;
+        if (exit) prevent(event);
+      }, true);
+      root.addEventListener('keydown', function (event) {
+        if (isDue() && event && (event.key === 'Escape' || event.key === 'Esc')) prevent(event);
+      }, true);
+      root.addEventListener('popstate', function (event) {
+        if (!isDue()) return;
+        prevent(event);
+        if (isSurveyPage()) { historyArmed = false; armSurveyHistory(); }
+        else redirectIfDue();
+      });
+      root.addEventListener('pageshow', function () { if (!redirectIfDue()) armSurveyHistory(); });
+      root.document.addEventListener('visibilitychange', function () {
+        if (root.document.visibilityState === 'visible' && !redirectIfDue()) armSurveyHistory();
+      });
+    });
+    if (!redirectIfDue()) armSurveyHistory();
+    return true;
+  }
+
+  root.CQSurveyGate = {
+    key: FLOW_KEY,
+    version: VERSION,
+    state: state,
+    ensureDue: ensureDue,
+    isDue: isDue,
+    responseId: responseId,
+    surveyUrl: surveyUrl,
+    redirectIfDue: redirectIfDue,
+    installNavigationGuard: installNavigationGuard,
+    markSubmitted: markSubmitted,
+    confirmReceipt: markSubmitted
+  };
+  installNavigationGuard();
+})(window);
+/* CQSURVEYGATE:END */
+
 /* ══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — CLOSED BETA ANALYTICS               window.CQTrack        (ticket 3, v1)
    ------------------------------------------------------------------------------------------
@@ -32437,18 +32729,19 @@ window.SocialAgents = (function () {
    claimPostBoss returns TRUE when the Journal quest takes the moment over, and fires the
    callback it was handed when the quest finishes. So:
 
-     • claimPostBoss returns true  → we wrapped the callback → finish() at the true end of
-                                     Journal Discovery. This is the real path.
+     • claimPostBoss returns true  → we wrapped the callback. It may release ordinary follow-ups
+                                     early while still waiting, so only the durable Journal reward
+                                     boundary (or explicit skip) can finish the beta.
      • claimPostBoss returns false → veteran who already owns the Journal, or the module is
                                      missing → introComplete() runs _jtDone() itself → our
                                      introComplete wrapper finishes on the next tick.
 
-   We capture claimPostBoss's RETURN VALUE rather than polling isActive(), so there is no
-   timing race against its 900ms SETTLE_MS.
+   We capture claimPostBoss's RETURN VALUE for ownership, then pair its callback with the durable
+   flow event/poller so a WAIT_POST release can neither finish early nor lose the later finish.
 
    ── QA ───────────────────────────────────────────────────────────────────────────────────
-     ?beta=0                      disable the gate for this load (play on into L2)
-     CQBeta.devFinish()           run the ceremony right now
+     ?beta=0                      local/dev only: disable the gate for Level-2 QA
+     CQBeta.devFinish()           enter the terminal survey gate right now
      CQBeta.reset()               clear the completion flag
      CQBeta.state()               { enabled, done, finished, surveyUrl }
    ══════════════════════════════════════════════════════════════════════════════════════════ */
@@ -32456,7 +32749,7 @@ window.SocialAgents = (function () {
   'use strict';
 
   var NS   = 'CQBeta';
-  var DONE = 'cq_beta_done';        // '1' once the ceremony has been reached
+  var DONE = 'cq_beta_done';        // '1' once the terminal survey handoff has been reached
   var WHEN = 'cq_beta_done_at';     // ISO timestamp of first completion
 
   /* ── config ─────────────────────────────────────────────────────────────────────────────
@@ -32465,13 +32758,13 @@ window.SocialAgents = (function () {
   var CFG = (function () {
     var d = {
       enabled:    true,
-      surveyUrl:  'survey.html',   // ticket 3 builds this; relative → works in every deploy
-      surveyDelayMs: 0             // 0 = go on click; >0 = auto-advance after the ceremony
+      surveyUrl:  'survey.html'    // ticket 3 builds this; relative → works in every deploy
     };
     try { for (var k in (window.CQ_BETA || {})) if (d.hasOwnProperty(k)) d[k] = window.CQ_BETA[k]; } catch (e) {}
-    /* ?beta=0 turns the gate off for a single load — the founder's escape hatch for testing
-       Level 2+ without having to edit or redeploy anything. */
-    try { if (/[?&]beta=0\b/.test(location.search)) d.enabled = false; } catch (e) {}
+    /* The Level-2 bypass is QA scaffolding, never a public way around the required survey. */
+    try {
+      if (window._CQ_DEV === true && /[?&]beta=0\b/.test(location.search)) d.enabled = false;
+    } catch (e) {}
     return d;
   })();
 
@@ -32590,7 +32883,6 @@ window.SocialAgents = (function () {
     function go() {
       if (went) return; went = true;
       try { if (window.CQBetaFlow) CQBetaFlow.advance('survey_due'); } catch (e) {}
-      emit('survey_started', {});
       openSurvey();
     }
     try { $('cqbGo').addEventListener('click', go); } catch (e) {}
@@ -32601,7 +32893,7 @@ window.SocialAgents = (function () {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); go(); }
       });
     } catch (e) {}
-    if (CFG.surveyDelayMs > 0) T(go, CFG.surveyDelayMs);
+    T(go, 0);                              // ceremony can never become a click-gated terminal
   }
 
   /* gold/green confetti — pure DOM, self-cleaning, skipped under reduced motion */
@@ -32635,96 +32927,77 @@ window.SocialAgents = (function () {
     setTimeout(function () { try { host.innerHTML = ''; } catch (e) {} }, 2600);
   }
 
-  /* ── survey handoff ─────────────────────────────────────────────────────────────────────
-     The game is normally iframed by play.html. Ask the parent to take over first (it can
-     present the survey without a page load and without losing the game frame); if there is
-     no parent, or it does not answer, navigate the top-level window ourselves. */
-  function openSurvey() {
-    var url = CFG.surveyUrl;
-    var handedOff = false;
-    /* This intent survives every navigation/reload. The survey page's confirmed-write path stamps
-       cq_bt_survey_submitted; CQBetaFlow consumes only that receipt as terminal evidence. */
-    try { if (window.CQBetaFlow) CQBetaFlow.advance('survey_due'); } catch (e) {}
+  var surveyHandoffStarted = false;
 
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ source: 'cq-beta', type: 'beta_complete', surveyUrl: url }, '*');
-        handedOff = true;
-      }
-    } catch (e) {}
-
-    /* If the parent handled it, it replies and we stand down. Otherwise we go ourselves.
-       Navigating the TOP window matters: without it the survey would open inside the small
-       game box (the exact bug the audit found on play.html's home link). */
-    var t = setTimeout(function () {
-      try {
-        var w = (window.top && window.top !== window) ? window.top : window;
-        /* THE TRAILING-SLASH TRAP. `url` is relative and resolves against the TOP document's
-           base, which is play.html — and '/play' and '/play/' resolve it differently:
-               base /play   ->  /survey.html        the survey        ✅
-               base /play/  ->  /play/survey.html   the LANDING PAGE  ❌
-           There is no 404 page, so the bad one answers 200 with the marketing homepage: a
-           tester who finished the whole beta is dumped on the front page, and the funnel
-           records "reached the ceremony, never answered" — indistinguishable from choosing not
-           to. Stripping a trailing slash makes the last segment a FILE, so survey.html resolves
-           as a SIBLING of play.html, which is what it is. Deliberately not a root-absolute
-           '/survey.html': the relative form is what keeps a subpath deploy
-           (shelltrader.github.io/shell-trade/...) working. Same helper as website/play.html.
-           Wrapped in its own try: window.top is same-origin here, but if that ever stops being
-           true, reading its pathname throws and we fall back to the raw relative url. */
-        var nav = url;
-        try {
-          var tp = w.location.pathname;
-          if (tp.length > 1 && tp.charAt(tp.length - 1) === '/') tp = tp.slice(0, -1);
-          var abs = new URL(url, w.location.origin + tp);
-          if (abs.origin === w.location.origin) nav = abs.href;
-        } catch (e3) {}
-        w.location.href = nav;
-      } catch (e) {
-        try { window.location.href = url; } catch (e2) {}
-      }
-    }, handedOff ? 700 : 0);
-
-    try {
-      window.addEventListener('message', function ack(ev) {
-        var d = ev && ev.data;
-        if (d && d.source === 'cq-beta-host' && d.type === 'survey_shown') {
-          clearTimeout(t);
-          window.removeEventListener('message', ack);
-        }
-      });
-    } catch (e) {}
+  function ensureSurveyGate() {
+    if (document.getElementById('cqBetaSurveyGate')) return;
+    var gate = document.createElement('div');
+    gate.id = 'cqBetaSurveyGate';
+    gate.setAttribute('role', 'dialog'); gate.setAttribute('aria-modal', 'true');
+    gate.setAttribute('aria-label', 'Opening the required beta survey');
+    gate.style.cssText = 'position:fixed;inset:0;z-index:100004;display:flex;align-items:center;justify-content:center;' +
+      'padding:24px;box-sizing:border-box;text-align:center;background:rgba(2,5,10,.985);' +
+      'font-family:var(--font-ui),-apple-system,BlinkMacSystemFont,sans-serif';
+    gate.innerHTML = '<div style="width:min(390px,100%);padding:28px 22px;border-radius:20px;' +
+      'background:#09111b;border:1px solid rgba(22,199,132,.48);box-shadow:0 22px 70px rgba(0,0,0,.72)">' +
+      '<div style="font-size:42px">🐢</div><h2 style="margin:12px 0 8px;color:#fff;font-size:22px">Opening your beta survey…</h2>' +
+      '<p style="margin:0;color:#9fd9c4;font-size:14px;line-height:1.55">Seven required questions. Your progress is safe.</p>' +
+      '</div>';
+    document.body.appendChild(gate);
   }
 
-  /* Small, dismissible prompt for a player who already finished but never reached the survey. */
-  function resumeBanner() {
-    if (document.getElementById('cqBetaResume')) return;
-    var b = document.createElement('div');
-    b.id = 'cqBetaResume';
-    b.style.cssText =
-      'position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:100002;' +
-      'display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:16px;' +
-      'background:rgba(9,15,24,.97);border:1px solid rgba(255,214,10,.42);' +
-      'box-shadow:0 16px 40px rgba(0,0,0,.6);max-width:460px;margin-inline:auto;' +
-      'font-family:var(--font-ui),-apple-system,BlinkMacSystemFont,sans-serif';
-    b.innerHTML =
-      '<div style="flex:1;min-width:0">' +
-        '<div style="font-weight:800;font-size:14px;color:#fff">You already finished the beta 🐢</div>' +
-        '<div style="margin-top:3px;font-weight:600;font-size:12.5px;color:#9fd9c4">7 quick questions — under two minutes.</div>' +
-      '</div>' +
-      '<button type="button" id="cqBetaResumeGo" style="flex:0 0 auto;min-height:44px;padding:0 16px;border:0;' +
-        'border-radius:12px;cursor:pointer;font-weight:800;font-size:13.5px;color:#04130c;' +
-        'background:linear-gradient(180deg,#19d08a,#0e9b64)">Answer →</button>' +
-      '<button type="button" id="cqBetaResumeX" aria-label="Dismiss" style="flex:0 0 auto;width:34px;height:34px;' +
-        'border:0;background:transparent;color:#7c95a4;font-size:16px;cursor:pointer">✕</button>';
-    document.body.appendChild(b);
+  /* ── mandatory survey handoff ───────────────────────────────────────────────────────────
+     Completion owns an immediate, non-dismissible top-level handoff. The parent wrapper still
+     receives the message for its canonical sibling route, but it is not trusted as the only path:
+     the game also resolves the same-origin sibling itself and retries `location.replace` while
+     this full-screen gate holds the world. No acknowledgement can cancel the fallback before the
+     survey has actually replaced the page. */
+  function openSurvey() {
+    var url = CFG.surveyUrl;
+    var surveyResponseId = null;
+    /* This intent survives every navigation/reload. Only CQBetaFlow.markSubmitted(responseId)
+       with the exact v2 due id can terminalize the flow. */
     try {
-      b.querySelector('#cqBetaResumeGo').addEventListener('click', function () {
-        try { if (window.CQBetaFlow) CQBetaFlow.advance('survey_due'); } catch (e) {}
-        emit('survey_started', { from: 'resume' }); openSurvey();
-      });
-      b.querySelector('#cqBetaResumeX').addEventListener('click', function () { b.remove(); });
+      if (window.CQBetaFlow) {
+        CQBetaFlow.advance('survey_due');
+        surveyResponseId = CQBetaFlow.state().surveyResponseId || null;
+      }
     } catch (e) {}
+    try { ensureSurveyGate(); } catch (e) {}
+    if (surveyHandoffStarted) return true;
+    surveyHandoffStarted = true;
+
+    function replaceWithSurvey() {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(
+            { source: 'cq-beta', type: 'beta_complete', surveyUrl: url,
+              surveyResponseId: surveyResponseId }, window.location.origin);
+        }
+      } catch (e) {}
+      try {
+        var w = (window.top && window.top !== window) ? window.top : window;
+        var nav = url;
+        try {
+          /* Resolve from the game document, whose survey is a sibling. Normalising a trailing
+             slash keeps both `/game` and `/game/` on that sibling and preserves subpath deploys. */
+          var path = window.location.pathname;
+          if (path.length > 1 && path.charAt(path.length - 1) === '/') path = path.slice(0, -1);
+          var abs = new URL(url, window.location.origin + path);
+          if (abs.origin === window.location.origin) nav = abs.href;
+        } catch (e3) {}
+        if (w.location && typeof w.location.replace === 'function') w.location.replace(nav);
+        else w.location.href = nav;
+      } catch (e) {
+        try { window.location.replace(url); }
+        catch (e2) { try { window.location.href = url; } catch (e3) {} }
+      }
+      /* A successful replace unloads this document and cancels the timer. If a browser silently
+         ignores a top-navigation request, keep both wrapper and direct paths alive indefinitely. */
+      setTimeout(replaceWithSurvey, 1800);
+    }
+    setTimeout(replaceWithSurvey, 0);
+    return true;
   }
 
   /* Boss/Journal recovery is deliberately explicit and full-screen. We cannot reconstruct an
@@ -32779,12 +33052,45 @@ window.SocialAgents = (function () {
     try { if (typeof paused !== 'undefined') paused = true; } catch (e) {}
     try { if (window.GameMusic && GameMusic.duckTo) GameMusic.duckTo(0.25, 600); } catch (e) {}
 
-    try { ceremony(); }
-    catch (e) {
-      /* Last-ditch: the player must still reach the survey even if the ceremony throws. */
-      try { openSurvey(); } catch (e2) {}
-    }
+    /* The survey is the terminal screen, not an optional button after the terminal screen. */
+    try { openSurvey(); } catch (e) { try { ensureSurveyGate(); } catch (e2) {} }
     return true;
+  }
+
+  /* The Journal integration can release its ordinary follow-up callback after WAIT_POST while
+     it continues waiting for a clean stage. That release is not Journal completion. Conversely,
+     once released, the tutorial intentionally nulls that callback before it eventually begins,
+     so the real completion needs a durable-ledger backstop. Only the saved reward boundary (or
+     an explicit player skip) may hand off to the required survey, and the mastery finale gets to
+     finish rendering before that handoff takes the page. */
+  function finishIfJournalTerminal(reason) {
+    if (S.finished || !CFG.enabled) return false;
+    var JT = null, skipped = false, completed = false, submitted = false, active = false;
+    try { JT = window.CQJournalTutorial; } catch (e) {}
+    try { skipped = !!(JT && JT.wasSkipped && JT.wasSkipped()); } catch (e) {}
+    try { active = !!(JT && JT.isActive && JT.isActive()); } catch (e) {}
+    try {
+      if (window.CQBetaFlow) {
+        submitted = CQBetaFlow.hasReached('survey_submitted');
+        completed = CQBetaFlow.hasReached('journal_completed');
+      }
+    } catch (e) {}
+    if (submitted || (!skipped && !completed) || active) return false;
+    if (skipped) emit('journal_discovery_skipped', {});
+    else emit('journal_discovery_completed', {});
+    return finish(reason || (skipped ? 'journal_discovery_skipped' : 'journal_discovery_complete'));
+  }
+
+  var journalCompletionWatchArmed = false;
+  function armJournalCompletionWatch() {
+    if (journalCompletionWatchArmed) return;
+    journalCompletionWatchArmed = true;
+    var check = function () { try { finishIfJournalTerminal('journal_completion_backstop'); } catch (e) {} };
+    try { window.addEventListener('cq:beta-flow', check); } catch (e) {}
+    var iv = setInterval(function () {
+      if (S.finished || !CFG.enabled) { clearInterval(iv); return; }
+      check();
+    }, 600);
   }
 
   /* Patch the Journal quest so the beta ends at the true end of Journal Discovery. */
@@ -32799,19 +33105,12 @@ window.SocialAgents = (function () {
       var took = false;
       try {
         took = orig.call(JT, function () {
-          /* The true end of Journal Discovery. Emitted BEFORE finish() so the funnel records
-             the stage even if the ceremony throws and we fall through to the survey. */
-          /* A player who tapped ✕ to skip is NOT a completer — otherwise the metric is inflated
-             by exactly the people who rejected the quest. */
-          var _skipped = false;
-          try { _skipped = !!(JT.wasSkipped && JT.wasSkipped()); } catch (e) {}
-          if (_skipped) emit('journal_discovery_skipped', {});
-          else {
-            try { if (window.CQBetaFlow) CQBetaFlow.advance('journal_completed'); } catch (e) {}
-            emit('journal_discovery_completed', {});
-          }
+          /* WAIT_POST may invoke this merely to release the game's ordinary follow-ups while the
+             Journal keeps waiting. Run that original callback, but terminalize only after the
+             durable reward boundary or an explicit skip. The watcher below owns the later finish
+             because waitThenBegin deliberately nulls this callback after an early release. */
           try { if (typeof onDone === 'function') onDone(); } catch (e) {}
-          finish('journal_discovery_complete');
+          finishIfJournalTerminal('journal_discovery_callback');
         });
       } catch (e) { took = false; }
       S.claimed = !!took;
@@ -32866,6 +33165,7 @@ window.SocialAgents = (function () {
     if (!CFG.enabled) return;
     patchIntroComplete();
     patchJournal();
+    armJournalCompletionWatch();
     /* RESUME from the durable ledger, including the two holes the old cq_beta_done-only banner
        could not see: boss victory before Claim, and Journal start before its callback. */
     var plan = null, submitted = false;
@@ -32876,7 +33176,7 @@ window.SocialAgents = (function () {
       }
     } catch (e) {}
     if (!submitted && ((plan && plan.next === 'survey') || isDone()) && !S.finished) {
-      setTimeout(function () { try { resumeBanner(); } catch (e) {} }, 1200);
+      setTimeout(function () { try { openSurvey(); } catch (e) { try { ensureSurveyGate(); } catch (e2) {} } }, 0);
     } else if (!submitted && plan && plan.next === 'survey_finish' && !S.finished) {
       setTimeout(function () { try { finish('journal_recovered_complete'); } catch (e) {} }, 300);
     } else if (!submitted && plan && plan.kind === 'journal' && !S.finished) {

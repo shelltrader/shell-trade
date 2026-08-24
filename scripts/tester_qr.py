@@ -27,7 +27,7 @@ import urllib.request
 
 DEFAULT_URL = 'https://playchartquest.com'
 # Anything that changes what the game measures, or that only works on a dev machine.
-FORBIDDEN_PARAMS = ('fresh', 'dev', 'qa', 'beat', 'mute', 'pt')
+FORBIDDEN_PARAMS = ('fresh', 'dev', 'qa', 'beat', 'mute', 'pt', 'beta')
 
 
 def build_tag(url):
@@ -74,7 +74,7 @@ def main():
     if not url.startswith('https://'):
         sys.exit(f'Refusing: a tester link must be https, got {url!r}')
     q = urllib.parse.urlsplit(url).query
-    # Reject valued, bare and percent-encoded spellings (`?fresh=1`, `?fresh`, `?fr%65sh`). The
+    # Reject valued, bare and percent-encoded spellings (`?fresh=1`, `?beta=0`, `?fr%65sh`). The
     # wrapper parses URLSearchParams, so this guard must decode names exactly as the browser does.
     query_names = {name for name, _ in urllib.parse.parse_qsl(q, keep_blank_values=True)}
     hit = [p for p in FORBIDDEN_PARAMS if p in query_names]

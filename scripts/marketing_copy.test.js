@@ -28,6 +28,8 @@ const tests = [
     assert.match(home, /@media \(max-width:360px\) and \(max-height:620px\) and \(orientation:portrait\)\{[\s\S]*?\.hero-trust \+ \.btn-row\{margin-top:14px\}[\s\S]*?\}/);
     assert.match(home, /\.hero-trust\{display:block;max-width:46ch;[^}]*font-size:12\.5px;[^}]*\}/);
     assert.match(home, /<a class="btn btn-primary" href="play\.html">▶ Play Free<\/a>/);
+    assert.match(home, /Closed beta playtest · ends with 7 required feedback questions/);
+    assert.match(home, /\.hero-survey-note\{[^}]*color:#d7e5f1[^}]*font-size:12\.5px[^}]*font-weight:650/s);
   }],
 
   ['homepage explains Bitcoin-first learning without claiming markets behave alike', () => {
@@ -76,11 +78,12 @@ const tests = [
   }],
 
   ['returning visitors receive the changed copy and manifest through a new cache generation', () => {
-    assert.match(serviceWorker, /const CACHE = ['"]chartquest-site-v19['"]/);
+    assert.match(serviceWorker, /const CACHE = ['"]chartquest-site-v20['"]/);
     assert.match(serviceWorker, /['"]\.\/assets\/site\.js['"]/);
     assert.match(serviceWorker, /['"]\.\/manifest\.webmanifest['"]/);
     assert.match(serviceWorker, /v17 → v18 \(build 373\)/);
     assert.match(serviceWorker, /v18 → v19 \(build 373 visibility follow-up\)/);
+    assert.match(serviceWorker, /v19 → v20:[\s\S]*response-specific survey survives offline reloads and worker replacement/);
   }],
 ];
 

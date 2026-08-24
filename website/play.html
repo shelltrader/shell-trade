@@ -173,8 +173,16 @@
 <!-- Closed-beta analytics (ticket 3). The game frame reports its own milestones; this
      records the wrapper page so a tester who never gets the iframe to load is still visible
      in the funnel rather than silently missing. -->
-<script src="assets/cq-track.js?v=370"></script>
+<script src="assets/cq-track.js?v=374"></script>
 <script>
+(function () {
+  /* A completed playtest with no matching response receipt owns this page before the iframe,
+     Restart, Home, fullscreen or install controls can initialize. `replace` keeps browser Back
+     from turning the mandatory survey into a route back to gameplay. */
+  if (window.CQSurveyGate) {
+    CQSurveyGate.installNavigationGuard();
+    if (CQSurveyGate.redirectIfDue()) return;
+  }
   var CQ_GAME = (window.CHARTQUEST_CONFIG && window.CHARTQUEST_CONFIG.gameUrl) || 'game.html';
   /* Forward ordinary attribution/dev parameters, but consume `fresh` exactly once. A production
      reset is destructive even on a young save, so it always asks first. Once accepted, the iframe
@@ -210,6 +218,7 @@
   setTimeout(function(){ loader.classList.add('hide'); }, 9000);
 
   document.getElementById('cqRestartBtn').addEventListener('click', function(){
+    if (window.CQSurveyGate && CQSurveyGate.redirectIfDue()) return;
     if (!window.confirm('Restart from your last saved checkpoint? The current unfinished moment may replay.')) return;
     try { loader.classList.remove('hide'); } catch (e) {}
     gframe.src = CQ_GAME + CQ_QS;                       // deliberately clean: never reapply `fresh`
@@ -249,14 +258,27 @@
   }
 
   window.addEventListener('message', function (ev) {
-    if (ev.origin !== location.origin) return;
+    if (ev.origin !== location.origin || ev.source !== gframe.contentWindow) return;
     var d = ev && ev.data;
     if (!d || d.source !== 'cq-beta' || d.type !== 'beta_complete') return;
-    try { ev.source.postMessage({ source: 'cq-beta-host', type: 'survey_shown' }, ev.origin); } catch (e) {}
+    var due = true;
+    try {
+      if (window.CQSurveyGate) {
+        var dueState = CQSurveyGate.ensureDue({ responseId: d.responseId || d.surveyResponseId || null });
+        due = !!dueState && dueState.stage === 'survey_due';
+      }
+    } catch (e) { due = false; }
+    /* Do not acknowledge a handoff whose durable due state could not be written. The game keeps
+       its own top-level fallback armed in that case instead of trusting this wrapper. */
+    if (!due) return;
     var url = (typeof d.surveyUrl === 'string' && /^[\w./-]+$/.test(d.surveyUrl)) ? d.surveyUrl : 'survey.html';
     url = siblingUrl(url);
-    try { (window.top || window).location.href = url; }
-    catch (e) { location.href = url; }
+    var navigating = false;
+    try { location.replace(url); navigating = true; }
+    catch (e) { try { location.href = url; navigating = true; } catch (e2) {} }
+    if (navigating) {
+      try { ev.source.postMessage({ source: 'cq-beta-host', type: 'survey_shown' }, ev.origin); } catch (e) {}
+    }
   });
 
   /* ── Fullscreen ─────────────────────────────────────────────────────────────
@@ -334,6 +356,7 @@
       window.addEventListener('appinstalled', function(){ instBtn.hidden = true; fsBtn.hidden = true; });
     }
   })();
+})();
 </script>
 </body>
 </html>

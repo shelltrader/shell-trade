@@ -467,15 +467,42 @@ const tests = [
     assertSentinelsPreserved(h);
   }],
 
-  ['survey resolves true only after an exact same-origin receipt', async () => {
+  ['survey resolves true only after an exact response-specific same-origin receipt', async () => {
+    const mismatchedReceipt = (field, value) => (_url, request) => {
+      const [row] = JSON.parse(String(request.body || '{}')).rows;
+      const receipt = {
+        ok: true,
+        written: 1,
+        survey_contract: 'chartquest-beta-survey-v2',
+        surveys: [{
+          response_id: row.response_id,
+          experience_level: row.experience_level,
+          purchase_intent_19: row.purchase_intent_19,
+        }],
+      };
+      if (field === 'survey_contract') receipt.survey_contract = value;
+      else receipt.surveys[0][field] = value;
+      return new Response(JSON.stringify(receipt), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      });
+    };
     const cases = [
       { plan: [true], expected: true, label: 'exact receipt' },
+      { plan: [mismatchedReceipt('response_id', 'r-p-other')], expected: false, label: 'wrong response id' },
+      { plan: [mismatchedReceipt('experience_level', 'new_to_both')], expected: false, label: 'wrong research answer' },
+      { plan: [mismatchedReceipt('survey_contract', 'chartquest-beta-survey-v1')], expected: false, label: 'wrong receipt contract' },
       { plan: [false, true], expected: false, label: 'non-2xx' },
       { plan: [new Error('offline'), true], expected: false, label: 'rejected' },
     ];
     for (const item of cases) {
       const h = makeHarness({ fetchPlan: item.plan, localStorage: SENTINELS });
-      const result = await h.context.CQTrack.survey({ q1_rating: 7, q4_continue: 'later' });
+      const result = await h.context.CQTrack.survey({
+        response_id: 'r-p-test',
+        q1_rating: 7,
+        q4_continue: 'later',
+        experience_level: 'gamer_not_trader',
+        purchase_intent_19: 'probably',
+      });
       await settle();
       assert.equal(result, item.expected, item.label);
       assertSentinelsPreserved(h);
@@ -530,7 +557,7 @@ const tests = [
     assertSentinelsPreserved(h);
   }],
 
-  ['all tracker tags are versioned and private founder/API data bypasses the v19 cache', async () => {
+  ['all tracker tags are versioned and private founder/API data bypasses the v20 cache', async () => {
     const website = path.join(ROOT, 'website');
     const htmlFiles = fs.readdirSync(website)
       .filter(name => name.endsWith('.html'))
@@ -545,15 +572,15 @@ const tests = [
 
     assert.deepEqual(
       found.map(item => item.name),
-      ['bosses.html', 'courses.html', 'index.html', 'play.html', 'survey.html'],
+      ['bosses.html', 'courses.html', 'index.html', 'offline.html', 'play.html', 'survey.html'],
       'the known tracker surfaces must all remain instrumented',
     );
     for (const item of found) {
-      assert.match(item.src, /cq-track\.js\?v=370$/, `${item.name} has an unversioned/stale tracker tag: ${item.src}`);
+      assert.match(item.src, /cq-track\.js\?v=374$/, `${item.name} has an unversioned/stale tracker tag: ${item.src}`);
     }
 
     const sw = fs.readFileSync(path.join(website, 'sw.js'), 'utf8');
-    assert.match(sw, /const CACHE = ['"]chartquest-site-v19['"];?/);
+    assert.match(sw, /const CACHE = ['"]chartquest-site-v20['"];?/);
     assert.match(sw, /requestURL\.pathname === ['"]\/api['"] \|\| requestURL\.pathname\.startsWith\(['"]\/api\/['"]\)/);
     assert.match(sw, /requestURL\.pathname === ['"]\/founder['"] \|\| requestURL\.pathname\.startsWith\(['"]\/founder\/['"]\)/);
     assert.match(sw, /requestURL\.origin !== self\.location\.origin/,

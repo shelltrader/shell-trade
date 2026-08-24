@@ -87,7 +87,7 @@
 <style>
 /* ============================================================================
    ChartQuest — BETA SURVEY (ticket 3)
-   One question per screen. Seven steps, four of them a single tap.
+   One question per screen. Seven steps with an explicit Next action after each answer.
    Mobile first: every control is >=52px, the primary action never moves, and
    nothing needs a zoom or a horizontal scroll at 320px.
    ============================================================================ */
@@ -110,7 +110,7 @@ body{
   min-height:100dvh;display:flex;flex-direction:column}
 
 /* ---- header + progress ---- */
-.top{position:sticky;top:0;z-index:5;padding:calc(14px + env(safe-area-inset-top,0px)) 20px 12px;
+.top{position:sticky;top:0;z-index:5;padding:calc(14px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-right,0px)) 12px calc(20px + env(safe-area-inset-left,0px));
   background:rgba(6,9,16,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line)}
 .top-in{width:min(560px,100%);margin-inline:auto;display:flex;align-items:center;gap:12px}
@@ -123,7 +123,7 @@ body{
   transition:width .38s cubic-bezier(.2,.8,.2,1)}
 
 /* ---- card ---- */
-main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:26px 20px 30px}
+main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:26px calc(20px + env(safe-area-inset-right,0px)) 30px calc(20px + env(safe-area-inset-left,0px))}
 .wrap{width:min(560px,100%)}
 .step{display:none;animation:in .34s cubic-bezier(.2,.8,.2,1) both}
 .step.on{display:block}
@@ -132,6 +132,12 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
 h1{margin:10px 0 0;font-family:var(--display);font-size:clamp(22px,5.4vw,29px);font-weight:700;line-height:1.22;letter-spacing:-.015em}
 .hint{margin:10px 0 0;color:var(--ink-dim);font-size:14.5px;line-height:1.55}
 .req{color:var(--ink-faint);font-size:12.5px;margin-top:7px}
+.mandatory{margin:0 0 22px;padding:13px 15px;border-radius:13px;border:1px solid rgba(255,214,10,.3);
+  background:rgba(255,214,10,.07);color:var(--ink-dim);font-size:13.5px;line-height:1.55}
+.mandatory strong{color:var(--gold)}
+.status{display:none;margin:0 0 18px;padding:12px 14px;border-radius:11px;border:1px solid rgba(76,195,255,.34);
+  background:rgba(76,195,255,.08);color:#cdeeff;font-size:13.5px}
+.status.on{display:block}
 
 /* ---- 1-10 scale ---- */
 .scale{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:22px}
@@ -193,9 +199,10 @@ textarea:focus{outline:none;border-color:var(--green);background:rgba(22,199,132
   background:rgba(234,57,67,.1);color:#ffc9cd;font-size:13.5px;display:none}
 .err.on{display:block}
 
-footer{padding:20px 20px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;
+form.is-pending .step button:not(#send),form.is-pending textarea{opacity:.62;cursor:not-allowed}
+
+footer{padding:20px calc(20px + env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) calc(20px + env(safe-area-inset-left,0px));text-align:center;
   font-size:12px;color:var(--ink-faint);border-top:1px solid var(--line)}
-footer a{color:var(--ink-faint)}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -213,20 +220,23 @@ footer a{color:var(--ink-faint)}
            two items and the container's gap:9px renders the brand as "Chart Quest". -->
       <span>Chart<b>Quest</b></span>
     </span>
-    <span class="step-n" id="stepN">1 / 7</span>
+    <span class="step-n" role="status" aria-live="polite" id="stepN">1 / 7</span>
   </div>
-  <div class="bar"><i id="bar"></i></div>
+  <div class="bar" id="progress" role="progressbar" aria-label="Survey progress" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1"><i id="bar"></i></div>
 </div>
 
 <main>
 <div class="wrap">
+
+  <p class="mandatory"><strong>Required to complete this playtest.</strong> You will see all seven questions; question 5 is optional. Your place and answers are saved on this device, so you can close the game and return if needed.</p>
+  <div class="status" id="surveyStatus" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <form id="form" novalidate>
 
     <!-- 1 ───────────────────────────────────────────────────────────────── -->
     <section class="step on" data-step="1">
       <span class="eyebrow">Question 1 of 7</span>
-      <h1>How was it, overall?</h1>
+      <h1 id="q1Title" tabindex="-1">How was it, overall?</h1>
       <p class="hint">1 means you did not enjoy it. 10 means you loved it.</p>
       <div class="scale" id="scale" role="radiogroup" aria-label="Rate your experience from 1 to 10"></div>
       <div class="scale-ends"><span>1 · Not fun</span><span>10 · Loved it</span></div>
@@ -236,14 +246,14 @@ footer a{color:var(--ink-faint)}
     <!-- 2 ───────────────────────────────────────────────────────────────── -->
     <section class="step" data-step="2">
       <span class="eyebrow">Question 2 of 7</span>
-      <h1>When did it click?</h1>
+      <h1 id="q2Title" tabindex="-1">When did it click?</h1>
       <p class="hint">Was there a moment where you thought <b>“okay, this is actually fun”</b>? Tell us when.
         If that never happened, tell us why — that is just as useful.</p>
       <textarea id="q2" maxlength="2000" rows="5"
         placeholder="e.g. when I landed on the first green candle… or: it never really clicked, because…"></textarea>
       <div class="count"><span id="c2">0</span> / 2000</div>
       <div class="actions">
-        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="button" class="btn btn-ghost" data-back aria-label="Back to question 1">← Back</button>
         <button type="button" class="btn btn-primary" data-next disabled>Next →</button>
       </div>
     </section>
@@ -251,13 +261,13 @@ footer a{color:var(--ink-faint)}
     <!-- 3 ───────────────────────────────────────────────────────────────── -->
     <section class="step" data-step="3">
       <span class="eyebrow">Question 3 of 7</span>
-      <h1>Change one thing.</h1>
+      <h1 id="q3Title" tabindex="-1">Change one thing.</h1>
       <p class="hint">If you could fix or improve <b>one thing</b> before we launch, what would it be?</p>
       <textarea id="q3" maxlength="2000" rows="5"
         placeholder="The one thing that bugged you most…"></textarea>
       <div class="count"><span id="c3">0</span> / 2000</div>
       <div class="actions">
-        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="button" class="btn btn-ghost" data-back aria-label="Back to question 2">← Back</button>
         <button type="button" class="btn btn-primary" data-next disabled>Next →</button>
       </div>
     </section>
@@ -265,7 +275,7 @@ footer a{color:var(--ink-faint)}
     <!-- 4 ───────────────────────────────────────────────────────────────── -->
     <section class="step" data-step="4">
       <span class="eyebrow">Question 4 of 7</span>
-      <h1>Would you keep going?</h1>
+      <h1 id="q4Title" tabindex="-1">Would you keep going?</h1>
       <p class="hint">If World 2 were ready right now…</p>
       <div class="choices" id="cont" role="radiogroup" aria-label="Would you continue?">
         <button type="button" class="choice" data-v="immediately"><span class="dot"></span>I would play it straight away.</button>
@@ -273,7 +283,7 @@ footer a{color:var(--ink-faint)}
         <button type="button" class="choice" data-v="not_interested"><span class="dot"></span>It is not really for me.</button>
       </div>
       <div class="actions">
-        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="button" class="btn btn-ghost" data-back aria-label="Back to question 3">← Back</button>
         <button type="button" class="btn btn-primary" data-next disabled>Next →</button>
       </div>
     </section>
@@ -281,13 +291,13 @@ footer a{color:var(--ink-faint)}
     <!-- 5 ───────────────────────────────────────────────────────────────── -->
     <section class="step" data-step="5">
       <span class="eyebrow">Question 5 of 7</span>
-      <h1>Anything else?</h1>
+      <h1 id="q5Title" tabindex="-1">Anything else?</h1>
       <p class="hint">Anything at all you want us to know. Bugs, ideas, things that confused you.</p>
       <p class="req">Optional — you can send without this.</p>
       <textarea id="q5" maxlength="2000" rows="5" placeholder="Optional…"></textarea>
       <div class="count"><span id="c5">0</span> / 2000</div>
       <div class="actions">
-        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="button" class="btn btn-ghost" data-back aria-label="Back to question 4">← Back</button>
         <button type="button" class="btn btn-primary" data-next>Next →</button>
       </div>
     </section>
@@ -295,7 +305,7 @@ footer a{color:var(--ink-faint)}
     <!-- 6 ───────────────────────────────────────────────────────────────── -->
     <section class="step" data-step="6">
       <span class="eyebrow">Question 6 of 7</span>
-      <h1>What experience did you bring in?</h1>
+      <h1 id="q6Title" tabindex="-1">What experience did you bring in?</h1>
       <p class="hint">Before playing ChartQuest, which sounded most like you?</p>
       <div class="choices" id="experience" role="radiogroup" aria-label="Your prior gaming and trading experience">
         <button type="button" class="choice" data-v="new_to_both"><span class="dot"></span>I was new to both trading and games like this.</button>
@@ -304,7 +314,7 @@ footer a{color:var(--ink-faint)}
         <button type="button" class="choice" data-v="familiar_with_both"><span class="dot"></span>I already had experience with both.</button>
       </div>
       <div class="actions">
-        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="button" class="btn btn-ghost" data-back aria-label="Back to question 5">← Back</button>
         <button type="button" class="btn btn-primary" data-next disabled>Next →</button>
       </div>
     </section>
@@ -312,7 +322,7 @@ footer a{color:var(--ink-faint)}
     <!-- 7 ───────────────────────────────────────────────────────────────── -->
     <section class="step" data-step="7">
       <span class="eyebrow">Question 7 of 7</span>
-      <h1>Would a proposed $19 Founding Access offer interest you?</h1>
+      <h1 id="q7Title" tabindex="-1">Would a proposed $19 Founding Access offer interest you?</h1>
       <p class="hint">We are researching a smaller early-access offer, separate from the $24.99 full-journey concept you may have seen. If it included a polished version of this beta plus World 2, how likely would you be to buy it for one <b>$19 payment</b> — not a subscription?</p>
       <div class="choices" id="purchase" role="radiogroup" aria-label="Likelihood of buying one-time nineteen-dollar Founding Access">
         <button type="button" class="choice" data-v="definitely"><span class="dot"></span>Definitely would buy.</button>
@@ -322,10 +332,10 @@ footer a{color:var(--ink-faint)}
         <button type="button" class="choice" data-v="definitely_not"><span class="dot"></span>Definitely would not buy.</button>
       </div>
       <div class="actions">
-        <button type="button" class="btn btn-ghost" data-back>←</button>
+        <button type="button" class="btn btn-ghost" data-back aria-label="Back to question 6">← Back</button>
         <button type="submit" class="btn btn-primary" id="send" disabled>Send it →</button>
       </div>
-      <div class="err" id="err"></div>
+      <div class="err" id="err" role="alert" aria-live="assertive" aria-atomic="true" tabindex="-1"></div>
     </section>
 
   </form>
@@ -342,21 +352,32 @@ footer a{color:var(--ink-faint)}
 </div>
 </main>
 
-<footer>ChartQuest closed beta · <a href="index.html">playchartquest.com</a></footer>
+<footer>ChartQuest closed beta · Complete all seven questions to finish</footer>
 
-<script src="assets/cq-track.js?v=370"></script>
+<script src="assets/cq-track.js?v=374"></script>
 <script>
 (function () {
   'use strict';
   var DRAFT = 'cq_survey_draft';
+  var DRAFT_VERSION = 2;
   var T0 = Date.now();
+  var SUBMIT_TIMEOUT_MS = 12000;
+  var RETRY_DELAYS = [1500, 4000, 10000, 30000, 60000];
 
   var form  = document.getElementById('form');
   var steps = [].slice.call(document.querySelectorAll('.step'));
   var bar   = document.getElementById('bar');
+  var progress = document.getElementById('progress');
   var stepN = document.getElementById('stepN');
   var errEl = document.getElementById('err');
+  var statusEl = document.getElementById('surveyStatus');
+  var mandatoryEl = document.querySelector('.mandatory');
   var cur   = 0;
+  var pending = null;
+  var sending = false;
+  var retryTimer = null;
+  var retryAttempt = 0;
+  var revising = false;
 
   var answers = {
     q1: null, q2: '', q3: '', q4: null, q5: '',
@@ -364,20 +385,129 @@ footer a{color:var(--ink-faint)}
   };
   var EXPERIENCE_VALUES = ['new_to_both', 'gamer_not_trader', 'trader_not_gamer', 'familiar_with_both'];
   var PURCHASE_VALUES = ['definitely', 'probably', 'unsure', 'probably_not', 'definitely_not'];
+  var CONTINUE_VALUES = ['immediately', 'later', 'not_interested'];
+
+  function storageGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function validResponseId(value) {
+    return typeof value === 'string' && value.length <= 80 && /^r-[A-Za-z0-9_-]{1,77}$/.test(value);
+  }
+  function boundedText(value, max) { return typeof value === 'string' ? value.slice(0, max) : ''; }
+  function copyAnswers() {
+    return {
+      q1: answers.q1, q2: answers.q2, q3: answers.q3, q4: answers.q4, q5: answers.q5,
+      experience_level: answers.experience_level, purchase_intent_19: answers.purchase_intent_19
+    };
+  }
+  function copyRow(row) {
+    if (!row) return null;
+    return {
+      response_id: row.response_id, player_id: row.player_id, session_id: row.session_id,
+      q1_rating: row.q1_rating, q2_hook: row.q2_hook, q3_improvement: row.q3_improvement,
+      q4_continue: row.q4_continue, q5_anything: row.q5_anything,
+      experience_level: row.experience_level, purchase_intent_19: row.purchase_intent_19,
+      seconds_taken: row.seconds_taken
+    };
+  }
+  function readGate() {
+    try {
+      if (!window.CQSurveyGate || typeof CQSurveyGate.state !== 'function') return null;
+      var state = CQSurveyGate.state();
+      return state && typeof state === 'object' ? state : null;
+    } catch (e) { return null; }
+  }
+  function receiptResponseId(value) {
+    if (typeof value === 'string') return value;
+    if (!value || typeof value !== 'object') return '';
+    return String(value.response_id || value.responseId || '');
+  }
+  function gateMatches(responseId) {
+    var state = readGate();
+    return !!state && state.stage === 'survey_submitted' &&
+      String(state.surveyResponseId || '') === responseId && receiptResponseId(state.surveyReceipt) === responseId;
+  }
+  function playerId() {
+    try { if (window.CQTrack && typeof CQTrack.pid === 'function') return String(CQTrack.pid() || ''); } catch (e) {}
+    var id = storageGet('cq_pid');
+    if (!id) {
+      id = 'p-' + Math.random().toString(36).slice(2, 12);
+      try { localStorage.setItem('cq_pid', id); } catch (e) {}
+    }
+    return id;
+  }
+  function sessionId() {
+    try { if (window.CQTrack && typeof CQTrack.session === 'function') return String(CQTrack.session() || ''); } catch (e) {}
+    return 'survey-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+
+  var rawDraft = {};
+  try {
+    rawDraft = JSON.parse(storageGet(DRAFT) || '{}');
+    if (!rawDraft || typeof rawDraft !== 'object' || Array.isArray(rawDraft)) rawDraft = {};
+  } catch (e) { rawDraft = {}; }
+
+  var initialGate = readGate();
+  var gateResponseId = initialGate && validResponseId(initialGate.surveyResponseId) ? initialGate.surveyResponseId : '';
+  var canonicalPlayer = playerId();
+  if (!/^[A-Za-z0-9_-]{1,77}$/.test(canonicalPlayer)) {
+    canonicalPlayer = 'p-' + Math.random().toString(36).slice(2, 12);
+    try { localStorage.setItem('cq_pid', canonicalPlayer); } catch (e) {}
+  }
+  var responseId = gateResponseId || ('r-' + canonicalPlayer).slice(0, 80);
+  if (rawDraft.response_id !== responseId) rawDraft = {};
+
+  function restoreAnswers(saved) {
+    saved = saved && typeof saved === 'object' ? saved : {};
+    if (Number.isInteger(saved.q1) && saved.q1 >= 1 && saved.q1 <= 10) answers.q1 = saved.q1;
+    answers.q2 = boundedText(saved.q2, 2000);
+    answers.q3 = boundedText(saved.q3, 2000);
+    if (CONTINUE_VALUES.indexOf(saved.q4) >= 0) answers.q4 = saved.q4;
+    answers.q5 = boundedText(saved.q5, 2000);
+    if (EXPERIENCE_VALUES.indexOf(saved.experience_level) >= 0) answers.experience_level = saved.experience_level;
+    if (PURCHASE_VALUES.indexOf(saved.purchase_intent_19) >= 0) answers.purchase_intent_19 = saved.purchase_intent_19;
+  }
+  restoreAnswers(rawDraft.version === DRAFT_VERSION ? rawDraft.answers : rawDraft);
+  if (rawDraft.version === DRAFT_VERSION && Number.isInteger(rawDraft.current_step)) {
+    cur = Math.max(0, Math.min(steps.length - 1, rawDraft.current_step));
+  }
+
+  function normalizePending(row) {
+    if (!row || typeof row !== 'object' || row.response_id !== responseId) return null;
+    var rating = Number(row.q1_rating), seconds = Number(row.seconds_taken);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 10 ||
+        typeof row.player_id !== 'string' || !row.player_id || row.player_id.length > 64 ||
+        typeof row.session_id !== 'string' || !row.session_id || row.session_id.length > 64 ||
+        typeof row.q2_hook !== 'string' || !row.q2_hook.trim() || row.q2_hook.length > 2000 ||
+        typeof row.q3_improvement !== 'string' || !row.q3_improvement.trim() || row.q3_improvement.length > 2000 ||
+        CONTINUE_VALUES.indexOf(row.q4_continue) < 0 ||
+        typeof row.q5_anything !== 'string' || row.q5_anything.length > 2000 ||
+        EXPERIENCE_VALUES.indexOf(row.experience_level) < 0 ||
+        PURCHASE_VALUES.indexOf(row.purchase_intent_19) < 0 ||
+        !Number.isInteger(seconds) || seconds < 0 || seconds > 86400) return null;
+    return copyRow(row);
+  }
+  if (rawDraft.version === DRAFT_VERSION) pending = normalizePending(rawDraft.pending);
+  if (pending) cur = steps.length - 1;
 
   /* Restore a draft — a survey that loses your typing when the browser reloads is a
      survey people abandon. */
-  try {
-    var saved = JSON.parse(localStorage.getItem(DRAFT) || '{}');
-    if (Number.isInteger(saved.q1) && saved.q1 >= 1 && saved.q1 <= 10) answers.q1 = saved.q1;
-    if (typeof saved.q2 === 'string') answers.q2 = saved.q2.slice(0, 2000);
-    if (typeof saved.q3 === 'string') answers.q3 = saved.q3.slice(0, 2000);
-    if (['immediately', 'later', 'not_interested'].indexOf(saved.q4) >= 0) answers.q4 = saved.q4;
-    if (typeof saved.q5 === 'string') answers.q5 = saved.q5.slice(0, 2000);
-    if (EXPERIENCE_VALUES.indexOf(saved.experience_level) >= 0) answers.experience_level = saved.experience_level;
-    if (PURCHASE_VALUES.indexOf(saved.purchase_intent_19) >= 0) answers.purchase_intent_19 = saved.purchase_intent_19;
-  } catch (e) {}
-  function saveDraft() { try { localStorage.setItem(DRAFT, JSON.stringify(answers)); } catch (e) {} }
+  function saveDraft() {
+    var value = JSON.stringify({
+      version: DRAFT_VERSION,
+      response_id: responseId,
+      answers: copyAnswers(),
+      current_step: cur,
+      pending: copyRow(pending),
+      updated_at: new Date().toISOString()
+    });
+    try {
+      localStorage.setItem(DRAFT, value);
+      if (localStorage.getItem(DRAFT) !== value) throw new Error('draft-readback-mismatch');
+      return true;
+    } catch (e) {
+      showStatus('This browser is blocking saved progress. Keep this page open and enable site data before sending.');
+      return false;
+    }
+  }
 
   /* ── build the 1-10 scale ─────────────────────────────────────────────── */
   var scale = document.getElementById('scale');
@@ -386,13 +516,12 @@ footer a{color:var(--ink-faint)}
       var b = document.createElement('button');
       b.type = 'button'; b.textContent = n; b.setAttribute('role', 'radio');
       b.setAttribute('aria-label', n + ' out of 10');
+      b.tabIndex = n === 1 ? 0 : -1;
       b.addEventListener('click', function () {
+        if (pending) return;
         answers.q1 = n; saveDraft();
-        [].forEach.call(scale.children, function (c) { c.classList.remove('sel'); c.setAttribute('aria-checked', 'false'); });
-        b.classList.add('sel'); b.setAttribute('aria-checked', 'true');
+        selectRadio(scale, b);
         sync();
-        /* One tap is the whole answer — move them on rather than making them find Next. */
-        setTimeout(function () { if (cur === 0) go(1); }, 260);
       });
       scale.appendChild(b);
     })(i);
@@ -402,18 +531,46 @@ footer a{color:var(--ink-faint)}
   var cont = document.getElementById('cont');
   var experience = document.getElementById('experience');
   var purchase = document.getElementById('purchase');
-  function bindChoices(group, answerKey, advanceFrom) {
-    [].forEach.call(group.querySelectorAll('.choice'), function (b) {
-      b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', 'false');
-      b.addEventListener('click', function () {
-        answers[answerKey] = b.getAttribute('data-v'); saveDraft();
-        [].forEach.call(group.querySelectorAll('.choice'), function (c) { c.classList.remove('sel'); c.setAttribute('aria-checked', 'false'); });
-        b.classList.add('sel'); b.setAttribute('aria-checked', 'true');
-        sync();
-        if (advanceFrom != null) setTimeout(function () { if (cur === advanceFrom) go(cur + 1); }, 260);
-      });
+  function selectRadio(group, selected) {
+    var buttons = [].slice.call(group.querySelectorAll('[role="radio"]'));
+    buttons.forEach(function (button) {
+      var active = button === selected;
+      button.classList.toggle('sel', active);
+      button.setAttribute('aria-checked', active ? 'true' : 'false');
+      button.tabIndex = active ? 0 : -1;
     });
   }
+  function bindRadioKeys(group) {
+    group.addEventListener('keydown', function (event) {
+      if (pending) return;
+      var keys = ['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown', 'Home', 'End'];
+      if (keys.indexOf(event.key) < 0) return;
+      var buttons = [].slice.call(group.querySelectorAll('[role="radio"]'));
+      if (!buttons.length) return;
+      var index = buttons.indexOf(document.activeElement);
+      if (event.key === 'Home') index = 0;
+      else if (event.key === 'End') index = buttons.length - 1;
+      else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') index = (Math.max(0, index) - 1 + buttons.length) % buttons.length;
+      else index = (Math.max(-1, index) + 1) % buttons.length;
+      event.preventDefault();
+      buttons[index].focus();
+      buttons[index].click();
+    });
+  }
+  function bindChoices(group, answerKey) {
+    [].forEach.call(group.querySelectorAll('.choice'), function (b, index) {
+      b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', 'false');
+      b.tabIndex = index === 0 ? 0 : -1;
+      b.addEventListener('click', function () {
+        if (pending) return;
+        answers[answerKey] = b.getAttribute('data-v'); saveDraft();
+        selectRadio(group, b);
+        sync();
+      });
+    });
+    bindRadioKeys(group);
+  }
+  bindRadioKeys(scale);
   bindChoices(cont, 'q4', 3);
   bindChoices(experience, 'experience_level', 5);
   bindChoices(purchase, 'purchase_intent_19', null);
@@ -424,12 +581,12 @@ footer a{color:var(--ink-faint)}
   function paintRestored() {
     if (answers.q1 != null) {
       var b = scale.children[answers.q1 - 1];
-      if (b) { b.classList.add('sel'); b.setAttribute('aria-checked', 'true'); }
+      if (b) selectRadio(scale, b);
     }
     function paintChoice(group, value) {
       if (value == null) return;
       var c = group.querySelector('.choice[data-v="' + value + '"]');
-      if (c) { c.classList.add('sel'); c.setAttribute('aria-checked', 'true'); }
+      if (c) selectRadio(group, c);
     }
     paintChoice(cont, answers.q4);
     paintChoice(experience, answers.experience_level);
@@ -461,24 +618,56 @@ footer a{color:var(--ink-faint)}
   function sync() {
     var s = steps[cur];
     var next = s.querySelector('[data-next], button[type="submit"]');
-    if (next) next.disabled = !valid(cur);
+    if (next && !pending) next.disabled = !valid(cur);
     bar.style.width = Math.round(((cur + (valid(cur) ? 1 : 0)) / steps.length) * 100) + '%';
     stepN.textContent = (cur + 1) + ' / ' + steps.length;
+    if (progress) progress.setAttribute('aria-valuenow', String(cur + 1));
+  }
+
+  function showStatus(message) {
+    statusEl.textContent = message || '';
+    statusEl.classList.toggle('on', !!message);
+  }
+
+  function showError(message) {
+    errEl.textContent = message || '';
+    errEl.classList.toggle('on', !!message);
+    if (message) setTimeout(function () { try { errEl.focus({ preventScroll: true }); } catch (e) { try { errEl.focus(); } catch (e2) {} } }, 0);
+  }
+
+  function setPendingUI(active, manualRetry) {
+    form.classList.toggle('is-pending', !!active);
+    [].forEach.call(form.querySelectorAll('button:not(#send), textarea'), function (control) {
+      control.disabled = !!active;
+    });
+    if (active) {
+      send.disabled = !manualRetry;
+      send.textContent = manualRetry ? 'Try again →' : 'Sending…';
+    } else {
+      send.textContent = 'Send it →';
+      sync();
+    }
+  }
+
+  function focusStep() {
+    var heading = steps[cur] && steps[cur].querySelector('h1');
+    if (!heading) return;
+    setTimeout(function () {
+      try { heading.focus({ preventScroll: true }); }
+      catch (e) { try { heading.focus(); } catch (e2) {} }
+    }, 0);
   }
 
   function go(n) {
-    if (n < 0 || n >= steps.length) return;
+    if (pending || n < 0 || n >= steps.length) return;
     steps[cur].classList.remove('on');
     cur = n;
     steps[cur].classList.add('on');
+    showError('');
     sync();
+    saveDraft();
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
-    var f = steps[cur].querySelector('textarea');
-    /* Only autofocus where typing is the point, and never on touch — a keyboard that
-       shoots up the moment the screen changes is disorienting on a phone. */
-    if (f && !window.matchMedia('(hover:none) and (pointer:coarse)').matches) {
-      setTimeout(function () { try { f.focus(); } catch (e) {} }, 320);
-    }
+    focusStep();
   }
 
   document.addEventListener('click', function (e) {
@@ -490,19 +679,11 @@ footer a{color:var(--ink-faint)}
 
   /* ── submit ───────────────────────────────────────────────────────────── */
   var send = document.getElementById('send');
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var complete = true;
-    for (var i = 0; i < steps.length; i++) if (!valid(i)) complete = false;
-    if (!complete) {
-      errEl.textContent = 'Some answers are missing — use ← to go back and fill them in.';
-      errEl.classList.add('on');
-      return;
-    }
-    send.disabled = true; send.textContent = 'Sending…';
-    errEl.classList.remove('on');
-
-    var row = {
+  function buildPendingRow() {
+    return normalizePending({
+      response_id: responseId,
+      player_id: playerId(),
+      session_id: sessionId(),
       q1_rating: answers.q1,
       q2_hook: answers.q2.trim(),
       q3_improvement: answers.q3.trim(),
@@ -510,37 +691,160 @@ footer a{color:var(--ink-faint)}
       q5_anything: (answers.q5 || '').trim(),
       experience_level: answers.experience_level,
       purchase_intent_19: answers.purchase_intent_19,
-      seconds_taken: Math.min(86400, Math.max(0, Math.round((Date.now() - T0) / 1000)))   // time in THIS sitting; backend-safe even after a day-open tab
-    };
+      seconds_taken: Math.min(86400, Math.max(0, Math.round((Date.now() - T0) / 1000)))
+    });
+  }
 
-    var p = (window.CQTrack && CQTrack.survey) ? CQTrack.survey(row) : Promise.resolve(false);
-    Promise.resolve(p).then(function (ok) {
+  function ensureGateDue() {
+    if (gateMatches(responseId)) return true;
+    try {
+      if (!window.CQSurveyGate || typeof CQSurveyGate.ensureDue !== 'function') return false;
+      CQSurveyGate.ensureDue({ responseId: responseId });
+      if (typeof CQSurveyGate.installNavigationGuard === 'function') CQSurveyGate.installNavigationGuard();
+    } catch (e) { return false; }
+    var state = readGate();
+    return !!state && (state.stage === 'survey_due' || state.stage === 'survey_submitted') &&
+      String(state.surveyResponseId || '') === responseId;
+  }
+
+  function withTimeout(value) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      var timer = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        resolve(false);
+      }, SUBMIT_TIMEOUT_MS);
+      Promise.resolve(value).then(function (ok) {
+        if (settled) return;
+        settled = true; clearTimeout(timer); resolve(ok === true);
+      }, function () {
+        if (settled) return;
+        settled = true; clearTimeout(timer); resolve(false);
+      });
+    });
+  }
+
+  function scheduleRetry(message) {
+    sending = false;
+    setPendingUI(true, false);
+    showStatus(message || 'Your answers are saved. We will try again automatically.');
+    if (retryTimer) clearTimeout(retryTimer);
+    retryTimer = null;
+    var delay = RETRY_DELAYS[Math.min(retryAttempt, RETRY_DELAYS.length - 1)];
+    retryAttempt++;
+    retryTimer = setTimeout(function () {
+      retryTimer = null;
+      attemptPending('backoff');
+    }, delay);
+  }
+
+  function finishConfirmedSubmission(row) {
+    var marked = false;
+    try {
+      if (window.CQTrack && typeof CQTrack.event === 'function') {
+        CQTrack.event('survey_submitted', {
+          rating: row.q1_rating, cont: row.q4_continue, seconds: row.seconds_taken,
+          response_id: row.response_id
+        });
+      }
+    } catch (e) {}
+    try {
+      if (window.CQSurveyGate && typeof CQSurveyGate.markSubmitted === 'function') {
+        CQSurveyGate.markSubmitted(row.response_id);
+        marked = gateMatches(row.response_id);
+      }
+    } catch (e) { marked = false; }
+    if (!marked) {
+      scheduleRetry('Your answers reached ChartQuest, but this device could not save the completion receipt. Nothing was cleared.');
+      return;
+    }
+    sending = false;
+    if (retryTimer) clearTimeout(retryTimer);
+    retryTimer = null;
+    pending = null;
+    alreadySubmitted = true;
+    revising = false;
+    try { localStorage.removeItem(DRAFT); } catch (e) {}
+    showDone(false);
+  }
+
+  function attemptPending(reason) {
+    if (!pending || sending) return;
+    if (!saveDraft()) {
+      setPendingUI(true, false);
+      return;
+    }
+    if (navigator.onLine === false) {
+      scheduleRetry('You are offline. Your answers are saved and will send automatically when you reconnect.');
+      return;
+    }
+    if (!window.CQTrack || typeof CQTrack.survey !== 'function') {
+      scheduleRetry('The secure survey connection is not ready. Your answers are saved and will retry automatically.');
+      return;
+    }
+    sending = true;
+    setPendingUI(true, false);
+    showError('');
+    showStatus(reason === 'online' ? 'You are back online. Sending your saved answers…' : 'Sending your saved answers securely…');
+    var request;
+    try { request = CQTrack.survey(copyRow(pending)); }
+    catch (e) {
+      scheduleRetry('That send could not start. Your answers are saved and will retry automatically.');
+      return;
+    }
+    withTimeout(request).then(function (ok) {
       if (!ok) {
-        send.disabled = false; send.textContent = 'Send it →';
-        errEl.textContent = 'That did not send — check your connection and try again. Your answers are saved.';
-        errEl.classList.add('on');
+        scheduleRetry('We could not confirm the receipt yet. Your answers are saved and will retry automatically.');
         return;
       }
-      try { if (window.CQTrack) CQTrack.event('survey_submitted', { rating: row.q1_rating, cont: row.q4_continue, seconds: row.seconds_taken }); } catch (e2) {}
-      try { localStorage.removeItem(DRAFT); } catch (e2) {}
-      form.style.display = 'none';
-      document.querySelector('.top').style.display = 'none';
-      document.getElementById('done').classList.add('on');
-      try { window.scrollTo(0, 0); } catch (e2) {}
+      finishConfirmedSubmission(copyRow(pending));
+    }, function () {
+      scheduleRetry('We could not confirm the receipt yet. Your answers are saved and will retry automatically.');
     });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (pending) {
+      retryAttempt = 0;
+      if (retryTimer) clearTimeout(retryTimer);
+      retryTimer = null;
+      attemptPending('manual');
+      return;
+    }
+    var firstMissing = -1;
+    for (var i = 0; i < steps.length; i++) if (!valid(i) && firstMissing < 0) firstMissing = i;
+    if (firstMissing >= 0) {
+      showStatus('Some answers are missing. We moved you to the first one that needs an answer.');
+      go(firstMissing);
+      return;
+    }
+    pending = buildPendingRow();
+    if (!pending) {
+      showError('Those answers could not be prepared safely. Nothing was sent; please review them and try again.');
+      return;
+    }
+    cur = steps.length - 1;
+    if (!saveDraft()) {
+      setPendingUI(true, false);
+      return;
+    }
+    retryAttempt = 0;
+    attemptPending('submit');
   });
 
   paintRestored();
 
-  /* Already answered? Show the thank-you rather than a pristine form. Re-answering is still
-     possible and now REPLACES the previous answer (one row per player), instead of quietly
-     adding a second contradictory response to the average. */
-  try {
-    if (localStorage.getItem('cq_bt_survey_submitted')) {
-      form.style.display = 'none';
-      document.querySelector('.top').style.display = 'none';
-      var done = document.getElementById('done');
-      done.classList.add('on');
+  function showDone(allowChange) {
+    form.style.display = 'none';
+    document.querySelector('.top').style.display = 'none';
+    if (mandatoryEl) mandatoryEl.style.display = 'none';
+    showStatus(''); showError('');
+    var done = document.getElementById('done');
+    done.classList.add('on');
+    document.querySelector('footer').textContent = 'Survey receipt confirmed · ChartQuest closed beta';
+    if (allowChange && !document.getElementById('againBtn')) {
       var again = document.createElement('div');
       again.style.cssText = 'margin-top:18px';
       again.innerHTML = '<button type="button" id="againBtn" style="background:none;border:0;color:var(--ink-faint);' +
@@ -548,16 +852,71 @@ footer a{color:var(--ink-faint)}
         'min-height:44px;padding:0 10px">Change my answers</button>';
       done.appendChild(again);
       again.querySelector('#againBtn').addEventListener('click', function () {
+        revising = true;
+        pending = null;
+        retryAttempt = 0;
         done.classList.remove('on');
         document.querySelector('.top').style.display = '';
+        if (mandatoryEl) mandatoryEl.style.display = '';
         form.style.display = '';
-        go(0);
+        document.querySelector('footer').textContent = 'ChartQuest closed beta · Complete all seven questions to finish';
+        setPendingUI(false, false);
+        steps[cur].classList.remove('on');
+        cur = 0; steps[cur].classList.add('on');
+        saveDraft(); sync(); focusStep();
       });
     }
-  } catch (e) {}
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
 
-  try { if (window.CQTrack) CQTrack.event('survey_started', {}); } catch (e) {}
-  sync();
+  if (!validResponseId(responseId)) responseId = 'r-p-' + Math.random().toString(36).slice(2, 12);
+
+  /* A survey reached directly still becomes an explicit due boundary. If the shared gate or
+     durable storage is unavailable, fail closed: keep this mandatory form visible and never
+     infer completion from the historical generic once-key. */
+  var alreadySubmitted = gateMatches(responseId);
+  if (alreadySubmitted) {
+    try { localStorage.removeItem(DRAFT); } catch (e) {}
+    pending = null;
+    showDone(true);
+  } else {
+    if (!ensureGateDue()) {
+      showStatus('ChartQuest could not save the required survey checkpoint on this device. Keep this page open and enable site data; completion will remain locked until it is safely stored.');
+    }
+    steps.forEach(function (step) { step.classList.remove('on'); });
+    steps[cur].classList.add('on');
+    sync();
+    if (!pending) saveDraft();
+    try {
+      if (window.CQTrack && typeof CQTrack.event === 'function') {
+        CQTrack.event('survey_started', { response_id: responseId, resumed: !!rawDraft.response_id });
+      }
+    } catch (e) {}
+    if (pending) {
+      setPendingUI(true, false);
+      showStatus('Your completed answers were restored. Confirming their receipt…');
+      setTimeout(function () { attemptPending('reload'); }, 0);
+    } else {
+      setPendingUI(false, false);
+      focusStep();
+    }
+  }
+
+  window.addEventListener('online', function () {
+    if (!pending || sending) return;
+    if (retryTimer) clearTimeout(retryTimer);
+    retryTimer = null; retryAttempt = 0;
+    attemptPending('online');
+  });
+  window.addEventListener('offline', function () {
+    if (pending) showStatus('You are offline. Your answers are saved and will send automatically when you reconnect.');
+  });
+  window.addEventListener('pagehide', function () { if (!alreadySubmitted || revising) saveDraft(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && pending && !sending && !retryTimer && navigator.onLine !== false) {
+      retryAttempt = 0; attemptPending('resume');
+    }
+  });
 })();
 </script>
 </body>

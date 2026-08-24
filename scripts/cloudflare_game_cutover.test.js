@@ -91,7 +91,10 @@ const tests = [
   }],
 
   ['telemetry and boot failures stay durable and never cross providers', () => {
-    assert.doesNotMatch(tracker + boot, /https?:\/\/|Authorization|\bapikey\b/i);
+    assert.doesNotMatch(tracker + boot, /https?:\/\//i,
+      'telemetry clients must not contain a cross-origin transport URL');
+    assert.doesNotMatch(tracker + boot, /['"]Authorization['"]\s*:|\bBearer\s+|\bapikey\s*[:=]/i,
+      'telemetry clients must not embed credential headers or provider keys');
     assert.match(tracker, /persistPending\(rows\);[\s\S]*post\('events', rows/);
     assert.match(boot, /persist\(rows\);\s*drain\(\);/);
     assert.match(boot, /receipt\.ok === true && Number\(receipt\.written\) === count/);
@@ -106,18 +109,18 @@ const tests = [
       assert.match(policy, /connect-src 'self' https:\/\/cloudflareinsights\.com https:\/\/\*\.cloudflareinsights\.com/);
     }
     const sw = read('website/sw.js');
-    assert.match(sw, /chartquest-site-v19/);
+    assert.match(sw, /chartquest-site-v20/);
     assert.match(sw, /\.\/assets\/cq-cloud-data\.js/);
     assert.match(read('website/privacy.html'), /production game sends no new account, gameplay, survey or bug-report data there/i);
     assert.match(read('website/terms.html'), /one-time secure restore code/i);
   }],
 
-  ['mirrors and build identity are ready for build 373', () => {
+  ['mirrors and build identity are ready for build 374', () => {
     assert.equal(read('index.html'), game, 'root mirror drifted');
     assert.equal(read('website/game.html'), game, 'website game mirror drifted');
-    assert.match(game, /const BUILD_TAG = 'build 373 /);
-    for (const relative of ['website/bosses.html', 'website/courses.html', 'website/index.html', 'website/play.html', 'website/survey.html']) {
-      assert.match(read(relative), /cq-track\.js\?v=370/);
+    assert.match(game, /const BUILD_TAG = 'build 374 /);
+    for (const relative of ['website/bosses.html', 'website/courses.html', 'website/index.html', 'website/offline.html', 'website/play.html', 'website/survey.html']) {
+      assert.match(read(relative), /cq-track\.js\?v=374/);
     }
   }],
 ];

@@ -31,8 +31,18 @@
     <button type="button" onclick="location.reload()">Try again</button>
     <small>ChartQuest works offline once the game has loaded at least once.</small>
   </div>
+  <script src="assets/cq-track.js?v=374"></script>
   <script>
-    addEventListener('online', function(){ location.reload(); });
+    /* If the offline fallback was reached while a response-specific survey is owed, recover the
+       cached survey shell immediately. It keeps the draft usable offline and cannot be mistaken
+       for a completed receipt; submission remains open until the exact API confirmation arrives. */
+    var cqOfflineSurveyRedirected = false;
+    try {
+      if (window.CQSurveyGate && CQSurveyGate.isDue()) {
+        cqOfflineSurveyRedirected = CQSurveyGate.redirectIfDue();
+      }
+    } catch (e) {}
+    addEventListener('online', function(){ if (!cqOfflineSurveyRedirected) location.reload(); });
   </script>
 </body>
 </html>

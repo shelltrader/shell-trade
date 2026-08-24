@@ -49,6 +49,65 @@ const tests = [
     assert.match(html, /\[data-next\], button\[type="submit"\]/);
   }],
 
+  ['response-specific v2 drafts preserve the exact form step and a completed pending row', () => {
+    assert.match(html, /var DRAFT_VERSION = 2/);
+    assert.match(html, /if \(rawDraft\.response_id !== responseId\) rawDraft = \{\}/,
+      'a draft from another playtest response must never be restored');
+    assert.match(html, /version: DRAFT_VERSION,[\s\S]*response_id: responseId,[\s\S]*answers: copyAnswers\(\),[\s\S]*current_step: cur,[\s\S]*pending: copyRow\(pending\)/);
+    assert.match(html, /localStorage\.setItem\(DRAFT, value\);[\s\S]*localStorage\.getItem\(DRAFT\) !== value/,
+      'the pending response must be read back before a send can be trusted');
+    assert.match(html, /pending = normalizePending\(rawDraft\.pending\);[\s\S]*if \(pending\) cur = steps\.length - 1/,
+      'a reload must restore the complete response at the send step');
+  }],
+
+  ['the form closes only after the exact response-specific gate receipt is durably confirmed', () => {
+    const matchStart = html.indexOf('function gateMatches(responseId)');
+    const matchEnd = html.indexOf('function playerId()', matchStart);
+    assert.ok(matchStart >= 0 && matchEnd > matchStart, 'gateMatches must be extractable');
+    const matcher = html.slice(matchStart, matchEnd);
+    assert.match(matcher, /state\.stage === 'survey_submitted'/);
+    assert.match(matcher, /state\.surveyResponseId \|\| ''\) === responseId/);
+    assert.match(matcher, /receiptResponseId\(state\.surveyReceipt\) === responseId/);
+
+    const finishStart = html.indexOf('function finishConfirmedSubmission(row)');
+    const finishEnd = html.indexOf('function attemptPending(reason)', finishStart);
+    assert.ok(finishStart >= 0 && finishEnd > finishStart, 'confirmed-submission handler must be extractable');
+    const finish = html.slice(finishStart, finishEnd);
+    const mark = finish.indexOf('CQSurveyGate.markSubmitted(row.response_id)');
+    const verify = finish.indexOf('marked = gateMatches(row.response_id)', mark);
+    const failClosed = finish.indexOf('if (!marked)', verify);
+    const clear = finish.indexOf('localStorage.removeItem(DRAFT)', failClosed);
+    const done = finish.indexOf('showDone(false)', clear);
+    assert.ok(mark >= 0 && verify > mark && failClosed > verify && clear > failClosed && done > clear,
+      'exact receipt persistence must precede draft removal and the thank-you screen');
+    assert.match(finish.slice(failClosed, clear), /scheduleRetry\(/,
+      'a missing local receipt must keep the completed answers pending');
+    assert.doesNotMatch(html, /localStorage\.(?:setItem|getItem)\(['"]cq_bt_survey_submitted['"]/,
+      'the historical generic analytics flag cannot authorize the thank-you screen');
+  }],
+
+  ['network, reload, background, and worker-era recovery keep the mandatory surface fail-closed', () => {
+    assert.match(html, /<script src="assets\/cq-track\.js\?v=374"><\/script>/);
+    assert.match(html, /function withTimeout\(value\)[\s\S]*resolve\(ok === true\)[\s\S]*resolve\(false\)/,
+      'rejection, timeout, and non-exact results must all fail closed');
+    assert.match(html, /function scheduleRetry\(message\)[\s\S]*attemptPending\('backoff'\)/);
+    assert.match(html, /if \(rawDraft\.version === DRAFT_VERSION\) pending = normalizePending\(rawDraft\.pending\)/);
+    assert.match(html, /setTimeout\(function \(\) \{ attemptPending\('reload'\); \}, 0\)/);
+    assert.match(html, /window\.addEventListener\('online',[\s\S]*attemptPending\('online'\)/);
+    assert.match(html, /document\.addEventListener\('visibilitychange',[\s\S]*attemptPending\('resume'\)/);
+    assert.doesNotMatch(html, /beforeunload/,
+      'closing the game remains the one allowed physical exit');
+
+    const formStart = html.indexOf('<form id="form"');
+    const formEnd = html.indexOf('<!-- thank you', formStart);
+    const activeForm = html.slice(formStart, formEnd);
+    assert.doesNotMatch(activeForm, /\b(?:Skip|Close|Dismiss)\b/i,
+      'the active mandatory form must not expose a dismiss action');
+    assert.doesNotMatch(activeForm, /href\s*=/i,
+      'navigation links may appear only on the post-receipt thank-you surface');
+    assert.match(html, /<footer>ChartQuest closed beta · Complete all seven questions to finish<\/footer>/);
+  }],
+
   ['every inline script remains syntactically valid', () => {
     const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
       .map(match => match[1])

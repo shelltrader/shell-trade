@@ -41,12 +41,15 @@
    v17 → v18 (build 373): public pain-point/Bitcoin-first truth copy changed in site.js and the
    manifest; returning testers must receive those precached assets rather than the old claims.
    v18 → v19 (build 373 visibility follow-up): the precached landing page promotes the pain point
-   from fine print to a readable hero panel, so returning/offline visitors need the new root. */
-const CACHE = 'chartquest-site-v19';
+   from fine print to a readable hero panel, so returning/offline visitors need the new root.
+   v19 → v20: an owed response-specific survey survives offline reloads and worker replacement;
+   the survey shell is precached and is served for offline /survey navigations. */
+const CACHE = 'chartquest-site-v20';
 const OFFLINE_URL = './offline.html';
+const SURVEY_URL = './survey.html';
 const ASSETS = [
   './',
-  OFFLINE_URL,
+  OFFLINE_URL, SURVEY_URL,
   './assets/site.css', './assets/site.js', './assets/config.js', './assets/cq-track.js',
   './assets/cq-boot-crash.js', './assets/cq-cloud-data.js',
   './assets/chartquest-poster.jpg', './manifest.webmanifest',
@@ -76,7 +79,9 @@ self.addEventListener('fetch', e => {
   // Only when the device is offline do we take over, purely to serve offline.html.
   if (req.mode === 'navigate') {
     if (!self.navigator.onLine) {
-      e.respondWith(caches.match(OFFLINE_URL).then(hit => {
+      const navigationURL = new URL(req.url);
+      const owedSurveyRoute = /(?:^|\/)survey(?:\.html)?\/?$/.test(navigationURL.pathname);
+      e.respondWith(caches.match(owedSurveyRoute ? SURVEY_URL : OFFLINE_URL).then(hit => {
         if (!hit) return fetch(req);
         // Rebuild the response so `.redirected` is false. On Cloudflare, ./offline.html
         // 308s to /offline, so `addAll` stored a REDIRECTED response — and a SW may not
@@ -118,7 +123,9 @@ self.addEventListener('fetch', e => {
 
   // Static assets: cache-first; only cache clean (ok, non-redirected) responses.
   e.respondWith(
-    caches.match(req).then(hit => hit || fetch(req).then(res => {
+    // HTML references versioned static assets (`?v=...`) while precache keys are deliberately
+    // canonical. Ignoring the query here lets the offline survey load its verified local tracker.
+    caches.match(req, { ignoreSearch: true }).then(hit => hit || fetch(req).then(res => {
       if (res && res.ok && !res.redirected) {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});

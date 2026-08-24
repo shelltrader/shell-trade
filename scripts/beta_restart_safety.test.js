@@ -37,12 +37,15 @@ test('direct production fresh reset is confirmed and wrapper approval is same-or
   assert.doesNotMatch(block, /!_real\s*\|\|\s*_qa/);
 });
 
-test('tester QR rejects valued, bare, encoded, and fragment-suffixed destructive flags before any network work', () => {
-  for (const suffix of ['?fresh=1', '?fresh', '?fr%65sh=1', '?fresh#resume']) {
+test('tester QR rejects valued, bare, encoded, and fragment-suffixed fresh/beta bypass flags before any network work', () => {
+  for (const [suffix, flag] of [
+    ['?fresh=1', 'fresh'], ['?fresh', 'fresh'], ['?fr%65sh=1', 'fresh'], ['?fresh#resume', 'fresh'],
+    ['?beta=0', 'beta'], ['?beta', 'beta'], ['?b%65ta=0', 'beta'], ['?beta=0#resume', 'beta'],
+  ]) {
     const r = cp.spawnSync('python3', ['scripts/tester_qr.py', '--url', 'https://playchartquest.com/' + suffix,
       '--out', '/tmp/chartquest-should-not-exist.svg'], { cwd: ROOT, encoding: 'utf8', timeout: 3000 });
     assert.notEqual(r.status, 0, suffix + ' must be rejected');
-    assert.match((r.stdout || '') + (r.stderr || ''), /fresh.*DEV flag/i);
+    assert.match((r.stdout || '') + (r.stderr || ''), new RegExp(flag + '.*DEV flag', 'i'));
   }
 });
 
@@ -61,9 +64,36 @@ test('boss, Journal, and survey boundaries are independently durable', () => {
   assert.match(GAME, /CQBetaFlow\.advance\('journal_started'\)/);
   assert.match(GAME, /CQBetaFlow\.advance\('journal_completed'\)/);
   assert.match(GAME, /CQBetaFlow\.advance\('survey_due'\)/);
-  assert.match(GAME, /cq_bt_survey_submitted[\s\S]{0,500}survey_submitted/);
+  const flow = GAME.slice(GAME.indexOf('/* BETA_FLOW_CONTINUITY_V1:BEGIN'), GAME.indexOf('/* BETA_FLOW_CONTINUITY_V1:END */'));
+  assert.match(flow, /var VERSION = 2/);
+  assert.match(flow, /if \(stage === 'survey_submitted'\) return false/,
+    'ordinary stage progression must not forge the terminal receipt');
+  assert.match(flow, /function markSubmitted\(submittedResponseId\)/);
+  assert.match(flow, /receipt !== cur\.surveyResponseId/,
+    'only an exact response-specific receipt may close the flow');
+  assert.doesNotMatch(flow, /get\(['"]cq_bt_survey_submitted['"]\)/,
+    'the historical analytics once-flag cannot terminalize a new playtest');
   assert.match(GAME, /Continue where you left off/);
   assert.match(GAME, /RESTART JOURNAL/);
+});
+
+test('mandatory survey handoff has no in-game dismiss control and retries top-level replacement', () => {
+  const gateStart = GAME.indexOf('function ensureSurveyGate()');
+  const handoffEnd = GAME.indexOf('/* Boss/Journal recovery', gateStart);
+  assert.ok(gateStart >= 0 && handoffEnd > gateStart, 'mandatory survey handoff must be extractable');
+  const handoff = GAME.slice(gateStart, handoffEnd);
+  const gateOnly = handoff.slice(0, handoff.indexOf('function openSurvey()'));
+  assert.match(gateOnly, /id = 'cqBetaSurveyGate'/);
+  assert.match(gateOnly, /aria-modal['"], 'true'/);
+  assert.doesNotMatch(gateOnly, /<button|aria-label=["'](?:Close|Skip|Dismiss)/i,
+    'the full-screen owed-survey gate must not render an exit control');
+  assert.match(handoff, /CQBetaFlow\.state\(\)\.surveyResponseId/);
+  assert.match(handoff, /window\.parent\.postMessage\([\s\S]*window\.location\.origin/,
+    'the wrapper message must stay same-origin scoped');
+  assert.match(handoff, /var w = \(window\.top && window\.top !== window\) \? window\.top : window/);
+  assert.match(handoff, /w\.location\.replace\(nav\)/);
+  assert.match(handoff, /setTimeout\(replaceWithSurvey, 1800\)/,
+    'a silently ignored navigation must leave the gate up and retry');
 });
 
 test('Guardian completion is stamped only after its shells and XP are durably saved', () => {
@@ -94,4 +124,4 @@ test('Journal completion is stamped only after its shell reward is durably saved
   assert.match(pay, /Number\(_savedReward\.shells\)\s*===\s*Number\(p\.shells\)/);
 });
 
-if (!process.exitCode) process.stdout.write('\n' + passed + '/7 restart and survey safety contracts passed\n');
+if (!process.exitCode) process.stdout.write('\n' + passed + '/8 restart and survey safety contracts passed\n');

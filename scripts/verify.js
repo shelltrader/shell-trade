@@ -24,6 +24,7 @@
  *   26 Build-370/371 player-paced trades + teaching/survey research contracts
  *   27 Build-372 music-on-every-start + permanent browser-unlock contracts
  *   28 Build-373 feedback recovery + continuity + marketing-truth contracts
+ *   29 Build-374 mandatory response-specific survey + no-exit/recovery contracts
  */
 const fs = require('fs');
 const os = require('os');
@@ -925,6 +926,26 @@ function run() {
     } catch (e) {
       add('28', 'Build-373 beta feedback recovery', 'FAIL',
         'Build-373 focused checks could not run: ' + String(e && e.message || e).slice(0, 140));
+    }
+  }
+
+  // 29 — BUILD 374 MANDATORY RESPONSE-SPECIFIC SURVEY. This adversarial suite locks the owed
+  // response across reload/restart/background/worker replacement, prevents every in-app escape,
+  // and permits completion only after the exact persisted response receipt is confirmed.
+  {
+    try {
+      const result = cp.spawnSync(process.execPath, [path.join('scripts', 'mandatory_survey.test.js')], {
+        cwd: ROOT, encoding: 'utf8', timeout: 30000,
+      });
+      const output = String(result.stderr || result.stdout || '').trim();
+      const match = String(result.stdout || '').match(/(\d+\/\d+[^\n]*passed|all[^\n]*pass)/i);
+      add('29', 'Build-374 mandatory response-specific survey gate', result.status === 0 ? 'PASS' : 'FAIL',
+        result.status === 0
+          ? 'mandatory survey contracts PASS' + (match ? ' (' + match[1] + ')' : '')
+          : 'mandatory survey contracts failed: ' + (output || 'exit ' + result.status).slice(0, 180));
+    } catch (e) {
+      add('29', 'Build-374 mandatory response-specific survey gate', 'FAIL',
+        'mandatory survey suite could not run: ' + String(e && e.message || e).slice(0, 140));
     }
   }
 

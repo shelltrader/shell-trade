@@ -39,8 +39,10 @@
    v16 → v17 (build 370): the tracker captures expiring opaque cohort/invite attribution for the
    next beta round, so returning testers must not keep the un-attributed v16 client.
    v17 → v18 (build 373): public pain-point/Bitcoin-first truth copy changed in site.js and the
-   manifest; returning testers must receive those precached assets rather than the old claims. */
-const CACHE = 'chartquest-site-v18';
+   manifest; returning testers must receive those precached assets rather than the old claims.
+   v18 → v19 (build 373 visibility follow-up): the precached landing page promotes the pain point
+   from fine print to a readable hero panel, so returning/offline visitors need the new root. */
+const CACHE = 'chartquest-site-v19';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',

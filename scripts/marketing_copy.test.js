@@ -20,7 +20,13 @@ const publicCopy = [home, play, bosses, sharedSite, manifestText].join('\n');
 
 const tests = [
   ['hero names the approved pain point and keeps the free-play action', () => {
-    assert.match(home, /ONE INCOME DOESN’T FEEL LIKE ENOUGH ANYMORE\. LEARN THE CHART BEFORE YOU RISK REAL MONEY\./);
+    assert.match(home, /<p class="hero-trust"><strong>One income doesn’t feel like enough anymore\.<\/strong><span>Learn the chart before you risk real money\.<\/span><\/p>/);
+    assert.match(home, /\.hero-trust\{[^}]*font-size:clamp\(15\.5px,1\.45vw,18px\)[^}]*color:#fff[^}]*\}/s);
+    assert.match(home, /\.hero-trust strong\{[^}]*font-weight:800[^}]*\}/);
+    assert.match(home, /\.hero-trust \+ \.btn-row\{margin-top:22px\}/);
+    assert.doesNotMatch(home, /\.hero-cine \.eyebrow,\.hero-trust,\.hero-scroll\{display:none\}/);
+    assert.match(home, /@media \(max-width:360px\) and \(max-height:620px\) and \(orientation:portrait\)\{[\s\S]*?\.hero-trust \+ \.btn-row\{margin-top:14px\}[\s\S]*?\}/);
+    assert.match(home, /\.hero-trust\{display:block;max-width:46ch;[^}]*font-size:12\.5px;[^}]*\}/);
     assert.match(home, /<a class="btn btn-primary" href="play\.html">▶ Play Free<\/a>/);
   }],
 
@@ -70,10 +76,11 @@ const tests = [
   }],
 
   ['returning visitors receive the changed copy and manifest through a new cache generation', () => {
-    assert.match(serviceWorker, /const CACHE = ['"]chartquest-site-v18['"]/);
+    assert.match(serviceWorker, /const CACHE = ['"]chartquest-site-v19['"]/);
     assert.match(serviceWorker, /['"]\.\/assets\/site\.js['"]/);
     assert.match(serviceWorker, /['"]\.\/manifest\.webmanifest['"]/);
     assert.match(serviceWorker, /v17 → v18 \(build 373\)/);
+    assert.match(serviceWorker, /v18 → v19 \(build 373 visibility follow-up\)/);
   }],
 ];
 

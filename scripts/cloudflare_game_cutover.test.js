@@ -106,7 +106,7 @@ const tests = [
       assert.match(policy, /connect-src 'self' https:\/\/cloudflareinsights\.com https:\/\/\*\.cloudflareinsights\.com/);
     }
     const sw = read('website/sw.js');
-    assert.match(sw, /chartquest-site-v18/);
+    assert.match(sw, /chartquest-site-v19/);
     assert.match(sw, /\.\/assets\/cq-cloud-data\.js/);
     assert.match(read('website/privacy.html'), /production game sends no new account, gameplay, survey or bug-report data there/i);
     assert.match(read('website/terms.html'), /one-time secure restore code/i);

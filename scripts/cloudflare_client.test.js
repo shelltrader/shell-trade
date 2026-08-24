@@ -530,7 +530,7 @@ const tests = [
     assertSentinelsPreserved(h);
   }],
 
-  ['all tracker tags are versioned and private founder/API data bypasses the v18 cache', async () => {
+  ['all tracker tags are versioned and private founder/API data bypasses the v19 cache', async () => {
     const website = path.join(ROOT, 'website');
     const htmlFiles = fs.readdirSync(website)
       .filter(name => name.endsWith('.html'))
@@ -553,7 +553,7 @@ const tests = [
     }
 
     const sw = fs.readFileSync(path.join(website, 'sw.js'), 'utf8');
-    assert.match(sw, /const CACHE = ['"]chartquest-site-v18['"];?/);
+    assert.match(sw, /const CACHE = ['"]chartquest-site-v19['"];?/);
     assert.match(sw, /requestURL\.pathname === ['"]\/api['"] \|\| requestURL\.pathname\.startsWith\(['"]\/api\/['"]\)/);
     assert.match(sw, /requestURL\.pathname === ['"]\/founder['"] \|\| requestURL\.pathname\.startsWith\(['"]\/founder\/['"]\)/);
     assert.match(sw, /requestURL\.origin !== self\.location\.origin/,

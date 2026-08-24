@@ -34,13 +34,20 @@
   pacing 11/11; teaching UI 5/5; survey 4/4; beta service 26/26; client 15/15; Founder beta
   dashboard 8/8; canonical/deployed model and all three game artifacts match. Independent final
   review approved after trade-time pruning and name-like invite cases were added to the gates.
+- **Preview provider evidence (2026-08-24):** after verifying that the Pages Preview environment
+  binds `BETA_DB` to `chartquest-preview` (`d2f3e508-7f2c-400e-9522-d89c38545e9e`), the Release
+  Manager made a pre-write D1 recovery bookmark, recorded the six-row aggregate and absent Q6/Q7
+  columns, then applied the approved `0003` statements once each. The two nullable checked columns
+  now exist; all historical rows retain the same aggregate and have null research fields. The
+  separate Production binding was inspected but not queried or changed. Evidence:
+  `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`.
 - In-app Browser at 390×844 verified the seven-step survey and its offer distinction without
   horizontal overflow, plus the Home Market chart bridge. The ordinary first-session route loaded;
   subjective complete-trade feel still requires Founder physical-device QA. The inherited internal
   `?dev=1` boot TDZ remains outside the plain tester path and is not claimed fixed here.
-- **Hard release order:** back up/count BETA_DB; inspect schema; apply `0003` exactly once to BETA_DB;
-  verify old rows and new columns; deploy Functions/static candidate to Preview; test survey v2,
-  dashboard, trade matrix, Access, old service worker, and rollback; only then prepare normal
+- **Hard release order:** the Preview BETA_DB backup/count, schema inspection, `0003` application,
+  and old-row/new-column proof are complete. Deploy Functions/static candidate to Preview; test survey
+  v2, dashboard, trade matrix, Access, old service worker, and rollback; only then prepare normal
   manifest/lock/gate/live-fingerprint evidence. Leave additive columns in place on code rollback.
 - Decision: **BUILD 370 LOCAL CANDIDATE APPROVED — DO NOT DEPLOY OR SEND LINKS — BUILD 367 REMAINS
   LIVE.**

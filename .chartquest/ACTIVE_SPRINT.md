@@ -19,14 +19,18 @@ and served-fingerprint gates all pass.
   `b615adb1c06558b5409111384c406053dfb9dee802eda86d7000db8b2e63103d`.
 - Additive survey migration SHA-256:
   `3283707ade48d84447cf003377613b897bb004d836b89a5175df082930032a4d`.
+- **Preview-only migration pass (2026-08-24):** `0003` is applied to Preview `BETA_DB`
+  `chartquest-preview` (`d2f3e508-7f2c-400e-9522-d89c38545e9e`) after a D1 recovery bookmark and
+  pre-change survey aggregate. Both nullable checked columns now exist; the six historical rows and
+  their aggregate are unchanged. See `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`.
 - Production Build 367 remains live and unaffected. Build 370 has not been pushed or deployed.
 
 ## Active tasks
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Build-370 BETA_DB migration | Release Manager | **PENDING; HARD ORDERING GATE** | Back up and count BETA_DB, inspect columns, apply `0003_beta_survey_research.sql` exactly once, verify historical rows remain and new columns exist, then deploy Functions. Never reverse this order. |
-| Build-370 preview and phone QA | Release Manager + Founder | **LOCAL AUTOMATION/390PX VISUAL PASS; PREVIEW PENDING** | Deploy the exact payload to Preview only after `0003`; test player-paced long/short win/loss, pause/background/backtrack, survey v2 receipt, cohort dashboard, and returning service worker. Founder judges physical trade feel. |
+| Build-370 BETA_DB migration | Release Manager | **PASS — PREVIEW ONLY** | `0003` was applied once to the verified Preview `BETA_DB`; recovery bookmark, absent-before/present-after schema, constraints, and six-row aggregate are recorded in `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`. Do not apply it again or to production. |
+| Build-370 preview and phone QA | Release Manager + Founder | **LOCAL AUTOMATION/390PX VISUAL PASS; PREVIEW DEPLOYMENT PENDING** | Deploy the exact payload to Preview now that `0003` is verified; test player-paced long/short win/loss, pause/background/backtrack, survey v2 receipt, cohort dashboard, and returning service worker. Founder judges physical trade feel. |
 | Next ten-person beta cohort | PM/CTO | **PENDING RELEASE APPROVAL** | After preview/device approval, generate one `b370-beta2` cohort and ten unique consonant-digit invite codes; share plain canonical links only after Build 370 is verified live. |
 | Historical application-data migration | Release Manager | **SEPARATE PENDING WORK** | Preserve the existing audited Build-369 account/data migration gates; this Build-370 experiment does not weaken or bypass them. |
 
@@ -34,7 +38,7 @@ and served-fingerprint gates all pass.
 
 | Item | Status | Evidence |
 |---|---|---|
-| Build 370 production deployment | **DO NOT DEPLOY** | `0003` is not applied, Preview and physical-device QA are incomplete, and no release manifest/lock/served fingerprint exists. |
+| Build 370 production deployment | **DO NOT DEPLOY** | `0003` is applied to Preview only; Preview code deployment and physical-device QA are incomplete, and no release manifest/lock/served fingerprint exists. |
 | Next tester links | **DO NOT SEND YET** | The current public site still serves Build 367; invite attribution and Q6/Q7 exist only in the local candidate. |
 | Full Cloudflare application migration | **SEPARATE RELEASE GATE** | Build 370 inherits the Build-369 local candidate but does not itself prove production APP_DB migration, account restoration, or historical application-data reconciliation. |
 

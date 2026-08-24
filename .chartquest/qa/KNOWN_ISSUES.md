@@ -12,11 +12,12 @@ eight issuer-generated consonant-digit pairs so name-like strings cannot pass. F
 is 27/0/0/1; focused evidence is trade 11/11, teaching 5/5, survey 4/4, beta service 26/26,
 client 15/15, and Founder beta dashboard 8/8.
 
-Production release is blocked by an ordering-sensitive data migration. Back up/count and inspect
-BETA_DB, apply `0003_beta_survey_research.sql` exactly once to BETA_DB, prove existing survey rows
-remain and both nullable columns exist, and only then deploy the Build-370 Functions/static bytes to
-Preview. Functions-first can make survey writes and Founder survey reads fail. A code rollback must
-leave the additive columns in place.
+Production release remains blocked by the ordering-sensitive data gate. The verified Preview BETA_DB
+was backed up/bookmarked and inspected; `0003_beta_survey_research.sql` was then applied once to that
+database only, with six historical rows unchanged and both nullable checked columns present. The
+exact Build-370 Functions/static bytes still must deploy to Preview before any preview survey write or
+Founder read. Functions-first was avoided. A code rollback must leave the additive columns in place.
+See `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`.
 
 Preview still needs the real long/short win/loss traversal matrix, pause/background/backtrack,
 response-specific survey-v2 storage receipt, cohort dashboard/export, Access, returning-service-

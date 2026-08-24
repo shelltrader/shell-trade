@@ -69,6 +69,62 @@ function deterministicMath(initialSeed) {
   return math;
 }
 
+function playerMotionWorld({ liveTrade = true, level = 1 } = {}) {
+  const candles = Array.from({ length: 8 }, (_, i) => ({
+    id: i + 1, x: i * 8, w: 8, open: 100 + i, h: 101 + i,
+    color: 'green', wick: 0, wick2: 0,
+  }));
+  const sandbox = {
+    Math,
+    CFG: { walkSpeed: 10, spinBoostDecay: 0, collideInset: 0 },
+    session: { level, candles: 0 },
+    trade: liveTrade ? { _playerMotionArmed: false, _lastTestedId: 1, lastPrice: 100, path: [] } : null,
+    turtle: {
+      x: 3, y: -12, w: 2, h: 2, dir: 1, halt: true, vxBoost: 0,
+      trail: [], onGround: true, spinning: false, tucked: false, _tradeClimbT: 0,
+    },
+    candles,
+    finnDazedT: 0,
+    lastCandleId: 1,
+    maxSeenCandleId: 1,
+    firstTradeGuide: { step: 0 }, paused: true, _zoomWasTrade: true,
+    pointer: null, _tapTimer: null, lastTime: 0, _dtEMA: 1,
+    performance: { now: () => 1234 },
+    document: {
+      hidden: false, visibilityState: 'visible',
+      getElementById: () => ({ remove() { sandbox.guideRemoved = true; } }),
+      addEventListener() {},
+    },
+    window: { addEventListener() {} },
+    clearTimeout() {},
+    candleTop: () => -10,
+    onCandleEntered() { sandbox.session.candles++; },
+    tradeTouchCheck: () => false,
+    jump() { sandbox.jumpCalls++; sandbox.turtle.onGround = false; },
+    jumpCalls: 0,
+  };
+  vm.runInNewContext(section('function playerPacedTradeActive()', 'function maintainCandles(cameraX, dt)'), sandbox,
+    { filename: 'chart-quest.html#player-paced-motion-owner', timeout: 1000 });
+
+  const motion = section('/* --- Horizontal: walk in the facing direction', '/* --- Jetpack timers');
+  const pacedFinish = section('  let _playerPacedReachedCloseId = -1;', '  /* --- Candle counting:');
+  vm.runInNewContext('this.motionTick = function (dt) {\n' +
+    motion.slice(motion.indexOf('  const prevFront')) + '\n' + pacedFinish +
+    '\nthis._playerPacedReachedCloseId = _playerPacedReachedCloseId;\n}', sandbox,
+    { filename: 'chart-quest.html#player-paced-horizontal', timeout: 1000 });
+
+  const frontier = section('/* --- Candle counting: setups + trade resolution tick per candle.', '// SAFETY (CQ-0023)');
+  vm.runInNewContext('this.frontierTick = function () {\nconst _playerPacedReachedCloseId = this._playerPacedReachedCloseId;\n' + frontier + '\n}', sandbox,
+    { filename: 'chart-quest.html#player-paced-frontier', timeout: 1000 });
+
+  vm.runInNewContext(section('function closeFirstTradeGuide()', 'function renderFirstTradeGuidePanel()'), sandbox,
+    { filename: 'chart-quest.html#first-trade-guide-close', timeout: 1000 });
+  vm.runInNewContext(section('function resetWorldMotionFrameClock()', 'let camY = 0;'), sandbox,
+    { filename: 'chart-quest.html#world-motion-reset', timeout: 1000 });
+  sandbox.tick = dt => { sandbox.motionTick(dt); sandbox.frontierTick(); };
+  return sandbox;
+}
+
 function runDriven({ seed, outcome, direction, firstRide }) {
   const math = deterministicMath(seed);
   const long = direction === 'long';
@@ -110,6 +166,143 @@ function runDriven({ seed, outcome, direction, firstRide }) {
 }
 
 const tests = [
+  ['guide close and every explicit action leave guided price idle after one traversed candle', () => {
+    const entryLaw = section('/* ══ T-002 · LAW 1', '// SHOT 3 (CQ-0020)');
+    const cursorInit = entryLaw.slice(entryLaw.indexOf('  if (session.level <= 3) {'));
+    const noOverhang = { Math, session: { level: 1 }, maxSeenCandleId: 1,
+      candles: [{ id: 1, x: 0, w: 8 }], trade: {} };
+    vm.runInNewContext(cursorInit, noOverhang,
+      { filename: 'chart-quest.html#guided-entry-cursor', timeout: 1000 });
+    assert.equal(noOverhang.trade._lastTestedId, 1,
+      'entry must seed the price cursor even when there is no future suffix to truncate');
+
+    const world = playerMotionWorld();
+    world.closeFirstTradeGuide();
+    assert.equal(world.guideRemoved, true);
+    assert.equal(world.firstTradeGuide, null);
+    assert.equal(world.paused, false);
+    assert.equal(world.turtle.halt, true);
+    assert.equal(world.trade._playerMotionArmed, false);
+
+    const snap = () => JSON.stringify({
+      x: world.turtle.x, frontier: world.maxSeenCandleId, session: world.session.candles,
+      lastPrice: world.trade.lastPrice, path: world.trade.path.length,
+    });
+    const idleBefore = snap();
+    for (let i = 0; i < 300; i++) world.tick(1 / 60);
+    assert.equal(snap(), idleBefore, 'five no-input seconds after guide close must be byte-still');
+
+    world.turtle.vxBoost = 500; // adversarial: enough to skip touching candles without the source clamp
+    world.armPlayerPacedMotion();
+    for (let i = 0; i < 300 && world.trade.path.length === 0; i++) world.tick(1 / 60);
+    assert.equal(world.trade.path.length, 1, 'one explicit action must traverse exactly one price candle');
+    assert.equal(world.trade.lastPrice, 102);
+    assert.equal(world.maxSeenCandleId, 2, 'one action must advance the frontier by exactly one ID');
+    assert.equal(world.session.candles, 1);
+    assert.equal(world.turtle.halt, true);
+    assert.equal(world.trade._playerMotionArmed, false);
+    const afterStep = snap();
+    for (let i = 0; i < 300; i++) world.tick(1 / 60);
+    assert.equal(snap(), afterStep, 'a consumed action must not become permanent auto-walk');
+
+    world.turtle.dir = -1;
+    world.armPlayerPacedMotion();
+    for (let i = 0; i < 300 && world.lastCandleId !== 1; i++) world.tick(1 / 60);
+    assert.equal(world.lastCandleId, 1, 'one review action may cross exactly one prior boundary');
+    assert.equal(world.turtle.halt, true);
+    assert.equal(world.maxSeenCandleId, 2, 'backtracking must not retreat or advance the price frontier');
+    assert.equal(world.session.candles, 1);
+    assert.equal(world.trade.lastPrice, 102);
+    assert.equal(world.trade.path.length, 1);
+    const afterReviewStep = snap();
+    for (let i = 0; i < 300; i++) world.tick(1 / 60);
+    assert.equal(snap(), afterReviewStep, 'backtracking must also consume its movement action');
+
+    world.turtle.halt = true;
+    assert.equal(world.releasePlayerPacedMotion(), true);
+    assert.equal(world.turtle.halt, false, 'trade teardown must hand auto-walk back to free roam');
+    world.trade = null;
+    world.turtle.dir = 1;
+    const releasedX = world.turtle.x;
+    world.motionTick(0.1);
+    assert.ok(world.turtle.x > releasedX, 'manual close must not strand post-trade movement');
+
+    const free = playerMotionWorld({ liveTrade: false });
+    free.turtle.halt = false;
+    free.resetWorldMotionFrameClock();
+    assert.equal(free.turtle.halt, false, 'reset must not halt ordinary free roam');
+    const freeX = free.turtle.x;
+    free.motionTick(0.5);
+    assert.ok(free.turtle.x > freeX, 'ordinary free-roam auto-walk must remain unchanged');
+
+    const advanced = playerMotionWorld({ level: 4 });
+    advanced.turtle.halt = false;
+    advanced.resetWorldMotionFrameClock();
+    assert.equal(advanced.turtle.halt, false, 'reset must not pace Level 4+ trades');
+    const advancedX = advanced.turtle.x;
+    advanced.motionTick(0.5);
+    assert.ok(advanced.turtle.x > advancedX, 'Level 4+ trade movement must remain unchanged');
+  }],
+
+  ['background reset and anti-hop cannot manufacture a guided movement action', () => {
+    const world = playerMotionWorld();
+    world.closeFirstTradeGuide();
+    world.armPlayerPacedMotion();
+    world.motionTick(0.25); // player began a step but backgrounded before reaching a new candle
+    const pausedX = world.turtle.x;
+    world.resetWorldMotionFrameClock();
+    assert.equal(world.turtle.halt, true);
+    assert.equal(world.trade._playerMotionArmed, false);
+    for (let i = 0; i < 300; i++) world.tick(1 / 60);
+    assert.equal(world.turtle.x, pausedX, 'resume must require a fresh player action');
+    assert.equal(world.trade.path.length, 0);
+
+    world.candleTop = c => c.id === 2 ? -30 : -10; // a genuinely taller candle wall
+    world.turtle.x = 6.1; world.turtle.y = -12; world.turtle.onGround = true;
+    world.turtle.halt = false; world.trade._playerMotionArmed = false;
+    for (let i = 0; i < 180; i++) world.motionTick(1 / 60);
+    assert.equal(world.jumpCalls, 0, 'the 2.5s wall backstop must not fire without player intent');
+    assert.equal(world.turtle._tradeClimbT, 0);
+
+    world.turtle.onGround = true;
+    world.armPlayerPacedMotion();
+    for (let i = 0; i < 180; i++) world.motionTick(1 / 60);
+    assert.equal(world.jumpCalls, 1, 'the anti-hard-lock hop must survive after intentional movement');
+
+    const input = section("window.addEventListener('keydown'", 'TRADING (Step 6)');
+    assert.match(input, /addEventListener\(['"]pointercancel['"], resetWorldMotionFrameClock\)/);
+    assert.match(input, /addEventListener\(['"]blur['"], resetWorldMotionFrameClock\)/);
+    assert.equal((input.match(/armPlayerPacedMotion\(\)/g) || []).length, 11,
+      'all five keys, quick/delayed taps, and four swipe routes must share the intent owner');
+    for (const route of [
+      /e\.code === 'Space'[^\n]+armPlayerPacedMotion\(\)[^\n]+jump\(\)/,
+      /ArrowUp[^\n]+armPlayerPacedMotion\(\)[^\n]+fireJetpack\(\)/,
+      /ArrowDown[^\n]+armPlayerPacedMotion\(\)[^\n]+shellTuck\(\)/,
+      /ArrowLeft[^\n]+turtle\.dir = -1[^\n]+armPlayerPacedMotion\(\)/,
+      /ArrowRight[^\n]+turtle\.dir = 1[^\n]+armPlayerPacedMotion\(\)/,
+      /dy < -45[^\n]+armPlayerPacedMotion\(\)[^\n]+fireJetpack\(\)/,
+      /dy >  45[^\n]+armPlayerPacedMotion\(\)[^\n]+shellTuck\(\)/,
+      /dx < -40[^\n]+turtle\.dir = -1[^\n]+armPlayerPacedMotion\(\)/,
+      /dx >  40[^\n]+turtle\.dir = 1[^\n]+armPlayerPacedMotion\(\)/,
+    ]) assert.match(input, route);
+    const pointerDown = section("window.addEventListener('pointerdown'", "window.addEventListener('pointermove'");
+    assert.match(pointerDown, /if \(pointer && !pointer\.fired\)[\s\S]*armPlayerPacedMotion\(\);\s*jump\(\);/,
+      'the delayed canvas tap must arm its one movement boundary');
+    const pointerUp = section("window.addEventListener('pointerup'", '/* ---------- Candle inspector');
+    assert.match(pointerUp, /if \(pointer && !pointer\.fired[^\n]*\)[\s\S]*armPlayerPacedMotion\(\);\s*jump\(\);/,
+      'the crisp pointer-up tap must arm its one movement boundary');
+
+    const commit = section('function commitTrade()', "$('btnConfirm').onclick = commitTrade;");
+    assert.match(commit, /clearBeginnerSetup\(\);[^\n]*\n\s*haltPlayerPacedMotion\(\)/,
+      'every guided position must start halted before optional first-trade teaching');
+    const guideOpen = section('function openFirstTradeGuide()', "let reviewMode = 'replay'");
+    assert.match(guideOpen, /firstTradeGuide\s*=\s*\{[^\n]+\n\s*haltPlayerPacedMotion\(\)/,
+      'opening the first-trade guide must cancel stale movement intent');
+    const resolver = section('function resolveTrade(result)', '// Between guided trades:');
+    assert.match(resolver, /releasePlayerPacedMotion\(\);[^\n]*\n\s*trade = null;/,
+      'every resolution path must release player pacing before the trade owner disappears');
+  }],
+
   ['guided-trade wall time cannot print candles or advance progression', () => {
     const world = candleWorld({ liveTrade: true, lastX: 290 });
     world.maintainCandles(0, 0);

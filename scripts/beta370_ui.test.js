@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-/* Focused Build 370 teaching-surface contracts. Gameplay physics are deliberately out of scope. */
+/* Focused Build 370/371 teaching-surface contracts. Gameplay physics are deliberately out of scope. */
 const assert = require('assert/strict');
 const fs = require('fs');
 const path = require('path');
@@ -29,13 +29,17 @@ const tests = [
   }],
 
   ['first-trade guide is scrollable and Close/final Continue share one teardown', () => {
+    const steps = section('function firstTradeGuideSteps()', 'function closeFirstTradeGuide()');
     const guide = section('function closeFirstTradeGuide()', 'let reviewMode =');
+    assert.match(steps, /title: 'Reveal one candle at a time'/);
+    assert.match(steps, /Finn waits after each one/);
     assert.match(guide, /id="cqTradeGuideScroll"/);
     assert.match(guide, /overflow-y:auto/);
     assert.match(guide, /touch-action:pan-y/);
     assert.match(guide, /overscroll-behavior:contain/);
     assert.match(guide, /cqTradeGuideClose'\)\.addEventListener\('click', closeFirstTradeGuide\)/);
     assert.match(guide, /firstTradeGuide\.step >= firstTradeGuideSteps\(\)\.length - 1\) \{ closeFirstTradeGuide\(\)/);
+    assert.match(guide, /READY — CLOSE GUIDE/);
   }],
 
   ['animated concept lesson has a reachable Close and a contained mobile scroller', () => {
@@ -86,7 +90,7 @@ function runSuite(options = {}) {
     passed,
     total: tests.length,
     failures,
-    detail: `${passed}/${tests.length} Build 370 teaching-surface contracts passed`,
+    detail: `${passed}/${tests.length} Build 370/371 teaching-surface contracts passed`,
   };
   if (options.report !== false) console.log(`\n${result.detail}`);
   return result;

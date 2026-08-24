@@ -4,36 +4,50 @@ Only repository-documented issues are listed below. The severity/status reflects
 
 ## Build-370/371 player-paced next-beta candidate
 
-**P0 — Preview release blocker (2026-08-24):** the exact Build-370 artifact was served on Preview as
-deployment `c8c138b1-3e77-45a5-bc5a-094c8f6a83f2` (source `7bb0ed7`, `/game` SHA-256
-`b615adb1...`). In a fresh ordinary Level-1 route at 390×844, the first-trade guide was dismissed
-with Escape. With no subsequent player input, the live `CLOSE POSITION` state changed from `−2 In the
-red` to `−4 In the red` during five seconds of idle time. The required player-paced rule says an idle
-or set-down phone must not advance guided-trade price/outcome. This Preview observation overrides the
-prior local-code conclusion for release purposes. Evidence: `handoffs/BETA370_PREVIEW_QA.md`.
+**Historical Build-370 P0 — CLOSED ON EXACT BUILD-371 PREVIEW BY SERVED EVIDENCE:** Build 370
+deployment `c8c138b1-3e77-45a5-bc5a-094c8f6a83f2` advanced live P&L from `−2` to `−4` while no
+player input was sent after Escape. Build 371 payload
+`3019058b32c6acddc8fc5530569f24d95c76a98f` adds the one-action/one-boundary owner and is now served
+as Preview deployment `1c56b4ee-a726-4116-8e4c-cc6450b6f7cd` (source `f311dfa`, exact `/game`
+SHA-256 `3224c603...`). At 390×844, Escape/no-input held `+0` for 5.6 seconds, one explicit action
+changed state once to `+1`, and a second 5.6-second idle period held `+1`. A separate visible-× run
+held `−1` for 5.6 seconds. Backtrack, manual Close/replay/free-roam return, automatic long TP,
+automatic short TP, Q1–Q7 v2 receipt, and Founder deny also passed. Evidence:
+`handoffs/BETA370_PREVIEW_QA.md`, `handoffs/BETA371_LOCAL_REPAIR_CANDIDATE.md`, and
+`handoffs/BETA371_PREVIEW_QA.md`.
 
-**Local remediation exists; issue remains open pending served proof:** Build 371 payload
-`3019058b32c6acddc8fc5530569f24d95c76a98f` gates every guided movement action to one production
-touching-candle boundary, cancels stale intent on guide/background/input lifecycle changes, restores
-free roam after manual Close, and seeds the entry price cursor even when no future suffix exists.
-The three game artifacts match at `3224c603...`; pacing is 13/13, teaching UI 5/5, the full gate is
-27/0/0/1, and independent re-review APPROVED. This does not close the P0 until exact Build 371 is
-served on Preview and the idle/P&L, action-step, background/resume, backtrack, terminal, and physical
-phone paths pass. Evidence: `handoffs/BETA371_LOCAL_REPAIR_CANDIDATE.md`.
+**Release remains held — unverified matrix is not a new confirmed runtime defect:** physical-phone
+background/resume and subjective feel, automatic Stop Loss/loss paths for both directions, Founder
+Access allow/dashboard/export and fresh-entry cohort display, a genuine v16→v17 returning-service-
+worker upgrade, Production `0003`, and account/data rollback compatibility remain unverified. The
+in-app browser and local regression suite cannot be substituted for those credentials/device states.
+Manifest/lock, `main`, production deployment, double production fingerprint, and tester links remain
+prohibited until all gates pass.
 
 The additive Preview-only `0003_beta_survey_research.sql` migration remains valid: it was applied once
 after backup/bookmark and inspection, leaving six historical rows unchanged and both nullable checked
-columns present. Survey Q1–Q7 receipt was exercised on Preview. A code rollback must leave the
-additive columns in place. See `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`.
+columns present. Survey Q1–Q7 receipt was exercised on Preview. Production `BETA_DB` was inspected
+read-only and still lacks those two columns; production migration-before-Functions remains a gate.
+A code rollback must leave additive columns in place. See
+`handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md` and
+`handoffs/BETA371_PROVIDER_ROLLBACK_AUDIT.md`.
 
-The guide Close and Escape controls, ordinary Home Market bridge, and survey v2 storage path passed
-their limited Preview checks. Unauthenticated Founder access correctly denied. These do not close the
-remaining founder-Allow/dashboard/export, valid invite attribution, returning-service-worker,
-long/short terminal, pause/background/backtrack, rollback, or physical-phone gates.
+Guide ×/Escape, ordinary Home Market, automatic TP for both directions, manual Close/replay,
+backtracking, and the survey v2 confirmed-write receipt now have exact Build-371 Preview evidence.
+No separate Build-371 D1 row query is claimed. The guide scroll owner is configured
+(`overflow-y:auto`, touch pan enabled), but all copy fit at 390×844, so a Build-371 overflow-
+displacement gesture is not claimed. Unauthenticated Founder access correctly denied.
 
-Build 370 was published only to its non-production branch and Preview; Build 371 is local only at
-this record. `main` and production remain Build 367. Do not send cohort links or start release
-controls until the P0 is closed by the full matrix.
+Controlled invite capture, URL stripping, Functions validation, and token-filtered Preview D1
+persistence passed for one internal pair without sending a tester link. Because the shared browser
+identity had earlier QA history, fresh-entry cohort freezing and Founder dashboard display are not
+claimed. Provider binding/secret names and Access issuer/audience are coherent; the retained
+Build-367 deployment exactly matches its tagged game hash and service-worker identity. Host rollback
+cannot by itself reconcile new account/data writes.
+
+Build 371 was published only to its non-production branch and Preview. Local and remote `main` remain
+`8c858aab...`; production remains Build 367. Do not send cohort links or start production release
+controls while the listed matrix gaps remain.
 
 ## Build-369 complete Cloudflare migration candidate
 
@@ -145,7 +159,9 @@ and blocked.
   representative-device Founder testing.
 - Global HUD/modal safe-area migration, historical small controls, secondary canvases, and the
   `/play` wrapper/PWA manifest/service-worker/cache topology remain post-beta/release follow-ups.
-- Successful online survey telemetry was not exercised because the local harness blocks external
-  connections by design.
+- Exact Build-371 Preview Q1–Q7 exercised the online response-specific confirmed-write receipt.
+  Fresh-player entry-cohort freezing, Access-private Founder cohort display, release-authorized
+  tester issuance/link send, Production telemetry, and returning-client behavior remain release
+  boundaries. Controlled Preview invite capture and token-filtered D1 persistence already passed.
 - Served production fingerprint, fresh-cache behavior, release manifest/lock/gate, and account-level
   freeze changes remain future Release Manager work.

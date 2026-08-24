@@ -1,11 +1,61 @@
 # Current Technical State
 
+## 2026-08-24 Build-371 Preview QA addendum — SERVED PACING P0 PASS; RELEASE HELD
+
+- **VERIFIED — exact non-production deployment:** control source
+  `f311dfa0375305ce08c2d4af06a72f30356f2fd3` deployed successfully as Cloudflare Pages deployment
+  `1c56b4ee-a726-4116-8e4c-cc6450b6f7cd`. Both the deployment route and current branch alias serve
+  `/game` at SHA-256 `3224c603255ee5d1210295b31151f7de04ca6c3b2a211b158f14627b76a0ab09`
+  (`2212400` bytes), exactly matching the Build-371 source/root/site candidate.
+- **VERIFIED — original P0 closed on served bytes:** at 390×844, Escape dismissed the first-trade
+  guide and the live close state remained `+0 Safe profit` through 5.6 seconds of no input. One
+  explicit forward action changed resolved state once to `+1`; another 5.6 seconds of no input
+  remained `+1`. A separate first-trade run used the visible × and held `−1` for 5.6 seconds.
+- **VERIFIED — served trade behaviors:** one backtrack moved Finn without changing resolved `+1` and
+  remained idle for another 5.4 seconds; manual Close banked `+1`, recap truth said `CLOSED EARLY`,
+  replay rendered, and ordinary free roam resumed. A later ordinary long reached automatic TP and
+  Wallet recorded `+10`; an ordinary short reached automatic TP and details recorded `TARGET HIT`
+  and `WIN +10 shells`. No ambient reward/world event was observed while either live position was
+  exercised; the exact-source 13/13 contract remains the exhaustive suppression owner.
+- **VERIFIED — teaching/research/protection:** two ordinary fresh-origin paths reached all four guide
+  pages. Escape and the visible × both worked; the final Build-371 copy explicitly explains one
+  candle at a time. The computed guide scroll owner is `overflow-y:auto` with `touch-action:pan-y`;
+  at 390×844 its 172 px content fit exactly, so this is not a claim of an overflow-displacement
+  gesture on Build 371. Q1–Q7 completed on exact Build 371 and the receipt-gated thank-you state
+  proves the response-specific v2 API receipt matched response id plus stored Q6
+  `gamer_not_trader` and Q7 `probably`; no separate Build-371 D1 row query is claimed.
+  Unauthenticated Founder access returned 403. Served `sw.js` identifies `chartquest-site-v17`.
+- **VERIFIED — scoped attribution/provider/rollback:** internal pair `b371-beta100` /
+  `i-M2B7D9K2Z9W6T7K8` was captured on the exact Build-371 alias, stripped from the URL, and persisted
+  to four token-filtered Preview D1 rows for one pseudonymous session; the exact-game row carries
+  `build=371`. Preview/Production D1 binding names and UUIDs, required encrypted-secret presence,
+  and Access issuer/audience coherence were re-audited. Retained Production deployment
+  `38d166bd-2aa2-4fd3-8aa9-8d1423f39220` serves the exact tagged Build-367 `/game` hash
+  `1d97b906...` and service worker v14.
+- **RELEASE HOLD:** true physical-phone background/resume and subjective feel, automatic SL/loss
+  outcomes for long and short, Founder Access allow/dashboard/export and fresh-entry cohort display,
+  a genuine v16→v17 returning-worker upgrade, Production `0003`, account/data rollback compatibility,
+  release manifest/lock/gate, explicit final production authorization, `main`, production, and
+  double production fingerprint remain incomplete. The in-app browser cannot substitute for a
+  hidden physical phone or a valid Founder JWT. Do not infer these passes.
+- **PROTECTION:** Preview migration `0003` was not reapplied; no recovered Supabase archive or
+  production state was changed. Production `BETA_DB` still has only the original 13 survey columns,
+  so `0003` must be authorized and applied exactly once there before Build-371 Functions. Local/
+  remote `main` remain `8c858aab...`; Build 367 remains the documented production release. No tester
+  link was issued.
+
+See `handoffs/BETA371_PREVIEW_QA.md`. The Build-370 failure below is retained as historical root-cause
+evidence and no longer describes the current Preview artifact.
+
+See `handoffs/BETA371_PROVIDER_ROLLBACK_AUDIT.md` for the exact external provider and rollback
+boundary.
+
 ## 2026-08-24 Build-371 local pacing repair — VERIFIED LOCALLY; RELEASE BLOCKED
 
 - **VERIFIED — root cause:** Build 370 removed its special wall-clock/carry path but inherited the
   platformer's always-on horizontal walk. Closing the first-trade guide cleared `paused` without a
   player-intent gate, so Finn crossed real candle frontiers and changed `lastPrice`, path, and P&L
-  while the phone was untouched. The former 11/11 suite held `maxSeenCandleId` fixed and did not run
+  while no player input was sent. The former 11/11 suite held `maxSeenCandleId` fixed and did not run
   production horizontal movement, so it could not reproduce the served defect.
 - **VERIFIED — exact local repair:** payload `3019058b32c6acddc8fc5530569f24d95c76a98f`,
   Build 371. `chart-quest.html`, `index.html`, and `website/game.html` are byte-identical at SHA-256
@@ -22,13 +72,14 @@
 - **VERIFIED — evidence:** player pacing 13/13 using production gap-zero geometry and an adversarial
   movement spike; teaching UI 5/5; full verifier 27 pass / 0 fail / 0 warn / 1 optional Puppeteer
   skip; diff check clean; two independent adversarial re-reviews APPROVE with no remaining finding.
-- **RELEASE HOLD:** Build 371 is not yet on Preview. The complete Preview/live-phone matrix,
-  Founder Access allow/dashboard/export, valid invite attribution, returning-service-worker,
-  rollback/provider proof, release manifest/lock, authorization, `main`, production, and double
-  served-fingerprint verification remain incomplete. Production remains Build 367.
+- **PREVIEW FOLLOW-UP:** exact Build 371 is now deployed to non-production Preview and its original
+  idle/P&L blocker is closed by the scoped evidence above. Physical/device, opposite-terminal,
+  authenticated Founder/export/fresh-entry cohort, returning-worker, Production `0003`,
+  post-promotion rollback action, account/data rollback, and production gates remain. Production
+  remains Build 367.
 
-See `handoffs/BETA371_LOCAL_REPAIR_CANDIDATE.md`. The Build-370 Preview failure below remains the
-current external result until exact Build 371 passes a new Preview run.
+See `handoffs/BETA371_LOCAL_REPAIR_CANDIDATE.md` for the implementation evidence and
+`handoffs/BETA371_PREVIEW_QA.md` for the current external result.
 
 ## 2026-08-24 Build-370 Preview QA addendum — RELEASE BLOCKED
 

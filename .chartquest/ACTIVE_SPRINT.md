@@ -15,7 +15,7 @@ and served-fingerprint gates all pass.
 - Isolated candidate branch: `codex/beta370-player-paced-trades`.
 - Exact Build-371 pacing-repair payload commit: `3019058b32c6acddc8fc5530569f24d95c76a98f`
   (the Build-370 experiment payload remains `08d3b3c930f86ca4894ff9c26c813f78b43fb040`).
-- Build: **371 local candidate; Preview still serves failed Build 370**.
+- Build: **371 Preview engineering candidate; production remains Build 367**.
 - Source, root mirror, and website game artifact are byte-identical at SHA-256
   `3224c603255ee5d1210295b31151f7de04ca6c3b2a211b158f14627b76a0ab09`.
 - Additive survey migration SHA-256:
@@ -24,14 +24,26 @@ and served-fingerprint gates all pass.
   `chartquest-preview` (`d2f3e508-7f2c-400e-9522-d89c38545e9e`) after a D1 recovery bookmark and
   pre-change survey aggregate. Both nullable checked columns now exist; the six historical rows and
   their aggregate are unchanged. See `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`.
-- **Preview deployment (2026-08-24):** source `7bb0ed7` deployed successfully as Pages deployment
-  `c8c138b1-3e77-45a5-bc5a-094c8f6a83f2`; the served `/game` artifact matches the Build-370 SHA-256
-  `b615adb1...`. This is a non-production deployment only.
-- **Build-371 local repair (2026-08-24):** the served idle-advance root cause is fixed locally by an
+- **Historical failed Build-370 Preview (2026-08-24):** source `7bb0ed7` deployed as Pages
+  deployment `c8c138b1-3e77-45a5-bc5a-094c8f6a83f2`; its served `/game` matched `b615adb1...` and
+  exposed the no-input P&L blocker. It is superseded for current Preview testing, not production.
+- **Build-371 repair (2026-08-24):** the served idle-advance root cause is fixed by an
   explicit one-action/one-boundary gate. Touching candles, abnormal movement spikes, guide close,
   background/resume, backtracking, anti-hop, no-overhang entry, manual Close, free roam, and Level 4+
   are covered by 13/13 pacing contracts. Independent re-review APPROVED; full verifier is 27/0/0/1.
   See `handoffs/BETA371_LOCAL_REPAIR_CANDIDATE.md`.
+- **Build-371 Preview deployment (2026-08-24):** control source `f311dfa` deployed successfully as
+  Pages deployment `1c56b4ee-a726-4116-8e4c-cc6450b6f7cd`. Deployment route and branch alias both
+  serve the exact approved `/game` SHA-256 `3224c603...` (`2212400` bytes). At 390×844 the original
+  Escape/no-input failure did not reproduce: `+0` held for 5.6 seconds, one action changed state once
+  to `+1`, and another 5.6 seconds held at `+1`. Backtrack, manual Close/replay, free-roam return,
+  automatic long TP, automatic short TP, Q1–Q7 receipt, guide ×/Escape, and Founder deny also passed.
+  See `handoffs/BETA371_PREVIEW_QA.md`.
+- **Build-371 provider/rollback audit (2026-08-24):** Preview and Production binding names/UUIDs,
+  required encrypted-secret presence, Access issuer/audience coherence, controlled Preview invite
+  persistence, and the exact Build-367 static rollback artifact passed. Production `BETA_DB` still
+  lacks Q6/Q7, so authorized Production `0003` migration-before-Functions is a hard release gate.
+  See `handoffs/BETA371_PROVIDER_ROLLBACK_AUDIT.md`.
 - Production Build 367 remains live and unaffected. Build 371 has not been pushed to `main` or
   deployed to production.
 
@@ -39,8 +51,8 @@ and served-fingerprint gates all pass.
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Build-370 BETA_DB migration | Release Manager | **PASS — PREVIEW ONLY** | `0003` was applied once to the verified Preview `BETA_DB`; recovery bookmark, absent-before/present-after schema, constraints, and six-row aggregate are recorded in `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`. Do not apply it again or to production. |
-| Build-371 repair Preview and phone QA | Release Manager + Founder | **LOCAL PASS — PREVIEW RETEST PENDING** | Publish only exact payload `3019058` to the existing non-production branch, verify the served artifact equals `3224c603...`, then repeat the complete pacing/guide/background/terminal matrix. The failed Build-370 Preview remains the current external evidence until this passes. |
+| Build-370 BETA_DB migration | Release Manager | **PASS — PREVIEW ONLY** | `0003` was applied once to the verified Preview `BETA_DB`; recovery bookmark, absent-before/present-after schema, constraints, and six-row aggregate are recorded in `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`. Do not reapply it to Preview. Apply it exactly once to the verified Production `BETA_DB` only after release authorization plus a Production recovery bookmark/count/schema record, and before Build-371 Functions. |
+| Build-371 repair Preview and phone QA | Release Manager + Founder | **SERVED PACING P0 PASS — RELEASE MATRIX INCOMPLETE** | Engineering Preview and controlled invite capture/D1 checks passed on exact deployment `1c56b4ee...`. Complete a physical-phone/true-background pass, automatic SL/loss paths, Founder Access allow/dashboard/export plus fresh-entry cohort display, returning v16→v17 worker, Production `0003`, and account/data rollback proof on the exact candidate. |
 | Next ten-person beta cohort | PM/CTO | **BLOCKED BY PREVIEW/DEVICE GATES** | Do not generate or share a cohort until the repaired candidate passes Preview and physical-device acceptance. After approval, generate one release-authorized cohort and ten unique consonant-digit invite codes. |
 | Historical application-data migration | Release Manager | **SEPARATE PENDING WORK** | Preserve the existing audited Build-369 account/data migration gates; this Build-370 experiment does not weaken or bypass them. |
 
@@ -48,15 +60,17 @@ and served-fingerprint gates all pass.
 
 | Item | Status | Evidence |
 |---|---|---|
-| Build 371 production deployment | **DO NOT DEPLOY** | Build 371 is local only; repaired Preview/physical-device QA, remaining matrix items, and all release controls are incomplete. No production manifest/lock/served fingerprint exists. |
-| Next tester links | **DO NOT SEND YET** | The current public site still serves Build 367. Q6/Q7 are verified only in the blocked Preview candidate; valid invite attribution has not been exercised. |
+| Build 371 production deployment | **DO NOT DEPLOY** | The served pacing P0 is closed on Preview, but Production `BETA_DB` lacks Q6/Q7 and physical-device/background, automatic-loss, Founder allow/export/fresh-entry cohort, returning-worker, account/data rollback, and release-control gates remain incomplete. No production manifest/lock/served fingerprint exists. |
+| Next tester links | **DO NOT SEND YET** | The current public site still serves Build 367. Q1–Q7 is confirmed-write-receipt verified; controlled invite capture/persistence is separately token-filtered D1-query verified. A release-authorized cohort, fresh-entry Founder view, and physical acceptance have not occurred. |
 | Full Cloudflare application migration | **SEPARATE RELEASE GATE** | Build 370 inherits the Build-369 local candidate but does not itself prove production APP_DB migration, account restoration, or historical application-data reconciliation. |
 
 ## Completed tasks
 
 | Task | Result | Evidence |
 |---|---|---|
-| Build-371 idle-gate repair and adversarial review | **APPROVED LOCALLY; PREVIEW/RELEASE HELD** | Exact payload `3019058`; game artifacts `3224c603...`; verifier 27/0/0/1; trade 13/13; UI 5/5; independent final review APPROVE |
+| Build-371 exact Preview deployment and scoped browser QA | **SERVED PACING P0 PASS; RELEASE HELD** | Deployment `1c56b4ee-a726-4116-8e4c-cc6450b6f7cd`; `/game` `3224c603...`; Escape/idle/action/backtrack/manual/replay/free-roam, long TP, short TP, guide ×/Escape, Q1–Q7 receipt, and Founder deny passed; device/credential/opposite-terminal gates remain |
+| Build-371 provider, attribution, and rollback audit | **SCOPED PASS; RELEASE HELD** | Preview/Production bindings and required secrets re-audited; Access issuer/audience coherent; controlled invite persisted in Preview D1; retained Build-367 deployment `/game` exactly matches `1d97b906...` and `sw.js` v14; Production `0003` and account/data rollback remain pending |
+| Build-371 idle-gate repair and adversarial review | **APPROVED LOCALLY; RELEASE HELD** | Exact payload `3019058`; game artifacts `3224c603...`; verifier 27/0/0/1; trade 13/13; UI 5/5; independent final review APPROVE; exact Preview follow-up passed the scoped pacing P0 matrix |
 | Build-370 player-paced trade and next-beta learning payload | **APPROVED LOCALLY; RELEASE HELD** | Exact payload `08d3b3c`; game artifacts `b615adb1...`; verifier 27/0/0/1; trade 11/11; UI 5/5; survey 4/4; beta service 26/26; client 15/15; Founder beta 8/8; independent final review APPROVE |
 | Build-369 full Cloudflare application/data client | **APPROVED LOCALLY** | Payload `df0053c`; `handoffs/CLOUDFLARE_GAME_CUTOVER_IMPLEMENTATION.md`; app 31/31, adapter 22/22, cutover 7/7 |
 | Build-369 auditable historical importer/reconciler | **APPROVED LOCALLY; REAL EXPORT PENDING** | `handoffs/CLOUDFLARE_MIGRATION_TOOLING.md`; importer 27/27 |
@@ -97,13 +111,16 @@ and served-fingerprint gates all pass.
 
 No product-design decision is required before Preview. The Founder explicitly selected
 player-controlled traversal instead of a trade clock and required every adjacent trade rule to stay
-intact. The next Founder decision is subjective acceptance of physical-device trade feel after the
-Release Manager has applied the migration and produced a safe Preview.
+intact. The next Founder actions are physical-device trade-feel acceptance and an authenticated
+Founder dashboard/export pass on the exact Preview. Production migration and final release
+authorization remain later, separate decisions.
 
 ## Release status
 
-**BUILD 370 PREVIEW QA BLOCKED — DO NOT DEPLOY OR SEND LINKS — THE PLAYER-PACED TRADE GATE FAILED ON THE SERVED PREVIEW; REMAINING PHONE/RELEASE CONTROLS AND LIVE FINGERPRINT ARE PENDING — BUILD 367 REMAINS LIVE**
+**BUILD 371 SERVED PACING P0 PASS — DO NOT DEPLOY OR SEND LINKS — PHYSICAL DEVICE, TRUE BACKGROUND/RETURNING WORKER, AUTOMATIC LOSS, AUTHENTICATED FOUNDER/EXPORT/FRESH-ENTRY COHORT, PRODUCTION `0003`, POST-PROMOTION ROLLBACK ACTION, ACCOUNT/DATA ROLLBACK, AND RELEASE CONTROLS REMAIN — BUILD 367 REMAINS LIVE**
 
-Automated QA does not authorize production. Apply `0003` before Functions, verify Cloudflare in
-Preview and on a real phone, then use the normal Release Manager manifest/lock/gate/fingerprint
-process. Historical/account migration remains a separate no-loss gate.
+Automated and scoped Preview QA do not authorize production. Migration `0003` is already present in
+Preview and must not be reapplied there. Finish the exact-candidate phone/credential matrix, then
+apply `0003` once to Production under the recorded recovery/authorization gate before Functions and
+use the normal Release Manager manifest/lock/gate/fingerprint process. Historical/account migration
+remains a separate no-loss gate.

@@ -4,32 +4,27 @@ Only repository-documented issues are listed below. The severity/status reflects
 
 ## Build-370 player-paced next-beta candidate
 
-No known local code P0 remains on exact payload `08d3b3c930f86ca4894ff9c26c813f78b43fb040`
-(game artifact `b615adb1...`, tracker `55b523b5...`, survey migration `3283707a...`). Final
-adversarial review approved after two gaps were closed: guided trades now return before
-behind-camera pruning can delete deferred candles/rewards/pages, and invite tokens must alternate
-eight issuer-generated consonant-digit pairs so name-like strings cannot pass. Full verifier evidence
-is 27/0/0/1; focused evidence is trade 11/11, teaching 5/5, survey 4/4, beta service 26/26,
-client 15/15, and Founder beta dashboard 8/8.
+**P0 — Preview release blocker (2026-08-24):** the exact Build-370 artifact was served on Preview as
+deployment `c8c138b1-3e77-45a5-bc5a-094c8f6a83f2` (source `7bb0ed7`, `/game` SHA-256
+`b615adb1...`). In a fresh ordinary Level-1 route at 390×844, the first-trade guide was dismissed
+with Escape. With no subsequent player input, the live `CLOSE POSITION` state changed from `−2 In the
+red` to `−4 In the red` during five seconds of idle time. The required player-paced rule says an idle
+or set-down phone must not advance guided-trade price/outcome. This Preview observation overrides the
+prior local-code conclusion for release purposes. Evidence: `handoffs/BETA370_PREVIEW_QA.md`.
 
-Production release remains blocked by the ordering-sensitive data gate. The verified Preview BETA_DB
-was backed up/bookmarked and inspected; `0003_beta_survey_research.sql` was then applied once to that
-database only, with six historical rows unchanged and both nullable checked columns present. The
-exact Build-370 Functions/static bytes still must deploy to Preview before any preview survey write or
-Founder read. Functions-first was avoided. A code rollback must leave the additive columns in place.
-See `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`.
+The additive Preview-only `0003_beta_survey_research.sql` migration remains valid: it was applied once
+after backup/bookmark and inspection, leaving six historical rows unchanged and both nullable checked
+columns present. Survey Q1–Q7 receipt was exercised on Preview. A code rollback must leave the
+additive columns in place. See `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`.
 
-Preview still needs the real long/short win/loss traversal matrix, pause/background/backtrack,
-response-specific survey-v2 storage receipt, cohort dashboard/export, Access, returning-service-
-worker, and rollback checks. At 390×844 the seven-step survey and Home Market chart bridge fit with
-no horizontal overflow. Full physical-phone trade feel, touch pacing, audio/haptics, and subjective
-readability remain Founder validation. The pre-existing internal `?dev=1` boot path can hit a
-`candleAcademy` temporal-dead-zone error; the plain tester path used for the next beta does not use
-that flag, and this candidate does not claim to fix the internal-only path.
+The guide Close and Escape controls, ordinary Home Market bridge, and survey v2 storage path passed
+their limited Preview checks. Unauthenticated Founder access correctly denied. These do not close the
+remaining founder-Allow/dashboard/export, valid invite attribution, returning-service-worker,
+long/short terminal, pause/background/backtrack, rollback, or physical-phone gates.
 
-Build 370 has not been pushed or deployed; the public site remains Build 367. Do not send cohort
-links until the exact candidate passes migration, Preview/device, manifest/lock/gate, served-
-fingerprint, and Founder release approval.
+Build 370 was published only to its non-production branch and Preview. `main` and production remain
+Build 367. Do not send cohort links or start release controls until the P0 is fixed and the full matrix
+passes.
 
 ## Build-369 complete Cloudflare migration candidate
 

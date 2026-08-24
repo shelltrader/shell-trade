@@ -23,23 +23,27 @@ and served-fingerprint gates all pass.
   `chartquest-preview` (`d2f3e508-7f2c-400e-9522-d89c38545e9e`) after a D1 recovery bookmark and
   pre-change survey aggregate. Both nullable checked columns now exist; the six historical rows and
   their aggregate are unchanged. See `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`.
-- Production Build 367 remains live and unaffected. Build 370 has not been pushed or deployed.
+- **Preview deployment (2026-08-24):** source `7bb0ed7` deployed successfully as Pages deployment
+  `c8c138b1-3e77-45a5-bc5a-094c8f6a83f2`; the served `/game` artifact matches the Build-370 SHA-256
+  `b615adb1...`. This is a non-production deployment only.
+- Production Build 367 remains live and unaffected. Build 370 has not been pushed to `main` or
+  deployed to production.
 
 ## Active tasks
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
 | Build-370 BETA_DB migration | Release Manager | **PASS — PREVIEW ONLY** | `0003` was applied once to the verified Preview `BETA_DB`; recovery bookmark, absent-before/present-after schema, constraints, and six-row aggregate are recorded in `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`. Do not apply it again or to production. |
-| Build-370 preview and phone QA | Release Manager + Founder | **LOCAL AUTOMATION/390PX VISUAL PASS; PREVIEW DEPLOYMENT PENDING** | Deploy the exact payload to Preview now that `0003` is verified; test player-paced long/short win/loss, pause/background/backtrack, survey v2 receipt, cohort dashboard, and returning service worker. Founder judges physical trade feel. |
-| Next ten-person beta cohort | PM/CTO | **PENDING RELEASE APPROVAL** | After preview/device approval, generate one `b370-beta2` cohort and ten unique consonant-digit invite codes; share plain canonical links only after Build 370 is verified live. |
+| Build-370 preview and phone QA | Release Manager + Founder | **FAIL — PREVIEW PLAYER-PACING GATE** | At 390×844, after the first-trade guide was dismissed with Escape and with no further input, the live-trade label changed from `−2 In the red` to `−4 In the red` over five seconds. This contradicts the no-idle-price-advance requirement. Do not advance release controls. See `handoffs/BETA370_PREVIEW_QA.md`. |
+| Next ten-person beta cohort | PM/CTO | **BLOCKED BY PREVIEW P0** | Do not generate or share a cohort while player-paced Preview QA is failing. After remediation and preview/device approval, generate one `b370-beta2` cohort and ten unique consonant-digit invite codes. |
 | Historical application-data migration | Release Manager | **SEPARATE PENDING WORK** | Preserve the existing audited Build-369 account/data migration gates; this Build-370 experiment does not weaken or bypass them. |
 
 ## Blocked tasks
 
 | Item | Status | Evidence |
 |---|---|---|
-| Build 370 production deployment | **DO NOT DEPLOY** | `0003` is applied to Preview only; Preview code deployment and physical-device QA are incomplete, and no release manifest/lock/served fingerprint exists. |
-| Next tester links | **DO NOT SEND YET** | The current public site still serves Build 367; invite attribution and Q6/Q7 exist only in the local candidate. |
+| Build 370 production deployment | **DO NOT DEPLOY** | Preview player-paced trade QA failed; physical-device QA, remaining Preview matrix items, and all release controls are incomplete. No production manifest/lock/served fingerprint exists. |
+| Next tester links | **DO NOT SEND YET** | The current public site still serves Build 367. Q6/Q7 are verified only in the blocked Preview candidate; valid invite attribution has not been exercised. |
 | Full Cloudflare application migration | **SEPARATE RELEASE GATE** | Build 370 inherits the Build-369 local candidate but does not itself prove production APP_DB migration, account restoration, or historical application-data reconciliation. |
 
 ## Completed tasks
@@ -91,7 +95,7 @@ Release Manager has applied the migration and produced a safe Preview.
 
 ## Release status
 
-**BUILD 370 LOCAL CANDIDATE APPROVED — DO NOT DEPLOY OR SEND LINKS — BETA_DB MIGRATION, PREVIEW/PHONE QA, RELEASE CONTROLS, AND LIVE FINGERPRINT PENDING — BUILD 367 REMAINS LIVE**
+**BUILD 370 PREVIEW QA BLOCKED — DO NOT DEPLOY OR SEND LINKS — THE PLAYER-PACED TRADE GATE FAILED ON THE SERVED PREVIEW; REMAINING PHONE/RELEASE CONTROLS AND LIVE FINGERPRINT ARE PENDING — BUILD 367 REMAINS LIVE**
 
 Automated QA does not authorize production. Apply `0003` before Functions, verify Cloudflare in
 Preview and on a real phone, then use the normal Release Manager manifest/lock/gate/fingerprint

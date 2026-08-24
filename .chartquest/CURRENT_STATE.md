@@ -1,5 +1,33 @@
 # Current Technical State
 
+## 2026-08-24 Build-370 Preview QA addendum — RELEASE BLOCKED
+
+- **VERIFIED — Preview only:** source `7bb0ed7` deployed successfully as Pages deployment
+  `c8c138b1-3e77-45a5-bc5a-094c8f6a83f2` on branch
+  `codex/beta370-player-paced-trades`. The served `/game` SHA-256 is exactly
+  `b615adb1c06558b5409111384c406053dfb9dee802eda86d7000db8b2e63103d`.
+- **VERIFIED — migration/write path:** the seven-step Preview survey completed with Q1–Q7; a
+  response-specific Preview D1 receipt confirmed Q6 `gamer_not_trader`, Q7 `probably`, the existing
+  fields, and `ingest_source = cloudflare`. The optional Q5 blank is stored by the current client as
+  an empty string. This deliberately retained QA row is Preview-only evidence; no historical answer
+  content or identifiers were inspected.
+- **VERIFIED — teaching controls at 390×844:** Home Market's candle bridge rendered; the first-trade
+  guide appeared after the ordinary route, the explicit Close control worked, the guide's scroll
+  region accepted a scroll gesture, and a separate first-trade run dismissed the guide with Escape.
+  No browser-console runtime error was observed in these exercised flows.
+- **FAILED — release blocker:** immediately after the Escape dismissal, leaving the phone untouched
+  changed the live `CLOSE POSITION` state from `−2 In the red` to `−4 In the red` over five seconds.
+  This is incompatible with the required idle/player-paced guided-trade behavior. The candidate must
+  not proceed to physical acceptance, release manifest/lock, `main`, production, or tester links.
+- **VERIFIED — protection:** unauthenticated Preview Founder page access returned 403. Founder
+  Access allow/dashboard/export, valid invite attribution, old-client service-worker return,
+  long/short terminal paths, pause/background/backtrack, rollback, and physical-phone QA are
+  unverified; none may be inferred from the local suite.
+- Production was not queried, changed, pushed, or deployed. Build 367 remains live.
+
+See `handoffs/BETA370_PREVIEW_QA.md` for scoped evidence. Lower sections are historical snapshots
+and do not override this release-blocking addendum.
+
 ## 2026-08-24 Build-370 next-beta local candidate — VERIFIED LOCALLY
 
 - Exact payload commit: `08d3b3c930f86ca4894ff9c26c813f78b43fb040` on

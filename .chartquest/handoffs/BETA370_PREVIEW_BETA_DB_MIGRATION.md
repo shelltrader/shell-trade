@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-24
 
-**Status:** **PASS — PREVIEW BETA_DB ONLY; PREVIEW CODE DEPLOYMENT AND QA PENDING**
+**Status:** **PASS — PREVIEW BETA_DB ONLY; CODE DEPLOYED TO PREVIEW; QA BLOCKED BY PLAYER-PACING P0**
 
 ## Candidate identity
 
@@ -67,11 +67,19 @@ Do not restore the pre-migration bookmark after Build-370 survey writes begin: r
 erase Q6/Q7 responses. A code rollback may retain these additive nullable columns. The bookmark is
 evidence and a pre-write recovery point only.
 
-## Remaining gates
+## Subsequent Preview evidence and remaining gates
 
-1. Deploy the exact Build-370 Functions/static candidate to Preview, retaining Preview's verified
-   `APP_DB`/`BETA_DB` bindings and secrets.
-2. Run the complete Preview and physical-phone matrix: player-paced long/short win/loss, pause /
+**VERIFIED — Preview deployment:** the exact candidate's served `/game` artifact matched SHA-256
+`b615adb1...` on successful Pages deployment `c8c138b1-3e77-45a5-bc5a-094c8f6a83f2` (source
+`7bb0ed7`). The deployment retained the verified Preview binding. No production state changed.
+
+**FAILED — Preview player-pacing QA:** after the first-trade guide was dismissed with Escape at
+390×844, a five-second no-input observation changed the live label from `−2 In the red` to `−4 In the
+red`. This blocks the full matrix and release sequence. See `BETA370_PREVIEW_QA.md`.
+
+1. Correct the served idle guided-trade behavior and redeploy a new Preview candidate. Do not reapply
+   `0003`; the existing additive columns must remain in place.
+2. Repeat the complete Preview and physical-phone matrix: player-paced long/short win/loss, pause /
    background / backtrack, manual close and replay truth, world-event suppression, Q1–Q7 stored-value
    receipt, invite attribution, Founder Access/dashboard/export, v16/v17 service-worker return, and
    rollback.

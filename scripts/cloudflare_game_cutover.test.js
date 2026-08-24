@@ -112,10 +112,10 @@ const tests = [
     assert.match(read('website/terms.html'), /one-time secure restore code/i);
   }],
 
-  ['mirrors and build identity are ready for build 371', () => {
+  ['mirrors and build identity are ready for build 372', () => {
     assert.equal(read('index.html'), game, 'root mirror drifted');
     assert.equal(read('website/game.html'), game, 'website game mirror drifted');
-    assert.match(game, /const BUILD_TAG = 'build 371 /);
+    assert.match(game, /const BUILD_TAG = 'build 372 /);
     for (const relative of ['website/bosses.html', 'website/courses.html', 'website/index.html', 'website/play.html', 'website/survey.html']) {
       assert.match(read(relative), /cq-track\.js\?v=370/);
     }

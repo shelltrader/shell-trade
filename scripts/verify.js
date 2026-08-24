@@ -22,6 +22,7 @@
  *   24 Build-368 Boss1 cinematic-audio media quality/parity/timing
  *   25 Build-369 Cloudflare-only app/beta data-plane + no-loss client contracts
  *   26 Build-370/371 player-paced trades + teaching/survey research contracts
+ *   27 Build-372 music-on-every-start + permanent browser-unlock contracts
  */
 const fs = require('fs');
 const os = require('os');
@@ -874,6 +875,24 @@ function run() {
     } catch (e) {
       add('26', 'Build-370/371 player-paced trades + next-beta learning', 'FAIL',
         'Build-370/371 focused checks could not run: ' + String(e && e.message || e).slice(0, 140));
+    }
+  }
+
+  // 27 — BUILD 372 STARTUP AUDIO. Normal launches own cq_music and repair a stale saved-off
+  // value; ?mute remains the explicit QA exception. The focused VM suite executes the real launch
+  // owner and music bootstrap, including capture-phase first input, all three audio engines,
+  // intro deferral, later permission recovery, session-only manual mute, and artifact parity.
+  {
+    try {
+      const suite = require(path.join(__dirname, 'music_startup.test.js')).runSuite({ report: false });
+      const first = suite.failures[0];
+      add('27', 'Build-372 music-on-every-start + permanent unlock owner', suite.ok ? 'PASS' : 'FAIL',
+        suite.ok
+          ? suite.detail
+          : `${suite.passed}/${suite.total} passed · ${first.name}: ${String(first.error && first.error.message || first.error).slice(0, 140)}`);
+    } catch (e) {
+      add('27', 'Build-372 music-on-every-start + permanent unlock owner', 'FAIL',
+        'startup-audio suite could not run: ' + String(e && e.message || e).slice(0, 140));
     }
   }
 

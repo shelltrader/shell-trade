@@ -22,6 +22,7 @@ import pathlib
 import re
 import subprocess
 import sys
+import urllib.parse
 import urllib.request
 
 DEFAULT_URL = 'https://playchartquest.com'
@@ -72,8 +73,11 @@ def main():
     url = args.url.strip()
     if not url.startswith('https://'):
         sys.exit(f'Refusing: a tester link must be https, got {url!r}')
-    q = url.split('?', 1)[1] if '?' in url else ''
-    hit = [p for p in FORBIDDEN_PARAMS if re.search(rf'(^|&){p}=', q)]
+    q = urllib.parse.urlsplit(url).query
+    # Reject valued, bare and percent-encoded spellings (`?fresh=1`, `?fresh`, `?fr%65sh`). The
+    # wrapper parses URLSearchParams, so this guard must decode names exactly as the browser does.
+    query_names = {name for name, _ in urllib.parse.parse_qsl(q, keep_blank_values=True)}
+    hit = [p for p in FORBIDDEN_PARAMS if p in query_names]
     if hit:
         sys.exit(f'Refusing: {", ".join(hit)} is a DEV flag and must never reach a tester.\n'
                  f'  ?fresh wipes cq_pid, so one tester is counted as a new person on every launch\n'
@@ -99,7 +103,7 @@ def main():
   <text x="{W//2}" y="792" text-anchor="middle" font-family="-apple-system,Helvetica,sans-serif"
         font-size="22" fill="#888">{label}</text>
   <text x="{W//2}" y="858" text-anchor="middle" font-family="-apple-system,Helvetica,sans-serif"
-        font-size="21" fill="#888">Play to the end, then the 5-question survey</text>
+        font-size="21" fill="#888">Play to the end, then the 7-question survey</text>
   <text x="{W//2}" y="892" text-anchor="middle" font-family="-apple-system,Helvetica,sans-serif"
         font-size="19" fill="#aaa">Takes about 15 minutes</text>
 </svg>

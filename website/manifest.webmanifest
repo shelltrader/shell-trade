@@ -2,7 +2,7 @@
   "id": "/",
   "name": "ChartQuest — The World's First Trading RPG",
   "short_name": "ChartQuest",
-  "description": "Dive inside real market charts as Finn the turtle. Run the candles, read the setups, defeat the Guardians — and learn to trade. Free, in your browser.",
+  "description": "Explore candlestick charts as Finn the turtle. Run the candles, read the setups, defeat the Guardians, and learn the foundations through play, starting with Bitcoin.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "./",
@@ -27,7 +27,7 @@
     { "src": "assets/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "screenshots": [
-    { "src": "assets/EXPLORE.jpg", "sizes": "720x900", "type": "image/jpeg", "form_factor": "narrow", "label": "Run across live market candles as Finn" },
+    { "src": "assets/EXPLORE.jpg", "sizes": "720x900", "type": "image/jpeg", "form_factor": "narrow", "label": "Run across a Bitcoin-first practice chart as Finn" },
     { "src": "assets/TRADE.jpg",   "sizes": "720x900", "type": "image/jpeg", "form_factor": "narrow", "label": "Read the setup and pick a side" },
     { "src": "assets/BATTLE.jpg",  "sizes": "720x900", "type": "image/jpeg", "form_factor": "narrow", "label": "Defeat the Guardians" }
   ],

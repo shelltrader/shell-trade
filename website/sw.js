@@ -37,8 +37,10 @@
    v15 → v16 (build 369): every production data path is same-origin Cloudflare-only; tracker,
    boot-crash capture and cloud-data adapter fail closed into their durable on-device queues.
    v16 → v17 (build 370): the tracker captures expiring opaque cohort/invite attribution for the
-   next beta round, so returning testers must not keep the un-attributed v16 client. */
-const CACHE = 'chartquest-site-v17';
+   next beta round, so returning testers must not keep the un-attributed v16 client.
+   v17 → v18 (build 373): public pain-point/Bitcoin-first truth copy changed in site.js and the
+   manifest; returning testers must receive those precached assets rather than the old claims. */
+const CACHE = 'chartquest-site-v18';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',

@@ -97,7 +97,7 @@
 /* CQBOOTCRASH:END */
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="54666ab248" data-built-at="2026-08-23T17:15:17Z">
+<meta name="cq-build" content="9ec219ef21" data-built-at="2026-08-24T16:11:16Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -2421,8 +2421,8 @@
       </picture>
       <div style="width:40px;height:2px;background:linear-gradient(90deg,transparent,#86c210,transparent);margin:0 auto 14px;"></div>
       <div style="font-size:13px;color:#7d8aa0;max-width:380px;margin:0 auto 6px;line-height:1.6;font-family:'Inter',sans-serif;">
-        Your chart determines which <strong style="color:#c7d1de;">real live market</strong> you'll trade on.
-        All charts, boss fights, and lessons will reflect your chosen coin.
+        Your selection changes the chart's <strong style="color:#c7d1de;">visual identity</strong>.
+        Every practice chart keeps the same lesson path and candlestick foundations.
       </div>
       <div style="font-size:11px;color:#16c784;letter-spacing:0.5px;margin-top:6px;">★ Recommended start: Bitcoin</div>
       <div style="font-size:10px;color:#4a5a6a;margin-top:4px;">You can change this later from your account.</div>
@@ -3492,24 +3492,22 @@ window._CQ_JQ = (function () { try { return /[?&]jq(=|&|$)/.test(location.search
 
 /* PLAYTEST RESET — DEV_ALWAYS_FRESH (above) OR a ?fresh=1 link wipes ALL local progress (intro
    flags, trades, journal, wisdom, streaks, mastery) so a phone can replay the true first-run
-   experience without digging through Safari settings. The ?fresh param strips itself so a
-   mid-test reload doesn't re-wipe; the constant wipes on EVERY load unconditionally. The secure
-   server session cookie is untouched. */
+   experience without digging through Safari settings. Ordinary production visitors must confirm
+   the destructive reset even when their save is still young; local/dev harnesses are the explicit
+   exception. play.html can carry one already-confirmed reset into this iframe, but only when the
+   referrer proves it is our same-origin wrapper. The ?fresh param strips itself so a mid-test reload
+   cannot re-wipe. The secure server session cookie is untouched. */
 try {
   if (DEV_ALWAYS_FRESH || /[?&]fresh(=|&|$)/.test(location.search)) {
-    // A ?fresh link re-tapped from a chat thread must never silently destroy a real save.
-    // But "cq_player_v1 exists" is NOT progress — every visitor gets a default {shells:5,
-    // level:1, xp:0} object, so keying on the key's presence would prompt on every single
-    // ?fresh test run and, under automation (confirm() → false), would skip the wipe and
-    // silently make a "fresh" beginner test not fresh. Only EARNED progress prompts — and the
-    // DEV_ALWAYS_FRESH path is an explicit testing choice, so it never prompts at all.
-    let _real = false;
+    let _wrapperApproved = false;
     try {
-      const _p = JSON.parse(localStorage.getItem('cq_player_v1') || 'null');
-      _real = !!_p && (Number(_p.level) > 1 || Number(_p.xp) > 0);
+      const _ref = new URL(document.referrer || '', location.href);
+      _wrapperApproved = window.parent !== window && _ref.origin === location.origin &&
+        /\/play\/?$/.test(_ref.pathname) && /[?&]fresh_confirmed=1(?:&|$)/.test(location.search);
     } catch (e) {}
-    const _qa = /[?&]qa(=|&|$)/.test(location.search);
-    if (DEV_ALWAYS_FRESH || !_real || _qa || confirm('Start ChartQuest over? This erases your progress on this device.')) {
+    const _approved = DEV_ALWAYS_FRESH || _CQ_DEV || _wrapperApproved ||
+      confirm('Start ChartQuest over? This erases your progress on this device.');
+    if (_approved) {
       const _rk = [];
       for (let _i = 0; _i < localStorage.length; _i++) _rk.push(localStorage.key(_i));
       _rk.forEach(k => { if (/^(cq_|shellTrade)/.test(k)) localStorage.removeItem(k); });
@@ -3522,12 +3520,124 @@ try {
     // Every test URL in this project is supposed to carry ?fresh=1, so that collision hit all of them.
     try {
       const _p = new URLSearchParams(location.search);
-      _p.delete('fresh'); _p.delete('qa');
+      _p.delete('fresh'); _p.delete('fresh_confirmed'); _p.delete('qa');
       const _q = _p.toString();
       history.replaceState(null, '', location.pathname + (_q ? '?' + _q : ''));
     } catch (e) { history.replaceState(null, '', location.pathname); }
   }
 } catch (e) {}
+
+/* BETA_FLOW_CONTINUITY_V1:BEGIN
+   Durable, monotonic safe-boundary ledger for the closed-beta funnel. This deliberately does not
+   serialize arbitrary modal/candle state. A reload rolls forward from the last completed boundary,
+   never back to movement and never through an already-paid trade. Existing saves are inferred once
+   from their durable evidence; malformed/newer rows fail safe to that same legacy inference. */
+window.CQBetaFlow = (function () {
+  'use strict';
+  var KEY = 'cq_beta_flow_v1';
+  var VERSION = 1;
+  var STAGES = ['new','movement_started','movement_complete','market_selected',
+    'trade_1_complete','trade_2_complete','trade_3_complete','boss_won',
+    'journal_due','journal_started','journal_completed','survey_due','survey_submitted'];
+  var RANK = {};
+  for (var i = 0; i < STAGES.length; i++) RANK[STAGES[i]] = i;
+
+  function safe(fn, dflt) { try { return fn(); } catch (e) { return dflt; } }
+  function get(k) { return safe(function () { return localStorage.getItem(k); }, null); }
+  function parsePlayer() { return safe(function () { return JSON.parse(get('cq_player_v1') || 'null'); }, null); }
+  function hasBoss() {
+    return safe(function () {
+      var a = JSON.parse(get('cq_bosses_v2') || get('cq_bosses_v1') || '[]');
+      return Array.isArray(a) && a.length > 0;
+    }, false);
+  }
+  function valid(row) {
+    if (!row || row.version !== VERSION || !Object.prototype.hasOwnProperty.call(RANK, row.stage)) return null;
+    var slot = Math.max(0, Math.min(3, Number(row.tradeSlot) || 0));
+    if (row.stage === 'trade_1_complete') slot = Math.max(slot, 1);
+    if (row.stage === 'trade_2_complete') slot = Math.max(slot, 2);
+    if (row.stage === 'trade_3_complete' || RANK[row.stage] > RANK.trade_3_complete) slot = Math.max(slot, 3);
+    return {
+      version: VERSION,
+      stage: row.stage,
+      tradeSlot: slot,
+      market: typeof row.market === 'string' && /^[A-Z0-9]{2,8}$/.test(row.market) ? row.market : null,
+      updatedAt: typeof row.updatedAt === 'string' ? row.updatedAt : new Date().toISOString()
+    };
+  }
+  function legacy() {
+    var stage = 'new';
+    var market = get('cq_faction');
+    var player = parsePlayer();
+    if (get('cq_bt_movement_tutorial_completed')) stage = 'movement_complete';
+    if (market) stage = 'market_selected';
+    if (hasBoss() || get('cq_bt_boss_defeated')) stage = 'boss_won';
+    if ((player && player.jtut) || get('cq_bt_journal_discovery_started')) stage = 'journal_started';
+    if (get('cq_bt_journal_discovery_completed')) stage = 'journal_completed';
+    if (get('cq_beta_done') === '1' || get('cq_bt_beta_completed')) stage = 'survey_due';
+    if (get('cq_bt_survey_submitted')) stage = 'survey_submitted';
+    return { version: VERSION, stage: stage, tradeSlot: RANK[stage] >= RANK.trade_3_complete ? 3 : 0,
+      market: market || null, updatedAt: new Date().toISOString() };
+  }
+  function stored() {
+    var row = safe(function () { return valid(JSON.parse(get(KEY) || 'null')); }, null);
+    return row || legacy();
+  }
+  function persist(row) {
+    var ok = safe(function () { localStorage.setItem(KEY, JSON.stringify(row)); return true; }, false);
+    if (ok) safe(function () { window.dispatchEvent(new CustomEvent('cq:beta-flow', { detail: row })); });
+    return ok;
+  }
+  function state() {
+    var row = stored();
+    /* A confirmed survey receipt stamps cq_bt_survey_submitted before this module sees the next
+       launch. Heal the ledger to terminal; survey_due is otherwise intentionally never cleared. */
+    if (get('cq_bt_survey_submitted') && row.stage !== 'survey_submitted') {
+      row.stage = 'survey_submitted'; row.updatedAt = new Date().toISOString(); persist(row);
+    } else if (!get(KEY)) {
+      persist(row);                         // one-time migration of legacy durable evidence
+    }
+    return JSON.parse(JSON.stringify(row));
+  }
+  function advance(stage, meta) {
+    if (!Object.prototype.hasOwnProperty.call(RANK, stage)) return false;
+    var cur = state();
+    if (RANK[stage] < RANK[cur.stage]) return true;          // monotonic: stale callbacks cannot regress
+    var next = Object.assign({}, cur, { version: VERSION, stage: stage, updatedAt: new Date().toISOString() });
+    meta = meta || {};
+    if (typeof meta.tradeSlot === 'number') next.tradeSlot = Math.max(next.tradeSlot || 0, Math.min(3, Math.max(0, meta.tradeSlot)));
+    if (stage === 'trade_1_complete') next.tradeSlot = Math.max(next.tradeSlot, 1);
+    if (stage === 'trade_2_complete') next.tradeSlot = Math.max(next.tradeSlot, 2);
+    if (stage === 'trade_3_complete' || RANK[stage] > RANK.trade_3_complete) next.tradeSlot = Math.max(next.tradeSlot, 3);
+    if (typeof meta.market === 'string' && /^[A-Z0-9]{2,8}$/.test(meta.market)) next.market = meta.market;
+    return persist(valid(next));
+  }
+  function hasReached(stage) {
+    if (!Object.prototype.hasOwnProperty.call(RANK, stage)) return false;
+    return RANK[state().stage] >= RANK[stage];
+  }
+  function resumePlan() {
+    var row = state(), slot = row.tradeSlot || 0;
+    if (row.stage === 'new') return { kind: 'opening', tradeSlot: 0, next: 'opening' };
+    if (row.stage === 'movement_started') return { kind: 'movement', tradeSlot: 0, next: 'movement' };
+    if (row.stage === 'movement_complete') return { kind: 'market', tradeSlot: 0, next: 'market' };
+    if (row.stage === 'market_selected') return { kind: 'intro', tradeSlot: 0, next: 'green_red' };
+    if (row.stage === 'trade_1_complete') return { kind: 'trade', tradeSlot: 1, next: 'momentum_trade_2' };
+    if (row.stage === 'trade_2_complete') return { kind: 'trade', tradeSlot: 2, next: 'pullback_trade_3' };
+    if (row.stage === 'trade_3_complete') return { kind: 'trade', tradeSlot: 3, next: 'review_then_boss' };
+    if (row.stage === 'boss_won' || row.stage === 'journal_due') return { kind: 'journal', tradeSlot: 3, next: 'journal' };
+    if (row.stage === 'journal_started') return { kind: 'journal', tradeSlot: 3, next: 'journal_restart' };
+    if (row.stage === 'journal_completed') return { kind: 'survey', tradeSlot: 3, next: 'survey_finish' };
+    if (row.stage === 'survey_due') return { kind: 'survey', tradeSlot: 3, next: 'survey' };
+    return { kind: 'done', tradeSlot: slot, next: 'done' };
+  }
+  function isActive() { return state().stage !== 'survey_submitted'; }
+  function reset() { return safe(function () { localStorage.removeItem(KEY); return true; }, false); }
+
+  return { key: KEY, version: VERSION, stages: STAGES.slice(), state: state, advance: advance,
+    hasReached: hasReached, resumePlan: resumePlan, isActive: isActive, reset: reset };
+})();
+/* BETA_FLOW_CONTINUITY_V1:END */
 
 /* STARTUP MUSIC AUTHORITY — build 372. Every ordinary document launch owns a fresh ON decision,
    so a stale manual mute or an old muted QA link cannot silently follow a player into later visits.
@@ -3870,6 +3980,7 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
   let _pendingFactionKey = null, _cineDonePreAuth = false, _bootHandled = false, _savePromptMode = false;
   let _hmcDevMode = false;      // ?hmc — jump straight to the ceremony, never start the cinematic
   let _marketBound = false;     // the ceremony binds the Home Market exactly once per session
+  let _betaFlowRestored = false; // one safe-boundary recovery route per document
 
   function resolveAuth() {
     // Post-game "save your progress" prompt (shown after The Gambler): a successful
@@ -3922,13 +4033,26 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
     if (_hmcDevMode) {
       // dev launcher owns the flow — the ?hmc setTimeout runs the ceremony
     } else if (!localStorage.getItem('cq_played')) {
-      candleAcademy.active = false;   // cinematic's title card replaces the greeting
-      // THE FUNNEL: cinematic → MOVEMENT TUTORIAL → chart selection → gameplay.
-      // The Journey teaches jump / shell-roll / jetpack, then hands to the ceremony. If the module
-      // is missing or throws, we fall straight through to the ceremony so the chain can never dead-end.
-      IntroCinematic.start(function (key) { _runMovementTutorial(key); });
+      var _resume = { kind: 'opening' };
+      try { if (window.CQBetaFlow) _resume = CQBetaFlow.resumePlan(); } catch (e) {}
+      candleAcademy.active = false;   // every checkpoint here is already past the greeting
+      if (_resume.kind === 'movement') {
+        _runMovementTutorial(localStorage.getItem('cq_faction') || 'BTC');
+      } else if (_resume.kind === 'market') {
+        _afterMovementTutorial(localStorage.getItem('cq_faction') || 'BTC');
+      } else if (_resume.kind === 'intro' || _resume.kind === 'trade') {
+        // Movement/market/trade evidence is authoritative. Enter the saved authored world and let
+        // _resumeBetaFlowAfterMarket roll forward from the last paid trade boundary.
+        _marketBound = true;
+        _enterGameWithMarket(localStorage.getItem('cq_faction') || (_resume.market || 'BTC'));
+      } else {
+        // THE FUNNEL: cinematic → MOVEMENT TUTORIAL → chart selection → gameplay.
+        IntroCinematic.start(function (key) { _runMovementTutorial(key); });
+      }
     } else if (!localStorage.getItem('cq_faction')) {
-      showFactionPicker();
+      // A legacy returning save may predate cq_faction. Keep that player out of the retired
+      // multi-market picker and bind the beta's truthful default without erasing progress.
+      _enterGameWithMarket('BTC');
     } else {
       // Faction already chosen — reset game state in case the loop ran & halted under the overlay
       if (typeof initCandles === 'function') { initCandles(); prePopulateHTF(MARKET_DATA); spawnTurtle(); }
@@ -3939,6 +4063,7 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
       if (typeof setupZone !== 'undefined') setupZone = null;
       if (typeof portals !== 'undefined') portals.length = 0;
       try { document.getElementById('setupBanner').style.display = 'none'; } catch(e) {}
+      try { _resumeBetaFlowAfterMarket(); } catch (e) {}
     }
   }
 
@@ -4282,6 +4407,7 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
     if (!f) return;
     playerFaction = f;
     localStorage.setItem('cq_faction', key);
+    try { if (window.CQBetaFlow) CQBetaFlow.advance('market_selected', { market: key }); } catch (e) {}
     // Re-fetch live data for the chosen coin
     fetchMarketData(f);
     // Re-init candles and HTF from fresh data (prePopulateHTF runs inside fetchMarketData)
@@ -4305,6 +4431,7 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
     if (typeof setupCountdown !== 'undefined') setupCountdown = 10;
     if (typeof pending !== 'undefined') pending = null;
     if (typeof setupZone !== 'undefined') setupZone = null;
+    try { _resumeBetaFlowAfterMarket(); } catch (e) {}
   };
   window.showFactionPicker = showFactionPicker; // expose for account panel
 
@@ -4315,6 +4442,7 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
      the chart LOOKS. (If live data ever returns, this is the single place that would opt back in.) */
   function _enterGameWithMarket(key) {
     const f = applyHomeMarketSkin(key) || playerFaction;
+    try { if (window.CQBetaFlow) CQBetaFlow.advance('market_selected', { market: (f && f.ticker) || key || 'BTC' }); } catch (e) {}
     try { prePopulateHTF(MARKET_DATA); } catch (e) {}
     const overlay = document.getElementById('factionOverlay');
     if (overlay) overlay.style.display = 'none';
@@ -4330,9 +4458,63 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
     if (typeof pending !== 'undefined') pending = null;
     if (typeof setupZone !== 'undefined') setupZone = null;
     try { updateAccountBtn(); } catch (e) {}
+    try { _resumeBetaFlowAfterMarket(); } catch (e) {}
     return f;
   }
   window._enterGameWithMarket = _enterGameWithMarket;
+
+  /* Restore only from completed guided-trade boundaries. Lessons/reviews may replay; trades,
+     rewards and journal rows may not. The third slot reopens its persisted replay before the final
+     approach whenever that evidence exists, preserving the fail-closed review law after a reload. */
+  function _resumeBetaFlowAfterMarket() {
+    if (_betaFlowRestored || localStorage.getItem('cq_played')) return false;
+    var plan = null;
+    try { plan = window.CQBetaFlow && CQBetaFlow.resumePlan(); } catch (e) {}
+    if (!plan || plan.kind !== 'trade' || plan.tradeSlot < 1) return false;
+    _betaFlowRestored = true;
+    var tries = 0;
+    (function restore() {
+      tries++;
+      try {
+        if (typeof introFlow === 'undefined' || typeof teachThenNextTrade !== 'function' ||
+            typeof beginIntroProve !== 'function' || typeof turtle === 'undefined') throw new Error('flow-not-ready');
+        introFlow.active = true;
+        introFlow.phase = 'run';
+        introFlow.learnStarted = true;             // green/red was completed before any guided trade
+        introFlow.tradesDone = plan.tradeSlot;
+        introFlow.tradeWaitCandles = 0;
+        introFlow.exploreConcept = null;
+        introFlow.exploreBreather = false;
+        introFlow.exploreAfter = null;
+        introFlow.explorePortalUp = false;
+        paused = false; session.inModal = false; turtle.halt = false;
+        try { if (typeof portals !== 'undefined') portals.length = 0; } catch (e) {}
+
+        if (plan.tradeSlot === 1 || plan.tradeSlot === 2) {
+          introFlow.firstTradeDone = false;
+          introFlow.awaitingTrade = true;           // teachThenNextTrade owns the next safe handoff
+          var concept = plan.tradeSlot === 1 ? 'momentum' : 'pullback';
+          var left = 3 - plan.tradeSlot;
+          try { floaters.push({ text: 'Welcome back — Trade ' + (plan.tradeSlot + 1) + ' is next', color: '#4cc3ff', y: 104, t: 3.0 }); } catch (e) {}
+          teachThenNextTrade(concept, left);
+        } else {
+          introFlow.firstTradeDone = true;
+          introFlow.awaitingTrade = false;
+          var rec = null, token = 0;
+          try { rec = (typeof journal !== 'undefined' && journal && journal.length) ? journal[0] : null; } catch (e) {}
+          try { if (rec && typeof autoOpenTradeReplay === 'function') token = autoOpenTradeReplay(rec) || 0; } catch (e) {}
+          if (token) waitThenIntroBoss(token);
+          else beginIntroProve();                   // corrupt/missing replay: preserve progress, never repay trade 3
+        }
+        return;
+      } catch (e) {
+        if (tries < 40) { setTimeout(restore, 100); return; }
+        _betaFlowRestored = false;                  // fail open to the ordinary intro, never a dead screen
+      }
+    })();
+    return true;
+  }
+  window._resumeBetaFlowAfterMarket = _resumeBetaFlowAfterMarket;
 
   /* THE FINAL STEP OF THE TUTORIAL.
      Funnel:  website → FREE PLAY → movement tutorial → CHART SELECTION → gameplay.
@@ -4347,6 +4529,7 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
            BlockchainJourney.start('BTC', function () { window._afterMovementTutorial(); });
        Nothing else about the Journey changes. */
   function _afterMovementTutorial(fallbackKey) {
+    try { if (window.CQBetaFlow) CQBetaFlow.advance('movement_complete'); } catch (e) {}
     // Exactly once. Several paths can legitimately reach this (cinematic end, tutorial end, the
     // pre-auth resume, the dev launcher) and a second call would restart the ceremony mid-fade
     // or re-bind a market the player already chose.
@@ -4358,13 +4541,16 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
     try { document.body.classList.remove('cineOwn'); } catch (e) {}
     try { const v = document.getElementById('mmVideo'); if (v) { v.pause(); v.classList.remove('show'); } } catch (e) {}
     try { const mt = document.getElementById('mmTeaser'); if (mt) mt.style.display = 'none'; } catch (e) {}
-    const fallback = fallbackKey || localStorage.getItem('cq_faction') || 'BTC';
+    const firstRun = !localStorage.getItem('cq_played');
+    // The cinematic's historical market key is a visual callback, not permission to reintroduce
+    // choice overload. A first run always enters the one-card Bitcoin initiation.
+    const fallback = firstRun ? 'BTC' : (fallbackKey || localStorage.getItem('cq_faction') || 'BTC');
     let launched = false;
     try {
       if (window.HomeMarketCeremony) {
         launched = window.HomeMarketCeremony.start(function (chosen) {
           _enterGameWithMarket(chosen || fallback);
-        });
+        }, { bitcoinFirst: firstRun });
       }
     } catch (e) { try { console.warn('[HomeMarket] ceremony failed → entering game', e); } catch (_) {} }
     if (!launched) _enterGameWithMarket(fallback);   // ceremony unavailable → straight to the game
@@ -4373,6 +4559,8 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
   // the pre-auth resume, the dev launcher) runs the identical chain.
   function _runMovementTutorial(key) {
     let started = false;
+    try { if (window.CQBetaFlow) CQBetaFlow.advance('movement_started'); } catch (e) {}
+    try { candleAcademy.active = false; } catch (e) {}
     // Make sure nothing from the cinematic is still holding the screen. finish() normally hides the
     // Market-Maker video before handing off, but any path that reaches us another way would leave an
     // opaque video sitting ON TOP of the tutorial — it would run perfectly and be completely
@@ -4483,7 +4671,8 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
       // Do not auto-start first-run cinematics behind the restore form.
       setAuthMode('claim');
       const ov = document.getElementById('authOverlay'); if (ov) ov.style.display = 'flex';
-    } else if (!localStorage.getItem('cq_played')) {
+    } else if (!localStorage.getItem('cq_played') &&
+               !(window.CQBetaFlow && CQBetaFlow.hasReached('movement_started'))) {
       // First-time visitor, no account → play the cinematic hook BEFORE the login
       // wall, then show auth once they've chosen a chain. resolveAuth finishes it.
       const ov = document.getElementById('authOverlay'); if (ov) ov.style.display = 'none';
@@ -4494,7 +4683,8 @@ try { localStorage.setItem('cq_music', _CQ_MUTE ? 'off' : 'on'); } catch (e) {}
       if (!_hmcDevMode) { try { IntroCinematic.start(function (key) { _pendingFactionKey = key; _cineDonePreAuth = true; resolveAuth(); }); } catch (e) {} }
     } else {
       // Returning visitor, no session → they already played and their progress is saved
-      // locally (cq_player_v1). Do NOT re-wall them behind Sign In — the old behavior left
+      // locally (cq_player_v1), OR a first-run continuity checkpoint proves the opening already
+      // ran. Do NOT re-wall them behind Sign In — the old behavior left
       // the overlay up, whose only escape read "progress won't save", telling a Day-2 player
       // their save was lost when it wasn't. Drop them straight back into the game as a guest;
       // Sign In stays one tap away on the 👤 button. resolveAuth's faction-chosen branch
@@ -4911,7 +5101,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 372 - MUSIC ON EVERY STARTUP. Every ordinary launch resets soundtrack intent to ON, so a stale mute choice or historical muted QA link cannot silently follow a returning player into later sessions. Explicit ?mute remains silent for that document; the music button can still mute the current visit. A permanent capture-phase gesture owner unlocks the game, cinematic and Guardian audio on every permitted tap or key, while the first eligible gesture starts the explore bed once and intro or boss audio ownership remains unchanged. No music composition, volume, gameplay, save-progress, service-worker or data-plane behavior changes. - build 371 - PLAYER-PACED IDLE GATE. Guided Level 1-3 trades require explicit movement intent for each candle boundary: one player action advances at most one candle, then Finn stops again. Trade entry, guide close and background/resume start halted. This closes the served Build-370 idle-advance blocker without changing free-roam movement, authored TP/SL paths, economics, manual close, replay, rewards, world-event suppression, survey research or cohort attribution. - build 370 - PLAYER-PACED NEXT-BETA LEARNING.';
+const BUILD_TAG = 'build 373 - BETA FEEDBACK RECOVERY. The closed-beta journey now checkpoints completed movement, Bitcoin entry, each paid guided trade, Guardian, Journal reward and survey boundaries so an interruption resumes at the next unpaid step without replaying shells. Fresh and Restart actions require confirmation, destructive tester links are rejected, and service-worker reload waits until the beta flow is complete. A first-time player explicitly starts with Bitcoin while returning players keep later chart choice. The next visible Shell Smash cube carries a device-specific reminder until a real smash, and the first three automatic guided trades follow win-loss-win with the single stop-protected First Loss on trade two. Public copy names income pressure without claiming markets behave alike. Music-on-start, player-paced TP/SL truth, manual-close truth, 2:1 risk and trade-time world-event suppression remain intact. - build 372 - MUSIC ON EVERY STARTUP. Every ordinary launch resets soundtrack intent to ON, so a stale mute choice or historical muted QA link cannot silently follow a returning player into later sessions. Explicit ?mute remains silent for that document; the music button can still mute the current visit. A permanent capture-phase gesture owner unlocks the game, cinematic and Guardian audio on every permitted tap or key, while the first eligible gesture starts the explore bed once and intro or boss audio ownership remains unchanged. No music composition, volume, gameplay, save-progress, service-worker or data-plane behavior changes. - build 371 - PLAYER-PACED IDLE GATE. Guided Level 1-3 trades require explicit movement intent for each candle boundary: one player action advances at most one candle, then Finn stops again. Trade entry, guide close and background/resume start halted. This closes the served Build-370 idle-advance blocker without changing free-roam movement, authored TP/SL paths, economics, manual close, replay, rewards, world-event suppression, survey research or cohort attribution. - build 370 - PLAYER-PACED NEXT-BETA LEARNING.';
 /* Build 370 and earlier full served-change history retained below for audit. */
 /*
 const BUILD_TAG = 'build 370 - PLAYER-PACED NEXT-BETA LEARNING. Guided Level 1-3 trades no longer advance on a wall clock or carry Finn forward: candles are authored only as Finn reaches the frontier, players may pause or backtrack, every automatic path stays within 30-60 visible candles, and honest wick/body Take Profit or Stop Loss first-touch remains the sole automatic outcome. Live trades still exclude shells, boxes, Lost Wisdom, portals and world events. The first-trade and intro teaching panels now scroll with explicit Continue and Close controls, the Level-1 HUD connects diving to diamond smashing, and the market bridge explains chart candles. The survey keeps its original five questions and adds experience level plus one-time $19 purchase intent; opaque expiring invite codes attribute the next cohort without names or emails. No adjacent movement physics, trade scoring, account, cloud-save, boss or reward behavior changes. - build 369 - CLOUDFLARE-ONLY GAME DATA CUTOVER. Production accounts, secure session cookies, one-time account restore, cloud profile, Journal, streak, mastery, bug reports, visits, content events, market quotes, beta analytics and surveys now use same-origin Cloudflare services only. Every existing gameplay save key remains unchanged and authoritative on-device; unconfirmed writes remain in their durable local queues and failed reads never overwrite local progress. Provider URLs, browser credentials, fallback writes and SDK allowances are removed from the production runtime and CSP. Historical provider records are not deleted by this release and receive no new runtime writes. - build 368 - CLOUDFLARE BETA DATA PLANE. New beta events and survey answers write first to a same-origin, schema-validated Cloudflare endpoint with the existing Supabase route retained only as a confirmed-write fallback during migration. The durable queue now clears only the batch actually acknowledged and drains every remaining batch, so a mobile retry cannot delete unsent milestones. A Cloudflare Access-protected founder dashboard owns the complete new dataset and exports; player ids, local saves, signed-in account/cloud-save paths, gameplay, survey questions and historical Supabase rows remain unchanged. - build 367 - BOSS 1 CINEMATIC AUDIO POLISH. Five versioned full-timeline mixes start from the first rendered video frame and follow media time through pause, stall, seek and rate changes. A generation token cancels skip, error, mute, replacement and arena arrival exactly once; only this Gambler path suppresses the old sting, random roar, synth bed and delayed impact. Videos, visuals, game rules and every other Guardian are unchanged. - build 366 - FOUNDER COSMETIC CLOSEOUT. Guardian 1 now uses the current cinematic Gambler portrait in both the Journal and defeat card; Journal mastery closes on one compact premium book-and-reward card using the existing canonical Journal asset; and the versioned Gambler-defeat cinematic restores Finn’s mandatory compass necklace for every front-facing victory frame. Cosmetic only: no trade, curriculum, reward, save or boss-state logic changed. - build 365 - FINAL BETA SEND STRIKE. Trade portals now own a reward-free corridor: every unreached box at or beyond the entrance is deferred and its quota restored after the trade. Replay and recap Finn now visibly cross the exact take-profit or stop-loss line in the correct direction. The first-trade score is a warmer hand-authored pulse instead of a dense sawtooth arpeggio, and ordinary center-screen feedback uses one premium non-blocking ChartQuest toast treatment. - build 364 - FINAL BETA BLOCKER STRIKE. Reward interaction now defers only while a real ticket/position owns the screen; boxes and Lost Wisdom pages share Finn\'s swept body-aware collision so visible overlap and fast shell-rolls cannot miss. FIRST WIN is one premium ChartQuest-native vector milestone with a bespoke trophy, disciplined copy hierarchy and earned reward badge instead of a system emoji/text pile. The first real trade owns a louder 112 BPM score and a four-act near-stop to profit-surge to hard-give-back to target run, while safe preview links no longer force or persist mute. - build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
@@ -5916,7 +6106,7 @@ FACTION_CONFIG.SPX = {
    a `.hmc-m-*` class whose halo/float timing differs, so a calm market breathes slowly and a
    volatile one flickers. `line` is the one-breath character note the card shows. */
 const HOME_MARKETS = [
-  { key: 'BTC',  motif: 'orbit',  line: 'Digital gold. Where every trader begins.' },
+  { key: 'BTC',  motif: 'orbit',  line: 'Your first practice chart. One clear place to begin.' },
   { key: 'ETH',  motif: 'grid',   line: 'The world computer. Built by builders.' },
   { key: 'SOL',  motif: 'streak', line: 'Built for speed. Moves fast, hits hard.' },
   { key: 'NVDA', motif: 'streak', line: 'The chip that taught machines to think.' },
@@ -5977,7 +6167,8 @@ window.applyHomeMarketSkin = applyHomeMarketSkin;
    exists), and hands control to the game through a single callback.
 
    PUBLIC API — one entry point, so whoever calls it doesn't need to know anything else:
-     HomeMarketCeremony.start(onDone)   → onDone(marketKey) fires as the dive reaches the chart.
+     HomeMarketCeremony.start(onDone, options) → onDone(marketKey) fires as the dive reaches the chart.
+       options.bitcoinFirst=true keeps the initiation beat but offers one clear first market.
      HomeMarketCeremony.active          → true while it owns the screen.
 
    The dive deliberately does NOT fade to black: onDone() starts the real game UNDERNEATH while
@@ -5989,7 +6180,7 @@ const HomeMarketCeremony = (() => {
     active:false, phase:'idle', t:0, onDone:null, done:false,
     cv:null, cx:null, root:null, cardsEl:null, raf:0, last:0, dpr:1, w:0, h:0,
     sel:null, hover:null, motes:[], bursts:[], streaks:[], divers:[],
-    flash:0, glow:0, veil:0, handedOff:false, reduced:false,
+    flash:0, glow:0, veil:0, handedOff:false, reduced:false, bitcoinFirst:false,
   };
   const clamp01 = v => v<0?0:v>1?1:v;
   const lerp = (a,b,t) => a+(b-a)*t;
@@ -6082,7 +6273,7 @@ const HomeMarketCeremony = (() => {
     const root=document.createElement('div');
     root.id='hmcRoot';
     root.setAttribute('role','dialog');
-    root.setAttribute('aria-label','Choose your home market');
+    root.setAttribute('aria-label',S.bitcoinFirst?'Start with Bitcoin':'Choose your home market');
     root.style.cssText='position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;'
       +'align-items:center;justify-content:flex-start;background:#04050a;overflow-y:auto;'
       // Opaque from the first frame. The entrance is carried by the staggered heading/card
@@ -6099,15 +6290,17 @@ const HomeMarketCeremony = (() => {
 
     const eyebrow=document.createElement('div');
     eyebrow.className='hmc-eyebrow';
-    eyebrow.textContent='TRAINING COMPLETE';
+    eyebrow.textContent=S.bitcoinFirst?'YOUR FIRST MARKET':'TRAINING COMPLETE';
 
     const h1=document.createElement('h1');
     h1.className='hmc-h1';
-    h1.textContent='Choose Your Home Market';
+    h1.textContent=S.bitcoinFirst?'Start With Bitcoin':'Choose Your Home Market';
 
     const sub=document.createElement('p');
     sub.className='hmc-sub';
-    sub.innerHTML='Every trader has a market they believe in.<br>Choose the market that represents your trading journey.';
+    sub.innerHTML=S.bitcoinFirst
+      ?'One clear starting point. Learn the shared candlestick language before adding more market choices.'
+      :'Every trader has a market they believe in.<br>Choose the market that represents your trading journey.';
 
     const context=document.createElement('p');
     context.className='hmc-context';
@@ -6115,10 +6308,13 @@ const HomeMarketCeremony = (() => {
 
     const note=document.createElement('p');
     note.className='hmc-note';
-    note.textContent='This changes the look of your charts only. Every market teaches the exact same trading skills.';
+    note.textContent=S.bitcoinFirst
+      ?'Bitcoin is your first practice chart. You can change the chart style later from your account.'
+      :'This changes the look of your charts only. Every market teaches the same candlestick foundations.';
 
     const grid=document.createElement('div');
     grid.id='hmcCards';
+    if(S.bitcoinFirst) grid.className='hmc-single';
 
     inner.appendChild(eyebrow); inner.appendChild(h1); inner.appendChild(sub); inner.appendChild(context); inner.appendChild(note); inner.appendChild(grid);
     root.appendChild(inner);
@@ -6144,6 +6340,7 @@ const HomeMarketCeremony = (() => {
   opacity:0;animation:hmcUp .7s .36s ease forwards;}
 #hmcCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
   gap:clamp(9px,1.6vw,15px);max-width:1080px;margin:0 auto;}
+#hmcCards.hmc-single{grid-template-columns:minmax(220px,300px);max-width:300px;}
 .hmc-badge{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;
   justify-content:center;border:1.5px solid transparent;}
 .hmc-name{font-size:15px;font-weight:700;color:#fff;letter-spacing:.2px;margin-top:2px;}
@@ -6240,7 +6437,8 @@ const HomeMarketCeremony = (() => {
     document.body.appendChild(root);
 
     S.root=root; S.cv=cv; S.cx=cv.getContext('2d'); S.cardsEl=grid;
-    HOME_MARKETS.forEach((m,i)=>grid.appendChild(card(m,i)));
+    (S.bitcoinFirst?HOME_MARKETS.filter(m=>m.key==='BTC'):HOME_MARKETS)
+      .forEach((m,i)=>grid.appendChild(card(m,i)));
     void root.offsetHeight;   // settle layout before the staggered entrance animations begin
   }
 
@@ -6497,10 +6695,11 @@ const HomeMarketCeremony = (() => {
     S.root=S.cv=S.cx=S.cardsEl=null; S.bursts=[]; S.divers=[]; S.motes=[];
   }
 
-  function start(onDone){
+  function start(onDone,options){
     if(S.active) return true;
     try{
       S.active=true; S.done=false; S.handedOff=false; S.phase='choose'; S.t=0; S.sel=null; S.hover=null;
+      S.bitcoinFirst=!!(options&&options.bitcoinFirst);
       S.flash=0; S.glow=0; S.veil=0; S.bursts=[]; S.divers=[]; S.last=performance.now();
       S.onDone=(typeof onDone==='function')?onDone:function(){};
       try{ S.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ S.reduced=false; }
@@ -6514,7 +6713,7 @@ const HomeMarketCeremony = (() => {
       try{ console.warn('[HomeMarketCeremony] start failed → skipping to game',e); }catch(_){}
       S.active=false;
       try{ teardown(); }catch(_){}
-      try{ if(typeof onDone==='function') onDone(localStorage.getItem('cq_faction')||'BTC'); }catch(_){}
+      try{ if(typeof onDone==='function') onDone(S.bitcoinFirst?'BTC':(localStorage.getItem('cq_faction')||'BTC')); }catch(_){}
       return false;
     }
   }
@@ -8059,6 +8258,9 @@ const portals = []; // { x, y, r, label, sublabel, action, glowT, entered }
    into the existing coin spawn/update/draw calls. No new currency/journal/lore/collectible.
    ═══════════════════════════════════════════════════════════════════════════════ */
 const boxes = [];   // { x, y, w, premium, broken, breakT, bob, glow, rot, orb, excite }
+// Session-local by design: if a player reloads before mastering the move, the next visible cube
+// teaches it again. Only a successful main-world smash retires the contextual reminder.
+let mainSmashLearned = false;
 const boxFx = [];   // burst particles { kind:'ring'|'shard'|'spark', x,y,vx,vy,r,vr,life,maxLife,size,col,rot,grav }
 const BOX_W = 34, BOX_PREMIUM_CHANCE = 0.2;                 // ~1 in 5 boxes is premium (5 shells vs 1)
 /* ── GOVERNED BOXES (founder, L1 trial) ────────────────────────────────────────────────────────
@@ -8267,6 +8469,7 @@ function maybeSpawnBox(c) {
 function smashBox(b) {
   if (b.broken) return;
   b.broken = true; b.breakT = 1;
+  mainSmashLearned = true;
   /* EVENT LEDGER (build 324) — breaking a box IS one of the founder's four events, and it is the
      moment the player EXPERIENCES it (not when it spawned, which was a screen earlier). Stamping
      here is what guarantees no lesson, page or trade lands in the 10-15 candles after a smash. */
@@ -8331,9 +8534,10 @@ function boxRefuse(b) {
   try { hapticMove(6); } catch (e) {}
   if (_boxHintsLeft > 0) {
     _boxHintsLeft--;
-    // build 353 — names the actual move now that the shell-roll is the ONLY way in, and matches the
-    // tutorial's wording ("BOOST, then SWIPE DOWN") instead of contradicting it with "JUMP".
-    floaters.push({ text: '⬇ SWIPE DOWN to SHELL-ROLL and smash it open!', color: BOX_COL, y: 128, t: 2.6, center: true });
+    const _boxHelp = IS_DESKTOP_CTRL
+      ? 'W ABOVE IT • S TO SMASH'
+      : 'BOOST ABOVE IT • SWIPE DOWN TO SMASH';
+    floaters.push({ text: _boxHelp, color: BOX_COL, y: 128, t: 2.6, center: true });
   }
 }
 function updateBoxes(dt, tx, ty) {
@@ -8389,6 +8593,20 @@ function updateBoxes(dt, tx, ty) {
   }
 }
 function drawBoxes(camX) {
+  let _smashTarget = null;
+  let _smashHelpBlocked = mainSmashLearned;
+  try {
+    _smashHelpBlocked = _smashHelpBlocked ||
+      (typeof tradeInProgress === 'function' && tradeInProgress()) ||
+      (typeof _anyBlockingUI === 'function' && _anyBlockingUI());
+  } catch (e) {}
+  if (!_smashHelpBlocked) {
+    _smashTarget = boxes.find(function (b) {
+      if (!b || b.broken) return false;
+      const sx = b.x - camX;
+      return sx >= -40 && sx <= W + 40;
+    }) || null;
+  }
   for (const b of boxes) {
     const sx = b.x - camX; if (sx < -40 || sx > W + 40) continue;
     if (b.broken) {
@@ -8427,6 +8645,25 @@ function drawBoxes(camX) {
     for (let o = 0; o < 3; o++) { const a = b.orb + o * 2.094; ctx.globalAlpha = 0.45 + 0.4 * Math.sin(a * 2);   // orbiting data-dots
       ctx.fillStyle = core; ctx.beginPath(); ctx.arc(Math.cos(a) * (hw + 4), Math.sin(a) * (hw + 4) * 0.5, 1.7, 0, 6.283); ctx.fill(); }
     ctx.globalAlpha = 1; ctx.restore();
+    if (b === _smashTarget) {
+      // The instruction belongs to the object, not a generic HUD corner. It automatically follows
+      // the next visible unbroken cube if an earlier one was missed. Reduced-motion keeps the same
+      // fully readable static treatment; only the optional pulse is removed.
+      let _rm = false;
+      try { _rm = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+      const _pulse = _rm ? 1 : (0.86 + 0.14 * Math.sin((b.glow || 0) * 2.2));
+      const _labelY = Math.max(42, cy - hw - 38);
+      ctx.save(); ctx.globalAlpha = _pulse; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(56,224,255,.7)'; ctx.shadowBlur = 10;
+      ctx.fillStyle = '#eaffff'; ctx.font = '800 11px var(--font-ui)';
+      ctx.fillText(IS_DESKTOP_CTRL ? 'W ABOVE IT' : 'BOOST ABOVE IT', cx, _labelY - 7);
+      ctx.shadowBlur = 0; ctx.fillStyle = BOX_COL2; ctx.font = '800 10px var(--font-ui)';
+      ctx.fillText(IS_DESKTOP_CTRL ? 'S TO SMASH' : 'SWIPE DOWN TO SMASH', cx, _labelY + 8);
+      ctx.strokeStyle = BOX_COL2; ctx.lineWidth = 2; ctx.beginPath();
+      ctx.moveTo(cx, _labelY + 17); ctx.lineTo(cx, cy - hw - 5);
+      ctx.moveTo(cx - 4, cy - hw - 10); ctx.lineTo(cx, cy - hw - 5); ctx.lineTo(cx + 4, cy - hw - 10); ctx.stroke();
+      ctx.restore();
+    }
   }
 }
 function drawBoxFx(camX) {
@@ -8589,11 +8826,11 @@ const coach = {
   hints: IS_DESKTOP_CTRL ? [
     { icon: '⌨️', text: 'SPACE to JUMP',    sub: 'hop across the candle tops' },
     { icon: '⬆️', text: '↑ or W to BOOST',  sub: 'jet over the tall candles' },
-    { icon: '⬇️', text: '↓ or S to TUCK',   sub: 'drop fast through the gaps' },
+    { icon: '⬇️', text: 'S to SMASH',       sub: 'while airborne, hit glowing cubes' },
   ] : [
     { icon: '👆', text: 'TAP to JUMP',        sub: 'hop across the candle tops' },
     { icon: '⬆️', text: 'SWIPE UP to BOOST',  sub: 'jet over the tall candles' },
-    { icon: '⬇️', text: 'SWIPE DOWN to TUCK', sub: 'drop fast through the gaps' },
+    { icon: '⬇️', text: 'SWIPE DOWN to SMASH',sub: 'while airborne, hit glowing cubes' },
   ],
 };
 function coachAdvance(fromStep) {
@@ -16109,6 +16346,15 @@ function bossWin() {
   } catch (e) {}
   const bf = $('bossFight'); if (bf) { bf.classList.remove('shake', 'fighting', 'lost'); bf.classList.add('won'); void bf.offsetWidth; bf.classList.add('shakeBig'); }
   player.shells += b.reward.shells; addXP(b.reward.xp);
+  /* The boss boundary is safe only after addXP has persisted the new shells and XP. Stamping it
+     before reward payout would let a crash resume at Journal while permanently skipping the prize. */
+  if (bfState.level === 1) {
+    try {
+      const _savedBossReward = JSON.parse(localStorage.getItem('cq_player_v1') || 'null');
+      if (_savedBossReward && Number(_savedBossReward.shells) === Number(player.shells) && window.CQBetaFlow)
+        CQBetaFlow.advance('boss_won');
+    } catch (e) {}
+  }
   floaters.push({ text: '⚔ ' + b.name + ' DEFEATED!', color: '#16c784', y: 100, t: 3 });
   const c = bossCard(bfState.level) || {};
   const isGambler = bfState.level === 1;
@@ -17588,30 +17834,21 @@ $('slSlider').oninput = refreshPanel;
 $('tpSlider').oninput = refreshPanel;
 $('btnRec').onclick = applyRecommended;
 $('btnClose').onclick = closePanel;
-// ── TES v1.1 · AUTHORED TUTORIAL OUTCOMES (Levels 1–3 confidence phase) ──────────────────────
-// Forbidden Pattern #1: never a random tutorial loss. Every L1–3 outcome is AUTHORED, and the
-// chart is driven to agree with it (tradeDrivenCandle). Level 1 = all clean wins. Level 2's FIRST
-// trade is the designed "First Loss" (TES A3) — a telegraphed, stop-protected loss on a correct
-// read — immediately followed by an authored recovery win. Everything else in L1–3 is a win.
-// (Real, honest variance begins at Guardian 4 — out of this scope.) See CHARTQUEST_TRADING_EXPERIENCE_SYSTEM_v1.1.md.
+// ── BUILD 373 · AUTHORED TUTORIAL OUTCOMES (Levels 1–3 confidence phase) ───────────────
+// The opening three guided trades own the W–L–W confidence curve in commitTrade(). Later
+// Level 1–3 trades remain authored wins, never random losses. This MOVES the canonical First Loss
+// into opening trade two; it must not be injected again in Level 2.
 function authoredTutorialOutcome() {
   try {
-    if (session._recoverNextWin) { session._recoverNextWin = false; return 'win'; }   // the authored recovery after the First Loss
-    if (session.level === 2 && localStorage.getItem('cq_firstloss_v') !== '1') {
-      session._l2TradeN = (session._l2TradeN || 0) + 1;
-      // TES A3 — placement VALIDATED in the P0 review: the First Loss lands on the SECOND Level-2
-      // trade, AFTER one winning pullback. So the loss clearly falls on a read the player KNOWS was
-      // right ("even a good read loses"), not on their first unfamiliar pullback ("did I misread
-      // it?"). Trade 1 of L2 = a confidence-building pullback win; trade 2 = the First-Loss lesson.
-      if (session._l2TradeN >= 2) {
-        try { localStorage.setItem('cq_firstloss_v', '1'); } catch (e) {}             // once, ever
-        session._firstLossPending = true;                                             // review/journal show the First-Loss coaching
-        session._recoverNextWin = true;                                               // the very next trade = the authored recovery win
+    if (introFlow.active && introFlow.awaitingTrade && !introFlow.firstTradeDone) {
+      const slot = Math.max(0, Math.min(2, Number(introFlow.tradesDone) || 0));
+      if (slot === 1) {
+        localStorage.setItem('cq_firstloss_v', '1');
         return 'loss';
       }
     }
   } catch (e) {}
-  return 'win';   // L1 · L2-after-First-Loss · L3 → authored win
+  return 'win';
 }
 function tradeMusicTrack(isFirstRide) { return isFirstRide ? 'firstTrade' : 'trade'; }
 function commitTrade() {
@@ -17755,10 +17992,11 @@ function commitTrade() {
   }
 
   if (_introTrade && sIdx >= 0) {
-    // FIRST 3 GUIDED TRADES → ALWAYS a clean 2:1 WIN. The chart is DRIVEN to the target
-    // (tradeDrivenCandle), and the TP snaps to the TOP of the tagging candle — never mid-body.
-    // The stop sits a clean 1.2R away and is never tagged.
-    trade._l1Outcome = 'win';
+    // BUILD 373: the opening curve is WIN → FIRST LOSS → RECOVERY WIN. The visible chart still
+    // decides honestly by touching the authored TP/SL, and a manual Close remains whatever price
+    // actually says. This moves—and does not duplicate—the once-ever First Loss lesson.
+    trade._l1Outcome = authoredTutorialOutcome();
+    trade._isFirstLoss = trade._l1Outcome === 'loss';
     if (long) { trade.tpH = Math.min(trade.entryH + _rd0 * 2, CFG.levelMax - 8); trade.slH = trade.entryH - _rd0 * 1.2; }
     else      { trade.tpH = Math.max(trade.entryH - _rd0 * 2, CFG.levelMin + 8); trade.slH = trade.entryH + _rd0 * 1.2; }
     trade.rr = 2;
@@ -17769,12 +18007,10 @@ function commitTrade() {
     // generated HONEST/scripted candles that could touch the stop for an INSTANT, unearned loss. Now
     // EVERY L1-3 trade is authored + given the clean band here (the _rd0 math needs only entryH, not sIdx).
     // ── TES v1.1 CONFIDENCE PHASE (Levels 1–3) — AUTHORED outcomes, never random ──────────────
-    // Forbidden Pattern #1: no random tutorial loss. Level 1 = all clean wins; Level 2's first
-    // trade is the designed First Loss (then a recovery win); the rest are wins. The chart is
-    // driven to agree with whichever outcome is authored — a win → a clean 2R target; the one
-    // First Loss → a telegraphed 1R move against + a stop-out. See authoredTutorialOutcome().
+    // Forbidden Pattern #1: no random tutorial loss. The sole designed First Loss now lives in
+    // opening trade two; all later Level 1–3 trades are authored wins.
     trade._l1Outcome = authoredTutorialOutcome();
-    trade._isFirstLoss = !!session._firstLossPending; session._firstLossPending = false;
+    trade._isFirstLoss = _introTrade && trade._l1Outcome === 'loss';
     if (long) { trade.tpH = Math.min(trade.entryH + _rd0 * 2, CFG.levelMax - 8); trade.slH = trade.entryH - _rd0; }
     else      { trade.tpH = Math.max(trade.entryH - _rd0 * 2, CFG.levelMin + 8); trade.slH = trade.entryH + _rd0; }
     trade.rr = 2;
@@ -18964,14 +19200,14 @@ function resolveTrade(result) {
   // the dedicated review card above; do not enqueue the generic TP/SL lesson for it.
   if (result === 'win') teach('win');
   else if (result === 'loss') teach('loss');
-  // Friendly FIRST-LOSS message (shown once). The first 3 trades are always wins; the first real
-  // loss is met with kindness so a beginner learns that not every trade wins without feeling bad.
+  // Friendly FIRST-LOSS message (shown once). Opening trade two is the designed, stop-protected
+  // loss and trade three is its recovery; any later loss keeps the same non-shaming fallback.
   try {
     if (result === 'loss' && !localStorage.getItem('cq_lossmsg_v1')) {
       localStorage.setItem('cq_lossmsg_v1', '1');
       // TES v1.1 A3 — THE FIRST LOSS is a designed lesson, not a consolation prize. Finn reframes
       // it instantly: the read was right, the market did the rare thing, and the STOP is the hero.
-      // The player must leave trusting the stop instead of fearing the loss (a recovery win follows).
+      // The player must leave trusting the stop instead of fearing the loss (guided trade three recovers).
       const _fl = (typeof trade !== 'undefined' && trade && trade._isFirstLoss);
       lessonQ.push([_fl ? '🛡️ YOUR STOP JUST DID ITS JOB' : '🌊 EVEN PROS LOSE SOME',
         '<div style="font-size:13px;line-height:1.7;color:#d4dde8">' + (_fl
@@ -18987,6 +19223,18 @@ function resolveTrade(result) {
     }
   } catch (e) {}
   addXP(result === 'win' ? 15 : delta > 0 ? 10 : 5); // harder XP — earn less per trade
+  /* BUILD 373 CONTINUITY — journal row + shell/XP save are durable above this line. Checkpoint the
+     resolved guided slot BEFORE tearing down `trade`, so a reload can never pay/log this trade a
+     second time. The ordinary in-memory counter below remains the live-session owner. */
+  try {
+    if (introFlow.active && introFlow.awaitingTrade && !introFlow.firstTradeDone && window.CQBetaFlow) {
+      const _cqSlot = Math.min(INTRO_TRADES_NEEDED, (introFlow.tradesDone || 0) + 1);
+      CQBetaFlow.advance('trade_' + _cqSlot + '_complete', {
+        tradeSlot: _cqSlot,
+        market: (playerFaction && playerFaction.ticker) || localStorage.getItem('cq_faction') || 'BTC'
+      });
+    }
+  } catch (e) {}
   releasePlayerPacedMotion(); // hand normal auto-walk back after TP, SL, or player-directed Close
   trade = null;
   /* T-002 — HAND THE MARKET BACK. For the whole trade the drive owned market.level directly and the
@@ -22196,18 +22444,18 @@ function render(cameraX) {
     // Progress bar = how far through the level you are (toward the Guardian).
     const lvlFrac = Math.max(0, Math.min(1, session.candles / session.perHour));
     drawBar(x0, y0 + 26, W - 28, 9, lvlFrac, '#ff6b73');
-    // MOVEMENT CONTROLS — three big, bordered chips along the bottom, legible enough for a
-    // 10-year-old. Only three controls exist, so each gets its own clear chip (key + action).
+    // MOVEMENT CONTROLS — large bordered chips along the bottom, legible enough for a
+    // 10-year-old. Desktop names S explicitly; hiding it was the clearest cause of missed cubes.
     // Shown through Level 1, then removed after the first boss (by L2 it's instinct).
     if (session.level <= 1 && !trade && !(typeof bossesDone !== 'undefined' && bossesDone.has(0))) {   // hidden during Trader Mode — let the chart breathe
       const ctrls = IS_DESKTOP_CTRL
-        ? [['A / D', 'MOVE'], ['SPACE', 'JUMP'], ['W', 'BOOST']]
+        ? [['A / D', 'MOVE'], ['SPACE', 'JUMP'], ['W', 'BOOST'], ['S', 'SMASH 💎']]
         : [['TAP', 'JUMP'], ['SWIPE ↑', 'BOOST'], ['SWIPE ↓', 'SMASH 💎']];
-      const gap = 8, chipH = 32, cyC = y0 + 40;     // POLISH: taller chips so the 2 lines breathe + center cleanly
+      const gap = ctrls.length === 4 ? 6 : 8, chipH = 32, cyC = y0 + 40;     // POLISH: taller chips so the 2 lines breathe + center cleanly
       const rowW = Math.min(336, W - 88);          // centered, clear of the corner music button
-      const chipW = (rowW - gap * 2) / 3;
+      const chipW = (rowW - gap * (ctrls.length - 1)) / ctrls.length;
       const startX = (W - rowW) / 2;
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < ctrls.length; i++) {
         const bx = startX + i * (chipW + gap);
         ctx.fillStyle = 'rgba(124,196,255,0.12)';
         rr(bx, cyC, chipW, chipH, 8); ctx.fill();
@@ -23751,6 +23999,7 @@ function introComplete() {
   session.inModal = false;
   paused = false;
   introFlow.awaitingTrade = false;
+  try { if (window.CQBetaFlow) CQBetaFlow.advance('journal_due'); } catch (e) {}
   // The intro no longer ends via the normal hour flow, so start Hour 1 cleanly:
   // reset the candle counter, balance baseline, lesson throttle and trade gate.
   session.candles = 0;
@@ -26523,8 +26772,11 @@ const BlockchainJourney = (() => {
     const ex=b.excite||0, jit=Math.sin(S.tGlobal*26)*1.7*ex, hw=b.w*0.5;
     const cx=boxX(b)-camX+jit, cy=boxY(b)+b.h*0.5-1.6*ex, pulse=0.6+0.4*Math.sin(b.glow);
     if(b.broken){ if(b.breakT>0){ ctx.save(); ctx.globalAlpha=b.breakT; ctx.strokeStyle=DATA2; ctx.lineWidth=2; rr(cx-hw-(1-b.breakT)*11,cy-hw-(1-b.breakT)*11,b.w+(1-b.breakT)*22,b.w+(1-b.breakT)*22,6); ctx.stroke(); ctx.restore(); } return; }
-    // TUTORIAL TARGET — the first box (before the shell-roll is learned) wears an expanding "smash me" halo ring
-    if(!S.taught.roll && S.boxes.find(function(o){return !o.broken;})===b){ const rp=(S.tGlobal*0.9)%1;
+    // TUTORIAL TARGET — the first unbroken box glows while SMASH is the active curriculum stage.
+    // An exploratory down-swipe may set taught.roll early; it must not erase the target before the
+    // player reaches the actual box lesson.
+    const _smashTeach=TEACH_STAGES[S.tStage];
+    if(_smashTeach && _smashTeach.key === 'smash' && S.boxes.find(function(o){return !o.broken;})===b){ const rp=(S.tGlobal*0.9)%1;
       ctx.save(); ctx.globalAlpha=(1-rp)*0.55*appear; ctx.strokeStyle=DATA2; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(cx,cy,hw+6+rp*18,0,6.283); ctx.stroke(); ctx.restore(); }
     ctx.save(); ctx.globalAlpha=appear;
     ctx.shadowColor=DATA; ctx.shadowBlur=12+9*pulse+13*ex;
@@ -26700,7 +26952,13 @@ const BlockchainJourney = (() => {
   }
   // The world ran out before the player finished a stage — retire the curriculum rather than ask
   // for a verb the remaining chart cannot provide. The portal prompt takes over from here.
-  function teachSkipToPortal(){ if(!S.tCelebDone){ S.tStage = TEACH_STAGES.length; teachAllDone(); } }
+  function teachSkipToPortal(){
+    if(!S.tCelebDone){
+      // Running out of authored terrain retires unavailable prompts; it is not evidence that the
+      // player performed the moves. Only teachCredit() may award MOVES MASTERED.
+      S.tStage = TEACH_STAGES.length; S.tCount = 0; S.tFlash = 0;
+    }
+  }
 
   function currentTeach(){
     // the portal is entered with a JUMP, so show the TAP gesture — the old up-arrow mimed a swipe
@@ -28010,12 +28268,25 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').then(reg => { try { reg.update(); } catch (e) {} }).catch(() => {});
   });
   // CACHE FIX — when a newly deployed version activates and takes control, reload ONCE so the
-  // player always sees the freshest build (fixes "I deployed but my phone shows the old version"
-  // on iOS Safari) — but NOT on the first-install takeover, which caused the flicker.
+  // player sees the freshest build on the next safe launch (fixes "I deployed but my phone shows
+  // the old version" on iOS Safari) — but NOT on the first-install takeover and never while an
+  // unfinished beta checkpoint owns continuity. A forced mid-run reload used to erase movement,
+  // guided-trade and Journal state.
   let _swReloaded = false;
+  let _swReloadDeferred = false;
+  const _swBetaActive = () => {
+    try { return !!(window.CQBetaFlow && CQBetaFlow.isActive()); } catch (e) { return false; }
+  };
+  const _swReloadWhenSafe = () => {
+    if (!_swReloadDeferred || _swReloaded || _swBetaActive()) return;
+    _swReloaded = true; location.reload();
+  };
+  window.addEventListener('cq:beta-flow', _swReloadWhenSafe);
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!_hadController) return;                       // first install — no reload, smooth first load
-    if (_swReloaded) return; _swReloaded = true; location.reload();
+    if (_swReloaded) return;
+    if (_swBetaActive()) { _swReloadDeferred = true; return; }
+    _swReloaded = true; location.reload();
   });
 }
 
@@ -30977,6 +31248,15 @@ window.SocialAgents = (function () {
     p.shells += REWARD;
     try { if (typeof addXP === 'function') addXP(10); } catch (e) {}
     try { if (typeof saveLocalProgress === 'function') saveLocalProgress(); } catch (e) {}
+    /* Reward persistence is the final safe Journal boundary. Stamp completion only after the
+       compact player save proves the new balance landed; a reload during the remaining mastery
+       animation then continues to the survey without paying these shells a second time. The
+       ordinary completion callback repeats this advance idempotently after the animation. */
+    try {
+      var _savedReward = JSON.parse(localStorage.getItem('cq_player_v1') || 'null');
+      if (_savedReward && Number(_savedReward.shells) === Number(p.shells) && window.CQBetaFlow)
+        CQBetaFlow.advance('journal_completed');
+    } catch (e) {}
 
     /* Pay it out through the game's OWN wallet motion: shells home to the wallet icon
        (top-right) and tick a coin as each one banks, while the balance counts up — exactly
@@ -31113,6 +31393,7 @@ window.SocialAgents = (function () {
     /* Write the once-ever flag at START, not at completion (the cq_flow_* / cq_prac_* idiom):
        a ✕-close, a reload or a thrown error can then never re-trap the player in it. */
     markDone();
+    try { if (window.CQBetaFlow) CQBetaFlow.advance('journal_started'); } catch (e) {}
 
     injectCSS();
     freeze();
@@ -31153,7 +31434,12 @@ window.SocialAgents = (function () {
         if (S.active) return true;
         var forced = false;
         try { forced = !!window._CQ_JTUT; } catch (e) {}
-        if (isDone() && !forced) return false;
+        /* `player.jtut` historically means "started", not "completed". Build 373's durable
+           journal_started checkpoint is the one legitimate non-dev reason to replay from this safe
+           boundary after a reload; completed/survey states remain once-ever. */
+        var recovering = false;
+        try { recovering = !!(window.CQBetaFlow && CQBetaFlow.state().stage === 'journal_started'); } catch (e) {}
+        if (isDone() && !forced && !recovering) return false;
         /* Once we return true the caller has handed us its follow-ups and will not run them
            itself, so from here on onDone MUST fire no matter what — including if this module
            throws while starting. Losing it would silently cost the player the save-your-
@@ -32273,7 +32559,7 @@ window.SocialAgents = (function () {
         'Continue →</button>' +
 
       '<div id="cqbFoot" style="margin-top:15px;font:600 12px var(--font-ui);color:#7c95a4;max-width:32ch;line-height:1.5;' + st + ';transition:opacity .6s ease">' +
-        'Next: 5 quick questions. Under a minute.</div>';
+        'Next: 7 quick questions. Under two minutes.</div>';
 
     document.body.appendChild(el);
 
@@ -32303,6 +32589,7 @@ window.SocialAgents = (function () {
     var went = false;
     function go() {
       if (went) return; went = true;
+      try { if (window.CQBetaFlow) CQBetaFlow.advance('survey_due'); } catch (e) {}
       emit('survey_started', {});
       openSurvey();
     }
@@ -32355,6 +32642,9 @@ window.SocialAgents = (function () {
   function openSurvey() {
     var url = CFG.surveyUrl;
     var handedOff = false;
+    /* This intent survives every navigation/reload. The survey page's confirmed-write path stamps
+       cq_bt_survey_submitted; CQBetaFlow consumes only that receipt as terminal evidence. */
+    try { if (window.CQBetaFlow) CQBetaFlow.advance('survey_due'); } catch (e) {}
 
     try {
       if (window.parent && window.parent !== window) {
@@ -32420,7 +32710,7 @@ window.SocialAgents = (function () {
     b.innerHTML =
       '<div style="flex:1;min-width:0">' +
         '<div style="font-weight:800;font-size:14px;color:#fff">You already finished the beta 🐢</div>' +
-        '<div style="margin-top:3px;font-weight:600;font-size:12.5px;color:#9fd9c4">5 quick questions — under a minute.</div>' +
+        '<div style="margin-top:3px;font-weight:600;font-size:12.5px;color:#9fd9c4">7 quick questions — under two minutes.</div>' +
       '</div>' +
       '<button type="button" id="cqBetaResumeGo" style="flex:0 0 auto;min-height:44px;padding:0 16px;border:0;' +
         'border-radius:12px;cursor:pointer;font-weight:800;font-size:13.5px;color:#04130c;' +
@@ -32430,16 +32720,57 @@ window.SocialAgents = (function () {
     document.body.appendChild(b);
     try {
       b.querySelector('#cqBetaResumeGo').addEventListener('click', function () {
+        try { if (window.CQBetaFlow) CQBetaFlow.advance('survey_due'); } catch (e) {}
         emit('survey_started', { from: 'resume' }); openSurvey();
       });
       b.querySelector('#cqBetaResumeX').addEventListener('click', function () { b.remove(); });
     } catch (e) {}
   }
 
+  /* Boss/Journal recovery is deliberately explicit and full-screen. We cannot reconstruct an
+     arbitrary mid-animation frame safely, so one tap restarts the Journal from its first objective
+     while preserving the already-paid boss/trades. It has no dismiss action that could strand the
+     player in free roam with a survey still owed. */
+  function journalRecovery(stage) {
+    if (document.getElementById('cqBetaRecovery')) return;
+    var restarted = stage === 'journal_started';
+    var el = document.createElement('div');
+    el.id = 'cqBetaRecovery';
+    el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
+    el.style.cssText = 'position:fixed;inset:0;z-index:100003;display:flex;align-items:center;justify-content:center;' +
+      'padding:24px;box-sizing:border-box;background:rgba(2,5,10,.94);font-family:var(--font-ui),system-ui,sans-serif';
+    el.innerHTML = '<div style="width:min(390px,100%);padding:26px 22px;border-radius:20px;text-align:center;' +
+      'background:#09111b;border:1px solid rgba(76,195,255,.42);box-shadow:0 22px 70px rgba(0,0,0,.7)">' +
+      '<div style="font-size:42px">📖</div><h2 style="margin:12px 0 8px;color:#fff;font-size:22px">Continue where you left off</h2>' +
+      '<p style="margin:0 auto 20px;color:#a9bacb;font-size:14px;line-height:1.55;max-width:31ch">' +
+      (restarted ? 'Your trades and Guardian win are safe. The Journal lesson will restart from its first step.' :
+        'Your trades and Guardian win are safe. Continue into the Trader\'s Journal, then your feedback survey.') + '</p>' +
+      '<button id="cqBetaRecoveryGo" type="button" style="width:100%;min-height:52px;border:0;border-radius:13px;' +
+      'background:linear-gradient(180deg,#4cc3ff,#2389c7);color:#03121d;font-weight:900;font-size:15px;cursor:pointer">' +
+      (restarted ? 'RESTART JOURNAL →' : 'CONTINUE TO JOURNAL →') + '</button>' +
+      '<div id="cqBetaRecoveryErr" style="display:none;margin-top:12px;color:#ff8d97;font-size:12px">Could not resume yet. Tap again.</div></div>';
+    document.body.appendChild(el);
+    var btn = el.querySelector('#cqBetaRecoveryGo');
+    try { btn.focus({ preventScroll: true }); } catch (e) {}
+    btn.addEventListener('click', function () {
+      if (btn.disabled) return;
+      btn.disabled = true; btn.textContent = 'RESTORING…';
+      try {
+        if (typeof window.introComplete !== 'function') throw new Error('resume-not-ready');
+        el.remove();
+        window.introComplete();
+      } catch (e) {
+        btn.disabled = false; btn.textContent = restarted ? 'RESTART JOURNAL →' : 'CONTINUE TO JOURNAL →';
+        var err = el.querySelector('#cqBetaRecoveryErr'); if (err) err.style.display = 'block';
+      }
+    });
+  }
+
   /* ══ THE GATE ══════════════════════════════════════════════════════════════════════════ */
   function finish(reason) {
     if (S.finished || !CFG.enabled) return false;
     S.finished = true;
+    try { if (window.CQBetaFlow) CQBetaFlow.advance('survey_due'); } catch (e) {}
     markDone();
     emit('beta_completed', { reason: reason || 'journal_discovery_complete' });
 
@@ -32475,7 +32806,10 @@ window.SocialAgents = (function () {
           var _skipped = false;
           try { _skipped = !!(JT.wasSkipped && JT.wasSkipped()); } catch (e) {}
           if (_skipped) emit('journal_discovery_skipped', {});
-          else emit('journal_discovery_completed', {});
+          else {
+            try { if (window.CQBetaFlow) CQBetaFlow.advance('journal_completed'); } catch (e) {}
+            emit('journal_discovery_completed', {});
+          }
           try { if (typeof onDone === 'function') onDone(); } catch (e) {}
           finish('journal_discovery_complete');
         });
@@ -32530,13 +32864,24 @@ window.SocialAgents = (function () {
      so in practice the first attempt succeeds. The retries cover load-order surprises. */
   function boot() {
     if (!CFG.enabled) return;
-    /* RESUME. cq_beta_done was written but never read, so a player who reloaded between beating
-       the Gambler and tapping Continue was stranded: cq_played, cq_bosses_v2 and player.jtut are
-       all set by then, so neither introComplete nor claimPostBoss fires again, and the only route
-       back to the survey was replaying all of Level 1. Offer the survey directly instead. */
-    if (isDone() && !S.finished) { setTimeout(function () { try { resumeBanner(); } catch (e) {} }, 2500); }
     patchIntroComplete();
     patchJournal();
+    /* RESUME from the durable ledger, including the two holes the old cq_beta_done-only banner
+       could not see: boss victory before Claim, and Journal start before its callback. */
+    var plan = null, submitted = false;
+    try {
+      if (window.CQBetaFlow) {
+        plan = CQBetaFlow.resumePlan();
+        submitted = CQBetaFlow.hasReached('survey_submitted');
+      }
+    } catch (e) {}
+    if (!submitted && ((plan && plan.next === 'survey') || isDone()) && !S.finished) {
+      setTimeout(function () { try { resumeBanner(); } catch (e) {} }, 1200);
+    } else if (!submitted && plan && plan.next === 'survey_finish' && !S.finished) {
+      setTimeout(function () { try { finish('journal_recovered_complete'); } catch (e) {} }, 300);
+    } else if (!submitted && plan && plan.kind === 'journal' && !S.finished) {
+      setTimeout(function () { try { journalRecovery(CQBetaFlow.state().stage); } catch (e) {} }, 1200);
+    }
     armLevelGuard();
     var tries = 0;
     var iv = setInterval(function () {

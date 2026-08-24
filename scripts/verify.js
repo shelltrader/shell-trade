@@ -23,6 +23,7 @@
  *   25 Build-369 Cloudflare-only app/beta data-plane + no-loss client contracts
  *   26 Build-370/371 player-paced trades + teaching/survey research contracts
  *   27 Build-372 music-on-every-start + permanent browser-unlock contracts
+ *   28 Build-373 feedback recovery + continuity + marketing-truth contracts
  */
 const fs = require('fs');
 const os = require('os');
@@ -893,6 +894,37 @@ function run() {
     } catch (e) {
       add('27', 'Build-372 music-on-every-start + permanent unlock owner', 'FAIL',
         'startup-audio suite could not run: ' + String(e && e.message || e).slice(0, 140));
+    }
+  }
+
+  // 28 — BUILD 373 BETA FEEDBACK RECOVERY. These executable contracts keep the founder-directed
+  // W-L-W opening curve, Bitcoin-first entry, persistent device-specific Smash cue, interruption-
+  // safe paid-boundary recovery, confirmed restart/fresh behavior, survey recovery, and truthful
+  // public pain-point copy together as one candidate rather than independent best-effort edits.
+  {
+    try {
+      const checks = [
+        ['build373_feedback.test.js', 'Bitcoin/Smash/W-L-W/checkpoint contracts'],
+        ['beta_restart_safety.test.js', 'restart/survey/reward safety contracts'],
+        ['marketing_copy.test.js', 'public pain-point/market-truth contracts'],
+      ];
+      const failures = [], detail = [];
+      for (const [file, label] of checks) {
+        const result = cp.spawnSync(process.execPath, [path.join('scripts', file)], {
+          cwd: ROOT, encoding: 'utf8', timeout: 30000,
+        });
+        if (result.status !== 0) {
+          failures.push(label + ': ' + String(result.stderr || result.stdout || 'exit ' + result.status).trim().slice(0, 180));
+        } else {
+          const match = String(result.stdout || '').match(/(\d+\/\d+[^\n]*passed|all[^\n]*pass)/i);
+          detail.push(label + ' PASS' + (match ? ' (' + match[1] + ')' : ''));
+        }
+      }
+      add('28', 'Build-373 beta feedback recovery', failures.length ? 'FAIL' : 'PASS',
+        failures.length ? failures.join(' · ') : detail.join(' · '));
+    } catch (e) {
+      add('28', 'Build-373 beta feedback recovery', 'FAIL',
+        'Build-373 focused checks could not run: ' + String(e && e.message || e).slice(0, 140));
     }
   }
 

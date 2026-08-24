@@ -13,14 +13,9 @@ const prior = childProcess.spawnSync('git', ['show', 'HEAD:chart-quest.html'], {
   cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
 });
 assert.equal(prior.status, 0, prior.stderr || 'could not read HEAD game artifact');
-const withoutApprovedKeys = current
-  .split('cq_bt_invite_v1').join('bt_invite_placeholder')
-  .split('cq_cohort').join('cohort_placeholder')
-  .split('cq_invite').join('invite_placeholder');
-
 const tests = [
-  ['actual checkout is either unchanged or exactly the approved Build 370 attribution delta', () => {
-    const result = gate.check(prior.stdout, current, 370);
+  ['actual checkout is either unchanged or exactly the approved Build 373 continuity delta', () => {
+    const result = gate.check(prior.stdout, current, 373);
     if (result.changed) {
       assert.equal(result.approved, true, result.detail);
       assert.deepEqual(result.added, gate.APPROVED_ADDITIONS);
@@ -30,7 +25,7 @@ const tests = [
     assert.deepEqual(result.removed, []);
   }],
   ['an unapproved third key fails the exception', () => {
-    const result = gate.check(prior.stdout, current + "\nlocalStorage.setItem('cq_unapproved_v1', 'x');", 370);
+    const result = gate.check(prior.stdout, current + "\nlocalStorage.setItem('cq_unapproved_v1', 'x');", 373);
     assert.equal(result.approved, false);
     assert(result.added.includes('cq_unapproved_v1'));
   }],
@@ -38,16 +33,15 @@ const tests = [
     const established = gate.keys(prior.stdout).find(key => prior.stdout.includes(key));
     assert(established, 'fixture needs an established key');
     const without = current.split(established).join('cq_replaced_key_v1');
-    const result = gate.check(prior.stdout, without, 370);
+    const result = gate.check(prior.stdout, without, 373);
     assert.equal(result.approved, false);
     assert(result.removed.includes(established));
   }],
-  ['the exact build and generated-adapter markers are mandatory', () => {
-    assert.equal(gate.check(prior.stdout, current, 369).approved, false);
-    assert.equal(gate.check(prior.stdout, current.replace(gate.TRACKER_BEGIN, 'missing-tracker-marker'), 370).approved, false);
-    assert.equal(gate.check(prior.stdout, current.replace('build 370 - PLAYER-PACED NEXT-BETA LEARNING.', 'build 370 - other.'), 370).approved, false);
-    assert.equal(gate.check(prior.stdout, current.replace("var INVITE_KEY = 'cq_bt_invite_v1';", "var INVITE_KEY = 'missing';"), 370).approved, false);
-    assert.deepEqual(gate.check(withoutApprovedKeys, current, 370).added, gate.APPROVED_ADDITIONS);
+  ['the exact Build 373 and continuity-owner markers are mandatory', () => {
+    assert.equal(gate.check(prior.stdout, current, 372).approved, false);
+    assert.equal(gate.check(prior.stdout, current.replace('build 373 - BETA FEEDBACK RECOVERY.', 'build 373 - other.'), 373).approved, false);
+    assert.equal(gate.check(prior.stdout, current.replace('/* BETA_FLOW_CONTINUITY_V1:BEGIN', 'missing-continuity-marker'), 373).approved, false);
+    assert.equal(gate.check(prior.stdout, current.replace("var KEY = 'cq_beta_flow_v1';", "var KEY = 'missing';"), 373).approved, false);
   }],
 ];
 

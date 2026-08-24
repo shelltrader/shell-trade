@@ -76,7 +76,7 @@
 /* CQBOOTCRASH:END */
 </script>
 
-<meta name="description" content="The ChartQuest beta is open. Play World 1 free, beat the first Guardian, and tell us what to build next. Dive inside real candlestick charts as Finn the turtle — no download, no sign-up.">
+<meta name="description" content="The ChartQuest beta is open. Play World 1 free, explore candlestick charts as Finn the turtle, and learn the foundations on a Bitcoin-first practice chart before risking real money.">
 <meta name="theme-color" content="#060910">
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -124,7 +124,7 @@
 <meta property="og:image:alt" content="Finn the turtle faces the Guardians of the Blockchain Ocean on a rising candlestick chart">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ChartQuest — The World's First Trading RPG">
-<meta name="twitter:description" content="The ChartQuest beta is open. Play the first world free and learn to read a real chart, in your browser.">
+<meta name="twitter:description" content="The ChartQuest beta is open. Play the first world free and learn candlestick foundations on a Bitcoin-first practice chart.">
 <meta name="twitter:image" content="https://playchartquest.com/assets/og-cover.jpg">
 
 <!-- Typography: Inter (body) + Space Grotesk (display).
@@ -1099,11 +1099,10 @@ body.tab-hidden *{animation-play-state:paused!important}
 /* the bridge already carries the breathing room — don't stack it with the next section's */
 .bridge + .section{padding-top:clamp(28px,4vw,54px)}
 
-/* ---- hero: remove friction, point the way down ---- */
-/* The line whose whole job is "this costs you nothing" was the least readable text on the page:
-   faint, 11px, uppercase, wide-tracked — over the key art, and alone among its hero siblings in
-   having no text-shadow, so its contrast rode on whatever pixel of artwork sat behind it. */
-.hero-trust{margin:15px 0 0;font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);text-shadow:0 2px 14px rgba(0,0,0,.95),0 1px 3px rgba(0,0,0,.9)}
+/* ---- hero: name the problem, then point the way down ---- */
+/* This line carries the visitor's pressure point, so keep it readable over the key art and let the
+   longer thought wrap cleanly on a phone without shrinking below the existing trust-line size. */
+.hero-trust{margin:15px 0 0;max-width:62ch;font-family:var(--mono);font-size:11.5px;line-height:1.55;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);text-shadow:0 2px 14px rgba(0,0,0,.95),0 1px 3px rgba(0,0,0,.9)}
 /* bottom-RIGHT, not centre: the key art's Finn owns the centre, and the hero's
    last ~15px sit below the fold, so anchor it clear of both */
 .hero-scroll{position:absolute;right:clamp(16px,3vw,44px);bottom:clamp(30px,5.5vh,62px);z-index:5;
@@ -1289,11 +1288,11 @@ body.tab-hidden *{animation-play-state:paused!important}
     <div class="inner reveal">
       <span class="eyebrow">The world's first trading RPG</span>
       <h1 class="display">THE CHART<br>IS THE <span class="grad">WORLD</span></h1>
-      <p class="sub">Real market charts become a world you can explore. Finn teaches you to read them as you play.</p>
+      <p class="sub">Candlestick charts become a world you can explore. Finn teaches you the foundations as you play, starting with Bitcoin.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="play.html">▶ Play Free</a>
       </div>
-      <p class="hero-trust">Free · No download · No sign-up</p>
+      <p class="hero-trust">ONE INCOME DOESN’T FEEL LIKE ENOUGH ANYMORE. LEARN THE CHART BEFORE YOU RISK REAL MONEY.</p>
     </div>
   </div>
 
@@ -1306,7 +1305,7 @@ body.tab-hidden *{animation-play-state:paused!important}
 
 <!-- ===================== BRIDGE · hero → real markets ===================== -->
 <div class="bridge reveal" data-fx="bridge">
-  <p>The same chart that moves <b>Bitcoin</b> also moves <b>Apple</b>, <b>Tesla</b> and <b>Gold</b>.</p>
+  <p><b>Bitcoin</b>, <b>Apple</b>, <b>Tesla</b> and <b>Gold</b> share a candlestick language—but each market moves for different reasons.</p>
   <a class="bridge-next" href="#markets" aria-label="See the real markets">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
   </a>
@@ -1358,7 +1357,7 @@ body.tab-hidden *{animation-play-state:paused!important}
         </div>
 
         <div class="mk-fallback" id="mkFallback">
-          <p>Real market charts couldn't load here — but they're waiting for you inside ChartQuest.</p>
+          <p>Market snapshots couldn't load here — but you can still learn the candlestick foundations inside ChartQuest.</p>
         </div>
       </div>
     </div>
@@ -1371,7 +1370,7 @@ body.tab-hidden *{animation-play-state:paused!important}
       <button type="button" class="mk-chip">S&amp;P 500</button>
       <button type="button" class="mk-chip">Ethereum</button>
     </div>
-    <p class="mk-lesson reveal">Same chart. Different market. <b>Learn to read one, and you can read them all.</b></p>
+    <p class="mk-lesson reveal">Same candlestick language. Different market behavior. <b>ChartQuest starts with Bitcoin so you can learn one foundation without the noise.</b></p>
     <a class="mk-credit" href="https://www.tradingview.com" target="_blank" rel="noopener">Charts by TradingView</a>
   </div>
 </section>
@@ -1398,7 +1397,7 @@ body.tab-hidden *{animation-play-state:paused!important}
       <div class="scene">
         <img class="shot" src="assets/EXPLORE.jpg" alt="Finn sprinting across a Bitcoin candlestick chart" loading="lazy" decoding="async">
       </div>
-      <div class="body"><div class="tagn">◈ Explore</div><h3>Run the chart</h3><p>Every candle is solid ground. Run and jump your way across a real market.</p></div>
+      <div class="body"><div class="tagn">◈ Explore</div><h3>Run the chart</h3><p>Every candle is solid ground. Run and jump across a Bitcoin-first practice chart.</p></div>
     </div>
     <div class="pillar trade reveal">
       <div class="scene">
@@ -1529,7 +1528,7 @@ body.tab-hidden *{animation-play-state:paused!important}
           </svg>
           <span>Chart<b>Quest</b></span>
         </a>
-        <p style="max-width:300px;color:var(--ink-dim);margin-top:14px;font-size:14px">Dive inside real charts as Finn and learn to trade — free, in your browser. ChartQuest is an early beta: World 1 and the first Guardian are playable now.</p>
+        <p style="max-width:300px;color:var(--ink-dim);margin-top:14px;font-size:14px">Explore candlestick charts as Finn and learn the foundations through play, starting with Bitcoin. ChartQuest is an early beta: World 1 and the first Guardian are playable now.</p>
       </div>
       <div>
         <h5>The world</h5>
@@ -1553,7 +1552,7 @@ body.tab-hidden *{animation-play-state:paused!important}
 
 <!-- Sticky mobile CTA -->
 <div class="sticky-cta" id="stickyCta">
-  <div><div class="sc-label">Enter ChartQuest 🐢</div><div class="sc-sub">Free · no download</div></div>
+  <div><div class="sc-label">Enter ChartQuest 🐢</div><div class="sc-sub">Learn before you risk real money</div></div>
   <a class="btn btn-primary" href="play.html">▶ Play Free</a>
 </div>
 

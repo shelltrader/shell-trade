@@ -106,16 +106,16 @@ const tests = [
       assert.match(policy, /connect-src 'self' https:\/\/cloudflareinsights\.com https:\/\/\*\.cloudflareinsights\.com/);
     }
     const sw = read('website/sw.js');
-    assert.match(sw, /chartquest-site-v17/);
+    assert.match(sw, /chartquest-site-v18/);
     assert.match(sw, /\.\/assets\/cq-cloud-data\.js/);
     assert.match(read('website/privacy.html'), /production game sends no new account, gameplay, survey or bug-report data there/i);
     assert.match(read('website/terms.html'), /one-time secure restore code/i);
   }],
 
-  ['mirrors and build identity are ready for build 372', () => {
+  ['mirrors and build identity are ready for build 373', () => {
     assert.equal(read('index.html'), game, 'root mirror drifted');
     assert.equal(read('website/game.html'), game, 'website game mirror drifted');
-    assert.match(game, /const BUILD_TAG = 'build 372 /);
+    assert.match(game, /const BUILD_TAG = 'build 373 /);
     for (const relative of ['website/bosses.html', 'website/courses.html', 'website/index.html', 'website/play.html', 'website/survey.html']) {
       assert.match(read(relative), /cq-track\.js\?v=370/);
     }

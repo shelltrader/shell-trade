@@ -76,7 +76,7 @@
 /* CQBOOTCRASH:END */
 </script>
 
-<meta name="description" content="Play the ChartQuest beta free in your browser — run across a real candlestick chart and learn to trade.">
+<meta name="description" content="Play the ChartQuest beta free in your browser — run across a Bitcoin-first practice chart and learn candlestick foundations.">
 <meta name="theme-color" content="#060910">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/pwa/icon-192.png">
@@ -176,18 +176,44 @@
 <script src="assets/cq-track.js?v=370"></script>
 <script>
   var CQ_GAME = (window.CHARTQUEST_CONFIG && window.CHARTQUEST_CONFIG.gameUrl) || 'game.html';
-  // Forward the query string into the iframe — without this, /play?fresh=1 (and ?guest,
-  // ?dev, ?qa) were silently inert, so a "fresh" beginner test was never actually fresh.
-  var CQ_QS = location.search || '';
+  /* Forward ordinary attribution/dev parameters, but consume `fresh` exactly once. A production
+     reset is destructive even on a young save, so it always asks first. Once accepted, the iframe
+     receives a same-origin approval marker for this one load; the wrapper URL and every later
+     Restart are clean and therefore cannot wipe the newly-created checkpoint again. */
+  var _cqParams = new URLSearchParams(location.search || '');
+  var _cqFirstParams = new URLSearchParams(_cqParams.toString());
+  var _cqFresh = _cqParams.has('fresh');
+  var _cqFreshApproved = false;
+  var _cqDevHost = /^(?:localhost|127\.0\.0\.1|::1|192\.168\.|10\.|172\.(?:1[6-9]|2\d|3[01])\.)/.test(location.hostname || '');
+  try { _cqDevHost = _cqDevHost || localStorage.getItem('cq_dev') === '1'; } catch (e) {}
+  if (_cqFresh) {
+    _cqFreshApproved = _cqDevHost || window.confirm('Start ChartQuest over? This erases your progress on this device.');
+    _cqParams.delete('fresh'); _cqParams.delete('fresh_confirmed');
+    _cqFirstParams = new URLSearchParams(_cqParams.toString());
+    if (_cqFreshApproved) {
+      _cqFirstParams.set('fresh', '1');
+      _cqFirstParams.set('fresh_confirmed', '1');
+    }
+    try {
+      var _cqClean = _cqParams.toString();
+      history.replaceState(null, '', location.pathname + (_cqClean ? '?' + _cqClean : '') + location.hash);
+    } catch (e) {}
+  }
+  var CQ_QS = _cqParams.toString() ? '?' + _cqParams.toString() : '';
+  var CQ_FIRST_QS = _cqFirstParams.toString() ? '?' + _cqFirstParams.toString() : '';
   var gframe = document.getElementById('cqGame'), loader = document.getElementById('cqLoader');
   document.getElementById('cqOpenTab').href = CQ_GAME + CQ_QS;
-  gframe.src = CQ_GAME + CQ_QS;
+  gframe.src = CQ_GAME + CQ_FIRST_QS;
   gframe.addEventListener('load', function(){ setTimeout(function(){ loader.classList.add('hide'); }, 500); });
   // safety: hide loader after 9s no matter what, and offer the new-tab escape after 5s
   setTimeout(function(){ document.getElementById('cqOpenTab').style.display='inline'; }, 5000);
   setTimeout(function(){ loader.classList.add('hide'); }, 9000);
 
-  document.getElementById('cqRestartBtn').addEventListener('click', function(){ gframe.src = CQ_GAME + CQ_QS; });
+  document.getElementById('cqRestartBtn').addEventListener('click', function(){
+    if (!window.confirm('Restart from your last saved checkpoint? The current unfinished moment may replay.')) return;
+    try { loader.classList.remove('hide'); } catch (e) {}
+    gframe.src = CQ_GAME + CQ_QS;                       // deliberately clean: never reapply `fresh`
+  });
 
   /* ── CLOSED BETA → SURVEY handoff (ticket 2) ───────────────────────────────
      window.CQBeta (in the game) posts this the moment the player finishes Journal

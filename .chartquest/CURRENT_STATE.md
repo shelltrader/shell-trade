@@ -1,5 +1,68 @@
 # Current Technical State
 
+## 2026-08-24 Build-373 beta-feedback and restart recovery — VERIFIED LOCALLY; RELEASE HELD
+
+- **DOCUMENTED — Founder direction and source quality:** an anonymized skilled marketer reported
+  no survey after an unexplained restart to the movement tutorial, weak Shell Smash recall, opening
+  market-choice friction and misleading cross-market implications, an emotionally flat all-win
+  opening, and website copy that did not speak to the pressure of escaping the 9–5. The exact served
+  tester build was not captured and remains unknown.
+- **VERIFIED — marketing/entry repair:** the public subtext now speaks to rising costs and building
+  income beyond the 9–5. Public language describes practice charts honestly and no longer implies
+  that all markets trade alike. A fresh game gets one explicit Bitcoin confirmation card; returning
+  Change Chart keeps the full eight-market chooser.
+- **VERIFIED — Shell Smash teaching:** movement teaching and main-game follow-up use device-specific
+  swipe/keyboard language, point to a visible box, and retain the cue until a real smash succeeds.
+  Failed attempts do not silently retire the instruction.
+- **VERIFIED — current opening doctrine:** automatic guided trades are WIN → LOSS → WIN. Trade two
+  is the sole authored stop-protected First Loss, trade three is the recovery win, and the old
+  Level-2 injector is retired. “2–1” is the opening record; every guided trade retains 2:1 R:R.
+  Player pacing, first traversed visible TP/SL touch, 30–60-candle paths, manual Close, replay,
+  rewards, and live-trade world-event suppression remain under their existing owners. The approved
+  amendment is recorded in `CHARTQUEST_T-002B_OPENING_FIRST_LOSS_SUPERSESSION_2026-08-24.md`;
+  formal architecture re-ratification remains a release gate.
+- **VERIFIED — interruption outcome repair:** versioned device-local ledger `cq_beta_flow_v1` uses
+  fixed monotonic stages from `new` through `survey_submitted`. A checkpoint advances only after the
+  associated trade, Guardian, shell/XP, Journal, or player state is saved and verified. Resume begins
+  at the next unpaid boundary; lessons/reviews and unfinished Journal work may replay, but completed
+  trades/rewards may not. Survey remains due until a confirmed `cq_bt_survey_submitted` receipt.
+  Malformed/newer ledger versions fall back to legacy durable evidence.
+- **VERIFIED — restart/worker safety:** wrapper Restart and destructive Fresh/reset require
+  confirmation; Fresh is one-shot and tester QR generation rejects fresh flags. A service-worker
+  controller change defers reload while the beta flow is active. `website/sw.js` is now
+  `chartquest-site-v18`, SHA-256
+  `9e7b9e07c9db540098fcb2bf8f2e2af7d9ab8c34e5ca59c7e4074d5c5e827aaa`. This closes one known
+  reload source but does not prove it caused the tester's restart.
+- **VERIFIED — exact local identity:** branch `codex/build373-feedback-recovery`; runtime payload
+  `291d3849e8aa1d27631792ead5271036184efc42`; Build 373 source, root mirror, and website game are
+  byte-identical at SHA-256
+  `69eb93f0f97c60567cfd33c1e7654ec2a3e0bc76cc354ca426ad76145c1b3faa`.
+- **VERIFIED — executable and review evidence:** full verifier 29 pass / 0 fail / 0 warn / 1
+  optional Puppeteer skip; feedback/recovery 10/10; restart/survey/reward safety 7/7; marketing truth
+  8/8; startup music 10/10; pacing 13/13; CQSAFE 27/27; save-key gate 4/4; game cutover 7/7;
+  Cloudflare client 15/15; all three artifacts match; diff and syntax checks pass. The protected-key
+  delta is exactly one new flow-ledger key plus four established CQTrack once-key literals, with no
+  removal or rename. Independent final review APPROVED with no actionable finding.
+- **VERIFIED — scoped local Browser evidence:** at 390×844, the landing pain point, one-card Bitcoin
+  entry, returning eight-market chooser, ordinary-on/explicit-muted/reload-on music state, Q1–Q7
+  form and draft persistence, device-specific persistent Smash cue, and clean resume from the
+  `market_selected` safe boundary were observed. The native restart confirmation also fired. The
+  Browser did not submit a survey, prove speaker output, complete a physical smash, emulate a hidden
+  phone, or prove a served Preview build.
+- **[UNKNOWN — REQUIRES VERIFICATION]:** the initiating tester restart cause; exact tester build;
+  physical-phone audible output/background recovery; actual Smash completion and teaching
+  retirement; W-L-W subjective feel and automatic stop truth; interruption at every checkpoint;
+  real Q1–Q7 receipt recovery; authenticated Founder dashboard/export/fresh-cohort views; genuine
+  returning-worker behavior; and exact Preview bytes.
+- **RELEASE HOLD:** Preview migration `0003` was already applied once and must not be reapplied.
+  Production `0003` still requires recovery evidence, exact binding verification, and explicit
+  authorization before affected Functions. Account/data rollback and unreconciled Supabase history
+  remain separate gates. No manifest, lock, `main` push, deployment, provider mutation, tester link,
+  recovered-archive change, or production fingerprint was made. Build 367 remains live.
+
+See `handoffs/BETA373_FEEDBACK_RECOVERY_LOCAL_CANDIDATE.md`. All lower Build-372/371 sections are
+retained as historical evidence and do not override the Build-373 status above.
+
 ## 2026-08-24 Build-372 startup-music repair — VERIFIED LOCALLY; RELEASE HELD
 
 - **DOCUMENTED — Founder direction:** after a player reported hearing no music, the Founder directed

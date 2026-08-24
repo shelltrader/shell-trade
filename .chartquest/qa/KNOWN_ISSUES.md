@@ -2,6 +2,43 @@
 
 Only repository-documented issues are listed below. The severity/status reflects the cited document where available; it does not assert that the issue is currently live.
 
+## Build-373 tester restart and missing survey
+
+**Tester interruption P0 — OUTCOME REPAIRED LOCALLY; INITIATING CAUSE UNKNOWN:** an anonymized skilled
+marketer reported that the game restarted to the movement tutorial and never presented the survey.
+The exact served build/fingerprint and interruption moment were not captured. The initiating restart
+was not reproduced, so no specific service-worker, browser, network, or game owner is claimed as the
+cause.
+
+Build 373 adds a versioned device-local `cq_beta_flow_v1` safe-boundary ledger. It checkpoints only
+after durable side effects, resumes at the next unpaid step, prevents completed trade/Guardian/
+Journal rewards from being paid again, and keeps `survey_due` recoverable until the confirmed survey
+receipt. Fresh/reset and wrapper Restart require confirmation, tester QR output rejects fresh flags,
+and controller-change reload waits while the flow is active. The v18 worker change closes one
+controller-reload hazard; it does not prove that hazard caused this tester's restart.
+
+Executable coverage passes 10/10 feedback/recovery, 7/7 restart/reward safety, and 4/4 save-key
+protection. Local Browser evidence proved a clean `market_selected` resume and Q1/Q2 draft retention,
+but did not submit the survey or emulate a real interrupted phone. Exact Preview and physical-phone
+interruption at each safe boundary, non-duplicated rewards, Journal recovery, and Q1–Q7 confirmed-
+receipt recovery remain release blockers. Evidence:
+`handoffs/BETA373_FEEDBACK_RECOVERY_LOCAL_CANDIDATE.md`.
+
+## Build-373 feedback surfaces
+
+**Entry/teaching/credibility findings — REPAIRED LOCALLY; PHYSICAL ACCEPTANCE OPEN:** the same tester
+reported market-choice friction, weak Shell Smash recall, misleading cross-market implications, an
+all-win opening that lacked credible risk, and website subtext that did not speak to the pressure of
+escaping the 9–5. Build 373 uses one-card Bitcoin first-run confirmation, retains eight markets for
+returning Change Chart, uses truthful practice-chart wording, keeps a device-specific Smash cue until
+success, adopts an authored WIN → LOSS → WIN opening, and replaces the site subtext with the approved
+income-pressure pain point. The later Level-2 loss injector is retired; every guided trade remains
+2:1 R:R.
+
+Local contracts and scoped Browser checks pass. Exact Preview/physical-phone W-L-W, Smash completion,
+Bitcoin entry, and subjective copy/feel acceptance remain open. The TES placement amendment is
+Founder-approved but still requires formal architecture re-ratification before production.
+
 ## Build-372 startup music repair
 
 **Player-silent startup P0 — REPAIRED LOCALLY; AUDIBLE PHONE/PREVIEW PROOF OPEN:** a player reported
@@ -20,17 +57,18 @@ ordinary on, manual off, reload-on, explicit muted launch, later ordinary-on, fi
 advance, and zero console errors. This is UI/storage/gesture evidence only; it does not prove that a
 physical speaker produced audible music.
 
-`website/sw.js` remains unchanged at `chartquest-site-v17`. It does not intercept online HTML
-navigation and uses network-first behavior for explicit `game.html` fetches, so it is not the cause
-of this persisted preference defect and no worker bump is required. Exact local game artifacts are
-byte-identical at `64c157e3...`.
+In Build 372, `website/sw.js` remained unchanged at `chartquest-site-v17`. It did not intercept
+online HTML navigation and used network-first behavior for explicit `game.html` fetches, so that
+music repair made no service-worker change. Build 373 separately moves the marketing cache to v18.
+Exact Build-372 game artifacts were byte-identical at `64c157e3...`.
 
 Release remains held. Physical-phone audible startup and true background/resume, exact Preview
 startup/intro/Guardian checks, and all inherited Build-371 device, automatic-loss, Founder Access/
 dashboard/export/fresh-entry cohort, returning-worker, Production `0003`, account/data rollback,
 manifest/lock/gate, authorization, production fingerprint, and tester-link gates remain open.
-Build 367 remains production; no Preview/production deployment, migration, `main` push, manifest,
-lock, provider change, service-worker change, recovered-archive change, or tester link occurred.
+Build 367 remained production; that Build-372 repair made no Preview/production deployment,
+migration, `main` push, manifest, lock, provider change, service-worker change, recovered-archive
+change, or tester link.
 Evidence: `handoffs/BETA372_MUSIC_STARTUP_LOCAL_CANDIDATE.md`.
 
 ## Build-370/371 player-paced next-beta candidate

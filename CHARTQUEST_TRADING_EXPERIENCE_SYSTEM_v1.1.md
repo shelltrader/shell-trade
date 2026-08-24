@@ -5,6 +5,13 @@
 **Red-team of record:** [CHARTQUEST_TES_CRITIQUE_2026-07-07.md](CHARTQUEST_TES_CRITIQUE_2026-07-07.md).
 **Created:** 2026-07-07.
 
+> **BUILD-373 LOCAL-CANDIDATE PLACEMENT:** the local candidate follows Founder-approved
+> [`ADR-TES-1`](CHARTQUEST_T-002B_OPENING_FIRST_LOSS_SUPERSESSION_2026-08-24.md): automatic opening
+> **WIN → LOSS → WIN**, trade two as the sole stop-protected First Loss, trade three as the recovery
+> win, and the later Level-2 injector retired. “2–1” is the opening record; every automatic guided
+> trade remains 2:1 R:R. The original v1.1 wording below remains the formal architecture canon until
+> the required re-ratification is complete. Production is held on that reconciliation.
+
 > **What changed from v1.0 → v1.1.** The philosophy, First-Hour Doctrine, Confidence Curve, authored onboarding, and curriculum-first design are **unchanged**. v1.1 resolves the red-team's production blockers only: it corrects entity names to the canonical roster, adds an accessibility law, authors the First Loss, makes confidence measurable, defines the realism transition, states the monetization boundary, and adds returning-player, mistake-library, dependency-graph, tiered-validation, acceptance-gate, and implementation-safety systems. **No gameplay, market, boss, or curriculum was redesigned.**
 
 ### Traceability (every amendment → its red-team finding)

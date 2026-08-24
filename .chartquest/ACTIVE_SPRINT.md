@@ -4,19 +4,45 @@
 
 ## Sprint objective
 
-Prepare the next closed-beta experiment from the recovered evidence: restore player-paced guided
-trades without changing their price/outcome doctrine, improve the smallest confirmed teaching
-surfaces, add two bounded research questions, and attribute the next cohort with private opaque
-invites. Close the Founder-reported silent-startup defect without changing the soundtrack or game
-rules. Preserve Build 367 in production until the Build-370/371/372 migration, preview, device,
-release, and served-fingerprint gates all pass.
+Prepare the next closed-beta experiment from recovered evidence: keep player-paced guided trades,
+make the first run Bitcoin-first, teach Shell Smash until the player performs it, and test one
+authored WIN → LOSS → WIN opening while retaining 2:1 R:R and every visible first-touch/pacing law.
+Protect the interrupted beta journey through safe-boundary resume and a receipt-gated survey. Keep
+music enabled on ordinary startup and replace misleading/free-first website copy with the approved
+income-pressure pain point. Preserve Build 367 in production until all Build-373 doctrine, Preview,
+device, data, release-control, authorization, and served-fingerprint gates pass.
 
 ## Current release/build
 
-- Isolated startup-audio repair branch: `codex/build372-music-startup`.
-- Exact Build-372 runtime payload commit: `e3382414624ea571a28e2c887bbe8593545734cc`.
-- Build: **372 local engineering candidate; production remains Build 367**.
-- Build-372 source, root mirror, and website game artifact are byte-identical at SHA-256
+- Current isolated branch: `codex/build373-feedback-recovery`.
+- Exact Build-373 runtime payload commit: `291d3849e8aa1d27631792ead5271036184efc42`.
+- Build: **373 local engineering candidate; production remains Build 367**.
+- Build-373 source, root mirror, and website game artifact are byte-identical at SHA-256
+  `69eb93f0f97c60567cfd33c1e7654ec2a3e0bc76cc354ca426ad76145c1b3faa`; service worker is
+  `chartquest-site-v18` at SHA-256
+  `9e7b9e07c9db540098fcb2bf8f2e2af7d9ab8c34e5ca59c7e4074d5c5e827aaa`.
+- **Founder direction (2026-08-24):** implement the marketer's beta findings: pain-point site copy,
+  clearer Shell Smash, Bitcoin-first entry, and a 2–1 opening. Build 373 uses one-card Bitcoin
+  confirmation for a fresh run while returning Change Chart keeps eight markets; its automatic
+  opening is WIN → LOSS → WIN, with trade two the sole stop-protected First Loss, trade three the
+  recovery win, the old Level-2 injector retired, and every guided trade still 2:1 R:R.
+- **Interruption repair:** a versioned `cq_beta_flow_v1` ledger checkpoints only after durable side
+  effects, resumes at the next unpaid safe boundary, keeps survey due until a confirmed receipt,
+  confirms destructive Fresh/Restart, rejects fresh flags in tester QR output, and defers worker
+  reload during an active flow. The tester's initiating restart cause was not reproduced.
+- **Build-373 local evidence:** full verifier 29/0/0/1; Build-373 feedback 10/10; restart/reward
+  safety 7/7; marketing truth 8/8; music 10/10; pacing 13/13; CQSAFE 27/27; save-key gate 4/4;
+  game cutover 7/7; Cloudflare client 15/15; diff/syntax clean; independent final review APPROVE.
+  In-app phone-size Browser checks covered the pain-point copy, one-card Bitcoin entry, returning
+  eight-market chooser, ordinary-on/explicit-mute/reload-on music state, Q1–Q7 draft persistence,
+  persistent device-specific Smash cue, and clean safe-boundary market resume. These are not
+  physical-phone, audible-output, real-receipt, or Preview claims.
+- Build-373 doctrine record: `CHARTQUEST_T-002B_OPENING_FIRST_LOSS_SUPERSESSION_2026-08-24.md`.
+  Formal architecture re-ratification remains a release gate; TES v1.1 remains formal canon until
+  that gate completes.
+- Prior isolated startup-audio branch: `codex/build372-music-startup`; exact payload
+  `e3382414624ea571a28e2c887bbe8593545734cc`.
+- Build-372 source, root mirror, and website game artifact were byte-identical at SHA-256
   `64c157e311f5d2bffde5682a7acfc48ab1907daf95842ff6e3af8827ac0d7b90`.
 - **Founder direction (2026-08-24):** music must be enabled on every normal startup. The local repair
   resets stale/default `cq_music` state to `on` on every ordinary document load, keeps explicit
@@ -29,8 +55,9 @@ release, and served-fingerprint gates all pass.
   checks passed ordinary load, manual off, reload-on, explicit-muted launch, later ordinary-on,
   first-gesture intro advance, and zero console errors. Independent read-only review found no P0–P2
   issue. This is not audible phone evidence.
-- `website/sw.js` remains byte-unchanged at `chartquest-site-v17`; HTML navigation is not
-  service-worker cached, so no worker bump is required for this game-document-only repair.
+- **Historical Build-372 boundary:** its `website/sw.js` remained byte-unchanged at
+  `chartquest-site-v17`; Build 373 separately advances the marketing cache to v18 for changed public
+  assets and active-flow controller safety.
 - Prior pacing candidate branch: `codex/beta370-player-paced-trades`.
 - Exact prior Build-371 pacing-repair payload commit: `3019058b32c6acddc8fc5530569f24d95c76a98f`
   (the Build-370 experiment payload remains `08d3b3c930f86ca4894ff9c26c813f78b43fb040`).
@@ -62,31 +89,32 @@ release, and served-fingerprint gates all pass.
   persistence, and the exact Build-367 static rollback artifact passed. Production `BETA_DB` still
   lacks Q6/Q7, so authorized Production `0003` migration-before-Functions is a hard release gate.
   See `handoffs/BETA371_PROVIDER_ROLLBACK_AUDIT.md`.
-- Production Build 367 remains live and unaffected. Build 371 has not been pushed to `main` or
-  deployed to production.
+- Production Build 367 remains live and unaffected. Build 373 has not been pushed to `main` or
+  deployed to Preview or production.
 
 ## Active tasks
 
 | Task | Owner | State | Next action |
 |---|---|---|---|
-| Build-372 startup music repair | Engineering + Founder | **VERIFIED LOCALLY — AUDIBLE PHONE/PREVIEW GATES OPEN** | On the exact candidate, perform a physical-phone audible listen from an ordinary load, reload after manual mute, explicit `?mute=1`, first pointer/key, intro handoff, Guardian audio, and true background/resume. Then repeat the inherited Build-371 Preview/release matrix; local UI state is not proof that a speaker produced sound. |
+| Build-373 feedback/restart recovery | Engineering + Founder | **VERIFIED LOCALLY — PREVIEW/PHYSICAL PHONE GATES OPEN** | On exact payload `291d384`, verify fresh Bitcoin entry, returning eight-market Change Chart, W-L-W with stop coaching/recovery and no duplicate injector, device-specific Smash completion, ordinary startup music with audible output, interruption/resume at every safe boundary, Journal reward non-duplication, and survey recovery through a real Q1–Q7 receipt. Complete TES re-ratification before production authorization. |
 | Build-370 BETA_DB migration | Release Manager | **PASS — PREVIEW ONLY** | `0003` was applied once to the verified Preview `BETA_DB`; recovery bookmark, absent-before/present-after schema, constraints, and six-row aggregate are recorded in `handoffs/BETA370_PREVIEW_BETA_DB_MIGRATION.md`. Do not reapply it to Preview. Apply it exactly once to the verified Production `BETA_DB` only after release authorization plus a Production recovery bookmark/count/schema record, and before any production Functions that select or write Q6/Q7. |
-| Build-372 Preview and phone QA | Release Manager + Founder | **LOCAL AUDIO REPAIR PASS; PRIOR BUILD-371 SERVED PACING P0 PASS; RELEASE MATRIX INCOMPLETE** | Prior Build-371 engineering Preview and controlled invite/D1 checks passed on deployment `1c56b4ee...`, but its game-document evidence does not prove Build 372. Byte-verify and test exact payload `e338241` on authorized Preview, including a physical-phone audible/true-background pass, then complete automatic SL/loss, Founder allow/dashboard/export plus fresh-entry cohort, returning v16→v17 worker, Production `0003`, and account/data rollback proof. |
+| Build-373 Preview and phone QA | Release Manager + Founder | **LOCAL CANDIDATE PASS; PRIOR BUILD-371 SERVED EVIDENCE DOES NOT PROVE BUILD 373** | Deploy only to authorized non-production Preview, prove served bytes, then run the complete physical/interruption/trade/data matrix. Preview `0003` is already present and must not be reapplied. Include Founder allow/dashboard/export/fresh cohort, genuine returning-worker behavior, Production `0003` planning, and account/data rollback proof. |
 | Next ten-person beta cohort | PM/CTO | **BLOCKED BY PREVIEW/DEVICE GATES** | Do not generate or share a cohort until the repaired candidate passes Preview and physical-device acceptance. After approval, generate one release-authorized cohort and ten unique consonant-digit invite codes. |
-| Historical application-data migration | Release Manager | **SEPARATE PENDING WORK** | Preserve the existing audited Build-369 account/data migration gates; this Build-370 experiment does not weaken or bypass them. |
+| Historical application-data migration | Release Manager | **SEPARATE PENDING WORK** | Preserve the existing audited Build-369 account/data migration gates; Build 373 does not weaken or bypass them. |
 
 ## Blocked tasks
 
 | Item | Status | Evidence |
 |---|---|---|
-| Build 372 production deployment | **DO NOT DEPLOY** | Startup behavior is local-only and has no audible physical-phone or exact Preview proof. Production `BETA_DB` also lacks Q6/Q7 and the inherited physical-device/background, automatic-loss, Founder allow/export/fresh-entry cohort, returning-worker, account/data rollback, and release-control gates remain incomplete. No production manifest/lock/served fingerprint exists. |
+| Build 373 production deployment | **DO NOT DEPLOY** | Build 373 is local-only. Exact Preview and physical-phone behavior, W-L-W feel/SL truth, Smash completion, interruption/reward/survey recovery, audible music, doctrine re-ratification, Founder allow/export/fresh cohort, returning-worker, Production `0003`, account/data rollback, and release-control gates remain incomplete. No production manifest/lock/served fingerprint exists. |
 | Next tester links | **DO NOT SEND YET** | The current public site still serves Build 367. Q1–Q7 is confirmed-write-receipt verified; controlled invite capture/persistence is separately token-filtered D1-query verified. A release-authorized cohort, fresh-entry Founder view, and physical acceptance have not occurred. |
-| Full Cloudflare application migration | **SEPARATE RELEASE GATE** | Build 370 inherits the Build-369 local candidate but does not itself prove production APP_DB migration, account restoration, or historical application-data reconciliation. |
+| Full Cloudflare application migration | **SEPARATE RELEASE GATE** | Build 373 inherits the Build-369 local candidate but does not itself prove production APP_DB migration, account restoration, or historical application-data reconciliation. |
 
 ## Completed tasks
 
 | Task | Result | Evidence |
 |---|---|---|
+| Build-373 feedback and interruption recovery runtime | **VERIFIED LOCALLY; RELEASE HELD** | Payload `291d384`; game artifacts `69eb93f...`; service worker v18 `9e7b9e07...`; verifier 29/0/0/1; focused 10/10 + 7/7 + 8/8; retained music 10/10 and pacing 13/13; save-key gate 4/4; independent final review APPROVE; local Browser checks passed scoped UI/state paths; exact Preview/phone/data/release gates remain open |
 | Build-372 music-on-every-start repair | **VERIFIED LOCALLY; RELEASE HELD** | Payload `e338241`; game artifacts `64c157e3...`; startup audio 10/10; parent-diff verifier 28/0/0/1 and post-commit exact-tree verifier 26/0/0/3; independent review found no P0–P2 issue; local browser state/reload/explicit-mute checks passed with zero console errors; audible phone, exact Preview, and inherited Build-371 release gates remain open |
 | Build-371 exact Preview deployment and scoped browser QA | **SERVED PACING P0 PASS; RELEASE HELD** | Deployment `1c56b4ee-a726-4116-8e4c-cc6450b6f7cd`; `/game` `3224c603...`; Escape/idle/action/backtrack/manual/replay/free-roam, long TP, short TP, guide ×/Escape, Q1–Q7 receipt, and Founder deny passed; device/credential/opposite-terminal gates remain |
 | Build-371 provider, attribution, and rollback audit | **SCOPED PASS; RELEASE HELD** | Preview/Production bindings and required secrets re-audited; Access issuer/audience coherent; controlled invite persisted in Preview D1; retained Build-367 deployment `/game` exactly matches `1d97b906...` and `sw.js` v14; Production `0003` and account/data rollback remain pending |
@@ -129,19 +157,19 @@ release, and served-fingerprint gates all pass.
 
 ## Founder decisions required
 
-No product-design decision is required before Preview. The Founder explicitly directed music on
-every normal startup and previously selected player-controlled traversal instead of a trade clock,
-with adjacent trade rules intact. The next Founder actions are a physical-phone audible startup/
-background pass, physical-device trade-feel acceptance, and an authenticated Founder dashboard/
-export pass on the exact Preview. Production migration and final release authorization remain later,
-separate decisions.
+No product-design decision is required before Preview. The Founder approved the Build-373 feedback
+package and previously directed music on every ordinary startup and player-controlled traversal.
+The next Founder actions are exact physical-phone acceptance for audible startup/background,
+Bitcoin/Smash/W-L-W feel, interruption/survey recovery, and authenticated Founder dashboard/export
+on Preview. Formal TES re-ratification, Production migration, and final release authorization remain
+later, separate gates.
 
 ## Release status
 
-**BUILD 372 STARTUP MUSIC VERIFIED LOCALLY — DO NOT DEPLOY OR SEND LINKS — AUDIBLE PHONE/PREVIEW, PHYSICAL DEVICE, TRUE BACKGROUND/RETURNING WORKER, AUTOMATIC LOSS, AUTHENTICATED FOUNDER/EXPORT/FRESH-ENTRY COHORT, PRODUCTION `0003`, POST-PROMOTION ROLLBACK ACTION, ACCOUNT/DATA ROLLBACK, AND RELEASE CONTROLS REMAIN — BUILD 367 REMAINS LIVE**
+**BUILD 373 FEEDBACK/RESTART RECOVERY VERIFIED LOCALLY — DO NOT DEPLOY OR SEND LINKS — CANON RE-RATIFICATION, EXACT PREVIEW/PHYSICAL PHONE, W-L-W/SMASH/BITCOIN/MUSIC/INTERRUPTION/SURVEY, AUTHENTICATED FOUNDER/EXPORT/FRESH COHORT, RETURNING WORKER, PRODUCTION `0003`, ROLLBACK/RECONCILIATION, RELEASE CONTROLS, AUTHORIZATION, AND TWO PRODUCTION FINGERPRINTS REMAIN — BUILD 367 LIVE**
 
 Automated and scoped Preview QA do not authorize production, and prior Build-371 Preview evidence
-does not prove the changed Build-372 game document. Migration `0003` is already present in Preview
+does not prove the changed Build-373 game document. Migration `0003` is already present in Preview
 and must not be reapplied there. Finish the exact-candidate phone/credential matrix, then apply
 `0003` once to Production under the recorded recovery/authorization gate before Functions and use
 the normal Release Manager manifest/lock/gate/fingerprint process. Historical/account migration

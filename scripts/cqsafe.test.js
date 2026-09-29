@@ -668,22 +668,16 @@ const tests = [
       'the screenshot-scale page overlap that failed the old 30px centre circle must now collect');
   }],
 
-  ['build 365 first trade owns a warmer authored score and retains the complete four-act roller coaster', () => {
+  ['locked Decision Point scores the first trade and retains the complete four-act roller coaster', () => {
     assert.match(GAME, /trade\._firstRide = !!_introTrade/);
     assert.match(GAME, /function tradeMusicTrack\(isFirstRide\) \{ return isFirstRide \? 'firstTrade' : 'trade'; \}/);
     assert.match(GAME, /GameMusic\.play\(tradeMusicTrack\(_introTrade\)\)/);
     const audio = section('function play(name) {', 'function boss(level)');
-    assert.match(audio, /name === 'firstTrade'/);
-    assert.match(audio, /buildFirstTradeScore\(\)/);
-    assert.match(audio, /run\(buildFirstTradeScore\(\), \{ name: 'firstTrade', vol: 0\.17 \}\)/);
-    const firstScore = section('function buildFirstTradeScore()', 'function tick()');
-    assert.match(firstScore, /first-trade-score-v2/);
-    assert.match(firstScore, /warmLead: true/);
-    assert.match(firstScore, /beat: \(60 \/ 108\) \/ 4/);
-    assert.match(firstScore, /waveLead: 'sine'/);
-    assert.match(firstScore, /waveBass: 'triangle'/);
-    assert.doesNotMatch(firstScore, /sawtooth|dense/,
-      'the Founder first-trade loop must not regress to the brittle dense/sawtooth recipe');
+    assert.match(audio, /firstTrade:'trade'/, 'first trade uses the locked Decision Point too');
+    const scoreData = section('function createLockedScore(context)', 'const noiseBuffer=');
+    assert.match(scoreData, /"name":"Decision Point","style":4/);
+    assert.match(scoreData, /"bpm":108/);
+    // Exact note/voice parity, heartbeat and runtime lifecycle are covered by locked_audio.test.js.
     const duck = section('if (typeof GameMusic !==', 'if (winPunchT > 0)');
     for (const phase of ['dip', 'surge', 'shakeout', 'run']) assert.match(duck, new RegExp(`_drivePhase === '${phase}'`));
     assert.match(CQSH, /URL="http:\/\/\$IP:\$P\/chart-quest\.html\?fresh=1"/);

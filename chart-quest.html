@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="5416a60174" data-built-at="2026-08-13T16:26:55Z">
+<meta name="cq-build" content="8c858aabd2" data-built-at="2026-09-29T19:01:06Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3796,7 +3796,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 367 - BOSS 1 CINEMATIC AUDIO POLISH. Five versioned full-timeline mixes start from the first rendered video frame and follow media time through pause, stall, seek and rate changes. A generation token cancels skip, error, mute, replacement and arena arrival exactly once; only this Gambler path suppresses the old sting, random roar, synth bed and delayed impact. Videos, visuals, game rules and every other Guardian are unchanged. - build 366 - FOUNDER COSMETIC CLOSEOUT. Guardian 1 now uses the current cinematic Gambler portrait in both the Journal and defeat card; Journal mastery closes on one compact premium book-and-reward card using the existing canonical Journal asset; and the versioned Gambler-defeat cinematic restores Finn’s mandatory compass necklace for every front-facing victory frame. Cosmetic only: no trade, curriculum, reward, save or boss-state logic changed. - build 365 - FINAL BETA SEND STRIKE. Trade portals now own a reward-free corridor: every unreached box at or beyond the entrance is deferred and its quota restored after the trade. Replay and recap Finn now visibly cross the exact take-profit or stop-loss line in the correct direction. The first-trade score is a warmer hand-authored pulse instead of a dense sawtooth arpeggio, and ordinary center-screen feedback uses one premium non-blocking ChartQuest toast treatment. - build 364 - FINAL BETA BLOCKER STRIKE. Reward interaction now defers only while a real ticket/position owns the screen; boxes and Lost Wisdom pages share Finn\'s swept body-aware collision so visible overlap and fast shell-rolls cannot miss. FIRST WIN is one premium ChartQuest-native vector milestone with a bespoke trophy, disciplined copy hierarchy and earned reward badge instead of a system emoji/text pile. The first real trade owns a louder 112 BPM score and a four-act near-stop to profit-surge to hard-give-back to target run, while safe preview links no longer force or persist mute. - build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 376 - LOCKED CAMPAIGN MUSIC. Approved Core + Snare, Decision Point, Collision and Review choices follow gameplay, trades, Guardians, replay, Journal and reading in every level. One score transport preserves mute, foreground resume and cinematic ducking. - build 367 - BOSS 1 CINEMATIC AUDIO POLISH. Five versioned full-timeline mixes start from the first rendered video frame and follow media time through pause, stall, seek and rate changes. A generation token cancels skip, error, mute, replacement and arena arrival exactly once; only this Gambler path suppresses the old sting, random roar, synth bed and delayed impact. Videos, visuals, game rules and every other Guardian are unchanged. - build 366 - FOUNDER COSMETIC CLOSEOUT. Guardian 1 now uses the current cinematic Gambler portrait in both the Journal and defeat card; Journal mastery closes on one compact premium book-and-reward card using the existing canonical Journal asset; and the versioned Gambler-defeat cinematic restores Finn’s mandatory compass necklace for every front-facing victory frame. Cosmetic only: no trade, curriculum, reward, save or boss-state logic changed. - build 365 - FINAL BETA SEND STRIKE. Trade portals now own a reward-free corridor: every unreached box at or beyond the entrance is deferred and its quota restored after the trade. Replay and recap Finn now visibly cross the exact take-profit or stop-loss line in the correct direction. The first-trade score is a warmer hand-authored pulse instead of a dense sawtooth arpeggio, and ordinary center-screen feedback uses one premium non-blocking ChartQuest toast treatment. - build 364 - FINAL BETA BLOCKER STRIKE. Reward interaction now defers only while a real ticket/position owns the screen; boxes and Lost Wisdom pages share Finn\'s swept body-aware collision so visible overlap and fast shell-rolls cannot miss. FIRST WIN is one premium ChartQuest-native vector milestone with a bespoke trophy, disciplined copy hierarchy and earned reward badge instead of a system emoji/text pile. The first real trade owns a louder 112 BPM score and a four-act near-stop to profit-surge to hard-give-back to target run, while safe preview links no longer force or persist mute. - build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -13588,6 +13588,7 @@ function openJournal(tab) {
   $('journalPanel').classList.add('open');
   journalPrevPaused = paused;   // remember prior state (intermission / trade panel)
   paused = true; journalOpen = true; // freeze whatever is underneath
+  try { GameMusic.sting('journal'); GameMusic.sync(); } catch(e) {}
 }
 function closeJournal() {
   // A full-screen review sits ABOVE the journal — close that first
@@ -18589,6 +18590,7 @@ function update(dt) {
     const _autoEnter = !_bossP && p._t > 9 && Math.abs(ptx - p.x) < W * 0.6;    // never leave a lesson portal unenterable
     if (dist < _catchR || _reachedUp || _autoEnter) {
       p.entered = true;
+      try { GameMusic.sting('portal'); } catch(e) {}
       const _boss = p.kind === 'boss';
       const camX = Math.max(0, turtle.x - W * CFG.cameraAnchor);
       portalWarp = { t: 0, dur: _boss ? 1.0 : 0.7, x: p.x - camX, y: p.y, boss: _boss,
@@ -25729,31 +25731,332 @@ window.BlockchainJourney = BlockchainJourney;   // exposed so the resolveAuth ho
 const introCine = IntroCinematic._S;
 /* ════════ END OPENING CINEMATIC ════════ */
 
-/* ════════ PROCEDURAL SOUNDTRACK ════════
-   A tiny synth + step sequencer. No audio files — every loop is built from
-   oscillators and noise at runtime. One calm "explore" bed for normal play,
-   plus a driving battle track per boss (key/tempo/timbre from BOSS_THEME),
-   and one-shot stings for hits, wins and losses. */
+/* ════════ LOCKED CAMPAIGN SOUNDTRACK ════════
+   All levels share the Founder-approved music. The scene resolver observes game state;
+   it never changes trades, curriculum, progression, rewards or cinematic timing. */
+/* Locked audition score. The sound design below matches the approved preview; only the
+   seven approved choices are exposed to gameplay. Context and output remain GameMusic-owned. */
+function createLockedScore(context) {
+  const scores = {"explore":{"bpm":96,"chords":[[57,60,64,71],[53,57,60,64],[48,52,55,62],[55,59,62,69]],"bass":[45,41,36,43],"motif":[76,79,72,74,76,79,83,79],"motifSteps":[2,6,10,14],"density":1,"name":"Core + Snare","style":7,"musicId":"compass-core-snare"},"trade":{"bpm":108,"chords":[[45,48,52,59],[44,48,51,56],[41,45,48,55],[47,50,53,59]],"bass":[33,32,29,35],"motif":[72,75,71,68,72,76,75,71],"motifSteps":[3,11],"density":0.73,"name":"Decision Point","style":4},"guardian":{"bpm":116,"chords":[[43,46,50,55],[42,46,49,54],[39,43,46,53],[45,48,51,57]],"bass":[31,30,27,33],"motif":[67,70,65,62,67,71,70,65],"motifSteps":[3,7,11,15],"density":0.88,"name":"Collision","style":2},"continue":{"bpm":96,"chords":[[57,60,64,71],[53,57,60,64],[48,52,55,62],[55,59,62,69]],"bass":[45,41,36,43],"motif":[76,79,72,74,76,79,83,79],"motifSteps":[2,6,10,14],"density":1,"name":"Continue Exploration","style":7,"scheduleMode":"exploration","musicId":"compass-core-snare"},"forward":{"bpm":98,"chords":[[48,52,55,59],[43,47,50,55],[45,48,52,57],[41,45,48,53]],"bass":[36,31,33,29],"motif":[76,79,74,71,72,76,69,72],"motifSteps":[2,7,10,14],"density":0.65,"name":"Forward Page","style":8,"phrase":[[72,76,72,79],[71,74,71,79],[72,76,72,81],[69,72,69,77]]},"chamber":{"bpm":100,"chords":[[48,52,55,60],[41,45,48,53],[43,47,50,55],[48,52,55,60]],"bass":[36,29,31,36],"motif":[76,79,74,71,72,76,69,72],"motifSteps":[2,7,10,14],"density":0.65,"name":"Chamber Steps","style":9,"phrase":[[60,64,67,64],[65,69,72,69],[67,71,74,71],[64,67,72,67]]},"quiet":{"bpm":96,"chords":[[48,52,55,59],[47,50,55,62],[45,48,52,57],[41,45,48,55]],"bass":[36,43,33,29],"motif":[76,79,74,71,72,76,69,72],"motifSteps":[2,7,10,14],"density":0.65,"name":"Quiet Review","style":10,"silent":true}};
+  const noiseBuffer=context.createBuffer(1,context.sampleRate*3,context.sampleRate);
+  const samples=noiseBuffer.getChannelData(0);
+  for(let i=0;i<samples.length;i++) samples[i]=(Math.random()*2-1)*.8;
+  function midi(n) { return 440 * Math.pow(2,(n-69)/12); }
+  function fade(param, from, to, at, duration) {
+    if(param.cancelAndHoldAtTime) param.cancelAndHoldAtTime(at);
+    else { param.cancelScheduledValues(at); param.setValueAtTime(from,at); }
+    param.linearRampToValueAtTime(to,at+duration);
+  }
+  function voice(bus, frequency, at, duration, level, options={}) {
+    const oscillator=context.createOscillator(), filter=context.createBiquadFilter(), gain=context.createGain();
+    oscillator.type=options.wave || 'triangle';
+    oscillator.frequency.setValueAtTime(Math.max(20,frequency),at);
+    if(options.detune) oscillator.detune.value=options.detune;
+    if(options.endFrequency) oscillator.frequency.exponentialRampToValueAtTime(Math.max(20,options.endFrequency),at+duration*.8);
+    filter.type=options.filter || 'lowpass';
+    filter.frequency.setValueAtTime(options.cutoff || 2200,at);
+    if(options.endCutoff) filter.frequency.exponentialRampToValueAtTime(options.endCutoff,at+duration*.85);
+    if(options.q) filter.Q.value=options.q;
+    gain.gain.setValueAtTime(.0001,at);
+    gain.gain.exponentialRampToValueAtTime(Math.max(.0002,level),at+Math.min(options.attack || .012,duration*.4));
+    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+    oscillator.connect(filter).connect(gain).connect(bus);
+    oscillator.start(at); oscillator.stop(at+duration+.02);
+    oscillator.onended=()=>{ oscillator.disconnect(); filter.disconnect(); gain.disconnect(); };
+  }
+  function noise(bus,at,duration,level,options={}) {
+    const source=context.createBufferSource(), filter=context.createBiquadFilter(), gain=context.createGain();
+    source.buffer=noiseBuffer; filter.type=options.filter || 'bandpass';
+    filter.frequency.setValueAtTime(options.cutoff || 1200,at);
+    filter.Q.value=options.q || .8;
+    if(options.endCutoff) filter.frequency.exponentialRampToValueAtTime(options.endCutoff,at+duration*.85);
+    gain.gain.setValueAtTime(.0001,at);
+    gain.gain.exponentialRampToValueAtTime(level,at+Math.min(options.attack || .009,duration*.4));
+    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+    source.connect(filter).connect(gain).connect(bus); source.start(at); source.stop(at+duration+.01);
+    source.onended=()=>{ source.disconnect(); filter.disconnect(); gain.disconnect(); };
+  }
+  function bell(bus,frequency,at,duration,level,brightness=1) {
+    const carrier=context.createOscillator(), modulator=context.createOscillator(), depth=context.createGain(), envelope=context.createGain();
+    carrier.type='sine'; modulator.type='sine';
+    carrier.frequency.setValueAtTime(frequency,at); modulator.frequency.setValueAtTime(frequency*2.01,at);
+    depth.gain.setValueAtTime(frequency*brightness,at); depth.gain.exponentialRampToValueAtTime(.01,at+duration*.64);
+    envelope.gain.setValueAtTime(.0001,at); envelope.gain.exponentialRampToValueAtTime(level,at+.008); envelope.gain.exponentialRampToValueAtTime(.0001,at+duration);
+    modulator.connect(depth).connect(carrier.frequency); carrier.connect(envelope).connect(bus);
+    carrier.start(at); modulator.start(at); carrier.stop(at+duration+.02); modulator.stop(at+duration+.02);
+    carrier.onended=()=>{ carrier.disconnect(); modulator.disconnect(); depth.disconnect(); envelope.disconnect(); };
+  }
+  function pluck(bus,note,at,level=.09,length=.45) {
+    bell(bus,midi(note),at,length,level*.73,.56);
+    voice(bus,midi(note),at,length*.72,level*.4,{wave:'triangle',cutoff:1300,endCutoff:650,attack:.009});
+  }
+  function pulse(bus,note,at,level=.11) {
+    voice(bus,midi(note),at,.42,level,{wave:'sine',cutoff:530,attack:.012});
+    voice(bus,midi(note)*2,at,.2,level*.2,{wave:'triangle',cutoff:430,attack:.007});
+  }
+  function softBeat(bus,at,level=.08) {
+    voice(bus,100,at,.2,level,{wave:'sine',endFrequency:46,cutoff:340,attack:.007});
+    noise(bus,at,.052,level*.35,{filter:'lowpass',cutoff:570});
+  }
+  function tick(bus,at,level=.028) { noise(bus,at,.085,level,{cutoff:4200,endCutoff:1900,q:.55}); }
+  function lightSnare(bus,at,strength=1) {
+    noise(bus,at,.13,.12*strength,{cutoff:1250,endCutoff:620,q:.62});
+    voice(bus,170,at,.085,.052*strength,{wave:'triangle',endFrequency:110,cutoff:680,attack:.007});
+  }
+  function softKey(bus,note,at,level=.07,length=.8) {
+    const frequency=midi(note);
+    voice(bus,frequency,at,length,level,{wave:'triangle',cutoff:920,endCutoff:490,attack:.026});
+    bell(bus,frequency*2,at+.012,length*.68,level*.22,.18);
+  }
+  function shortKey(bus,note,at,level=.055,length=.36) {
+    voice(bus,midi(note),at,length,level,{wave:'triangle',cutoff:1000,endCutoff:460,attack:.016});
+  }
+  function heartbeat(bus,at,strength=1) {
+    voice(bus,105,at,.2,.18*strength,{wave:'sine',endFrequency:54,cutoff:390,attack:.009});
+    voice(bus,185,at,.12,.052*strength,{wave:'triangle',endFrequency:105,cutoff:520,attack:.006});
+    noise(bus,at,.055,.048*strength,{filter:'lowpass',cutoff:560});
+    const second=at+.185;
+    voice(bus,118,second,.16,.12*strength,{wave:'sine',endFrequency:62,cutoff:400,attack:.008});
+    voice(bus,220,second,.09,.038*strength,{wave:'triangle',endFrequency:130,cutoff:560,attack:.006});
+  }
+  function guardianSnare(bus,at,strength=1) {
+    noise(bus,at,.15,.16*strength,{cutoff:1600,endCutoff:650,q:.65});
+    voice(bus,195,at,.11,.08*strength,{wave:'triangle',endFrequency:95,cutoff:800});
+  }
+  function motifNote(d,bar,index,cycle) { return d.motif[(bar*2+index+cycle)%d.motif.length]; }
+  function scheduleExploration(d,step,bar,cycle,at,bus) {
+    const s=d.style;
+    if(s===0) {
+      if(step===0) { pulse(bus,d.bass[bar],at,.17); softBeat(bus,at,.07); }
+      if(step===8) pulse(bus,d.bass[bar],at,.11);
+      if(step===4 || step===12) { tick(bus,at,.031); if(step===12) softBeat(bus,at,.045); }
+      const i=[2,6,10,14].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.12,.58);
+      if(cycle && bar===3 && step===15) bell(bus,midi(88),at,.75,.038,.35);
+    } else if(s===1) {
+      if(step===0 || step===8) pulse(bus,d.bass[bar],at,step===0?.18:.11);
+      if(step===0 || step===10) softBeat(bus,at,step===0?.065:.04);
+      if(step===6 || step===14) tick(bus,at,.022);
+      const i=[3,7,11,15].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.105,.64);
+    } else if(s===2) {
+      if(step===0) pulse(bus,d.bass[bar],at,.095);
+      if(step===8) noise(bus,at,.52,.025,{cutoff:1300,endCutoff:2700,attack:.2,q:.5});
+      const i=[0,5,10].indexOf(step); if(i>=0) bell(bus,midi(motifNote(d,bar,i,cycle)),at,.95,.095,.3);
+      if(step===13 && bar%2===0) pluck(bus,d.motif[(bar+5)%d.motif.length],at,.045,.9);
+    } else if(s===3) {
+      if([0,6,10,14].includes(step)) pulse(bus,d.bass[bar]+(step===14?12:0),at,step===0?.15:.07);
+      if(step===0 || step===8) softBeat(bus,at,.075);
+      if(step===4 || step===12) tick(bus,at,.035);
+      const i=[2,5,9,13].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.105,.4);
+    } else if(s===4) {
+      if(step===0) pulse(bus,d.bass[bar],at,.11);
+      if(step===8) pulse(bus,d.bass[bar]+12,at,.05);
+      const i=[4,12].indexOf(step); if(i>=0) { pluck(bus,motifNote(d,bar,i,cycle),at,.095,.85); bell(bus,midi(d.chords[bar][2]+24),at+.13,.9,.036,.25); }
+    } else if(s===5) {
+      const shape=(cycle?1.07:.94)*(bar===3?1.08:1);
+      if(step===0) { pulse(bus,d.bass[bar],at,.13*shape); softBeat(bus,at,.052); }
+      if(step===8) pulse(bus,d.bass[bar]+(bar===3?12:0),at,.083*shape);
+      if((step===4 && bar%2===0) || (step===12 && bar%2===1)) tick(bus,at,.025);
+      const i=[2,6,10,14].indexOf(step);
+      if(i>=0) {
+        const level=((i===0 || i===3) ? .119 : .086)*shape;
+        pluck(bus,motifNote(d,bar,i,cycle),at,level,i===3?.7:.52);
+        if(step===14 && (bar===1 || bar===3)) softKey(bus,d.motif[(bar*2+i+3)%d.motif.length],at+.18,.03,.6);
+      }
+      if(step===15 && bar===3 && cycle) bell(bus,midi(88),at,.82,.04,.28);
+    } else {
+      if(step===0) { pulse(bus,d.bass[bar],at,.17); softBeat(bus,at,.07); }
+      if(step===8) pulse(bus,d.bass[bar],at,.11);
+      if(step===12) softBeat(bus,at,.045);
+      if(s>=7 && (step===4 || step===12)) lightSnare(bus,at);
+      const i=[2,6,10,14].indexOf(step);
+      if(i>=0) pluck(bus,s===10?d.phrase[bar][i]:motifNote(d,bar,i,cycle),at,.12,s===10&&step===14?.24:.58);
+      if((s===8 || s===10) && step===11 && bar%2===1) {
+        voice(bus,midi(d.chords[bar][1]),at,.32,s===8 ? .055 : .037,{wave:'triangle',cutoff:820,endCutoff:480,attack:.014});
+      }
+      if((s===9 || s===10) && (step===7 || step===15) && bar%2===0) {
+        lightSnare(bus,at,s===9 ? .34 : .22);
+      }
+    }
+  }
+  function scheduleTrade(d,step,bar,cycle,at,bus) {
+    const s=d.style;
+    if(s===0) {
+      if([0,4,8,12].includes(step)) heartbeat(bus,at,.82);
+      if(step===0) pulse(bus,d.bass[bar],at,.085);
+      if(step===6 && bar%2===0) bell(bus,midi(84),at,.38,.036,.14);
+      if(step===11) pluck(bus,motifNote(d,bar,0,cycle),at,.055,.66);
+    } else if(s===1) {
+      if(step===0 || step===8) heartbeat(bus,at,1.08);
+      if(step===4 || step===12) noise(bus,at,.7,.046,{cutoff:520,endCutoff:1400,attack:.3,q:.45});
+      if(step===14) bell(bus,midi(motifNote(d,bar,1,cycle)),at,.65,.057,.22);
+    } else if(s===2) {
+      if([0,4,8,12].includes(step)) heartbeat(bus,at,.92);
+      if(step===0 || step===8) pulse(bus,d.bass[bar],at,.065);
+      const i=[3,7,11,15].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.065,.34);
+      if(step===14 && bar===3) noise(bus,at,.22,.045,{cutoff:1900,endCutoff:3800,attack:.07});
+    } else if(s===3) {
+      if(step===0 || step===8) heartbeat(bus,at,.9);
+      if(step===4 || step===12) noise(bus,at,.58,.05,{cutoff:450,endCutoff:1700,attack:.23,q:.4});
+      if(step===3 || step===11) bell(bus,midi(motifNote(d,bar,step===3?0:1,cycle)),at,.75,.073,.16);
+      if(step===0) pulse(bus,d.bass[bar],at,.06);
+    } else if(s===4) {
+      if([0,4,8,12].includes(step)) heartbeat(bus,at,1.05);
+      if(step===2 || step===10) pulse(bus,d.bass[bar]+12,at,.075);
+      if(step===6 || step===14) { voice(bus,midi(d.chords[bar][1]+12),at,.28,.07,{wave:'sawtooth',cutoff:650,endCutoff:300}); tick(bus,at,.025); }
+      if(step===15 && bar%2) noise(bus,at,.06,.04,{cutoff:1050,endCutoff:500,q:.58});
+    } else {
+      const pressure=.86+bar*.075+(cycle?.04:0);
+      if([0,4,8,12].includes(step) && !(bar===3 && step===8)) {
+        const late=step===12 && bar===3?1.18:1;
+        heartbeat(bus,at+(step===4 ? .008 : 0),pressure*late);
+      }
+      if(step===0 || step===8) pulse(bus,d.bass[bar],at,step===0 ? .077 : .048);
+      if(s===5 && step===3 && bar%2===0) bell(bus,midi(84),at,.3,.035,.12);
+      if(step===7 || step===15) {
+        const note=s===6?d.phrase[bar][step===7?0:1]:motifNote(d,bar,step===7?0:1,cycle);
+        if(s===6) shortKey(bus,note,at,.057,step===15?.11:.39);
+        else softKey(bus,note,at,.048,.58);
+      }
+      if(s===5 && bar===3 && step===12) voice(bus,midi(d.chords[bar][2]+12),at,.54,.09,{wave:'sawtooth',cutoff:690,endCutoff:360,attack:.06});
+      if(s===6 && step===11 && bar%2===1) voice(bus,midi(d.chords[bar][1]+12),at,.3,.043,{wave:'triangle',cutoff:780,endCutoff:420,attack:.018});
+      if(s===6 && step===10 && bar%2===0) lightSnare(bus,at,.16);
+    }
+  }
+  function scheduleGuardian(d,step,bar,cycle,at,bus) {
+    const s=d.style, force=s===4?.78+bar*.1:1;
+    const bassSteps=s===1?[0,3,6,10,13]:s===3?[0,2,4,6,8,10,12,14]:[0,4,8,12];
+    if(bassSteps.includes(step)) pulse(bus,d.bass[bar]+(step===13?12:0),at,(s===3?.09:.13)*force);
+    if(step===0 || step===8 || (s===2 && step===12)) softBeat(bus,at,(s===2?.17:.12)*force);
+    if(step===(s===1?5:4) || step===(s===1?13:12)) guardianSnare(bus,at,(s===2?1.12:.9)*force);
+    if([2,6,10,14].includes(step)) tick(bus,at,(s===3?.055:.04)*force);
+    if(s===0) {
+      const i=[3,7,11,15].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.105,.29);
+    } else if(s===1) {
+      const i=[2,9].indexOf(step); if(i>=0) bell(bus,midi(motifNote(d,bar,i,cycle)),at,.31,.095,.75);
+      if(step===7 || step===15) noise(bus,at,.16,.08,{cutoff:1800,endCutoff:600,q:.7});
+    } else if(s===2) {
+      if([0,6,10].includes(step)) {
+        voice(bus,midi(d.chords[bar][1]+12),at,.35,.11,{wave:'sawtooth',cutoff:850,endCutoff:270});
+        noise(bus,at,.12,.065,{cutoff:900,endCutoff:380});
+      }
+    } else if(s===3) {
+      const i=[1,3,5,7,9,11,13,15].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.065,.21);
+    } else if(s===4) {
+      const i=[1,5,9,13].indexOf(step); if(i>=0) bell(bus,midi(d.motif[(bar*2+i)%d.motif.length]),at,.38,.095*force,.7);
+      if(step===15 && bar===3) noise(bus,at,.27,.1,{cutoff:1100,endCutoff:3300,attack:.08});
+    } else if(s===5) {
+      if([0,6,10].includes(step)) {
+        voice(bus,midi(d.chords[bar][1]+12),at,.27,.13,{wave:'sawtooth',cutoff:1150,endCutoff:330,attack:.008});
+        noise(bus,at,.13,.085,{cutoff:1850,endCutoff:650,q:.72});
+      }
+      if(step===7 || step===15) softKey(bus,motifNote(d,bar,step===7?0:1,cycle),at,.086,.32);
+      if(step===0 && bar===2) voice(bus,midi(d.bass[bar]),at,.68,.16,{wave:'sine',endFrequency:midi(d.bass[bar]-12),cutoff:400});
+      if(step===15 && bar===3 && cycle) noise(bus,at,.29,.08,{cutoff:1050,endCutoff:3200,attack:.08});
+    } else {
+      if([0,6,10].includes(step)) noise(bus,at,.09,.063,{cutoff:1150,endCutoff:540,q:.68});
+      if(step===11 && bar%2===0) lightSnare(bus,at,.22);
+    }
+  }
+  function scheduleRecovery(d,step,bar,cycle,at,bus) {
+    const s=d.style;
+    if(step===0 && (s===0 || s===1 || s===3)) pulse(bus,d.bass[bar],at,s===3?.075:.055);
+    if(s===0) {
+      if(step===0) bell(bus,midi(d.chords[bar][0]+24),at,.8,.055,.2);
+      const i=[3,11].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.068,.75);
+    } else if(s===1) {
+      const i=[2,7,12].indexOf(step); if(i>=0) bell(bus,midi(motifNote(d,bar,i,cycle)),at,.8,.08,.28);
+      if(step===8) pulse(bus,d.bass[bar]+12,at,.042);
+    } else if(s===2) {
+      if(step===0) noise(bus,at,.38,.018,{cutoff:2100,endCutoff:850,attack:.12,q:.5});
+      const i=[5,13].indexOf(step); if(i>=0) bell(bus,midi(motifNote(d,bar,i,cycle)),at,.85,.063,.18);
+    } else if(s===3) {
+      if(step===8) tick(bus,at,.012);
+      const i=[0,5,10,15].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.057,.76);
+    } else if(s===4) {
+      if(step===8) bell(bus,midi(motifNote(d,bar,0,cycle)),at,.9,.073,.17);
+      if(step===0 && bar===0) voice(bus,midi(d.bass[bar]+12),at,.68,.045,{wave:'sine',cutoff:370,attack:.09});
+    } else if(s===5 || s===6) {
+      if(step===0) voice(bus,midi(d.bass[bar]+12),at,.62,.036,{wave:'sine',cutoff:340,attack:.08});
+      if(step===4 || step===12) {
+        const note=s===6?d.phrase[bar][step===4?0:1]:motifNote(d,bar,step===4?0:1,cycle);
+        if(s===6) shortKey(bus,note,at,step===4?.077:.064,.58);
+        else softKey(bus,note,at,step===4?.069:.056,step===4?.74:.85);
+      }
+      if(s===5 && step===14 && bar===3) bell(bus,midi(d.chords[bar][2]+24),at,.82,.03,.13);
+      if(s===6 && step===9 && bar%2===1) voice(bus,midi(d.chords[bar][1]+12),at,.3,.04,{wave:'triangle',cutoff:750,endCutoff:420,attack:.03});
+      if(s===6 && step===8 && bar%2===0) noise(bus,at,.075,.024,{cutoff:900,endCutoff:520,q:.52});
+    } else if(s===8) {
+      if(step===0 || step===8) {
+        pulse(bus,d.bass[bar],at,step===0?.105:.065);
+        softBeat(bus,at,step===0?.055:.038);
+      }
+      if(step===4 || step===12) lightSnare(bus,at,.48);
+      const i=[2,6,10,14].indexOf(step);
+      if(i>=0) shortKey(bus,d.phrase[bar][i],at,.068,.24);
+    } else if(s===9) {
+      if(step===0 || step===8) {
+        pulse(bus,d.bass[bar],at,step===0?.075:.045);
+        softBeat(bus,at,step===0?.045:.03);
+      }
+      if(step===4 || step===12) lightSnare(bus,at,.25);
+      const i=[1,5,9,13].indexOf(step);
+      if(i>=0) voice(bus,midi(d.phrase[bar][i]),at,.18,.067,{wave:'triangle',cutoff:1350,endCutoff:610,attack:.008});
+    }
+  }
+
+  function schedule(name, index, at, bus) {
+    const d=scores[name], step=index%16, bar=Math.floor(index/16)%4, cycle=Math.floor(index/64)%2;
+    if(!d || d.silent) return;
+    if(name==='explore' || name==='continue') scheduleExploration(d,step,bar,cycle,at,bus);
+    else if(name==='trade') scheduleTrade(d,step,bar,cycle,at,bus);
+    else if(name==='guardian') scheduleGuardian(d,step,bar,cycle,at,bus);
+    else scheduleRecovery(d,step,bar,cycle,at,bus);
+  }
+  return { scores, schedule };
+}
+
 const GameMusic = (() => {
-  let ac = null, master = null, muted = false, started = false;
-  let pattern = null, step = 0, nextTime = 0, sched = null, curName = null;
+  let ac = null, master = null, output = null, score = null, scene = null;
+  let muted = false, started = false, unlocked = false, hidden = document.hidden;
+  let sched = null, curName = null, wanted = null;
   const MIDI = n => 440 * Math.pow(2, (n - 69) / 12);
-  const MINOR = [0, 2, 3, 5, 7, 8, 10];          // dark, tense — bosses
-  const PENTA = [0, 2, 4, 7, 9];                  // open, calm — explore
   function ctx() {
+    if (!unlocked) return null;
     if (!ac) {
       try {
         ac = new (window.AudioContext || window.webkitAudioContext)();
-        master = ac.createGain(); master.gain.value = 0; master.connect(ac.destination);
-      } catch (e) {}
+        output = ac.createGain(); output.gain.value = muted || hidden ? 0 : .82;
+        const limiter = ac.createDynamicsCompressor();
+        limiter.threshold.value=-10; limiter.knee.value=8; limiter.ratio.value=6;
+        limiter.attack.value=.003; limiter.release.value=.16;
+        output.connect(limiter).connect(ac.destination);
+        master = ac.createGain(); master.gain.value=.62*_duck; master.connect(output);
+        score = createLockedScore(ac);
+      } catch (e) { ac = null; }
     }
     return ac;
   }
-  function unlock() { const a = ctx(); if (a && a.state === 'suspended') a.resume(); }
+  function unlock() {
+    unlocked = true;
+    const a = ctx();
+    if (a && a.state === 'suspended') { const p=a.resume(); if(p && p.catch) p.catch(()=>{}); }
+    if (a && !muted && !hidden && wanted) play(wanted);
+  }
+  function retire(immediate=false) {
+    if(sched) { clearInterval(sched); sched=null; }
+    if(!scene) return;
+    const old=scene; scene=null;
+    old.bus.gain.cancelScheduledValues(ac.currentTime);
+    old.bus.gain.setValueAtTime(old.bus.gain.value,ac.currentTime);
+    old.bus.gain.linearRampToValueAtTime(0,ac.currentTime+(immediate?0:.25));
+    setTimeout(()=>old.bus.disconnect(),1200);
+  }
   function setMuted(m) {
-    muted = m; const a = ctx(); if (!a || !master) return;
-    master.gain.cancelScheduledValues(a.currentTime);
-    master.gain.linearRampToValueAtTime(m ? 0 : (curName ? curName.vol : 0.16), a.currentTime + 0.3);
+    muted = !!m;
+    if(output) { output.gain.cancelScheduledValues(ac.currentTime); output.gain.setValueAtTime(muted || hidden ? 0 : .82,ac.currentTime); }
+    if(muted) { retire(true); silenceEffects(); roarStop(); }
+    else if(wanted) play(wanted);
+    try { CineAudio.setMuted(muted); } catch(e) {}
   }
   // one synth voice through the music bus
   function voice(wave, freq, time, dur, vol, target) {
@@ -25764,24 +26067,6 @@ const GameMusic = (() => {
     g.gain.exponentialRampToValueAtTime(vol, time + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
     o.connect(g); g.connect(target || master); o.start(time); o.stop(time + dur + 0.03);
-  }
-  // A warmer, human-shaped voice for the first trade: two subtly detuned oscillators through a
-  // low-pass filter, with a slower attack than the game's arcade stings. This removes the brittle
-  // repeating-synth feel without adding an external asset or changing the global sound language.
-  function warmVoice(freq, time, dur, vol) {
-    const a = ctx(); if (!a) return;
-    const filter = a.createBiquadFilter(), g = a.createGain();
-    filter.type = 'lowpass'; filter.frequency.setValueAtTime(1850, time);
-    filter.Q.setValueAtTime(0.7, time);
-    g.gain.setValueAtTime(0.0001, time);
-    g.gain.exponentialRampToValueAtTime(vol, time + 0.055);
-    g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
-    [['sine', -5, 1], ['triangle', 5, 0.46]].forEach(function (spec) {
-      const o = a.createOscillator(), mix = a.createGain();
-      o.type = spec[0]; o.frequency.setValueAtTime(freq, time); o.detune.setValueAtTime(spec[1], time);
-      mix.gain.value = spec[2]; o.connect(mix); mix.connect(filter); o.start(time); o.stop(time + dur + 0.04);
-    });
-    filter.connect(g); g.connect(master);
   }
   function drum(type, time, target) {
     const a = ctx(); if (!a) return;
@@ -25800,116 +26085,67 @@ const GameMusic = (() => {
       src.connect(f); f.connect(g); g.connect(target || master); src.start(time);
     }
   }
-  // build a 16-step pattern from a key + scale
-  function build(opts) {
-    const scale = opts.scale, root = opts.root, beat = (60 / opts.bpm) / 4;
-    const lead = [], bass = [], dr = [];
-    const arp = opts.arp || [0, 2, 4, 2, 1, 3, 5, 3, 0, 4, 2, 5, 1, 3, 2, 4];
-    for (let s = 0; s < 16; s++) {
-      // lead arpeggio
-      if (opts.leadOn && (opts.dense || s % 2 === 0)) {
-        const deg = arp[s % arp.length], oct = 12 * (opts.leadOct || 1);
-        lead.push(root + oct + scale[deg % scale.length] + 12 * Math.floor(deg / scale.length));
-      } else lead.push(null);
-      // bass on the beat
-      bass.push(s % 4 === 0 ? root - 12 + scale[(s / 4 | 0) % scale.length] * 0 : null);
-      // drums
-      if (opts.drums) {
-        if (s % 4 === 0) dr.push('k');
-        else if (s % 8 === 4) dr.push('s');
-        else if (opts.dense && s % 2 === 1) dr.push('h');
-        else if (!opts.dense && s % 4 === 2) dr.push('h');
-        else dr.push(null);
-      } else dr.push(s % 8 === 0 ? 'h' : null);
-    }
-    return { beat, lead, bass, dr, waveLead: opts.waveLead, waveBass: opts.waveBass,
-             leadVol: opts.leadVol, bassVol: opts.bassVol, vol: opts.vol };
-  }
-  /* Build 365 — the first trade is scored, not procedurally filled. The old dense 16th-note minor
-     arpeggio plus saw bass read as generic computer-game music on the physical phone. This curated
-     four-bar phrase breathes: a sparse D-minor motif, two heartbeat kicks, restrained hats, and a
-     warm filtered lead. Energy still rises above exploration, but the loop leaves space for the
-     scare/surge/give-back price story instead of narrating every subdivision. */
-  function buildFirstTradeScore() {
-    return {
-      beat: (60 / 108) / 4,
-      lead: [null, 62, null, 65, null, null, 69, null, null, 67, null, 65, null, null, 62, null],
-      bass: [38, null, null, null, 45, null, null, null, 38, null, null, null, 43, null, null, null],
-      dr:   ['k', null, 'h', null, 's', null, null, 'h', 'k', null, 'h', null, 's', null, null, 'h'],
-      waveLead: 'sine', waveBass: 'triangle', leadVol: 0.052, bassVol: 0.115,
-      vol: 0.17, warmLead: true, authored: 'first-trade-score-v2'
-    };
-  }
   function tick() {
-    const a = ctx(); if (!a || !pattern) return;
-    while (nextTime < a.currentTime + 0.12) {
-      const s = step % 16;
-      const ln = pattern.lead[s];
-      if (ln != null) {
-        if (pattern.warmLead) warmVoice(MIDI(ln), nextTime, pattern.beat * 2.7, pattern.leadVol);
-        else voice(pattern.waveLead, MIDI(ln), nextTime, pattern.beat * 1.8, pattern.leadVol);
-      }
-      const bn = pattern.bass[s]; if (bn != null) voice(pattern.waveBass, MIDI(bn), nextTime, pattern.beat * 3.4, pattern.bassVol);
-      const dn = pattern.dr[s]; if (dn) drum(dn, nextTime);
-      step++; nextTime += pattern.beat;
+    if(!scene || muted || hidden || !ac || ac.state==='suspended') return;
+    // A background stall must not replay a backlog of overlapping notes.
+    if(scene.nextTime<ac.currentTime-.2) scene.nextTime=ac.currentTime+.025;
+    while(scene.nextTime<ac.currentTime+.14) {
+      score.schedule(scene.name,scene.step++,scene.nextTime,scene.bus);
+      scene.nextTime+=(60/scene.config.bpm)/4;
     }
-  }
-  function run(p, meta) {
-    const a = ctx(); if (!a) return;
-    pattern = p; curName = meta; step = 0; nextTime = a.currentTime + 0.06;
-    if (sched) clearInterval(sched);
-    sched = setInterval(tick, 25); tick();
-    master.gain.cancelScheduledValues(a.currentTime);
-    master.gain.linearRampToValueAtTime(muted ? 0 : meta.vol, a.currentTime + 0.6);
-    started = true;
   }
   function play(name) {
-    // Note 1 (playtest 253) — a distinct FOCUS bed for the "taking a trade / exercise" moment:
-    // a tense, mid-tempo minor pulse with a soft heartbeat drum, so the music itself signals
-    // "this matters" and pattern-breaks from the calm explore bed. Returns to 'explore' after.
-    if (name === 'firstTrade') {
-      // The CONFIRM gesture starts a hand-authored, warmer score that remains present through the
-      // scare/surge/give-back arc without the previous dense arpeggio/sawtooth cheese.
-      run(buildFirstTradeScore(), { name: 'firstTrade', vol: 0.17 });
-    } else if (name === 'trade' || name === 'focus') {
-      run(build({ root: 50, scale: MINOR, bpm: 96, leadOn: true, dense: false, leadOct: 1,
-        waveLead: 'sine', waveBass: 'triangle', leadVol: 0.055, bassVol: 0.12, vol: 0.145, drums: true }),
-        { name: 'trade', vol: 0.145 });
-    /* APPROACH (build 305, founder call) — "can we experiment with having the music get faster
-       or change to a music with higher pace between Trade 3 and the boss? We want to show that
-       the player is approaching the boss."
-       The bed between the last trade and the gate was still the calm 84bpm explore loop, so
-       nothing in the audio said a Guardian was coming. This sits deliberately BETWEEN explore
-       and the boss theme — faster than explore (108 vs 84), minor instead of pentatonic, drums
-       in, but still under the boss track's density and volume so walking into the arena is
-       STILL an escalation rather than an anticlimax. Ends itself: bossFinish() already returns
-       the world to 'explore'. */
-    } else if (name === 'approach') {
-      run(build({ root: 48, scale: MINOR, bpm: 108, leadOn: true, dense: false, leadOct: 1,
-        waveLead: 'triangle', waveBass: 'sawtooth', leadVol: 0.05, bassVol: 0.13, vol: 0.15, drums: true }),
-        { name: 'approach', vol: 0.15 });
-    } else {
-      run(build({ root: 57, scale: PENTA, bpm: 84, leadOn: true, dense: false, leadOct: 1,
-        waveLead: 'triangle', waveBass: 'sine', leadVol: 0.05, bassVol: 0.10, vol: 0.12, drums: false }),
-        { name: 'explore', vol: 0.12 });
+    const aliases={firstTrade:'trade',focus:'trade',boss:'guardian',approach:'guardian',review:'continue'};
+    name=aliases[name] || name;
+    if(!['explore','trade','guardian','continue','forward','chamber','quiet'].includes(name)) name='explore';
+    wanted=name;
+    const a=ctx(); if(!a || muted || hidden) return;
+    const config=score.scores[name];
+    curName={name,vol:.62}; started=true;
+    if(scene && (scene.name===name || (config.musicId && config.musicId===scene.config.musicId))) return;
+    retire();
+    master.gain.cancelScheduledValues(a.currentTime);
+    master.gain.setValueAtTime(.62*_duck,a.currentTime);
+    if(config.silent) return;
+    const bus=a.createGain(); bus.gain.setValueAtTime(0,a.currentTime);
+    bus.gain.linearRampToValueAtTime(.82,a.currentTime+.55); bus.connect(master);
+    scene={name,config,bus,step:0,nextTime:a.currentTime+.055};
+    sched=setInterval(tick,25); tick();
+  }
+  function boss(level) { play('guardian'); }
+  function stop() { wanted=null; curName=null; retire(); }
+  function visibility() {
+    hidden=document.hidden;
+    if(hidden) { retire(true); silenceEffects(); roarStop(); }
+    if(output) output.gain.setValueAtTime(hidden || muted ? 0 : .82,ac.currentTime);
+    if(!hidden && !muted) {
+      if(ac && ac.state==='suspended') { const p=ac.resume(); if(p && p.catch) p.catch(()=>{}); }
+      sync(); if(wanted) play(wanted);
     }
   }
-  function boss(level) {
-    const th = (typeof BOSS_THEME !== 'undefined' && BOSS_THEME[level]) || { root: 45, bpm: 110, wave: 'sawtooth' };
-    run(build({ root: th.root, scale: MINOR, bpm: th.bpm, leadOn: true, dense: true, leadOct: 1,
-      waveLead: th.wave, waveBass: 'sawtooth', leadVol: 0.07, bassVol: 0.14, vol: 0.17, drums: true }),
-      { name: 'boss', vol: 0.17 });
+  document.addEventListener('visibilitychange',visibility);
+  window.addEventListener('pagehide',()=>{ hidden=true; retire(true); silenceEffects(); roarStop(); if(output) output.gain.setValueAtTime(0,ac.currentTime); });
+  window.addEventListener('pageshow',visibility);
+  const effectBuses=new Set();
+  function effectBus() {
+    const bus=ac.createGain(); bus.gain.value=1; bus.connect(output); effectBuses.add(bus);
+    setTimeout(()=>{bus.disconnect(); effectBuses.delete(bus);},11000);
+    return bus;
   }
-  function stop() {
-    const a = ctx();
-    if (sched) { clearInterval(sched); sched = null; }
-    pattern = null; curName = null;
-    if (a && master) { master.gain.cancelScheduledValues(a.currentTime); master.gain.linearRampToValueAtTime(0, a.currentTime + 0.4); }
-  }
+  function silenceEffects() { effectBuses.forEach(bus=>bus.disconnect()); effectBuses.clear(); }
   function sting(name) {
-    const a = ctx(); if (!a || muted) return;
-    const t = a.currentTime, bus = a.createGain(); bus.gain.value = 1; bus.connect(a.destination);
-    if (name === 'hit') {           // bright stab up — boss damaged
+    const a = ctx(); if (!a || muted || hidden) return;
+    const t = a.currentTime, bus = effectBus();
+    if (name === 'coin') {
+      voice('sine', MIDI(79), t, .11, .055, bus);
+      voice('triangle', MIDI(84), t+.06, .15, .045, bus);
+    } else if (name === 'journal') {
+      noiseBurst(t,.12,1200,.04,bus);
+      voice('triangle',MIDI(72),t+.04,.18,.045,bus);
+    } else if (name === 'portal') {
+      sweep('sine',165,330,t,.32,.065,bus);
+      noiseBurst(t,.28,1100,.04,bus);
+    } else if (name === 'hit') {           // bright stab up — boss damaged
       [0, 4, 7, 12].forEach((s, i) => voice('square', MIDI(72 + s), t + i * 0.05, 0.18, 0.16, bus));
       drum('k', t, bus);
     } else if (name === 'hurt') {   // low buzz down — you got hit
@@ -25949,7 +26185,7 @@ const GameMusic = (() => {
      existing synth (respects the same `muted` toggle as music + stings) and plays one-shot on its
      own bus, exactly like sting(). Gains sit UNDER the stings; the base jump is the quietest since
      it's the most frequent. Each sound communicates state / power / momentum. */
-  function fx() { const a = ctx(); if (!a || muted) return null; const bus = a.createGain(); bus.gain.value = 1; bus.connect(a.destination); return { a, t: a.currentTime, bus }; }
+  function fx() { const a = ctx(); if (!a || muted || hidden) return null; const bus = effectBus(); return { a, t: a.currentTime, bus }; }
   function sweep(wave, f0, f1, t, dur, vol, bus) {
     const a = ctx(); if (!a) return;
     const o = a.createOscillator(), g = a.createGain();
@@ -26076,7 +26312,7 @@ const GameMusic = (() => {
   }
   function roarStop() { try { if (_roarLive) { _roarLive.pause(); _roarLive.currentTime = 0; _roarLive = null; } } catch (e) {} }
   function roarReal(tier) {
-    if (muted) return false;                  // ?mute=1 / the music toggle must silence this too
+    if (muted || hidden) return false;                  // ?mute=1 / the music toggle must silence this too
     const pool = roarPool(); if (!pool) return false;
     const el = pool[roarPick()]; if (!el) return false;
     const i = Math.max(0, Math.min(3, (tier || 1) - 1));
@@ -26174,7 +26410,7 @@ const GameMusic = (() => {
     if (muted) return;                           // mute wins; setMuted governs the unmute target
     const base = curName ? curName.vol : 0.12;
     master.gain.cancelScheduledValues(a.currentTime);
-    master.gain.linearRampToValueAtTime(base * level, a.currentTime + (ramp || 0.5));
+    master.gain.linearRampToValueAtTime(base * level, a.currentTime + (ramp > 10 ? ramp/1000 : (ramp || 0.5)));
   }
   /* Build the roar pool WITHOUT playing it, so the .m4a files are buffered long before the first
      flinch. They were previously created inside roarReal() microseconds before .play(), so the very
@@ -26203,8 +26439,8 @@ const GameMusic = (() => {
      The caller also releases the music duck across the tail instead of snapping it at clip end, so
      the bed breathes back in while he is still reeling. */
   function bossFlinch(windupSec, tailSec) {
-    const a = ctx(); if (!a || muted) return;
-    const bus = a.createGain(); bus.gain.value = 1; bus.connect(a.destination);
+    const a = ctx(); if (!a || muted || hidden) return;
+    const bus = effectBus();
     const t = a.currentTime;
     const wu = Math.max(0.25, Math.min(4, windupSec || 1.0));
     const tl = Math.max(0.30, Math.min(5, tailSec || 1.2));
@@ -26223,8 +26459,51 @@ const GameMusic = (() => {
     noiseBurst(it + 0.12, Math.min(tl * 0.70, 1.6), 380, 0.016, bus);
     if (tl > 1.6) noiseBurst(it + tl * 0.55, Math.min(tl * 0.40, 1.2), 220, 0.010, bus);
   }
-  return { unlock, setMuted, play, boss, stop, sting, roar, roarStop, roarWarm, bossFlinch, duckTo, isOn: () => started, move };
+  function route(state) {
+    if(state.journey) return 'explore';
+    if(state.intro) return null;
+    if(state.boss) return state.bossResult ? 'forward' : 'guardian';
+    if(state.review) return state.reviewDetails ? 'quiet' : 'forward';
+    if(state.lesson) return 'quiet';
+    if(state.journal) return state.journalReading ? 'quiet' : 'chamber';
+    if(state.intermission) return 'chamber';
+    if(state.drill) return 'forward';
+    if(state.trade || state.ticket || state.predict) return 'trade';
+    if(state.guardianApproach) return 'guardian';
+    if(state.browse) return 'continue';
+    return 'explore';
+  }
+  function currentRoute() {
+    const el=id=>document.getElementById(id);
+    const open=id=>!!(el(id) && el(id).classList.contains('open'));
+    const shown=id=>!!(el(id) && ['flex','block','grid'].includes(el(id).style.display));
+    return route({
+      intro:typeof introCine!=='undefined' && introCine.active,
+      journey:typeof bcJourney!=='undefined' && bcJourney.active,
+      boss:open('bossFight'), bossResult:!!(el('bossFight') && (el('bossFight').classList.contains('won') || el('bossFight').classList.contains('lost'))),
+      review:open('chartFull') && typeof reviewEntry!=='undefined' && !!reviewEntry,
+      reviewDetails:typeof reviewMode!=='undefined' && reviewMode==='details',
+      lesson:typeof lessonOpen!=='undefined' && lessonOpen,
+      journal:typeof journalOpen!=='undefined' && journalOpen,
+      journalReading:typeof journalTab!=='undefined' && ['knowledge','wisdom','notes'].includes(journalTab),
+      intermission:shown('intermission'), drill:shown('mgRoot') || open('dailyDrill'),
+      trade:typeof trade!=='undefined' && !!trade, ticket:open('tradePanel'),
+      predict:open('chartFull') && !(typeof reviewEntry!=='undefined' && reviewEntry),
+      browse:open('shellWalletPanel') || open('scannerOverlay'),
+      guardianApproach:typeof portals!=='undefined' && portals.some(p=>p.kind==='boss' && !p.entered)
+    });
+  }
+  function sync() {
+    if(!unlocked) return;
+    const name=currentRoute();
+    if(!name) { if(wanted) stop(); return; }
+    if(name!==wanted || (!scene && name!=='quiet' && !muted && !hidden)) play(name);
+  }
+  function snapshot() { return { selected:wanted, title:score && wanted ? score.scores[wanted].name:null, step:scene?scene.step:0, muted, hidden, unlocked, scheduling:!!sched }; }
+  return { unlock, setMuted, play, boss, stop, sting, roar, roarStop, roarWarm, bossFlinch, duckTo, sync, route, snapshot, isOn: () => started, move };
 })();
+
+window.GameMusic = GameMusic;
 
 /* ════════ BOSS ARENA (animated background per boss) ════════ */
 const BossArena = (() => {
@@ -26320,7 +26599,7 @@ const BossArena = (() => {
     on = !on; localStorage.setItem('cq_music', on ? 'on' : 'off');
     GameMusic.unlock(); GameMusic.setMuted(!on); try { Boss1CineAudio.setMuted(!on); } catch (e) {}
     if (on) { try { Boss1CineAudio.unlock(); } catch (e) {} }
-    if (on && !(typeof bfState !== 'undefined' && bfState && document.getElementById('bossFight').classList.contains('open'))) GameMusic.play('explore');
+    if (on) GameMusic.sync();
     paint();
   });
   // Browsers require a user gesture before audio; start the bed on the first tap/key
@@ -26332,8 +26611,8 @@ const BossArena = (() => {
     if (introCine && introCine.active) return;            // let the cinematic own audio first
     kicked = true;
     const bossOpen = typeof bfState !== 'undefined' && bfState && document.getElementById('bossFight').classList.contains('open');
-    if (localStorage.getItem('cq_music') !== 'off' && !bossOpen) GameMusic.play('explore');
-    window.removeEventListener('pointerdown', kick); window.removeEventListener('keydown', kick);
+    if (localStorage.getItem('cq_music') !== 'off') GameMusic.sync();
+    // Keep the gesture unlock available after mobile Safari suspends a background tab.
   }
   window.addEventListener('pointerdown', kick); window.addEventListener('keydown', kick);
 })();
@@ -26421,6 +26700,7 @@ function enforceChartContinuity(baseCamX, dt) {
 }
 
 function frame(now) {
+  try { GameMusic.sync(); } catch(e) {}
   // FRAME PACING (fluid-motion fix): the world scrolls by turtle.x += walkSpeed·dt and the camera
   // is rigidly locked to turtle.x, so feeding RAW rAF frame time straight in turned every timing
   // jitter or heavy frame into a visible scroll stutter ("not fluid / glitchy sometimes"). Low-pass

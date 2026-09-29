@@ -1,5 +1,11 @@
 # Active Sprint
 
+## Current founder request — locked audio integration (2026-09-30)
+
+Build 376 integrates the approved scores across campaign states. Local checks pass; release preparation and served verification are in progress under the Founder’s explicit publication request. See `handoffs/LOCKED_AUDIO_INTEGRATION.md` and `qa/LOCKED_AUDIO_376.md`. Current remote freeze read returned **disabled**; historical freeze and build-366 statements below are retained as prior sprint records, not current external-state claims.
+
+## Previous sprint record
+
 **Control-plane rule:** this file does not revive historical tasks as active work.
 
 ## Sprint objective

@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChartQuest — audio direction audition</title>
+<style>
+  :root { color-scheme: dark; --ink:#f3f2eb; --muted:#aab7bd; --line:#33434b; --aqua:#7ce2d3; --gold:#f8c984; --panel:#14242c; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; font:16px/1.48 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:radial-gradient(circle at 84% 10%,#274e54 0,transparent 34%),radial-gradient(circle at 8% 92%,#26354f 0,transparent 40%),#09151c; }
+  main { width:min(1040px,calc(100% - 36px)); margin:0 auto; padding:42px 0 70px; }
+  .eyebrow { color:var(--aqua); text-transform:uppercase; letter-spacing:.18em; font-size:.76rem; font-weight:750; }
+  h1 { font-size:clamp(2.1rem,5vw,4rem); line-height:1.06; letter-spacing:-.045em; margin:.35rem 0 .8rem; }
+  h2 { font-size:1.23rem; margin:0 0 .35rem; }
+  p { color:var(--muted); margin:.3rem 0 0; }
+  .intro { max-width:690px; font-size:1.05rem; }
+  .controls { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin:30px 0 20px; }
+  button { font:inherit; cursor:pointer; border:1px solid var(--line); color:var(--ink); background:#1a3039; border-radius:13px; padding:12px 16px; transition:background .16s,border-color .16s,transform .16s; }
+  button:hover { background:#24414a; border-color:#60988f; transform:translateY(-1px); }
+  button:focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
+  button:disabled { opacity:.5; cursor:default; transform:none; }
+  .primary { color:#10232a; border-color:var(--aqua); background:var(--aqua); font-weight:750; }
+  .primary:hover { background:#a3f1e6; }
+  .status { color:var(--gold); min-height:1.5em; }
+  .section { margin-top:27px; padding:24px; border:1px solid var(--line); border-radius:22px; background:linear-gradient(155deg,rgba(30,54,64,.94),rgba(13,30,38,.96)); box-shadow:0 20px 50px #030b1155; }
+  .section-head { display:flex; justify-content:space-between; align-items:baseline; gap:18px; margin-bottom:17px; }
+  .section-head small { color:var(--muted); }
+  .states { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:11px; }
+  .finals { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:11px; }
+  .final { min-height:118px; text-align:left; display:flex; flex-direction:column; align-items:flex-start; gap:7px; }
+  .final strong { color:var(--aqua); }
+  .final span { color:var(--muted); font-size:.82rem; line-height:1.35; }
+  .final[aria-pressed="true"] { border-color:var(--aqua); background:#285057; }
+  .state { min-height:148px; text-align:left; display:flex; flex-direction:column; align-items:flex-start; gap:7px; padding:18px; }
+  .state strong { font-size:1.12rem; }
+  .state span { color:var(--muted); font-size:.87rem; line-height:1.35; }
+  .state[aria-pressed="true"] { border-color:var(--aqua); background:linear-gradient(150deg,#315e61,#19353e); box-shadow:inset 0 0 0 1px #7ce2d344; }
+  .state[aria-pressed="true"] strong { color:#b3f8e8; }
+  .version-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin:24px 0 10px; }
+  .version-head h3 { margin:0; font-size:1rem; }
+  .version-head span { color:var(--muted); font-size:.85rem; }
+  .version-head button { margin-left:auto; padding:8px 11px; font-size:.82rem; }
+  .versions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+  .version { min-height:103px; padding:13px; text-align:left; display:flex; flex-direction:column; gap:6px; }
+  .version strong { font-size:.93rem; line-height:1.2; }
+  .version span { color:var(--muted); font-size:.76rem; line-height:1.25; }
+  .version[aria-pressed="true"] { border-color:var(--gold); background:#493c35; }
+  .version[aria-pressed="true"] strong { color:#ffe2ad; }
+  .version[data-version="5"], .version[data-version="6"], .version[data-version="7"], .version[data-version="8"], .version[data-version="9"], .version[data-version="10"] { box-shadow:inset 0 0 0 1px #7ce2d355; }
+  .version[hidden] { display:none; }
+  .fx { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+  .fx button { text-align:left; min-height:62px; }
+  .fx button::before { content:"↗"; color:var(--aqua); padding-right:12px; }
+  .mix-control { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin:0 0 18px; color:var(--muted); font-size:.9rem; }
+  .mix-control label { font-weight:650; color:var(--ink); }
+  .mix-control input { width:min(240px,60vw); accent-color:var(--aqua); }
+  .mix-control output { min-width:3.4em; color:var(--aqua); font-variant-numeric:tabular-nums; }
+  .note { margin-top:16px; font-size:.88rem; }
+  .footer { border-top:1px solid var(--line); margin-top:29px; padding-top:20px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; font-size:.84rem; color:var(--muted); }
+  @media (max-width:760px) { .states,.finals { grid-template-columns:repeat(2,minmax(0,1fr)); } .versions { grid-template-columns:repeat(2,minmax(0,1fr)); } .fx { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width:480px) { main { width:min(100% - 24px,1040px); padding-top:28px; } .section { padding:17px; } .states,.fx { grid-template-columns:1fr; } .versions { grid-template-columns:repeat(2,minmax(0,1fr)); } .state { min-height:110px; } .section-head { display:block; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">ChartQuest / isolated sound study</div>
+  <h1>The chart is about to move.</h1>
+  <p class="intro">Exploration · Core + Snare, Trade · Decision Point, and Guardian · Collision are locked. All four new Review choices are approved and locked too; choose the one that fits the moment.</p>
+
+  <div class="controls">
+    <button id="enable" class="primary" type="button">Enable audio</button>
+    <button id="mute" type="button" aria-pressed="false" disabled>Mute all</button>
+    <button id="duck" type="button" aria-pressed="false" disabled>Preview narration duck</button>
+    <span id="status" class="status" role="status" aria-live="polite">Audio is off until enabled.</span>
+  </div>
+
+  <section class="section" aria-labelledby="finals-title">
+    <div class="section-head"><div><h2 id="finals-title">Approved audio · Review choices</h2><p>Enable audio, then tap each state. Review opens with Continue Exploration; its four locked choices are below.</p></div><small>Original synthesis</small></div>
+    <div class="finals" id="finals">
+      <button class="final" type="button" data-final="exploration" aria-pressed="true"><strong>Exploration · Core + Snare</strong><span>Original core keys and rhythm with a tactile snare · locked pick.</span></button>
+      <button class="final" type="button" data-final="trade" aria-pressed="false"><strong>Trade · Decision Point</strong><span>Original heartbeat and rhythm, with the high chime replaced · locked pick.</span></button>
+      <button class="final" type="button" data-final="guardian" aria-pressed="false"><strong>Guardian · Collision</strong><span>Original 116 BPM take · your locked Guardian pick.</span></button>
+      <button class="final" type="button" data-final="recovery" aria-pressed="false"><strong>Review · Continue Exploration</strong><span>Starting Review choice · locked. Core + Snare keeps playing.</span></button>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="scenes-title">
+    <div class="section-head"><div><h2 id="scenes-title">Music states and earlier takes</h2><p>Every take is pad-free. Choose a state, then use its take list for a closer comparison.</p></div><small>Original synthesis</small></div>
+    <div class="states" id="states">
+      <button class="state" type="button" data-scene="exploration" aria-pressed="true"><strong>Exploration</strong><span>Calm curiosity, steady forward motion, a glint of discovery.</span></button>
+      <button class="state" type="button" data-scene="trade" aria-pressed="false"><strong>Trade</strong><span>Focused tension with clear space for reading the chart.</span></button>
+      <button class="state" type="button" data-scene="guardian" aria-pressed="false"><strong>Guardian</strong><span>Rising stakes and suspense, held below the action.</span></button>
+      <button class="state" type="button" data-scene="recovery" aria-pressed="false"><strong>Review / recovery</strong><span>Test continuity, a lighter groove, a crisp chamber pulse, or quiet.</span></button>
+    </div>
+    <div class="version-head"><h3>Choose a take</h3><button id="compare" type="button">Compare no-pad core</button><span id="version-label">Exploration · 8 of 11</span></div>
+    <div class="versions" id="versions">
+      <button class="version" type="button" data-mode="exploration" data-version="0" aria-pressed="false"><strong>01 · Compass Rhythm</strong><span>Earlier melody and pulse, now pad-free.</span></button>
+      <button class="version" type="button" data-mode="exploration" data-version="1" aria-pressed="false"><strong>02 · Night Drive</strong><span>Deeper pulse, darker horizon.</span></button>
+      <button class="version" type="button" data-mode="exploration" data-version="2" aria-pressed="false"><strong>03 · Aurora Trail</strong><span>Airy, curious, almost weightless.</span></button>
+      <button class="version" type="button" data-mode="exploration" data-version="3" aria-pressed="false"><strong>04 · Forward Signal</strong><span>Brighter movement and syncopation.</span></button>
+      <button class="version" type="button" data-mode="exploration" data-version="4" aria-pressed="false"><strong>05 · Distant Horizon</strong><span>More emotional, wide and patient.</span></button>
+      <button class="version" type="button" data-mode="exploration" data-version="5" aria-pressed="false"><strong>06 · Compass Refined</strong><span>Earlier experiment with more breath and shape.</span></button>
+      <button class="version" type="button" data-mode="exploration" data-version="6" aria-pressed="false"><strong>07 · No-Pad Core</strong><span>Main keys, bass pulse, light beat.</span></button>
+      <button class="version" type="button" data-mode="exploration" data-version="7" aria-pressed="true"><strong>08 · Core + Snare</strong><span>Core rhythm with tactile snare · locked pick.</span></button>
+      <button class="version" type="button" data-mode="exploration" data-version="8" aria-pressed="false"><strong>09 · Key Reply</strong><span>Snare and one low keyboard answer.</span></button>
+      <button class="version" type="button" data-mode="exploration" data-version="9" aria-pressed="false"><strong>10 · Ghost Groove</strong><span>Snare with quiet percussion ghosts.</span></button>
+      <button class="version" type="button" data-mode="exploration" data-version="10" aria-pressed="false"><strong>11 · Balanced</strong><span>Small key reply and faint ghost rhythm.</span></button>
+      <button class="version" type="button" data-mode="trade" data-version="0" aria-pressed="false" hidden><strong>01 · Pulse Monitor</strong><span>Heartbeat under a held decision.</span></button>
+      <button class="version" type="button" data-mode="trade" data-version="1" aria-pressed="false" hidden><strong>02 · Held Breath</strong><span>Slow pounding, long gaps of air.</span></button>
+      <button class="version" type="button" data-mode="trade" data-version="2" aria-pressed="false" hidden><strong>03 · Breakout Watch</strong><span>Heartbeat speeds toward a move.</span></button>
+      <button class="version" type="button" data-mode="trade" data-version="3" aria-pressed="false" hidden><strong>04 · Deep Water</strong><span>Muted pulse and anxious glow.</span></button>
+      <button class="version" type="button" data-mode="trade" data-version="4" aria-pressed="false" hidden><strong>05 · Decision Point</strong><span>Original heartbeat and rhythm; high chime replaced · locked pick.</span></button>
+      <button class="version" type="button" data-mode="trade" data-version="5" aria-pressed="false" hidden><strong>06 · Decision Point Refined</strong><span>Heart in the foreground; rising pressure.</span></button>
+      <button class="version" type="button" data-mode="trade" data-version="6" aria-pressed="false" hidden><strong>07 · Decision Point Clean Study</strong><span>Later heartbeat mix with a lower-key reply and ghost snare.</span></button>
+      <button class="version" type="button" data-mode="guardian" data-version="0" aria-pressed="false" hidden><strong>01 · Pursuit</strong><span>Fast low drive and sharp edges.</span></button>
+      <button class="version" type="button" data-mode="guardian" data-version="1" aria-pressed="false" hidden><strong>02 · Pressure</strong><span>Syncopated, relentless motion.</span></button>
+      <button class="version" type="button" data-mode="guardian" data-version="2" aria-pressed="false" hidden><strong>03 · Collision</strong><span>Chosen impact concept, now pad-free.</span></button>
+      <button class="version" type="button" data-mode="guardian" data-version="3" aria-pressed="false" hidden><strong>04 · Final Stand</strong><span>Fastest, fierce and determined.</span></button>
+      <button class="version" type="button" data-mode="guardian" data-version="4" aria-pressed="false" hidden><strong>05 · Rising Threat</strong><span>Escalating notes and tension.</span></button>
+      <button class="version" type="button" data-mode="guardian" data-version="5" aria-pressed="false" hidden><strong>06 · Collision Refined</strong><span>Sharper hits, more drive, clearer space.</span></button>
+      <button class="version" type="button" data-mode="guardian" data-version="6" aria-pressed="false" hidden><strong>07 · Collision Percussion Study</strong><span>Later bass-and-drum experiment.</span></button>
+      <button class="version" type="button" data-mode="recovery" data-version="0" aria-pressed="false" hidden><strong>01 · Soft Landing</strong><span>Slow exhale, warm and simple.</span></button>
+      <button class="version" type="button" data-mode="recovery" data-version="1" aria-pressed="false" hidden><strong>02 · Afterglow</strong><span>Gentle glow after the moment.</span></button>
+      <button class="version" type="button" data-mode="recovery" data-version="2" aria-pressed="false" hidden><strong>03 · Night Journal</strong><span>Chosen reflective concept, now pad-free.</span></button>
+      <button class="version" type="button" data-mode="recovery" data-version="3" aria-pressed="false" hidden><strong>04 · Open Sky</strong><span>Light movement, still relaxed.</span></button>
+      <button class="version" type="button" data-mode="recovery" data-version="4" aria-pressed="false" hidden><strong>05 · Exhale</strong><span>Longest notes and deepest calm.</span></button>
+      <button class="version" type="button" data-mode="recovery" data-version="5" aria-pressed="false" hidden><strong>06 · Night Journal Refined</strong><span>Warmer keys, slower pacing, and silence.</span></button>
+      <button class="version" type="button" data-mode="recovery" data-version="6" aria-pressed="false" hidden><strong>07 · Night Journal Clean Study</strong><span>Earlier slow reflective experiment.</span></button>
+      <button class="version" type="button" data-mode="recovery" data-version="7" aria-pressed="false" hidden><strong>08 · Continue Exploration</strong><span>Locked · keep the Core + Snare loop.</span></button>
+      <button class="version" type="button" data-mode="recovery" data-version="8" aria-pressed="false" hidden><strong>09 · Forward Page</strong><span>Locked · upbeat keys and restrained drums.</span></button>
+      <button class="version" type="button" data-mode="recovery" data-version="9" aria-pressed="false" hidden><strong>10 · Chamber Steps</strong><span>Locked · dry, short-note classical-inspired pattern.</span></button>
+      <button class="version" type="button" data-mode="recovery" data-version="10" aria-pressed="false" hidden><strong>11 · Quiet Review</strong><span>Locked · no music while reading or reflecting.</span></button>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="fx-title">
+    <div class="section-head"><div><h2 id="fx-title">Sound-effect previews</h2><p>Previous draft, kept available for reference. This round focuses on music.</p></div><small>Unchanged in this pass</small></div>
+    <div class="mix-control"><label for="fx-level">Effect audition level</label><input id="fx-level" type="range" min="70" max="160" value="125" step="5"><output id="fx-value" for="fx-level">125%</output><span>Music ducks briefly for each preview.</span></div>
+    <div class="fx" id="effects">
+      <button type="button" data-fx="movement">Movement</button>
+      <button type="button" data-fx="jump">Jump</button>
+      <button type="button" data-fx="box">Box</button>
+      <button type="button" data-fx="portal">Portal</button>
+      <button type="button" data-fx="tradeEntry">Trade entry</button>
+      <button type="button" data-fx="target">Target</button>
+      <button type="button" data-fx="stop">Stop</button>
+      <button type="button" data-fx="journal">Journal</button>
+      <button type="button" data-fx="guardianHit">Guardian hit</button>
+    </div>
+    <p class="note">Start at a comfortable device volume. The mute button gates music, effects, and their tails. Narration duck lowers music only; it leaves effects audible. This page does not connect to the game or save settings.</p>
+  </section>
+
+  <div class="footer"><span>Prototype for founder listening · no sampled assets or external requests</span><span id="scene-label">Selected: Exploration — Core + Snare</span></div>
+</main>
+<script>
+(() => {
+  'use strict';
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  const descriptions = { exploration:'Exploration', trade:'Trade', guardian:'Guardian', recovery:'Review / recovery' };
+  const sceneData = {
+    exploration: { bpm:96, chords:[[57,60,64,71],[53,57,60,64],[48,52,55,62],[55,59,62,69]], bass:[45,41,36,43], motif:[76,79,72,74,76,79,83,79], motifSteps:[2,6,10,14], density:1 },
+    trade: { bpm:92, chords:[[52,55,59,66],[48,52,55,59],[45,48,52,59],[47,52,54,59]], bass:[40,36,33,35], motif:[71,74,67,71,69,71,74,66], motifSteps:[3,11], density:.73 },
+    guardian: { bpm:104, chords:[[45,48,52,59],[44,48,51,56],[41,45,48,55],[47,50,53,59]], bass:[33,32,29,35], motif:[72,71,68,71,72,75,71,68], motifSteps:[3,7,11,15], density:.88 },
+    recovery: { bpm:86, chords:[[48,52,55,59],[47,50,55,62],[45,48,52,57],[41,45,48,55]], bass:[36,43,33,29], motif:[76,79,74,71,72,76,69,72], motifSteps:[2,7,10,14], density:.65 }
+  };
+  const variants = {
+    exploration: [
+      { ...sceneData.exploration, name:'Compass Rhythm', style:0 },
+      { ...sceneData.exploration, name:'Night Drive', style:1, bpm:90, chords:[[50,53,57,64],[46,50,53,60],[41,45,48,55],[48,52,55,62]], bass:[38,34,29,36], motif:[69,72,76,74,69,72,77,76] },
+      { ...sceneData.exploration, name:'Aurora Trail', style:2, bpm:88, chords:[[52,55,59,66],[48,52,55,62],[55,59,62,69],[50,54,57,64]], bass:[40,36,43,38], motif:[79,83,78,76,81,83,86,78] },
+      { ...sceneData.exploration, name:'Forward Signal', style:3, bpm:106, chords:[[57,60,64,71],[55,59,62,69],[53,57,60,67],[48,52,55,62]], bass:[45,43,41,36], motif:[76,79,83,79,74,76,81,83] },
+      { ...sceneData.exploration, name:'Distant Horizon', style:4, bpm:82, chords:[[55,59,62,69],[52,55,59,66],[48,52,55,62],[53,57,60,67]], bass:[43,40,36,41], motif:[74,79,71,76,72,79,76,83] },
+      { ...sceneData.exploration, name:'Compass Refined', style:5, bpm:94 },
+      { ...sceneData.exploration, name:'No-Pad Core', style:6 },
+      { ...sceneData.exploration, name:'Core + Snare', style:7, musicId:'compass-core-snare' },
+      { ...sceneData.exploration, name:'Key Reply', style:8 },
+      { ...sceneData.exploration, name:'Ghost Groove', style:9 },
+      { ...sceneData.exploration, name:'Balanced', style:10, phrase:[[76,81,72,71],[72,77,76,77],[76,79,74,79],[83,79,74,79]] }
+    ],
+    trade: [
+      { ...sceneData.trade, name:'Pulse Monitor', style:0, bpm:84, chords:[[45,48,52,59],[41,45,48,55],[38,41,45,52],[40,44,47,52]], bass:[33,29,26,28], motif:[69,72,67,71,69,72,74,68] },
+      { ...sceneData.trade, name:'Held Breath', style:1, bpm:72, chords:[[49,52,56,61],[45,49,52,56],[42,45,49,56],[44,47,52,59]], bass:[37,33,30,32], motif:[68,71,73,68,66,71,73,68] },
+      { ...sceneData.trade, name:'Breakout Watch', style:2, bpm:98, chords:[[52,55,59,66],[48,52,55,62],[45,48,52,59],[47,51,54,59]], bass:[40,36,33,35], motif:[71,74,78,74,69,74,79,78] },
+      { ...sceneData.trade, name:'Deep Water', style:3, bpm:80, chords:[[47,50,54,59],[43,47,50,57],[40,43,47,54],[42,45,50,57]], bass:[35,31,28,30], motif:[66,71,69,66,64,69,71,66] },
+      { ...sceneData.trade, name:'Decision Point', style:4, bpm:108, chords:[[45,48,52,59],[44,48,51,56],[41,45,48,55],[47,50,53,59]], bass:[33,32,29,35], motif:[72,75,71,68,72,76,75,71] },
+      { ...sceneData.trade, name:'Decision Point Refined', style:5, bpm:104, chords:[[45,48,52,59],[44,48,51,56],[41,45,48,55],[47,50,53,59]], bass:[33,32,29,35], motif:[72,75,71,68,72,76,75,71] },
+      { ...sceneData.trade, name:'Decision Point Clean Study', style:6, bpm:104, chords:[[45,48,52,59],[44,48,51,56],[41,45,48,55],[47,50,53,59]], bass:[33,32,29,35], motif:[72,75,71,68,72,76,75,71], phrase:[[72,71],[68,72],[72,69],[71,74]] }
+    ],
+    guardian: [
+      { ...sceneData.guardian, name:'Pursuit', style:0, bpm:122 },
+      { ...sceneData.guardian, name:'Pressure', style:1, bpm:128, chords:[[40,43,47,52],[39,43,46,51],[36,40,43,50],[42,45,48,54]], bass:[28,27,24,30], motif:[67,70,74,70,66,70,75,74] },
+      { ...sceneData.guardian, name:'Collision', style:2, bpm:116, chords:[[43,46,50,55],[42,46,49,54],[39,43,46,53],[45,48,51,57]], bass:[31,30,27,33], motif:[67,70,65,62,67,71,70,65] },
+      { ...sceneData.guardian, name:'Final Stand', style:3, bpm:136, chords:[[45,48,52,59],[41,45,48,55],[38,41,45,52],[40,44,47,52]], bass:[33,29,26,28], motif:[72,76,79,76,74,79,81,76] },
+      { ...sceneData.guardian, name:'Rising Threat', style:4, bpm:124, chords:[[47,50,54,59],[45,48,52,59],[44,47,51,56],[41,45,48,55]], bass:[35,33,32,29], motif:[66,68,69,71,72,74,75,78] },
+      { ...sceneData.guardian, name:'Collision Refined', style:5, bpm:124, chords:[[43,46,50,55],[42,46,49,54],[39,43,46,53],[45,48,51,57]], bass:[31,30,27,33], motif:[67,70,65,62,67,71,70,65] },
+      { ...sceneData.guardian, name:'Collision Percussion Study', style:6, bpm:124, chords:[[43,46,50,55],[42,46,49,54],[39,43,46,53],[45,48,51,57]], bass:[31,30,27,33], motif:[67,70,65,62,67,71,70,65] }
+    ],
+    recovery: [
+      { ...sceneData.recovery, name:'Soft Landing', style:0, bpm:68 },
+      { ...sceneData.recovery, name:'Afterglow', style:1, bpm:72, chords:[[53,57,60,64],[48,52,55,62],[45,48,52,57],[50,53,57,64]], bass:[41,36,33,38], motif:[76,79,81,76,74,79,72,76] },
+      { ...sceneData.recovery, name:'Night Journal', style:2, bpm:62, chords:[[52,55,59,64],[48,52,55,60],[45,48,52,57],[47,50,55,62]], bass:[40,36,33,35], motif:[71,76,74,69,72,76,79,74] },
+      { ...sceneData.recovery, name:'Open Sky', style:3, bpm:76, chords:[[55,59,62,67],[50,54,57,64],[52,55,59,64],[48,52,55,62]], bass:[43,38,40,36], motif:[79,81,83,79,76,81,74,79] },
+      { ...sceneData.recovery, name:'Exhale', style:4, bpm:58, chords:[[48,52,55,59],[45,48,52,57],[41,45,48,55],[43,47,50,55]], bass:[36,33,29,31], motif:[72,76,79,74,69,72,76,71] },
+      { ...sceneData.recovery, name:'Night Journal Refined', style:5, bpm:60, chords:[[52,55,59,64],[48,52,55,60],[45,48,52,57],[48,52,55,62]], bass:[40,36,33,36], motif:[71,76,74,69,72,76,79,74] },
+      { ...sceneData.recovery, name:'Night Journal Clean Study', style:6, bpm:60, chords:[[52,55,59,64],[48,52,55,60],[45,48,52,57],[48,52,55,62]], bass:[40,36,33,36], motif:[71,76,74,69,72,76,79,74], phrase:[[71,76],[72,67],[72,76],[79,74]] },
+      { ...sceneData.exploration, name:'Continue Exploration', style:7, scheduleMode:'exploration', musicId:'compass-core-snare' },
+      { ...sceneData.recovery, name:'Forward Page', style:8, bpm:98, chords:[[48,52,55,59],[43,47,50,55],[45,48,52,57],[41,45,48,53]], bass:[36,31,33,29], phrase:[[72,76,72,79],[71,74,71,79],[72,76,72,81],[69,72,69,77]] },
+      { ...sceneData.recovery, name:'Chamber Steps', style:9, bpm:100, chords:[[48,52,55,60],[41,45,48,53],[43,47,50,55],[48,52,55,60]], bass:[36,29,31,36], phrase:[[60,64,67,64],[65,69,72,69],[67,71,74,71],[64,67,72,67]] },
+      { ...sceneData.recovery, name:'Quiet Review', style:10, bpm:96, silent:true }
+    ]
+  };
+  const $ = id => document.getElementById(id);
+  const enableButton=$('enable'), muteButton=$('mute'), duckButton=$('duck'), status=$('status');
+  let context, master, musicRoot, fxRoot, fxVerbIn, noiseBuffer, scheduler, current, previewTimer;
+  let selected='exploration', muted=false, ducked=false, enabled=false, hidden=false, previewDuckUntil=0;
+  const chosenVersion={ exploration:7, trade:4, guardian:2, recovery:7 };
+  const favoriteVersion={ exploration:6, trade:4, guardian:2, recovery:2 };
+  const comparisonVersion={ exploration:7, trade:4, guardian:2, recovery:7 };
+
+  function midi(n) { return 440 * Math.pow(2,(n-69)/12); }
+  function fade(param, from, to, at, duration) {
+    if(param.cancelAndHoldAtTime) param.cancelAndHoldAtTime(at);
+    else { param.cancelScheduledValues(at); param.setValueAtTime(from,at); }
+    param.linearRampToValueAtTime(to,at+duration);
+  }
+  function voice(bus, frequency, at, duration, level, options={}) {
+    const oscillator=context.createOscillator(), filter=context.createBiquadFilter(), gain=context.createGain();
+    oscillator.type=options.wave || 'triangle';
+    oscillator.frequency.setValueAtTime(Math.max(20,frequency),at);
+    if(options.detune) oscillator.detune.value=options.detune;
+    if(options.endFrequency) oscillator.frequency.exponentialRampToValueAtTime(Math.max(20,options.endFrequency),at+duration*.8);
+    filter.type=options.filter || 'lowpass';
+    filter.frequency.setValueAtTime(options.cutoff || 2200,at);
+    if(options.endCutoff) filter.frequency.exponentialRampToValueAtTime(options.endCutoff,at+duration*.85);
+    if(options.q) filter.Q.value=options.q;
+    gain.gain.setValueAtTime(.0001,at);
+    gain.gain.exponentialRampToValueAtTime(Math.max(.0002,level),at+Math.min(options.attack || .012,duration*.4));
+    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+    oscillator.connect(filter).connect(gain).connect(bus);
+    oscillator.start(at); oscillator.stop(at+duration+.02);
+    oscillator.onended=()=>{ oscillator.disconnect(); filter.disconnect(); gain.disconnect(); };
+  }
+  function noise(bus,at,duration,level,options={}) {
+    const source=context.createBufferSource(), filter=context.createBiquadFilter(), gain=context.createGain();
+    source.buffer=noiseBuffer; filter.type=options.filter || 'bandpass';
+    filter.frequency.setValueAtTime(options.cutoff || 1200,at);
+    filter.Q.value=options.q || .8;
+    if(options.endCutoff) filter.frequency.exponentialRampToValueAtTime(options.endCutoff,at+duration*.85);
+    gain.gain.setValueAtTime(.0001,at);
+    gain.gain.exponentialRampToValueAtTime(level,at+Math.min(options.attack || .009,duration*.4));
+    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+    source.connect(filter).connect(gain).connect(bus); source.start(at); source.stop(at+duration+.01);
+    source.onended=()=>{ source.disconnect(); filter.disconnect(); gain.disconnect(); };
+  }
+  function bell(bus,frequency,at,duration,level,brightness=1) {
+    const carrier=context.createOscillator(), modulator=context.createOscillator(), depth=context.createGain(), envelope=context.createGain();
+    carrier.type='sine'; modulator.type='sine';
+    carrier.frequency.setValueAtTime(frequency,at); modulator.frequency.setValueAtTime(frequency*2.01,at);
+    depth.gain.setValueAtTime(frequency*brightness,at); depth.gain.exponentialRampToValueAtTime(.01,at+duration*.64);
+    envelope.gain.setValueAtTime(.0001,at); envelope.gain.exponentialRampToValueAtTime(level,at+.008); envelope.gain.exponentialRampToValueAtTime(.0001,at+duration);
+    modulator.connect(depth).connect(carrier.frequency); carrier.connect(envelope).connect(bus);
+    carrier.start(at); modulator.start(at); carrier.stop(at+duration+.02); modulator.stop(at+duration+.02);
+    carrier.onended=()=>{ carrier.disconnect(); modulator.disconnect(); depth.disconnect(); envelope.disconnect(); };
+  }
+  function pluck(bus,note,at,level=.09,length=.45) {
+    bell(bus,midi(note),at,length,level*.73,.56);
+    voice(bus,midi(note),at,length*.72,level*.4,{wave:'triangle',cutoff:1300,endCutoff:650,attack:.009});
+  }
+  function pulse(bus,note,at,level=.11) {
+    voice(bus,midi(note),at,.42,level,{wave:'sine',cutoff:530,attack:.012});
+    voice(bus,midi(note)*2,at,.2,level*.2,{wave:'triangle',cutoff:430,attack:.007});
+  }
+  function softBeat(bus,at,level=.08) {
+    voice(bus,100,at,.2,level,{wave:'sine',endFrequency:46,cutoff:340,attack:.007});
+    noise(bus,at,.052,level*.35,{filter:'lowpass',cutoff:570});
+  }
+  function tick(bus,at,level=.028) { noise(bus,at,.085,level,{cutoff:4200,endCutoff:1900,q:.55}); }
+  function lightSnare(bus,at,strength=1) {
+    noise(bus,at,.13,.12*strength,{cutoff:1250,endCutoff:620,q:.62});
+    voice(bus,170,at,.085,.052*strength,{wave:'triangle',endFrequency:110,cutoff:680,attack:.007});
+  }
+  function softKey(bus,note,at,level=.07,length=.8) {
+    const frequency=midi(note);
+    voice(bus,frequency,at,length,level,{wave:'triangle',cutoff:920,endCutoff:490,attack:.026});
+    bell(bus,frequency*2,at+.012,length*.68,level*.22,.18);
+  }
+  function shortKey(bus,note,at,level=.055,length=.36) {
+    voice(bus,midi(note),at,length,level,{wave:'triangle',cutoff:1000,endCutoff:460,attack:.016});
+  }
+  function heartbeat(bus,at,strength=1) {
+    voice(bus,105,at,.2,.18*strength,{wave:'sine',endFrequency:54,cutoff:390,attack:.009});
+    voice(bus,185,at,.12,.052*strength,{wave:'triangle',endFrequency:105,cutoff:520,attack:.006});
+    noise(bus,at,.055,.048*strength,{filter:'lowpass',cutoff:560});
+    const second=at+.185;
+    voice(bus,118,second,.16,.12*strength,{wave:'sine',endFrequency:62,cutoff:400,attack:.008});
+    voice(bus,220,second,.09,.038*strength,{wave:'triangle',endFrequency:130,cutoff:560,attack:.006});
+  }
+  function guardianSnare(bus,at,strength=1) {
+    noise(bus,at,.15,.16*strength,{cutoff:1600,endCutoff:650,q:.65});
+    voice(bus,195,at,.11,.08*strength,{wave:'triangle',endFrequency:95,cutoff:800});
+  }
+  function motifNote(d,bar,index,cycle) { return d.motif[(bar*2+index+cycle)%d.motif.length]; }
+  function scheduleExploration(d,step,bar,cycle,at,bus) {
+    const s=d.style;
+    if(s===0) {
+      if(step===0) { pulse(bus,d.bass[bar],at,.17); softBeat(bus,at,.07); }
+      if(step===8) pulse(bus,d.bass[bar],at,.11);
+      if(step===4 || step===12) { tick(bus,at,.031); if(step===12) softBeat(bus,at,.045); }
+      const i=[2,6,10,14].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.12,.58);
+      if(cycle && bar===3 && step===15) bell(bus,midi(88),at,.75,.038,.35);
+    } else if(s===1) {
+      if(step===0 || step===8) pulse(bus,d.bass[bar],at,step===0?.18:.11);
+      if(step===0 || step===10) softBeat(bus,at,step===0?.065:.04);
+      if(step===6 || step===14) tick(bus,at,.022);
+      const i=[3,7,11,15].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.105,.64);
+    } else if(s===2) {
+      if(step===0) pulse(bus,d.bass[bar],at,.095);
+      if(step===8) noise(bus,at,.52,.025,{cutoff:1300,endCutoff:2700,attack:.2,q:.5});
+      const i=[0,5,10].indexOf(step); if(i>=0) bell(bus,midi(motifNote(d,bar,i,cycle)),at,.95,.095,.3);
+      if(step===13 && bar%2===0) pluck(bus,d.motif[(bar+5)%d.motif.length],at,.045,.9);
+    } else if(s===3) {
+      if([0,6,10,14].includes(step)) pulse(bus,d.bass[bar]+(step===14?12:0),at,step===0?.15:.07);
+      if(step===0 || step===8) softBeat(bus,at,.075);
+      if(step===4 || step===12) tick(bus,at,.035);
+      const i=[2,5,9,13].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.105,.4);
+    } else if(s===4) {
+      if(step===0) pulse(bus,d.bass[bar],at,.11);
+      if(step===8) pulse(bus,d.bass[bar]+12,at,.05);
+      const i=[4,12].indexOf(step); if(i>=0) { pluck(bus,motifNote(d,bar,i,cycle),at,.095,.85); bell(bus,midi(d.chords[bar][2]+24),at+.13,.9,.036,.25); }
+    } else if(s===5) {
+      const shape=(cycle?1.07:.94)*(bar===3?1.08:1);
+      if(step===0) { pulse(bus,d.bass[bar],at,.13*shape); softBeat(bus,at,.052); }
+      if(step===8) pulse(bus,d.bass[bar]+(bar===3?12:0),at,.083*shape);
+      if((step===4 && bar%2===0) || (step===12 && bar%2===1)) tick(bus,at,.025);
+      const i=[2,6,10,14].indexOf(step);
+      if(i>=0) {
+        const level=((i===0 || i===3) ? .119 : .086)*shape;
+        pluck(bus,motifNote(d,bar,i,cycle),at,level,i===3?.7:.52);
+        if(step===14 && (bar===1 || bar===3)) softKey(bus,d.motif[(bar*2+i+3)%d.motif.length],at+.18,.03,.6);
+      }
+      if(step===15 && bar===3 && cycle) bell(bus,midi(88),at,.82,.04,.28);
+    } else {
+      if(step===0) { pulse(bus,d.bass[bar],at,.17); softBeat(bus,at,.07); }
+      if(step===8) pulse(bus,d.bass[bar],at,.11);
+      if(step===12) softBeat(bus,at,.045);
+      if(s>=7 && (step===4 || step===12)) lightSnare(bus,at);
+      const i=[2,6,10,14].indexOf(step);
+      if(i>=0) pluck(bus,s===10?d.phrase[bar][i]:motifNote(d,bar,i,cycle),at,.12,s===10&&step===14?.24:.58);
+      if((s===8 || s===10) && step===11 && bar%2===1) {
+        voice(bus,midi(d.chords[bar][1]),at,.32,s===8 ? .055 : .037,{wave:'triangle',cutoff:820,endCutoff:480,attack:.014});
+      }
+      if((s===9 || s===10) && (step===7 || step===15) && bar%2===0) {
+        lightSnare(bus,at,s===9 ? .34 : .22);
+      }
+    }
+  }
+  function scheduleTrade(d,step,bar,cycle,at,bus) {
+    const s=d.style;
+    if(s===0) {
+      if([0,4,8,12].includes(step)) heartbeat(bus,at,.82);
+      if(step===0) pulse(bus,d.bass[bar],at,.085);
+      if(step===6 && bar%2===0) bell(bus,midi(84),at,.38,.036,.14);
+      if(step===11) pluck(bus,motifNote(d,bar,0,cycle),at,.055,.66);
+    } else if(s===1) {
+      if(step===0 || step===8) heartbeat(bus,at,1.08);
+      if(step===4 || step===12) noise(bus,at,.7,.046,{cutoff:520,endCutoff:1400,attack:.3,q:.45});
+      if(step===14) bell(bus,midi(motifNote(d,bar,1,cycle)),at,.65,.057,.22);
+    } else if(s===2) {
+      if([0,4,8,12].includes(step)) heartbeat(bus,at,.92);
+      if(step===0 || step===8) pulse(bus,d.bass[bar],at,.065);
+      const i=[3,7,11,15].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.065,.34);
+      if(step===14 && bar===3) noise(bus,at,.22,.045,{cutoff:1900,endCutoff:3800,attack:.07});
+    } else if(s===3) {
+      if(step===0 || step===8) heartbeat(bus,at,.9);
+      if(step===4 || step===12) noise(bus,at,.58,.05,{cutoff:450,endCutoff:1700,attack:.23,q:.4});
+      if(step===3 || step===11) bell(bus,midi(motifNote(d,bar,step===3?0:1,cycle)),at,.75,.073,.16);
+      if(step===0) pulse(bus,d.bass[bar],at,.06);
+    } else if(s===4) {
+      if([0,4,8,12].includes(step)) heartbeat(bus,at,1.05);
+      if(step===2 || step===10) pulse(bus,d.bass[bar]+12,at,.075);
+      if(step===6 || step===14) { voice(bus,midi(d.chords[bar][1]+12),at,.28,.07,{wave:'sawtooth',cutoff:650,endCutoff:300}); tick(bus,at,.025); }
+      if(step===15 && bar%2) noise(bus,at,.06,.04,{cutoff:1050,endCutoff:500,q:.58});
+    } else {
+      const pressure=.86+bar*.075+(cycle?.04:0);
+      if([0,4,8,12].includes(step) && !(bar===3 && step===8)) {
+        const late=step===12 && bar===3?1.18:1;
+        heartbeat(bus,at+(step===4 ? .008 : 0),pressure*late);
+      }
+      if(step===0 || step===8) pulse(bus,d.bass[bar],at,step===0 ? .077 : .048);
+      if(s===5 && step===3 && bar%2===0) bell(bus,midi(84),at,.3,.035,.12);
+      if(step===7 || step===15) {
+        const note=s===6?d.phrase[bar][step===7?0:1]:motifNote(d,bar,step===7?0:1,cycle);
+        if(s===6) shortKey(bus,note,at,.057,step===15?.11:.39);
+        else softKey(bus,note,at,.048,.58);
+      }
+      if(s===5 && bar===3 && step===12) voice(bus,midi(d.chords[bar][2]+12),at,.54,.09,{wave:'sawtooth',cutoff:690,endCutoff:360,attack:.06});
+      if(s===6 && step===11 && bar%2===1) voice(bus,midi(d.chords[bar][1]+12),at,.3,.043,{wave:'triangle',cutoff:780,endCutoff:420,attack:.018});
+      if(s===6 && step===10 && bar%2===0) lightSnare(bus,at,.16);
+    }
+  }
+  function scheduleGuardian(d,step,bar,cycle,at,bus) {
+    const s=d.style, force=s===4?.78+bar*.1:1;
+    const bassSteps=s===1?[0,3,6,10,13]:s===3?[0,2,4,6,8,10,12,14]:[0,4,8,12];
+    if(bassSteps.includes(step)) pulse(bus,d.bass[bar]+(step===13?12:0),at,(s===3?.09:.13)*force);
+    if(step===0 || step===8 || (s===2 && step===12)) softBeat(bus,at,(s===2?.17:.12)*force);
+    if(step===(s===1?5:4) || step===(s===1?13:12)) guardianSnare(bus,at,(s===2?1.12:.9)*force);
+    if([2,6,10,14].includes(step)) tick(bus,at,(s===3?.055:.04)*force);
+    if(s===0) {
+      const i=[3,7,11,15].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.105,.29);
+    } else if(s===1) {
+      const i=[2,9].indexOf(step); if(i>=0) bell(bus,midi(motifNote(d,bar,i,cycle)),at,.31,.095,.75);
+      if(step===7 || step===15) noise(bus,at,.16,.08,{cutoff:1800,endCutoff:600,q:.7});
+    } else if(s===2) {
+      if([0,6,10].includes(step)) {
+        voice(bus,midi(d.chords[bar][1]+12),at,.35,.11,{wave:'sawtooth',cutoff:850,endCutoff:270});
+        noise(bus,at,.12,.065,{cutoff:900,endCutoff:380});
+      }
+    } else if(s===3) {
+      const i=[1,3,5,7,9,11,13,15].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.065,.21);
+    } else if(s===4) {
+      const i=[1,5,9,13].indexOf(step); if(i>=0) bell(bus,midi(d.motif[(bar*2+i)%d.motif.length]),at,.38,.095*force,.7);
+      if(step===15 && bar===3) noise(bus,at,.27,.1,{cutoff:1100,endCutoff:3300,attack:.08});
+    } else if(s===5) {
+      if([0,6,10].includes(step)) {
+        voice(bus,midi(d.chords[bar][1]+12),at,.27,.13,{wave:'sawtooth',cutoff:1150,endCutoff:330,attack:.008});
+        noise(bus,at,.13,.085,{cutoff:1850,endCutoff:650,q:.72});
+      }
+      if(step===7 || step===15) softKey(bus,motifNote(d,bar,step===7?0:1,cycle),at,.086,.32);
+      if(step===0 && bar===2) voice(bus,midi(d.bass[bar]),at,.68,.16,{wave:'sine',endFrequency:midi(d.bass[bar]-12),cutoff:400});
+      if(step===15 && bar===3 && cycle) noise(bus,at,.29,.08,{cutoff:1050,endCutoff:3200,attack:.08});
+    } else {
+      if([0,6,10].includes(step)) noise(bus,at,.09,.063,{cutoff:1150,endCutoff:540,q:.68});
+      if(step===11 && bar%2===0) lightSnare(bus,at,.22);
+    }
+  }
+  function scheduleRecovery(d,step,bar,cycle,at,bus) {
+    const s=d.style;
+    if(step===0 && (s===0 || s===1 || s===3)) pulse(bus,d.bass[bar],at,s===3?.075:.055);
+    if(s===0) {
+      if(step===0) bell(bus,midi(d.chords[bar][0]+24),at,.8,.055,.2);
+      const i=[3,11].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.068,.75);
+    } else if(s===1) {
+      const i=[2,7,12].indexOf(step); if(i>=0) bell(bus,midi(motifNote(d,bar,i,cycle)),at,.8,.08,.28);
+      if(step===8) pulse(bus,d.bass[bar]+12,at,.042);
+    } else if(s===2) {
+      if(step===0) noise(bus,at,.38,.018,{cutoff:2100,endCutoff:850,attack:.12,q:.5});
+      const i=[5,13].indexOf(step); if(i>=0) bell(bus,midi(motifNote(d,bar,i,cycle)),at,.85,.063,.18);
+    } else if(s===3) {
+      if(step===8) tick(bus,at,.012);
+      const i=[0,5,10,15].indexOf(step); if(i>=0) pluck(bus,motifNote(d,bar,i,cycle),at,.057,.76);
+    } else if(s===4) {
+      if(step===8) bell(bus,midi(motifNote(d,bar,0,cycle)),at,.9,.073,.17);
+      if(step===0 && bar===0) voice(bus,midi(d.bass[bar]+12),at,.68,.045,{wave:'sine',cutoff:370,attack:.09});
+    } else if(s===5 || s===6) {
+      if(step===0) voice(bus,midi(d.bass[bar]+12),at,.62,.036,{wave:'sine',cutoff:340,attack:.08});
+      if(step===4 || step===12) {
+        const note=s===6?d.phrase[bar][step===4?0:1]:motifNote(d,bar,step===4?0:1,cycle);
+        if(s===6) shortKey(bus,note,at,step===4?.077:.064,.58);
+        else softKey(bus,note,at,step===4?.069:.056,step===4?.74:.85);
+      }
+      if(s===5 && step===14 && bar===3) bell(bus,midi(d.chords[bar][2]+24),at,.82,.03,.13);
+      if(s===6 && step===9 && bar%2===1) voice(bus,midi(d.chords[bar][1]+12),at,.3,.04,{wave:'triangle',cutoff:750,endCutoff:420,attack:.03});
+      if(s===6 && step===8 && bar%2===0) noise(bus,at,.075,.024,{cutoff:900,endCutoff:520,q:.52});
+    } else if(s===8) {
+      if(step===0 || step===8) {
+        pulse(bus,d.bass[bar],at,step===0?.105:.065);
+        softBeat(bus,at,step===0?.055:.038);
+      }
+      if(step===4 || step===12) lightSnare(bus,at,.48);
+      const i=[2,6,10,14].indexOf(step);
+      if(i>=0) shortKey(bus,d.phrase[bar][i],at,.068,.24);
+    } else if(s===9) {
+      if(step===0 || step===8) {
+        pulse(bus,d.bass[bar],at,step===0?.075:.045);
+        softBeat(bus,at,step===0?.045:.03);
+      }
+      if(step===4 || step===12) lightSnare(bus,at,.25);
+      const i=[1,5,9,13].indexOf(step);
+      if(i>=0) voice(bus,midi(d.phrase[bar][i]),at,.18,.067,{wave:'triangle',cutoff:1350,endCutoff:610,attack:.008});
+    }
+  }
+  function scheduleStep(instance) {
+    const d=instance.config, step=instance.step%16, bar=Math.floor(instance.step/16)%4, at=instance.nextTime;
+    const beat=60/d.bpm, cycle=Math.floor(instance.step/64)%2;
+    if(instance.mode==='exploration') scheduleExploration(d,step,bar,cycle,at,instance.bus);
+    if(instance.mode==='trade') scheduleTrade(d,step,bar,cycle,at,instance.bus);
+    if(instance.mode==='guardian') scheduleGuardian(d,step,bar,cycle,at,instance.bus);
+    if(instance.mode==='recovery') scheduleRecovery(d,step,bar,cycle,at,instance.bus);
+    instance.step++;
+    instance.nextTime+=beat/4;
+  }
+  function tickScheduler() {
+    if(!current || muted || hidden) return;
+    while(current.nextTime<context.currentTime+.14) scheduleStep(current);
+  }
+  function retireScene(duration=.65) {
+    if(!current) return;
+    const old=current, now=context.currentTime;
+    fade(old.bus.gain,old.bus.gain.value,.0001,now,duration);
+    current=null;
+    setTimeout(()=>old.bus.disconnect(),1200);
+  }
+  function startScene() {
+    if(!enabled || muted || hidden) return;
+    const config=variants[selected][chosenVersion[selected]];
+    if(current && config.musicId && current.config.musicId===config.musicId) return;
+    retireScene(.45);
+    const bus=context.createGain(), now=context.currentTime;
+    bus.gain.setValueAtTime(.0001,now); bus.gain.linearRampToValueAtTime(.82,now+.55);
+    bus.connect(musicRoot);
+    current={mode:config.scheduleMode||selected,config,bus,step:0,nextTime:now+.055};
+    if(!scheduler) scheduler=setInterval(tickScheduler,25);
+    tickScheduler();
+  }
+  function setStatus(message) { status.textContent=message; }
+  function selectionName() { return descriptions[selected]+' — '+variants[selected][chosenVersion[selected]].name; }
+  function playingStatus() { return variants[selected][chosenVersion[selected]].silent?'Review is quiet for reading.':'Playing '+selectionName()+'.'; }
+  function updateVersionButtons() {
+    document.querySelectorAll('[data-scene]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.scene===selected)));
+    document.querySelectorAll('[data-final]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.final===selected && chosenVersion[selected]===comparisonVersion[selected])));
+    document.querySelectorAll('[data-version]').forEach(button=>{
+      button.hidden=button.dataset.mode!==selected;
+      button.setAttribute('aria-pressed',String(button.dataset.mode===selected && Number(button.dataset.version)===chosenVersion[selected]));
+    });
+    $('version-label').textContent=descriptions[selected]+' · '+(chosenVersion[selected]+1)+' of '+variants[selected].length;
+    $('scene-label').textContent='Selected: '+selectionName();
+    $('compare').hidden=selected!=='exploration';
+    const onCore=chosenVersion[selected]===favoriteVersion[selected];
+    $('compare').textContent=selected==='exploration'
+      ? (onCore?'Compare Core + Snare':'Compare no-pad core')
+      : (onCore?'Compare final take':'Compare earlier take');
+  }
+  function makeReverb(destination,level,impulse) {
+    const input=context.createGain(), convolver=context.createConvolver(), damping=context.createBiquadFilter(), wet=context.createGain();
+    convolver.buffer=impulse; convolver.normalize=false;
+    damping.type='lowpass'; damping.frequency.value=3500; wet.gain.value=level;
+    input.connect(convolver).connect(damping).connect(wet).connect(destination);
+    return input;
+  }
+  function createAudio() {
+    context=new AudioContextClass();
+    master=context.createGain(); musicRoot=context.createGain(); fxRoot=context.createGain();
+    const limiter=context.createDynamicsCompressor();
+    limiter.threshold.value=-10; limiter.knee.value=8; limiter.ratio.value=6; limiter.attack.value=.003; limiter.release.value=.16;
+    master.gain.value=.82; musicRoot.gain.value=.62; fxRoot.gain.value=1.25;
+    musicRoot.connect(master); fxRoot.connect(master); master.connect(limiter).connect(context.destination);
+    noiseBuffer=context.createBuffer(1,context.sampleRate*3,context.sampleRate);
+    const samples=noiseBuffer.getChannelData(0);
+    for(let i=0;i<samples.length;i++) samples[i]=(Math.random()*2-1)*.8;
+    const length=Math.floor(context.sampleRate*1.35), impulse=context.createBuffer(2,length,context.sampleRate);
+    const impulseScale=1.4/Math.sqrt(length);
+    for(let channel=0;channel<2;channel++) {
+      const data=impulse.getChannelData(channel);
+      for(let i=0;i<length;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/length,2.7)*impulseScale;
+    }
+    fxVerbIn=makeReverb(fxRoot,.26,impulse);
+  }
+  function setMute(value) {
+    muted=value; muteButton.setAttribute('aria-pressed',String(value)); muteButton.textContent=value?'Unmute all':'Mute all';
+    const now=context.currentTime;
+    fade(master.gain,master.gain.value,value?0:.82,now,.025);
+    if(value) retireScene(); else startScene();
+    setStatus(value?'Everything muted.':playingStatus());
+  }
+  function setDuck(value) {
+    ducked=value; duckButton.setAttribute('aria-pressed',String(value));
+    duckButton.textContent=value?'Narration duck on':'Preview narration duck';
+    fade(musicRoot.gain,musicRoot.gain.value,musicGainTarget(),context.currentTime,.22);
+  }
+  function musicGainTarget() { return .62 * (ducked?.24:1) * (context.currentTime<previewDuckUntil?.18:1); }
+  function previewDuck(duration=1.35) {
+    previewDuckUntil=context.currentTime+duration;
+    fade(musicRoot.gain,musicRoot.gain.value,musicGainTarget(),context.currentTime,.04);
+    clearTimeout(previewTimer);
+    previewTimer=setTimeout(()=>{
+      previewDuckUntil=0;
+      if(context) fade(musicRoot.gain,musicRoot.gain.value,musicGainTarget(),context.currentTime,.38);
+    },duration*1000);
+  }
+  function cueBus(wet=.25,level=.8) {
+    const bus=context.createGain(), send=context.createGain();
+    bus.gain.value=level; send.gain.value=wet;
+    bus.connect(fxRoot); bus.connect(send).connect(fxVerbIn);
+    setTimeout(()=>{ bus.disconnect(); send.disconnect(); },4000);
+    return bus;
+  }
+  function effect(name) {
+    if(!enabled || muted || hidden) { setStatus(enabled?'Unmute to hear cues.':'Enable audio to hear cues.'); return; }
+    const t=context.currentTime+.018;
+    previewDuck(name==='portal'||name==='target'?1.65:1.25);
+    const b=cueBus(name==='portal'?.5:name==='movement'?.08:.25,name==='movement'?.78:.9);
+    switch(name) {
+      case 'movement':
+        noise(b,t,.14,.18,{cutoff:1050,endCutoff:420,q:.65});
+        voice(b,195,t,.15,.18,{wave:'triangle',endFrequency:110,cutoff:920});
+        noise(b,t+.025,.055,.055,{cutoff:3600,q:.5}); break;
+      case 'jump':
+        voice(b,185,t,.29,.23,{wave:'triangle',endFrequency:470,cutoff:1350});
+        noise(b,t,.24,.15,{cutoff:580,endCutoff:2600,attack:.08,q:.6});
+        bell(b,740,t+.14,.38,.105,.52); break;
+      case 'box':
+        noise(b,t,.22,.31,{cutoff:1050,endCutoff:350,q:.7});
+        voice(b,165,t,.32,.27,{wave:'triangle',endFrequency:58,cutoff:650});
+        bell(b,540,t+.075,.28,.09,.8); bell(b,710,t+.12,.22,.055,.7); break;
+      case 'portal':
+        noise(b,t,.72,.19,{cutoff:480,endCutoff:3400,attack:.22,q:.5});
+        voice(b,165,t,.74,.16,{wave:'sine',endFrequency:330,cutoff:1050,attack:.15});
+        [0,.11,.23,.37].forEach((delay,i)=>bell(b,[330,440,554,660][i],t+delay,.75,.10,.55)); break;
+      case 'tradeEntry':
+        voice(b,125,t,.26,.21,{wave:'sine',endFrequency:62,cutoff:480});
+        noise(b,t,.08,.12,{cutoff:1450,q:.65});
+        bell(b,440,t+.07,.43,.105,.4); bell(b,659,t+.19,.49,.09,.45); break;
+      case 'target':
+        noise(b,t,.42,.105,{cutoff:700,endCutoff:3000,attack:.13,q:.6});
+        [659,831,988].forEach((frequency,i)=>bell(b,frequency,t+i*.11,.66,.11,.48));
+        break;
+      case 'stop':
+        noise(b,t,.115,.21,{cutoff:1500,endCutoff:470,q:.72});
+        voice(b,320,t,.34,.28,{wave:'triangle',endFrequency:95,cutoff:890});
+        bell(b,220,t+.045,.3,.09,.32); break;
+      case 'journal':
+        noise(b,t,.19,.22,{cutoff:1200,endCutoff:3000,attack:.03,q:.58});
+        voice(b,310,t,.11,.09,{wave:'triangle',endFrequency:220,cutoff:1000});
+        bell(b,523,t+.065,.4,.082,.35); bell(b,659,t+.18,.49,.071,.34); break;
+      case 'guardianHit':
+        noise(b,t,.31,.38,{cutoff:1100,endCutoff:320,q:.6});
+        voice(b,128,t,.45,.33,{wave:'triangle',endFrequency:44,cutoff:580});
+        voice(b,57,t+.055,.38,.15,{wave:'sine',endFrequency:42,cutoff:250});
+        bell(b,185,t+.11,.47,.09,.72); break;
+    }
+    setStatus('Preview: '+({tradeEntry:'trade entry',guardianHit:'Guardian hit'}[name]||name)+'.');
+  }
+  enableButton.addEventListener('click',async()=>{
+    if(!AudioContextClass) { setStatus('Web Audio is unavailable in this browser.'); return; }
+    try {
+      if(!context) createAudio();
+      await context.resume(); enabled=true;
+      fade(master.gain,master.gain.value,.82,context.currentTime,.025);
+      enableButton.textContent='Audio enabled'; enableButton.disabled=true; muteButton.disabled=false; duckButton.disabled=false;
+      startScene(); setStatus(playingStatus());
+    } catch(error) { setStatus('Audio could not start. Try another browser.'); }
+  });
+  muteButton.addEventListener('click',()=>setMute(!muted));
+  duckButton.addEventListener('click',()=>setDuck(!ducked));
+  $('fx-level').addEventListener('input',event=>{
+    $('fx-value').textContent=event.target.value+'%';
+    if(context) fade(fxRoot.gain,fxRoot.gain.value,Number(event.target.value)/100,context.currentTime,.04);
+  });
+  $('states').addEventListener('click',event=>{
+    const button=event.target.closest('[data-scene]'); if(!button) return;
+    selected=button.dataset.scene;
+    updateVersionButtons();
+    if(enabled && !muted) { startScene(); setStatus(playingStatus()); }
+    else setStatus('Selected '+selectionName()+'. '+(enabled?'Unmute to listen.':'Enable audio to listen.'));
+  });
+  $('finals').addEventListener('click',event=>{
+    const button=event.target.closest('[data-final]'); if(!button) return;
+    selected=button.dataset.final;
+    chosenVersion[selected]=comparisonVersion[selected];
+    updateVersionButtons();
+    if(enabled && !muted) { startScene(); setStatus(playingStatus()); }
+    else setStatus('Selected '+selectionName()+'. '+(enabled?'Unmute to listen.':'Enable audio to listen.'));
+  });
+  $('versions').addEventListener('click',event=>{
+    const button=event.target.closest('[data-version]'); if(!button || button.dataset.mode!==selected) return;
+    chosenVersion[selected]=Number(button.dataset.version);
+    updateVersionButtons();
+    if(enabled && !muted) { startScene(); setStatus(playingStatus()); }
+    else setStatus('Selected '+selectionName()+'. '+(enabled?'Unmute to listen.':'Enable audio to listen.'));
+  });
+  $('compare').addEventListener('click',()=>{
+    if(selected!=='exploration') return;
+    chosenVersion[selected]=chosenVersion[selected]===favoriteVersion[selected]?comparisonVersion[selected]:favoriteVersion[selected];
+    updateVersionButtons();
+    if(enabled && !muted) { startScene(); setStatus(playingStatus()); }
+    else setStatus('Selected '+selectionName()+'. '+(enabled?'Unmute to listen.':'Enable audio to listen.'));
+  });
+  $('effects').addEventListener('click',event=>{ const button=event.target.closest('[data-fx]'); if(button) effect(button.dataset.fx); });
+  document.addEventListener('visibilitychange',()=>{
+    hidden=document.hidden;
+    if(!enabled) return;
+    if(hidden) { retireScene(); fade(master.gain,master.gain.value,0,context.currentTime,.025); }
+    else if(!muted) { context.resume().then(()=>{ fade(master.gain,master.gain.value,.82,context.currentTime,.025); startScene(); }).catch(()=>{ enabled=false; enableButton.disabled=false; enableButton.textContent='Resume audio'; setStatus('Tap Resume audio to listen.'); }); }
+  });
+})();
+</script>
+</body>
+</html>

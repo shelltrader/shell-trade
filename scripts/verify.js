@@ -793,6 +793,11 @@ function run() {
     }
   }
 
+  // 25 — Founder-locked score identity, all-level routing and audio lifecycle.
+  try {
+    const result = require('./locked_audio.test.js').runSuite({ report: false });
+    add('25', 'Locked campaign audio', result.ok ? 'PASS' : 'FAIL', result.detail);
+  } catch (e) { add('25', 'Locked campaign audio', 'FAIL', String(e && e.message || e).slice(0, 200)); }
 }
 
 // 3b — optional real headless boot (only if puppeteer is installed)

@@ -2,7 +2,7 @@
 
 ## Current founder request — locked audio integration (2026-09-30)
 
-Build 376 integrates the approved scores across campaign states. Local checks pass; release preparation and served verification are in progress under the Founder’s explicit publication request. See `handoffs/LOCKED_AUDIO_INTEGRATION.md` and `qa/LOCKED_AUDIO_376.md`. Current remote freeze read returned **disabled**; historical freeze and build-366 statements below are retained as prior sprint records, not current external-state claims.
+Build 376 integrates the approved scores across campaign states. **Published and verified** at commit `39103190052d49b9e5ca8dde355c585da8896d5d`, Cloudflare deployment `927b4b04-a845-4329-a374-91b97b210e1f`. Founder explicitly authorized the Release Manager role. Canonical live bytes match; the strict smoke checker has one documented Cloudflare analytics-injection exception (51 other checks pass). See `releases/LOCKED_AUDIO_376.md`. See `handoffs/LOCKED_AUDIO_INTEGRATION.md` and `qa/LOCKED_AUDIO_376.md`. Current remote freeze read returned **disabled**; historical freeze and build-366 statements below are retained as prior sprint records, not current external-state claims.
 
 ## Previous sprint record
 

@@ -80,3 +80,8 @@ and blocked.
   connections by design.
 - Served production fingerprint, fresh-cache behavior, release manifest/lock/gate, and account-level
   freeze changes remain future Release Manager work.
+
+## Build 376 release follow-ups (2026-09-30)
+
+- **P2 — verified tooling limitation:** the strict Node post-deploy checksum sees Cloudflare’s added analytics script, while the canonical curl response exactly matches the release artifact. All 51 other smoke checks pass. Teach the verifier an explicit, narrowly verified provider-transform model in a separate tooling task; do not silently normalize arbitrary scripts. See `../releases/LOCKED_AUDIO_376.md`.
+- **P2 — observed browser warning, impact unknown:** live IAB startup reported Google Fonts and jsDelivr Supabase-script load failures on two loads, with no captured runtime errors. Account/online behavior was not exercised. Source URLs and CSP were not changed by the audio release. Investigate separately; do not represent online account flows as passed.

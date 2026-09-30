@@ -53,3 +53,7 @@ The approved scores are copied exactly from the audition, including Decision Poi
 ## Release
 
 Founder authorized publication; the Release Manager workflow must still identify a committed clean candidate, acquire its lock, pass the release gate, and verify the served fingerprint. Candidate readiness alone is not a deployment claim.
+
+## Completed release
+
+Founder explicitly assigned this agent the Release Manager role. Build 376 / commit `39103190052d49b9e5ca8dde355c585da8896d5d` is live; canonical served game hash equals the approved artifact. Deployment, browser evidence, external-asset warnings, and the exactly identified provider-beacon hash exception are recorded in `../releases/LOCKED_AUDIO_376.md`.

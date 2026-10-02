@@ -1,0 +1,611 @@
+{
+  "pass": true,
+  "events": [
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-1-flinch-1.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1280
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-1-flinch-1.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-1-flinch-2.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1280
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-1-flinch-2.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-1-flinch-3.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1280
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-1-flinch-3.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-1-flinch-4.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1280
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-1-flinch-4.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/outros/boss-1-defeat.mp4",
+      "duration": 6.041667,
+      "width": 720,
+      "height": 1280
+    },
+    {
+      "type": "ended",
+      "source": "bosses/outros/boss-1-defeat.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-2-flinch-1.mp4",
+      "duration": 3.041667,
+      "width": 816,
+      "height": 1104
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-2-flinch-1.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-2-flinch-2.mp4",
+      "duration": 3.041667,
+      "width": 816,
+      "height": 1104
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-2-flinch-2.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-2-flinch-3.mp4",
+      "duration": 3.041995,
+      "width": 1236,
+      "height": 1672
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-2-flinch-3.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-2-flinch-4.mp4",
+      "duration": 3.041995,
+      "width": 1236,
+      "height": 1672
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-2-flinch-4.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/outros/boss-2-defeat.mp4",
+      "duration": 6.041667,
+      "width": 1236,
+      "height": 1672
+    },
+    {
+      "type": "ended",
+      "source": "bosses/outros/boss-2-defeat.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-3-flinch-1.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-3-flinch-1.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-3-flinch-2.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-3-flinch-2.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-3-flinch-3.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-3-flinch-3.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-3-flinch-4.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-3-flinch-4.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/outros/boss-3-defeat.mp4",
+      "duration": 6.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/outros/boss-3-defeat.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-4-flinch-1.mp4",
+      "duration": 3.041995,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-4-flinch-1.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-4-flinch-2.mp4",
+      "duration": 3.041995,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-4-flinch-2.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-4-flinch-3.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1280
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-4-flinch-3.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-4-flinch-4.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1280
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-4-flinch-4.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/outros/boss-4-defeat.mp4",
+      "duration": 6.041667,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "type": "ended",
+      "source": "bosses/outros/boss-4-defeat.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-5-flinch-1.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-5-flinch-1.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-5-flinch-2.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-5-flinch-2.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-5-flinch-3.mp4",
+      "duration": 3.041995,
+      "width": 1080,
+      "height": 1916
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-5-flinch-3.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-5-flinch-4.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-5-flinch-4.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/outros/boss-5-defeat.mp4",
+      "duration": 6.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/outros/boss-5-defeat.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-6-flinch-1.mp4",
+      "duration": 3.041995,
+      "width": 1084,
+      "height": 1908
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-6-flinch-1.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-6-flinch-2.mp4",
+      "duration": 3.041995,
+      "width": 1084,
+      "height": 1908
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-6-flinch-2.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-6-flinch-3.mp4",
+      "duration": 3.041995,
+      "width": 1084,
+      "height": 1908
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-6-flinch-3.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-6-flinch-4.mp4",
+      "duration": 3,
+      "width": 1084,
+      "height": 1908
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-6-flinch-4.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/outros/boss-6-defeat.mp4",
+      "duration": 6.041667,
+      "width": 1084,
+      "height": 1908
+    },
+    {
+      "type": "ended",
+      "source": "bosses/outros/boss-6-defeat.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-7-flinch-1.mp4",
+      "duration": 3.041995,
+      "width": 1084,
+      "height": 1908
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-7-flinch-1.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-7-flinch-2.mp4",
+      "duration": 3.041995,
+      "width": 1084,
+      "height": 1908
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-7-flinch-2.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-7-flinch-3.mp4",
+      "duration": 3.041995,
+      "width": 1084,
+      "height": 1908
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-7-flinch-3.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-7-flinch-4.mp4",
+      "duration": 3.041995,
+      "width": 1084,
+      "height": 1908
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-7-flinch-4.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/outros/boss-7-defeat.mp4",
+      "duration": 6.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/outros/boss-7-defeat.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-8-flinch-1.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-8-flinch-1.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-8-flinch-2.mp4",
+      "duration": 3.041995,
+      "width": 1084,
+      "height": 1908
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-8-flinch-2.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-8-flinch-3.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-8-flinch-3.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-8-flinch-4.mp4",
+      "duration": 3.041995,
+      "width": 1084,
+      "height": 1908
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-8-flinch-4.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/outros/boss-8-defeat.mp4",
+      "duration": 6.041667,
+      "width": 720,
+      "height": 1264
+    },
+    {
+      "type": "ended",
+      "source": "bosses/outros/boss-8-defeat.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-9-flinch-1.mp4",
+      "duration": 3.041995,
+      "width": 1168,
+      "height": 1776
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-9-flinch-1.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-9-flinch-2.mp4",
+      "duration": 3.041995,
+      "width": 1168,
+      "height": 1776
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-9-flinch-2.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-9-flinch-3.mp4",
+      "duration": 3.041667,
+      "width": 768,
+      "height": 1184
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-9-flinch-3.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-9-flinch-4.mp4",
+      "duration": 3.041667,
+      "width": 768,
+      "height": 1184
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-9-flinch-4.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/outros/boss-9-defeat.mp4",
+      "duration": 6.041667,
+      "width": 1168,
+      "height": 1776
+    },
+    {
+      "type": "ended",
+      "source": "bosses/outros/boss-9-defeat.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-10-flinch-1.mp4",
+      "duration": 3.041995,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-10-flinch-1.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-10-flinch-2.mp4",
+      "duration": 3.041995,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-10-flinch-2.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-10-flinch-3.mp4",
+      "duration": 3.041995,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-10-flinch-3.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-10-flinch-4.mp4",
+      "duration": 3.041667,
+      "width": 720,
+      "height": 1280
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-10-flinch-4.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/outros/boss-10-defeat.mp4",
+      "duration": 6.041667,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "type": "ended",
+      "source": "bosses/outros/boss-10-defeat.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-11-flinch-1.mp4",
+      "duration": 3.041995,
+      "width": 1080,
+      "height": 1916
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-11-flinch-1.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-11-flinch-2.mp4",
+      "duration": 3.041995,
+      "width": 1080,
+      "height": 1916
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-11-flinch-2.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-11-flinch-3.mp4",
+      "duration": 3.041995,
+      "width": 1080,
+      "height": 1916
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-11-flinch-3.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/flinches/boss-11-flinch-4.mp4",
+      "duration": 3.041995,
+      "width": 1080,
+      "height": 1916
+    },
+    {
+      "type": "ended",
+      "source": "bosses/flinches/boss-11-flinch-4.mp4"
+    },
+    {
+      "type": "loaded",
+      "source": "bosses/outros/boss-11-defeat.mp4",
+      "duration": 6.041667,
+      "width": 1080,
+      "height": 1916
+    },
+    {
+      "type": "ended",
+      "source": "bosses/outros/boss-11-defeat.mp4"
+    }
+  ],
+  "errors": []
+}

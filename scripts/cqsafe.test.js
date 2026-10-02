@@ -818,12 +818,12 @@ const tests = [
     assert.match(guardians, /bossPortraitSrc\(k\)/);
     assert.doesNotMatch(guardians, /src="bosses\/boss-' \+ k/);
     assert.match(victory, /bossPortraitSrc\(bfState\.level\)/);
-    assert.match(outroOwner, /bosses\/outros\/boss-1-defeat-v2\.mp4/);
+    assert.match(outroOwner, /bosses\/outros\/boss-1-defeat\.mp4/);
 
     const portraitRoot = fs.readFileSync(path.join(ROOT, 'bosses', 'boss-1-gambler-v2.webp'));
     const portraitSite = fs.readFileSync(path.join(ROOT, 'website', 'bosses', 'boss-1-gambler-v2.webp'));
-    const outroRoot = fs.readFileSync(path.join(ROOT, 'bosses', 'outros', 'boss-1-defeat-v2.mp4'));
-    const outroSite = fs.readFileSync(path.join(ROOT, 'website', 'bosses', 'outros', 'boss-1-defeat-v2.mp4'));
+    const outroRoot = fs.readFileSync(path.join(ROOT, 'bosses', 'outros', 'boss-1-defeat.mp4'));
+    const outroSite = fs.readFileSync(path.join(ROOT, 'website', 'bosses', 'outros', 'boss-1-defeat.mp4'));
     assert.deepEqual(portraitRoot, portraitSite, 'Gambler portrait root and website bytes must match');
     assert.deepEqual(outroRoot, outroSite, 'Gambler defeat video root and website bytes must match');
     assert.equal(portraitRoot.subarray(0, 4).toString('ascii'), 'RIFF');
@@ -852,13 +852,9 @@ const tests = [
   }],
 
   ['build 367 Boss 1 authored mixes have exact identity and guarded media-time ownership', () => {
-    const controller = section('const Boss1CineAudio = (() => {', '/* Play flinch `n` (1-based)');
+    const controller = section('const Boss1CineAudio = (() => {', 'const BOSS_INTRO_VIDEOS =');
     const expectedAssets = {
       'intro.m4a': '3384ccde8bebf7b21df5ee05fce8349695c54563a6462e9a4ea81ea791c808f5',
-      'flinch-1.m4a': 'e6dd59cdb78da70e5da59c6f5a79ee79231edde9a3b1c0d0d33c083c4bb0ee17',
-      'flinch-2.m4a': '238fe86c4fce0582aa99734957261fe4e81b99def4c09ab154ba4da6cac523bd',
-      'flinch-3.m4a': 'b2938ab0abc51088c77019574dfba6c7d7ec9938c728028649fe9f824b45010d',
-      'flinch-4.m4a': '6d949154c1695d6c1e6ad61536a8396d89e7bb1462e3c42d9afdd40cf50e8632',
     };
     for (const [name, digest] of Object.entries(expectedAssets)) {
       const root = fs.readFileSync(path.join(ROOT, 'bosses', 'sfx', 'boss1-polish-v1', name));
@@ -869,25 +865,18 @@ const tests = [
     }
     const immutableMedia = {
       'bosses/intros/boss-1.mp4': 'ab95be2b3c61f91b5d2e53be2c044ec8e753a6991dcaa064f423e61958ffabee',
-      'bosses/flinches/boss-1-flinch-1.mp4': '8ed9cce05b688275044b218dfc8c53b4a6ed9d2bf9d671224051fa3c497d2bf2',
-      'bosses/flinches/boss-1-flinch-2.mp4': '2c126ffb85049e66cdb42e8e3628889b89776a69fa50ef99ff391cfd56c9c75b',
-      'bosses/flinches/boss-1-flinch-3.mp4': '36fbbce914512a2cb11181669d4607908ace2778d8fbbde7a4468734932fb3f9',
-      'bosses/flinches/boss-1-flinch-4.mp4': '6e43dd3583006a57141a505af03970b0a298a93371d41d679ab92c794930b1b2',
-      'bosses/sfx/boss-roar-1.m4a': 'e1948449619df11d60eb9d57d187bd5e72497de87d56f41d1f0aee40b5bf0733',
-      'bosses/sfx/boss-roar-2.m4a': '78bd238de4c3edc64f6231aef9720aa1a8c29df7d320d87ec4ba03617d5fda66',
-      'bosses/sfx/boss-roar-3.m4a': '212f8624aa9b077eeef428ae748de37b44d49ad005742abf842142f5abeb1bb3',
     };
     for (const [name, digest] of Object.entries(immutableMedia)) {
       const bytes = fs.readFileSync(path.join(ROOT, name));
       assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), digest, `${name} stayed immutable`);
     }
-    for (const src of ['intro.m4a', 'flinch-1.m4a', 'flinch-2.m4a', 'flinch-3.m4a', 'flinch-4.m4a']) {
+    for (const src of ['intro.m4a']) {
       assert.match(controller, new RegExp(`boss1-polish-v1/${src.replace('.', '\\.')}`));
     }
     for (const contract of [
       'requestVideoFrameCallback', 'mediaTime', 'currentTime', "listen(s, video, 'waiting'",
       "listen(s, video, 'seeking'", "listen(s, video, 'ended'", "listen(s, audio, 'error'",
-      "cancel('music-toggle-off')", "stopAll('boss-outro-start')",
+      "cancel('music-toggle-off')",
     ]) assert.match(GAME, new RegExp(contract.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     assert.match(controller, /Math\.abs\(drift\) > 0\.085/);
     assert.match(controller, /window\.__CQ_BOSS1_AUDIO_TEST_SINK__/);
@@ -895,8 +884,7 @@ const tests = [
     assert.match(controller, /typeof _CQ_DEV !== 'undefined' && _CQ_DEV/);
     assert.match(GAME, /boss1MediaWatchdog\(vid, arrive, 60000\)/,
       'Boss 1 intro uses progress-aware idle and hard-cap watchdogs; ended owns normal completion');
-    assert.match(GAME, /boss1MediaWatchdog\(vid, finish, 45000\)/,
-      'Boss 1 flinches use progress-aware idle and hard-cap watchdogs');
+    assert.match(GAME, /killT = setTimeout\(finish, 9000\)/, 'native flinch player must fail open');
     assert.match(GAME, /now - lastAt >= idleMs \|\| now - startedAt >= hardMs/);
     assert.doesNotMatch(controller, /window\.Boss1CineAudio\s*=/);
     assert.doesNotMatch(controller, /localStorage|sessionStorage|document\.cookie/);
@@ -981,7 +969,7 @@ const tests = [
       performance: { now: () => 1 }, Date, Math, Number, Object,
       requestAnimationFrame: () => 1, cancelAnimationFrame() {},
     };
-    const controller = section('const Boss1CineAudio = (() => {', '/* Play flinch `n` (1-based)');
+    const controller = section('const Boss1CineAudio = (() => {', 'const BOSS_INTRO_VIDEOS =');
     vm.runInNewContext(controller, sandbox, { filename: 'chart-quest.html#Boss1CineAudio', timeout: 1000 });
     const api = sandbox.window.CQBoss1AudioQA;
     assert.ok(api, 'dev-only controller seam must publish in QA');
@@ -990,8 +978,8 @@ const tests = [
     api.clearEvents(); api.setMuted(true);
     assert.equal(api.unlock(), 0, 'mute blocks permission priming');
     api.setMuted(false);
-    assert.equal(api.unlock(), 5, 'one gesture invokes all five play requests synchronously');
-    assert.equal(audios.length, 5);
+    assert.equal(api.unlock(), 1, 'one gesture invokes all five play requests synchronously');
+    assert.equal(audios.length, 1);
     assert.ok(audios.every(audio => audio.playCalls === 1 && audio.playMuted[0] === true && audio.paused && audio.muted === false),
       'all five iOS primes play muted then restore their prior muted state');
     api.setTestAudioFactory(() => { const audio = new FakeAudio(); audios.push(audio); return audio; });
@@ -1031,15 +1019,15 @@ const tests = [
     assert.equal(audios[0].currentTime, 1.6, 'drift is hard-resynced');
 
     const second = new FakeVideo(), stalePlayCount = audios[0].playCalls;
-    api.start('flinch1', second);
+    api.start('intro', second);
     first.frame(2.0);
     assert.equal(audios[0].playCalls, stalePlayCount, 'replaced video cannot resurrect old audio');
     second.frame(0.25);
-    assert.equal(audios[1].playCalls, 1);
+    assert.equal(audios[0].playCalls, stalePlayCount + 1);
     api.setMuted(true);
     assert.equal(api.snapshot(), null);
     second.frame(0.5); second.emit('playing');
-    assert.equal(audios[1].playCalls, 1, 'mute destroys event/frame ownership');
+    assert.equal(audios[0].playCalls, stalePlayCount + 1, 'mute destroys event/frame ownership');
     const events = api.events();
     assert.ok(events.some(row => row.type === 'play' && row.reason === 'rendered-frame'));
     assert.ok(events.some(row => row.type === 'pause' && row.reason === 'waiting'));

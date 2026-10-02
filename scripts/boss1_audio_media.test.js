@@ -22,24 +22,13 @@ const SAMPLE_RATE = 48000;
 
 const SPECS = Object.freeze([
   { name: 'intro', file: 'intro.m4a', duration: 10.041667, peakWindow: [7.35, 8.85], kind: 'intro' },
-  { name: 'flinch-1', file: 'flinch-1.m4a', duration: 3.916667, peakWindow: [2.36, 2.57], impact: 2.466667 },
-  { name: 'flinch-2', file: 'flinch-2.m4a', duration: 3.016667, peakWindow: [1.90, 2.10], impact: 2.000000 },
-  { name: 'flinch-3', file: 'flinch-3.m4a', duration: 3.533333, peakWindow: [0.51, 0.72], impact: 0.616667 },
-  { name: 'flinch-4', file: 'flinch-4.m4a', duration: 5.183333, peakWindow: [1.58, 1.79], impact: 1.683333 },
 ]);
 
 const APPROVED_VISUALS = Object.freeze({
   'bosses/intros/boss-1.mp4': 'ab95be2b3c61f91b5d2e53be2c044ec8e753a6991dcaa064f423e61958ffabee',
-  'bosses/flinches/boss-1-flinch-1.mp4': '8ed9cce05b688275044b218dfc8c53b4a6ed9d2bf9d671224051fa3c497d2bf2',
-  'bosses/flinches/boss-1-flinch-2.mp4': '2c126ffb85049e66cdb42e8e3628889b89776a69fa50ef99ff391cfd56c9c75b',
-  'bosses/flinches/boss-1-flinch-3.mp4': '36fbbce914512a2cb11181669d4607908ace2778d8fbbde7a4468734932fb3f9',
-  'bosses/flinches/boss-1-flinch-4.mp4': '6e43dd3583006a57141a505af03970b0a298a93371d41d679ab92c794930b1b2',
 });
 
 const PRESERVED_ROARS = Object.freeze({
-  'bosses/sfx/boss-roar-1.m4a': 'e1948449619df11d60eb9d57d187bd5e72497de87d56f41d1f0aee40b5bf0733',
-  'bosses/sfx/boss-roar-2.m4a': '78bd238de4c3edc64f6231aef9720aa1a8c29df7d320d87ec4ba03617d5fda66',
-  'bosses/sfx/boss-roar-3.m4a': '212f8624aa9b077eeef428ae748de37b44d49ad005742abf842142f5abeb1bb3',
 });
 
 function abs(rel) { return path.join(ROOT, rel); }
@@ -123,6 +112,17 @@ function ebur128(rel) {
 }
 
 function runSuite(options = {}) {
+  const selection = JSON.parse(fs.readFileSync(abs('.chartquest/qa/guardian-media-release.json'), 'utf8'));
+  assert.equal(selection.media.assets.length, 55);
+  assert.equal(new Set(selection.media.assets.map(x => `${x.guardian}:${x.stage}`)).size, 55);
+  for (const row of selection.media.assets) {
+    for (const prefix of ['', 'website/']) {
+      assert.equal(sha(prefix + row.target), row.release_sha256, 'approved release identity: ' + row.target);
+      assert.ok(fs.statSync(abs(prefix + row.target)).size <= 5 * 1024 * 1024, 'release size bound');
+    }
+  }
+  for (const row of selection.removed) assert.ok(!fs.existsSync(abs(row.path)), 'retired asset must remain absent: ' + row.path);
+
   const report = options.report !== false;
   const rows = [];
 
@@ -175,10 +175,12 @@ function runSuite(options = {}) {
     });
   }
 
-  assert.ok(new Set(hashes.slice(1)).size >= 3, 'four flinches need at least three genuinely distinct encoded waveforms');
-  const flinchLoudness = rows.slice(1).map(row => row.lufs);
-  assert.ok(Math.max(...flinchLoudness) - Math.min(...flinchLoudness) <= 3,
-    `flinch loudness spread must be ≤3 LU; got ${Math.min(...flinchLoudness)}..${Math.max(...flinchLoudness)}`);
+  const nativeHashes = selection.media.assets.filter(r => r.guardian === 1 && r.stage < 5).map(r => {
+    const result = cp.spawnSync('ffmpeg', ['-v','error','-i',abs(r.target),'-map','0:a:0','-c:a','copy','-f','hash','-hash','sha256','-'], {encoding:'utf8'});
+    assert.equal(result.status, 0, 'native reaction soundtrack must decode');
+    return result.stdout.trim();
+  });
+  assert.ok(new Set(nativeHashes).size >= 3, 'new reactions must have distinct native soundtracks');
 
   if (report) {
     for (const row of rows) {

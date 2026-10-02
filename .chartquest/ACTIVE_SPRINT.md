@@ -84,3 +84,7 @@ is not part of this sprint.
 
 Automated QA does not authorize production. The next technical workflow after Founder acceptance is
 a separate Release Manager candidate/manifest/lock/gate/fingerprint process.
+
+## Guardian cinematics — Founder release preparation, October 2
+
+VERIFIED: isolated codex/guardian-live-candidate, build377, production base3910319. All55 approved clips installed and tracked in both runtime trees;36 unused assets removed; root/index/website game parity and route documentation corrected. Full gate27PASS,0FAIL,1SKIP;22 player tests and55 browser playbacks PASS. Detailed evidence: qa/GUARDIAN_RELEASE_20261002.md. Production release remains pending Release Manager authority, exact manifest/lock/gate and served verification. GitHub freeze currently reports disabled; earlier freeze status above is historical.

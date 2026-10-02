@@ -1,0 +1,63 @@
+
+ChartQuest Regression Gate
+==============================================
+  ✓ [1] Correct Finn asset active (run.png, static legs)
+        run.png in load list + STATIC-LEG marker + file present
+  ✓ [2] Deprecated Finn (rig / walk-sheet / body / leg) DELETED
+        old model fully gone: no rig flags/calls, no walk-sheet/body/leg refs or arrays, deprecated PNGs absent
+  ✓ [3a] Game script parses (syntax = boot proxy)
+        10 inline <script> blocks parse clean
+  – [3b] Headless boot (console errors)
+        puppeteer not installed — `npm i -D puppeteer` to enable; syntax (3a) is the proxy
+  ✓ [3c] Standalone JS parses (sw.js, website/, ops/, scripts/, beta-qa/)
+        27 tracked standalone .js file(s) parse clean
+  ✓ [4] Lessons load (LESSONS + conceptTier + mastery map)
+        31 lesson keys; conceptTier + LESSON_MASTERY present
+  ✓ [5] Bosses load (openBoss/bossRound exam + 11 boss art)
+        boss exam engine (openBoss + bossRound) present; boss-1..11 art present
+  ✓ [6] Save system initializes (localStorage cq_* keys)
+        42 cq_* keys incl. core (faction/played/music)
+  ✓ [7] BUILD_TAG incremented
+        build 376 → 377
+  ✓ [8] Game artifacts byte-identical (source, root mirror, site)
+        sha256(chart-quest.html) == sha256(index.html) == sha256(website/game.html)
+  ✓ [9] No large binaries added (>5MB, non-ignored)
+        none staged/untracked; deploy.zip not tracked
+  ✓ [10] Protected systems unchanged
+        Finn / CFG / save keys / lesson set / boss engine identical to HEAD
+  ✓ [11] TES: min duration + curriculum order + authored outcomes + L1-3 fast-loss guard
+        MIN_TRADE_CANDLES=30 (≥24) · SETUP_UNLOCK order intact · outcomes AUTHORED (no 0.58 coin-flip) · L1-3 fast-loss GUARDED
+  ✓ [12] Candle-language divergence gate (no NEW inline palette / forks / rounded candles vs baseline)
+        no new candle-language divergence (total 301 ≤ baseline 314; converged 13)
+  ✓ [13] window.CQ owner integrity (owner published · COLOR derives from CQ · spine matches A.6)
+        window.CQ owner present & published · COLOR derives from CQ · full spine (palette + geometry + floors + wick + spacing) matches Constitution A.6
+  ✓ [14] COLLECTIBLE LAW 001 (CQREACH owns placement · all spawns validated · resize re-anchors)
+        owner published · 10 validated spawn sites · 4 wick growths owned · scene world render-derived · resize re-anchors · single groundY writer · wick growth owned · overlay dev-only · rebuild clears
+  ✓ [15] Lesson labels (measured plates · solver-placed · two-pass · Journal matches)
+        solver+plate owned by LessonChart · two-pass render (geometry → labels) · no blind label placement · scrim + arrows + wrapping + clearance intact · Journal on plates (5 deferred labels)
+  ✓ [16] Market identity (shared terrain · price layer display-only · every market anchored)
+        2 MARKET_DATA assignment(s), all TRAINING_REPLAY; MarketPrice touches neither MARKET_DATA nor prePopulateHTF; 8/8 markets anchored
+  ✓ [17] Deploy asset parity (every referenced asset present in website/, committed, same size)
+        80 referenced asset(s) present, git-tracked and identical in website/ · 1 comment-only ref(s) ignored: bosses/trend-crab.webp
+  ✓ [18] Event spacing owner (CQBEAT · rules · all categories reported · post-hoc · starvation-safe)
+        owner published · self-contained IIFE (0 top-level names) · 9 categories · 4/4 spawners + 6/6 moments reported · mode=enforce · placement post-hoc · moments never vetoed · starvation guard · ?beat overlay
+  ✓ [19] Operational foundation (CQOPS published · in sync · stamped · flags default-safe)
+        window.CQOPS published · self-contained IIFE (0 top-level names) · in sync with ops/cq-ops.js · stamped 3910319005 @ 2026-10-02T08:49:15Z · 7/7 seams (env/build/log/err/flags/health/report) · 4/4 product flags default ON · 2/2 passive observers · fetch observer handles both outcomes
+  ✓ [20] CQTrack in sync (inlined copy == website/assets/cq-track.js)
+        inlined copy byte-identical to website/assets/cq-track.js (33247B) · single intact marker pair · no literal </script>
+  ✓ [21] Deploy security headers (website/_headers ships · CSP covers every source origin)
+        website/_headers tracked & shipping · CSP + 5 headers present · 6 source origin(s) all allowlisted · iframe-safe (1 framed page) · root copy in step · NOTE: source analysis cannot see edge-injected or stylesheet-chained origins — verify a policy change live under Report-Only
+  ✓ [22] Build-367 beta readiness + Boss1 audio/viewport/CQSAFE/RC invariants
+        27/27 CQSAFE/build-367 contracts
+  ✓ [23] Build-367 local browser QA harness
+        bridge syntax PASS · harness syntax PASS · server/self-test PASS
+  ✓ [24] Build-367 Boss1 cinematic audio (AAC/parity/timing/headroom/phone-band)
+        1/1 media packages · AAC-LC/parity/timing/headroom/phone-band PASS
+  ✓ [25] Locked campaign audio
+        6/6 locked audio suites passed
+  ✓ [26] Approved Guardian cinematic player contracts
+        22 meaningful player/mapping tests PASS
+==============================================
+  27 pass · 0 fail · 0 warn · 1 skip
+
+PASS

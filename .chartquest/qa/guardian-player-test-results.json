@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "count": 22,
+  "cases": [
+    "all11 Guardians have4 ordered flinches and1 defeat; Gambler Journal preserved",
+    "flinch ended returns once and restores music",
+    "flinch error returns once and restores music",
+    "flinch skip returns once and restores music",
+    "flinch timeout returns once and restores music",
+    "missing bfFlinchScene cannot hang",
+    "missing bfFlinchVideo cannot hang",
+    "unmapped Guardian returns without playing",
+    "audible autoplay refusal retries muted and keeps cinematic",
+    "double autoplay refusal returns once",
+    "audio preference controls native track",
+    "delayed cleanup does not erase a repeated same-source clip",
+    "first Gambler defeat then Journal, exactly once",
+    "repeat Gambler victory omits Journal",
+    "all other Guardian defeats ended cannot block rewards",
+    "all other Guardian defeats error cannot block rewards",
+    "all other Guardian defeats skip cannot block rewards",
+    "all other Guardian defeats timeout cannot block rewards",
+    "outro audible refusal falls back muted",
+    "outro double refusal restores controls",
+    "damage intensity reaches stun for4 or5 HP; wrong/fatal hits do not flinch",
+    "bossWin routes non-Gambler defeat before Eel glasses"
+  ]
+}

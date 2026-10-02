@@ -1,0 +1,1199 @@
+{
+  "media": {
+    "assets": [
+      {
+        "guardian": 1,
+        "stage": 1,
+        "target": "bosses/flinches/boss-1-flinch-1.mp4",
+        "source_sha256": "e05093559a9dfe7fa2c306dc58dbbfeee11da529223bb65715c9cf85cbe5e081",
+        "original_bytes": 2072107,
+        "resolution": [
+          720,
+          1280
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "e05093559a9dfe7fa2c306dc58dbbfeee11da529223bb65715c9cf85cbe5e081",
+        "release_bytes": 2072107,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-gambler-dramatic/01-light-stagger.mp4"
+      },
+      {
+        "guardian": 1,
+        "stage": 2,
+        "target": "bosses/flinches/boss-1-flinch-2.mp4",
+        "source_sha256": "74b23ad617fdac11d73e0e426ab4e802ed95d0d0e87fbfe3c736a12ffe3242b8",
+        "original_bytes": 2185367,
+        "resolution": [
+          720,
+          1280
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "74b23ad617fdac11d73e0e426ab4e802ed95d0d0e87fbfe3c736a12ffe3242b8",
+        "release_bytes": 2185367,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-gambler-dramatic/02-heavy-buckle.mp4"
+      },
+      {
+        "guardian": 1,
+        "stage": 3,
+        "target": "bosses/flinches/boss-1-flinch-3.mp4",
+        "source_sha256": "daaf4c79a05b5022102c4f4caf00637fa346a91cd8c0d857e1f0e3a102b286a1",
+        "original_bytes": 2151119,
+        "resolution": [
+          720,
+          1280
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "daaf4c79a05b5022102c4f4caf00637fa346a91cd8c0d857e1f0e3a102b286a1",
+        "release_bytes": 2151119,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-gambler-dramatic/03-violent-recoil.mp4"
+      },
+      {
+        "guardian": 1,
+        "stage": 4,
+        "target": "bosses/flinches/boss-1-flinch-4.mp4",
+        "source_sha256": "96254e38ae4523cbd38d5eaaf67eb3612e28b12c963e6a32c291837f14dd8cd0",
+        "original_bytes": 2131748,
+        "resolution": [
+          720,
+          1280
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "96254e38ae4523cbd38d5eaaf67eb3612e28b12c963e6a32c291837f14dd8cd0",
+        "release_bytes": 2131748,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-gambler-dramatic/04-pre-defeat-stun.mp4"
+      },
+      {
+        "guardian": 1,
+        "stage": 5,
+        "target": "bosses/outros/boss-1-defeat.mp4",
+        "source_sha256": "d945f3a4ff884f655fb76abc205698430582d659bf10ed8560654292c2fe8bd3",
+        "original_bytes": 3903850,
+        "resolution": [
+          720,
+          1280
+        ],
+        "duration": 6.041667,
+        "reencoded": false,
+        "release_sha256": "d945f3a4ff884f655fb76abc205698430582d659bf10ed8560654292c2fe8bd3",
+        "release_bytes": 3903850,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-gambler-dramatic/05-final-defeat.mp4"
+      },
+      {
+        "guardian": 2,
+        "stage": 1,
+        "target": "bosses/flinches/boss-2-flinch-1.mp4",
+        "source_sha256": "dcfe18d7323534b31bfffc500663605e977f39d86930ab74465e5591910944e1",
+        "original_bytes": 2147426,
+        "resolution": [
+          816,
+          1104
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "dcfe18d7323534b31bfffc500663605e977f39d86930ab74465e5591910944e1",
+        "release_bytes": 2147426,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-02/light-stagger.mp4"
+      },
+      {
+        "guardian": 2,
+        "stage": 2,
+        "target": "bosses/flinches/boss-2-flinch-2.mp4",
+        "source_sha256": "6d1511762d7078fff007680131febaab289beaf6502ea65ed11427681a115070",
+        "original_bytes": 2145885,
+        "resolution": [
+          816,
+          1104
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "6d1511762d7078fff007680131febaab289beaf6502ea65ed11427681a115070",
+        "release_bytes": 2145885,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-02/heavy-buckle.mp4"
+      },
+      {
+        "guardian": 2,
+        "stage": 3,
+        "target": "bosses/flinches/boss-2-flinch-3.mp4",
+        "source_sha256": "becca7f2dd132d76130235c89e8fad8207d18cbb3f39cf9adf99f60d3001faab",
+        "original_bytes": 7949048,
+        "resolution": [
+          1236,
+          1672
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "3c4a14a12e19b183f304952e54cdfc81ffc779b32d6093afbea61c7ce27e1a64",
+        "release_bytes": 4812651,
+        "video_bitrate": 12786893,
+        "ssim": 0.993992,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-02/violent-recoil-v3.mp4"
+      },
+      {
+        "guardian": 2,
+        "stage": 4,
+        "target": "bosses/flinches/boss-2-flinch-4.mp4",
+        "source_sha256": "0ac0a3a14b81a14b52fa9464970579f798bb111d47be332f3ba1f2b0038572ad",
+        "original_bytes": 9061431,
+        "resolution": [
+          1236,
+          1672
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "9d0d54becedc9805e77fb11f7f96f21852b6c615891287f3a51e3d6614d9f597",
+        "release_bytes": 4891952,
+        "video_bitrate": 12786893,
+        "ssim": 0.992094,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-02/pre-defeat-stun-v2.mp4"
+      },
+      {
+        "guardian": 2,
+        "stage": 5,
+        "target": "bosses/outros/boss-2-defeat.mp4",
+        "source_sha256": "b5796dba49e05708cf38c450f7c27b6f50441c27a0d1ae7425b4820256484013",
+        "original_bytes": 17107794,
+        "resolution": [
+          1236,
+          1672
+        ],
+        "duration": 6.041667,
+        "reencoded": true,
+        "release_sha256": "6bcf10faf847d63c05da467e57bc5b8ca9d5a6340984d9bc1225c4a0f67e2647",
+        "release_bytes": 4881037,
+        "video_bitrate": 6345766,
+        "ssim": 0.986753,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-02/final-defeat-v2.mp4"
+      },
+      {
+        "guardian": 3,
+        "stage": 1,
+        "target": "bosses/flinches/boss-3-flinch-1.mp4",
+        "source_sha256": "bfe702491688b2b6679458daf3a467ce3d35abd169af131a38c72f63b9ce33cf",
+        "original_bytes": 4221324,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "bfe702491688b2b6679458daf3a467ce3d35abd169af131a38c72f63b9ce33cf",
+        "release_bytes": 4221324,
+        "approved_source": "content-assets/guardian-animation-production/sol-recovery-20261001-crab-five-variants/dramatic-pass/01-sharp-stagger.mp4"
+      },
+      {
+        "guardian": 3,
+        "stage": 2,
+        "target": "bosses/flinches/boss-3-flinch-2.mp4",
+        "source_sha256": "6e52b3d7266aa5859fe9608be0a830a1b86ca1faf33046a625bf8fa943409573",
+        "original_bytes": 5212558,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "6e52b3d7266aa5859fe9608be0a830a1b86ca1faf33046a625bf8fa943409573",
+        "release_bytes": 5212558,
+        "approved_source": "content-assets/guardian-animation-production/sol-recovery-20261001-crab-five-variants/dramatic-pass/02-crushing-buckle.mp4"
+      },
+      {
+        "guardian": 3,
+        "stage": 3,
+        "target": "bosses/flinches/boss-3-flinch-3.mp4",
+        "source_sha256": "305e388f97c26de0f94e5028906b99ebb543a820e49245f0945d6b31d7d4e7ad",
+        "original_bytes": 4840635,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "305e388f97c26de0f94e5028906b99ebb543a820e49245f0945d6b31d7d4e7ad",
+        "release_bytes": 4840635,
+        "approved_source": "content-assets/guardian-animation-production/sol-recovery-20261001-crab-five-variants/dramatic-pass/03-violent-recoil.mp4"
+      },
+      {
+        "guardian": 3,
+        "stage": 4,
+        "target": "bosses/flinches/boss-3-flinch-4.mp4",
+        "source_sha256": "e20764de1f893f34e4535152c142049876a783f04aed4f7a2316c55e83db2a82",
+        "original_bytes": 4425899,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "e20764de1f893f34e4535152c142049876a783f04aed4f7a2316c55e83db2a82",
+        "release_bytes": 4425899,
+        "approved_source": "content-assets/guardian-animation-production/sol-recovery-20261001-crab-five-variants/dramatic-pass/04-near-death-stun.mp4"
+      },
+      {
+        "guardian": 3,
+        "stage": 5,
+        "target": "bosses/outros/boss-3-defeat.mp4",
+        "source_sha256": "ab3f0d4e8bc3549f55cd9cd318aab6c844e329990c387adc540ba2d238e7e8e1",
+        "original_bytes": 7546148,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 6.041667,
+        "reencoded": true,
+        "release_sha256": "bf34ceb5982d2c513462fbc4b1f9daccd504dc38f77cfa13bc5fffecc4d49be3",
+        "release_bytes": 4859866,
+        "video_bitrate": 6345766,
+        "ssim": 0.985876,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-recovery-20261001-crab-five-variants/dramatic-pass/05-cinematic-defeat.mp4"
+      },
+      {
+        "guardian": 4,
+        "stage": 1,
+        "target": "bosses/flinches/boss-4-flinch-1.mp4",
+        "source_sha256": "837de7860f1a2dda663e214a03ae06109feb3285f764efc74b8b9efdf68d5cfc",
+        "original_bytes": 3182102,
+        "resolution": [
+          1080,
+          1920
+        ],
+        "duration": 3.041995,
+        "reencoded": false,
+        "release_sha256": "837de7860f1a2dda663e214a03ae06109feb3285f764efc74b8b9efdf68d5cfc",
+        "release_bytes": 3182102,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-04/light-stagger-v4.mp4"
+      },
+      {
+        "guardian": 4,
+        "stage": 2,
+        "target": "bosses/flinches/boss-4-flinch-2.mp4",
+        "source_sha256": "ed136d7958015bdd0697fb9b857a0270e0bc3577e4aa4a4702a619dae57ab252",
+        "original_bytes": 3041892,
+        "resolution": [
+          1080,
+          1920
+        ],
+        "duration": 3.041995,
+        "reencoded": false,
+        "release_sha256": "ed136d7958015bdd0697fb9b857a0270e0bc3577e4aa4a4702a619dae57ab252",
+        "release_bytes": 3041892,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-04/heavy-buckle-v4.mp4"
+      },
+      {
+        "guardian": 4,
+        "stage": 3,
+        "target": "bosses/flinches/boss-4-flinch-3.mp4",
+        "source_sha256": "d186cb3d867f2ed9bc4ea02e0cf009b8a1bcd03f6a0d22b90d17acc463428dab",
+        "original_bytes": 3213114,
+        "resolution": [
+          720,
+          1280
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "d186cb3d867f2ed9bc4ea02e0cf009b8a1bcd03f6a0d22b90d17acc463428dab",
+        "release_bytes": 3213114,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-04/violent-recoil.mp4"
+      },
+      {
+        "guardian": 4,
+        "stage": 4,
+        "target": "bosses/flinches/boss-4-flinch-4.mp4",
+        "source_sha256": "f1cb373186937819d50aefd5e08e63dbf45e15bd1e07cd9f051be3503397f0a5",
+        "original_bytes": 2814503,
+        "resolution": [
+          720,
+          1280
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "f1cb373186937819d50aefd5e08e63dbf45e15bd1e07cd9f051be3503397f0a5",
+        "release_bytes": 2814503,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-04/pre-defeat-stun.mp4"
+      },
+      {
+        "guardian": 4,
+        "stage": 5,
+        "target": "bosses/outros/boss-4-defeat.mp4",
+        "source_sha256": "5e1b19076b48d83adc42f3a4fdd4adf30bf4e4b292a6fbd2acaa372cd86b0c0e",
+        "original_bytes": 6388367,
+        "resolution": [
+          1080,
+          1920
+        ],
+        "duration": 6.041667,
+        "reencoded": true,
+        "release_sha256": "c21a4d3b1241ec8bc769d4dd6ed782c75fc199ff43df7d6d56b5d833afcf584c",
+        "release_bytes": 4957489,
+        "video_bitrate": 6345766,
+        "ssim": 0.991976,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-04/final-defeat-v4.mp4"
+      },
+      {
+        "guardian": 5,
+        "stage": 1,
+        "target": "bosses/flinches/boss-5-flinch-1.mp4",
+        "source_sha256": "8ba57ad89dbb484cd4e9efb898aba42024be46d03d4c4809493e95c1cfcbdf81",
+        "original_bytes": 5923953,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 3.041667,
+        "reencoded": true,
+        "release_sha256": "69fba289a9e1eeb8c6907a3a0f31acf430a72966eb97abd6e07cf84fe96280bb",
+        "release_bytes": 4833114,
+        "video_bitrate": 12788292,
+        "ssim": 0.982705,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-05/light-stagger.mp4"
+      },
+      {
+        "guardian": 5,
+        "stage": 2,
+        "target": "bosses/flinches/boss-5-flinch-2.mp4",
+        "source_sha256": "90293c176e599709b6201c6695a11be64b334b53c7aaf180e42c29564c58d901",
+        "original_bytes": 5709951,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 3.041667,
+        "reencoded": true,
+        "release_sha256": "743cbe615ea4f92e2996bf587892e09d8da4a42576fe8e8c66fae58dcefa2ba1",
+        "release_bytes": 4837478,
+        "video_bitrate": 12788292,
+        "ssim": 0.981028,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-05/heavy-buckle.mp4"
+      },
+      {
+        "guardian": 5,
+        "stage": 3,
+        "target": "bosses/flinches/boss-5-flinch-3.mp4",
+        "source_sha256": "1db6671354fc5d318a17181040e6ff99c0ff97887c0cb3cb211c2c9c5b50ff29",
+        "original_bytes": 12344146,
+        "resolution": [
+          1080,
+          1916
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "2d418bcfed98831211d03fc94277b9f331aa0702208b97fa95b25951204232ff",
+        "release_bytes": 4864727,
+        "video_bitrate": 12786893,
+        "ssim": 0.986041,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-05/violent-recoil-v2.mp4"
+      },
+      {
+        "guardian": 5,
+        "stage": 4,
+        "target": "bosses/flinches/boss-5-flinch-4.mp4",
+        "source_sha256": "996a56574b33efcb1026e03d7a630acada3bf27a9fee55201b0078e1c4e269f3",
+        "original_bytes": 6309774,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 3.041667,
+        "reencoded": true,
+        "release_sha256": "46dbb6aec0133ec78415fe43cf034537fa7180d814a10d02ab2c15f311e08554",
+        "release_bytes": 4841021,
+        "video_bitrate": 12788292,
+        "ssim": 0.977085,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-05/pre-defeat-stun.mp4"
+      },
+      {
+        "guardian": 5,
+        "stage": 5,
+        "target": "bosses/outros/boss-5-defeat.mp4",
+        "source_sha256": "44e44526ae0acb16330676155fd00d3291958a9ec466f897780eba1f06a2c6eb",
+        "original_bytes": 11518200,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 6.041667,
+        "reencoded": true,
+        "release_sha256": "eb3549fba2e71160b871074b0c40c9852136d90535d74ba7226efdf48d045dd3",
+        "release_bytes": 5056135,
+        "video_bitrate": 6688914,
+        "ssim": 0.962404,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-05/final-defeat-v2.mp4"
+      },
+      {
+        "guardian": 6,
+        "stage": 1,
+        "target": "bosses/flinches/boss-6-flinch-1.mp4",
+        "source_sha256": "b0ec93b27d0d9f36f75f38a3b6a07df29c4382eceefc3f2144a1f3a2fc442d68",
+        "original_bytes": 9336496,
+        "resolution": [
+          1084,
+          1908
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "29f37107990951913561c5baa0f537bef3fa5e9b69442ea914431bf3604cf496",
+        "release_bytes": 4776649,
+        "video_bitrate": 12786893,
+        "ssim": 0.992629,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-06/light-stagger-v3.mp4"
+      },
+      {
+        "guardian": 6,
+        "stage": 2,
+        "target": "bosses/flinches/boss-6-flinch-2.mp4",
+        "source_sha256": "ec6945d934209dd6322e33e3257bd6ee1223e66fbc1297e16e5b7f36316569cb",
+        "original_bytes": 11003517,
+        "resolution": [
+          1084,
+          1908
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "de7a45864c01d3fa4b61d6f4269ca232c0cb88d3f88fb8039a3ed7968a0c12cd",
+        "release_bytes": 4830070,
+        "video_bitrate": 12786893,
+        "ssim": 0.989563,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-06/heavy-buckle-v2.mp4"
+      },
+      {
+        "guardian": 6,
+        "stage": 3,
+        "target": "bosses/flinches/boss-6-flinch-3.mp4",
+        "source_sha256": "79fc3aa440365ae6716b45b003f0f9fe160b0109fad6551e4b7d251398540732",
+        "original_bytes": 9122695,
+        "resolution": [
+          1084,
+          1908
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "3cc2844429c321209d90a9f7a2e415b61a84b102a23809410880c6982e7fe186",
+        "release_bytes": 4820395,
+        "video_bitrate": 12786893,
+        "ssim": 0.992513,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-06/violent-recoil-v3.mp4"
+      },
+      {
+        "guardian": 6,
+        "stage": 4,
+        "target": "bosses/flinches/boss-6-flinch-4.mp4",
+        "source_sha256": "ae05fb299b8acfb4eec103a2041c9f8d39f54348a1ca23386448a2e25ed03007",
+        "original_bytes": 2598520,
+        "resolution": [
+          1084,
+          1908
+        ],
+        "duration": 3.0,
+        "reencoded": false,
+        "release_sha256": "ae05fb299b8acfb4eec103a2041c9f8d39f54348a1ca23386448a2e25ed03007",
+        "release_bytes": 2598520,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-06/pre-defeat-stun-v4.mp4"
+      },
+      {
+        "guardian": 6,
+        "stage": 5,
+        "target": "bosses/outros/boss-6-defeat.mp4",
+        "source_sha256": "72aa41e58e1f0a0095e33aba5a3bf3a06a27dafb37671124346fdd8e11b08a61",
+        "original_bytes": 19633219,
+        "resolution": [
+          1084,
+          1908
+        ],
+        "duration": 6.041667,
+        "reencoded": true,
+        "release_sha256": "006e18a598d2c34e4fe64ada25b9909542bbeeac8affe93badc7af9d75083388",
+        "release_bytes": 5115193,
+        "video_bitrate": 6688914,
+        "ssim": 0.985409,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-06/final-defeat-v2.mp4"
+      },
+      {
+        "guardian": 7,
+        "stage": 1,
+        "target": "bosses/flinches/boss-7-flinch-1.mp4",
+        "source_sha256": "8d05f681c03d277b226640b8e5edf4105f5352a61d01c858432a96b460a90f92",
+        "original_bytes": 8820743,
+        "resolution": [
+          1084,
+          1908
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "27d91a1133e8f2367da7ebc897097a833e859feaee5e172edbd69a6bb545e930",
+        "release_bytes": 5047061,
+        "video_bitrate": 13473147,
+        "ssim": 0.993165,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-07/light-stagger-v2.mp4"
+      },
+      {
+        "guardian": 7,
+        "stage": 2,
+        "target": "bosses/flinches/boss-7-flinch-2.mp4",
+        "source_sha256": "2531f364841ccbf74c7c506f8cecff1ab1062850e3b13cdb81f8acf21710397e",
+        "original_bytes": 9084966,
+        "resolution": [
+          1084,
+          1908
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "c8e2e791f8b0c0a34ce5009657263fa4d6fd909ab6d2272580e42f99c2b83fd8",
+        "release_bytes": 5045116,
+        "video_bitrate": 13473147,
+        "ssim": 0.992228,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-07/heavy-buckle-v2.mp4"
+      },
+      {
+        "guardian": 7,
+        "stage": 3,
+        "target": "bosses/flinches/boss-7-flinch-3.mp4",
+        "source_sha256": "b191dd927f05f755f5ae4b9ca86ad4cf0716f6dd13ac75c61ef3b3360aea2481",
+        "original_bytes": 9347701,
+        "resolution": [
+          1084,
+          1908
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "7120aa17590d828a12a267f40e1e44251912f8863969f441becf47783c38e4f2",
+        "release_bytes": 5052183,
+        "video_bitrate": 13473147,
+        "ssim": 0.991465,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-07/violent-recoil-v3.mp4"
+      },
+      {
+        "guardian": 7,
+        "stage": 4,
+        "target": "bosses/flinches/boss-7-flinch-4.mp4",
+        "source_sha256": "d15e437b0ea9038ae630e92c2c9190a42c73b637cf1ea8850bf9892a089ac10a",
+        "original_bytes": 7969226,
+        "resolution": [
+          1084,
+          1908
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "9d70c6054c39a3fac2cad93bf0ba45d1be68b1f6d5dc4059dcfa70919e763167",
+        "release_bytes": 5114949,
+        "video_bitrate": 13473147,
+        "ssim": 0.993509,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-07/pre-defeat-stun-v3.mp4"
+      },
+      {
+        "guardian": 7,
+        "stage": 5,
+        "target": "bosses/outros/boss-7-defeat.mp4",
+        "source_sha256": "1cc9efb2927e660e2ee5c34bf51a2c8fc67a477219065fe1e8e55e099a6aee49",
+        "original_bytes": 4309234,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 6.041667,
+        "reencoded": false,
+        "release_sha256": "1cc9efb2927e660e2ee5c34bf51a2c8fc67a477219065fe1e8e55e099a6aee49",
+        "release_bytes": 4309234,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-07/final-defeat-v2.mp4"
+      },
+      {
+        "guardian": 8,
+        "stage": 1,
+        "target": "bosses/flinches/boss-8-flinch-1.mp4",
+        "source_sha256": "e8fdcea09b60feadf7894d755a933c88da3003772b8e7e20a02027b228884e0d",
+        "original_bytes": 3885489,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "e8fdcea09b60feadf7894d755a933c88da3003772b8e7e20a02027b228884e0d",
+        "release_bytes": 3885489,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-08/light-stagger.mp4"
+      },
+      {
+        "guardian": 8,
+        "stage": 2,
+        "target": "bosses/flinches/boss-8-flinch-2.mp4",
+        "source_sha256": "d3aa2876f40ed7239deb44e382748f7cd196fa8440f691299766b14257f788ad",
+        "original_bytes": 9329605,
+        "resolution": [
+          1084,
+          1908
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "ce2816096de4c77e754e0804ea5c90fa413db83d06d24adf34f1f2f95e7e7309",
+        "release_bytes": 5005398,
+        "video_bitrate": 13473147,
+        "ssim": 0.992605,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-08/heavy-buckle-v2.mp4"
+      },
+      {
+        "guardian": 8,
+        "stage": 3,
+        "target": "bosses/flinches/boss-8-flinch-3.mp4",
+        "source_sha256": "a67b17c7c798b4300d64b8314cfafe234de47fc24cbad9515021c6ead7459c63",
+        "original_bytes": 3411708,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "a67b17c7c798b4300d64b8314cfafe234de47fc24cbad9515021c6ead7459c63",
+        "release_bytes": 3411708,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-08/violent-recoil.mp4"
+      },
+      {
+        "guardian": 8,
+        "stage": 4,
+        "target": "bosses/flinches/boss-8-flinch-4.mp4",
+        "source_sha256": "97549f130da345e5f0a2e24ed1b7e02045e3ed2a9eec5ca9cda476674abfcbd3",
+        "original_bytes": 10747103,
+        "resolution": [
+          1084,
+          1908
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "41d8b540a497e40bd9dafb1fc9fbb4fafabef477bfa14fe9505fabc9029fd6ac",
+        "release_bytes": 5134226,
+        "video_bitrate": 13473147,
+        "ssim": 0.990347,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-08/pre-defeat-stun-v2.mp4"
+      },
+      {
+        "guardian": 8,
+        "stage": 5,
+        "target": "bosses/outros/boss-8-defeat.mp4",
+        "source_sha256": "96ef97217b5d60e04bb04b1c5d3c621ae0421fba67dd98fcbeeb39000b17447c",
+        "original_bytes": 5147162,
+        "resolution": [
+          720,
+          1264
+        ],
+        "duration": 6.041667,
+        "reencoded": false,
+        "release_sha256": "96ef97217b5d60e04bb04b1c5d3c621ae0421fba67dd98fcbeeb39000b17447c",
+        "release_bytes": 5147162,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-08/final-defeat-v2.mp4"
+      },
+      {
+        "guardian": 9,
+        "stage": 1,
+        "target": "bosses/flinches/boss-9-flinch-1.mp4",
+        "source_sha256": "ddcde9aa16134813e8fbe2f1e7e63ba62ab48581abe88c31b521c6d0a8723d0a",
+        "original_bytes": 7614861,
+        "resolution": [
+          1168,
+          1776
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "cee7c3e83d7660e0fae29d0cc2e7c627bf091bf302d425ce6a23fae879e5aae0",
+        "release_bytes": 5057947,
+        "video_bitrate": 13473147,
+        "ssim": 0.994829,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-09/light-stagger-v2.mp4"
+      },
+      {
+        "guardian": 9,
+        "stage": 2,
+        "target": "bosses/flinches/boss-9-flinch-2.mp4",
+        "source_sha256": "4cc2b79c51a1fd948e13a4e38f796d84174b35c98cb8a5f722844152ef36ee5a",
+        "original_bytes": 8839552,
+        "resolution": [
+          1168,
+          1776
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "71d7ee594d80ea11bafd1d40f3fe3456a86c06dfbe0faa69640c79724cb2e900",
+        "release_bytes": 5098215,
+        "video_bitrate": 13473147,
+        "ssim": 0.991878,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-09/heavy-buckle-v2.mp4"
+      },
+      {
+        "guardian": 9,
+        "stage": 3,
+        "target": "bosses/flinches/boss-9-flinch-3.mp4",
+        "source_sha256": "3844dffc8977456218aa6c3ec7a453f7cad3d727764801d90086fa23451a0738",
+        "original_bytes": 2787913,
+        "resolution": [
+          768,
+          1184
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "3844dffc8977456218aa6c3ec7a453f7cad3d727764801d90086fa23451a0738",
+        "release_bytes": 2787913,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-09/violent-recoil.mp4"
+      },
+      {
+        "guardian": 9,
+        "stage": 4,
+        "target": "bosses/flinches/boss-9-flinch-4.mp4",
+        "source_sha256": "a2a6cfb2b8c8014444402db795ed6ccce5b8ac68a8354e661e768a9397558454",
+        "original_bytes": 2269336,
+        "resolution": [
+          768,
+          1184
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "a2a6cfb2b8c8014444402db795ed6ccce5b8ac68a8354e661e768a9397558454",
+        "release_bytes": 2269336,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-09/pre-defeat-stun.mp4"
+      },
+      {
+        "guardian": 9,
+        "stage": 5,
+        "target": "bosses/outros/boss-9-defeat.mp4",
+        "source_sha256": "ef50417fc1c40b6c6a75aefcf51216c4439d65a65fd84dcd303f12d9f16e72ad",
+        "original_bytes": 15311114,
+        "resolution": [
+          1168,
+          1776
+        ],
+        "duration": 6.041667,
+        "reencoded": true,
+        "release_sha256": "e8514b64106be0449f519eaa14b8b742c2efa0e8b47968cd2d7972e9d2938575",
+        "release_bytes": 5188738,
+        "video_bitrate": 6688914,
+        "ssim": 0.987727,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-09/final-defeat-v2.mp4"
+      },
+      {
+        "guardian": 10,
+        "stage": 1,
+        "target": "bosses/flinches/boss-10-flinch-1.mp4",
+        "source_sha256": "ce174d71eda1fe0e6604cc6c73517d20cd7b5ca74ed589a5e8b5cc116e13491c",
+        "original_bytes": 8821381,
+        "resolution": [
+          1080,
+          1920
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "1481aa03236395225c23b55afcbbb40f9336782aaea90ab6a616424abc10bb8e",
+        "release_bytes": 5035134,
+        "video_bitrate": 13473147,
+        "ssim": 0.993569,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-10/light-stagger-v2.mp4"
+      },
+      {
+        "guardian": 10,
+        "stage": 2,
+        "target": "bosses/flinches/boss-10-flinch-2.mp4",
+        "source_sha256": "aff418261b1a9a50b7c06416b524ffdc487708057f818d2640be87f62555b75d",
+        "original_bytes": 9256701,
+        "resolution": [
+          1080,
+          1920
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "62dd4b30b6e7a07312b3c26c1a4219b7e1a2d6eb87fafd4cb96a9dcb43b03734",
+        "release_bytes": 5059573,
+        "video_bitrate": 13473147,
+        "ssim": 0.992672,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-10/heavy-buckle-v2.mp4"
+      },
+      {
+        "guardian": 10,
+        "stage": 3,
+        "target": "bosses/flinches/boss-10-flinch-3.mp4",
+        "source_sha256": "445060901ece542bb3e49c6844d93be6e43f46a1c8a415f59411f1cb30f042f7",
+        "original_bytes": 8756423,
+        "resolution": [
+          1080,
+          1920
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "c631067a0fc9de2e626b37d1e515514f903edc56a78326bce8e0ee324426c248",
+        "release_bytes": 5042870,
+        "video_bitrate": 13473147,
+        "ssim": 0.993667,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-10/violent-recoil-v2.mp4"
+      },
+      {
+        "guardian": 10,
+        "stage": 4,
+        "target": "bosses/flinches/boss-10-flinch-4.mp4",
+        "source_sha256": "3aadcef22bd4bdd3df9f2cb848573f6cb872a4a7581b3190ffa0aef405935166",
+        "original_bytes": 2804896,
+        "resolution": [
+          720,
+          1280
+        ],
+        "duration": 3.041667,
+        "reencoded": false,
+        "release_sha256": "3aadcef22bd4bdd3df9f2cb848573f6cb872a4a7581b3190ffa0aef405935166",
+        "release_bytes": 2804896,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261001-remaining-guardians/guardian-10/pre-defeat-stun.mp4"
+      },
+      {
+        "guardian": 10,
+        "stage": 5,
+        "target": "bosses/outros/boss-10-defeat.mp4",
+        "source_sha256": "9e0d9d54a67bb1baf11faffe0154d465e5f2ce6ccdad9fc2dc726784a47b8c4b",
+        "original_bytes": 17773433,
+        "resolution": [
+          1080,
+          1920
+        ],
+        "duration": 6.041667,
+        "reencoded": true,
+        "release_sha256": "c5c589a1cba14e6f17416862177f706eae4f0a47a1a2a02fe4f49d490b24c00a",
+        "release_bytes": 5072782,
+        "video_bitrate": 6688914,
+        "ssim": 0.987983,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-10/final-defeat-v2.mp4"
+      },
+      {
+        "guardian": 11,
+        "stage": 1,
+        "target": "bosses/flinches/boss-11-flinch-1.mp4",
+        "source_sha256": "986dcec748e18916caca4bb30517ec423b04009d3ef786cdd0a8547ea899fc7f",
+        "original_bytes": 10496238,
+        "resolution": [
+          1080,
+          1916
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "c4be714c026c1b2250b0b224e99fbcbc9dd71f13f516d1d07cf1463ab6cdb081",
+        "release_bytes": 5001399,
+        "video_bitrate": 13473147,
+        "ssim": 0.990877,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-11/light-stagger-v2.mp4"
+      },
+      {
+        "guardian": 11,
+        "stage": 2,
+        "target": "bosses/flinches/boss-11-flinch-2.mp4",
+        "source_sha256": "5118c6237e3fd0514c06c587b45366aa0dc5ed1932eb827048a790a54112cfc4",
+        "original_bytes": 10601376,
+        "resolution": [
+          1080,
+          1916
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "3ccda085eff35cbbf29d84f98d75242e7b0ab2eac7eeb619923a7f103caf202b",
+        "release_bytes": 4980627,
+        "video_bitrate": 13473147,
+        "ssim": 0.991035,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-11/heavy-buckle-v2.mp4"
+      },
+      {
+        "guardian": 11,
+        "stage": 3,
+        "target": "bosses/flinches/boss-11-flinch-3.mp4",
+        "source_sha256": "9d4fe0733c8c78795c95e8a0029a2bd6180bec2d7cab4a94f97909f3b7f90fbd",
+        "original_bytes": 10390643,
+        "resolution": [
+          1080,
+          1916
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "baf2e26c287fc1e0927ee4ebbb57e76f64090312c4388222cc18a0044a0192e1",
+        "release_bytes": 5006708,
+        "video_bitrate": 13473147,
+        "ssim": 0.990808,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-11/violent-recoil-v2.mp4"
+      },
+      {
+        "guardian": 11,
+        "stage": 4,
+        "target": "bosses/flinches/boss-11-flinch-4.mp4",
+        "source_sha256": "37b7d5cfc190052cf01a38a27fb35676cf30f3f887c0de09dab027f2bdee86fc",
+        "original_bytes": 9817312,
+        "resolution": [
+          1080,
+          1916
+        ],
+        "duration": 3.041995,
+        "reencoded": true,
+        "release_sha256": "209ff9d49b1c28c5ddd597aa635c1c055de800896573a2408f2aa586e03a7168",
+        "release_bytes": 5019496,
+        "video_bitrate": 13473147,
+        "ssim": 0.992488,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-11/pre-defeat-stun-v2.mp4"
+      },
+      {
+        "guardian": 11,
+        "stage": 5,
+        "target": "bosses/outros/boss-11-defeat.mp4",
+        "source_sha256": "584b169a446eed03296aa5ad6a2208194b5121960054be37aa3f350de2dd9380",
+        "original_bytes": 22539432,
+        "resolution": [
+          1080,
+          1916
+        ],
+        "duration": 6.041667,
+        "reencoded": true,
+        "release_sha256": "9ca2ec0e8128527bb678a78f8774b8cf6786d0af1170eb77bdcc06227a701f0d",
+        "release_bytes": 5094270,
+        "video_bitrate": 6688914,
+        "ssim": 0.980208,
+        "audio_payload_identical": true,
+        "frames_resolution_fps_preserved": true,
+        "approved_source": "content-assets/guardian-animation-production/sol-20261002-founder-revisions/guardian-11/final-defeat-v2.mp4"
+      }
+    ],
+    "policy": "Two-pass slow H.264, largest practical bitrate below5MiB. Original geometry, all frames, fps, duration and exact AAC payload preserved; no generation or creative edits."
+  },
+  "removed": [
+    {
+      "path": "bosses/intros/boss-0.mp4",
+      "sha256": "ab95be2b3c61f91b5d2e53be2c044ec8e753a6991dcaa064f423e61958ffabee",
+      "bytes": 3286666
+    },
+    {
+      "path": "bosses/intros/boss-4.mp4",
+      "sha256": "4ab5ce4f95a854395534bf6c002d9922bd9fbcf0757a36f66bb7c5c7fcf09084",
+      "bytes": 15085768
+    },
+    {
+      "path": "bosses/intros/boss-5.mp4",
+      "sha256": "b253b9d0c0e02bd0ca39c28fdab5325f0566f8ab1420e88377aaca6b155acbf5",
+      "bytes": 14133479
+    },
+    {
+      "path": "bosses/intros/boss-6.mp4",
+      "sha256": "9d330c300b0685883e4df18c0cbaebef31d6f5667bd100dfdc753492ce8490e8",
+      "bytes": 13798306
+    },
+    {
+      "path": "bosses/intros/boss-7.mp4",
+      "sha256": "d72eaf306eb8451f729413c60d8c972ff01d20abca4677fe0793d8a04261ffd4",
+      "bytes": 13441978
+    },
+    {
+      "path": "bosses/intros/boss-8.mp4",
+      "sha256": "d25db5201fe155b1c8b95573f6eeff45d13b2fbb9bcadf320d122f77d46139b0",
+      "bytes": 20957585
+    },
+    {
+      "path": "bosses/intros/boss-9.mp4",
+      "sha256": "2422179b812374cdba6f76a75a193b3045595caebbc36510f5837737625a001f",
+      "bytes": 11574302
+    },
+    {
+      "path": "bosses/intros/boss-10.mp4",
+      "sha256": "1f78e98b0ca3dbc60cb5dba499494c7ccb910bb8140479fd207c91cf35a72b67",
+      "bytes": 13524394
+    },
+    {
+      "path": "website/bosses/boss-0.webp",
+      "sha256": "7fc1a3e5660475a8ff78489288c4dcde9300bcacdd1294d0385c91d52dd268e1",
+      "bytes": 193424
+    },
+    {
+      "path": "website/assets/shot-hud.png",
+      "sha256": "18696ea25b9321609101d6dfc9efc360ae382a043e12e87e68f72bdd69c4391c",
+      "bytes": 47170
+    },
+    {
+      "path": "website/assets/shot-level1.png",
+      "sha256": "3954070a2c4fdc9d35c66f0fbffaf4c4d2fcf592180357c18c1086105205bcdd",
+      "bytes": 43602
+    },
+    {
+      "path": "website/assets/shot-momentum.png",
+      "sha256": "897ce991e2bc6f91c9d2dc0b40936163d5706e4ba80cbf7b4bb630571b0f13d7",
+      "bytes": 45694
+    },
+    {
+      "path": "website/assets/shot-predict.png",
+      "sha256": "ef0719fe642244e7aa9964acdf1bfb951f9b21e4a1dbaed28380460326f95eff",
+      "bytes": 24189
+    },
+    {
+      "path": "website/assets/shot-short.png",
+      "sha256": "c7b2382f6c21be6234f4efccbc38007683df8d0eec2942432d11321e13ce2f3e",
+      "bytes": 45799
+    },
+    {
+      "path": "website/assets/shot-structure.png",
+      "sha256": "73da22719d4eb1e442412498b2d04f5122a18825e167b72e054cc28bb12b17ed",
+      "bytes": 46078
+    },
+    {
+      "path": "website/assets/shot-terrain.png",
+      "sha256": "79c0e07af66c620458c9944b4bb2586853214fc8a2a2266b20518ed71805165a",
+      "bytes": 63189
+    },
+    {
+      "path": "website/assets/finn-run.png",
+      "sha256": "0310b572c59260f95494213cbf9d886ec980121d66fa4287081654ddf5c72222",
+      "bytes": 85177
+    },
+    {
+      "path": "website/assets/finn-jump.png",
+      "sha256": "c4069809c3b44d149569e135561a2bb67d7539edbe33126167dae424f208ce0f",
+      "bytes": 60667
+    },
+    {
+      "path": "website/assets/finn-dazed.png",
+      "sha256": "24978ae0dd75d7d714f4ee0c9bee03a4c67626ed5c131357aadd1d7fa82ad32e",
+      "bytes": 52428
+    },
+    {
+      "path": "website/assets/finn-roll.png",
+      "sha256": "f90e886d09d9cc95ba1cd4b830212f55a6ee9e269cd11f52db30a9d16e9ce80a",
+      "bytes": 45638
+    },
+    {
+      "path": "bosses/sfx/boss1-polish-v1/flinch-1.m4a",
+      "sha256": "e6dd59cdb78da70e5da59c6f5a79ee79231edde9a3b1c0d0d33c083c4bb0ee17",
+      "bytes": 62444
+    },
+    {
+      "path": "bosses/sfx/boss1-polish-v1/flinch-2.m4a",
+      "sha256": "238fe86c4fce0582aa99734957261fe4e81b99def4c09ab154ba4da6cac523bd",
+      "bytes": 48520
+    },
+    {
+      "path": "bosses/sfx/boss1-polish-v1/flinch-3.m4a",
+      "sha256": "b2938ab0abc51088c77019574dfba6c7d7ec9938c728028649fe9f824b45010d",
+      "bytes": 57921
+    },
+    {
+      "path": "bosses/sfx/boss1-polish-v1/flinch-4.m4a",
+      "sha256": "6d949154c1695d6c1e6ad61536a8396d89e7bb1462e3c42d9afdd40cf50e8632",
+      "bytes": 84875
+    },
+    {
+      "path": "website/bosses/sfx/boss1-polish-v1/flinch-1.m4a",
+      "sha256": "e6dd59cdb78da70e5da59c6f5a79ee79231edde9a3b1c0d0d33c083c4bb0ee17",
+      "bytes": 62444
+    },
+    {
+      "path": "website/bosses/sfx/boss1-polish-v1/flinch-2.m4a",
+      "sha256": "238fe86c4fce0582aa99734957261fe4e81b99def4c09ab154ba4da6cac523bd",
+      "bytes": 48520
+    },
+    {
+      "path": "website/bosses/sfx/boss1-polish-v1/flinch-3.m4a",
+      "sha256": "b2938ab0abc51088c77019574dfba6c7d7ec9938c728028649fe9f824b45010d",
+      "bytes": 57921
+    },
+    {
+      "path": "website/bosses/sfx/boss1-polish-v1/flinch-4.m4a",
+      "sha256": "6d949154c1695d6c1e6ad61536a8396d89e7bb1462e3c42d9afdd40cf50e8632",
+      "bytes": 84875
+    },
+    {
+      "path": "bosses/sfx/boss-roar-1.m4a",
+      "sha256": "e1948449619df11d60eb9d57d187bd5e72497de87d56f41d1f0aee40b5bf0733",
+      "bytes": 25027
+    },
+    {
+      "path": "bosses/sfx/boss-roar-2.m4a",
+      "sha256": "78bd238de4c3edc64f6231aef9720aa1a8c29df7d320d87ec4ba03617d5fda66",
+      "bytes": 24993
+    },
+    {
+      "path": "bosses/sfx/boss-roar-3.m4a",
+      "sha256": "212f8624aa9b077eeef428ae748de37b44d49ad005742abf842142f5abeb1bb3",
+      "bytes": 24438
+    },
+    {
+      "path": "website/bosses/sfx/boss-roar-1.m4a",
+      "sha256": "e1948449619df11d60eb9d57d187bd5e72497de87d56f41d1f0aee40b5bf0733",
+      "bytes": 25027
+    },
+    {
+      "path": "website/bosses/sfx/boss-roar-2.m4a",
+      "sha256": "78bd238de4c3edc64f6231aef9720aa1a8c29df7d320d87ec4ba03617d5fda66",
+      "bytes": 24993
+    },
+    {
+      "path": "website/bosses/sfx/boss-roar-3.m4a",
+      "sha256": "212f8624aa9b077eeef428ae748de37b44d49ad005742abf842142f5abeb1bb3",
+      "bytes": 24438
+    },
+    {
+      "path": "bosses/outros/boss-1-defeat-v2.mp4",
+      "bytes": 4256732,
+      "sha256": "109610c7cf0eebdb707ae8e42aa8ab51b8550622639c4a2dcc2a107bc8b92032"
+    },
+    {
+      "path": "website/bosses/outros/boss-1-defeat-v2.mp4",
+      "bytes": 4256732,
+      "sha256": "109610c7cf0eebdb707ae8e42aa8ab51b8550622639c4a2dcc2a107bc8b92032"
+    }
+  ],
+  "html_sha256": "c9149f1d17edaaba52a42c73a89e25d68ee0d6c12cce8f478c3579bd0fbbff27",
+  "production": "NOT DEPLOYED: Release Manager and Founder freeze action required"
+}

@@ -798,6 +798,11 @@ function run() {
     const result = require('./locked_audio.test.js').runSuite({ report: false });
     add('25', 'Locked campaign audio', result.ok ? 'PASS' : 'FAIL', result.detail);
   } catch (e) { add('25', 'Locked campaign audio', 'FAIL', String(e && e.message || e).slice(0, 200)); }
+  try {
+    const result = cp.spawnSync(process.execPath, [path.join(__dirname, 'guardian-cinematics.test.js')], {cwd: ROOT, encoding:'utf8'});
+    add('26', 'Approved Guardian cinematic player contracts', result.status === 0 ? 'PASS' : 'FAIL', (result.stdout || result.stderr).trim().slice(0,200));
+  } catch(e) { add('26', 'Approved Guardian cinematic player contracts', 'FAIL', String(e)); }
+
 }
 
 // 3b — optional real headless boot (only if puppeteer is installed)

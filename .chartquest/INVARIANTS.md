@@ -24,3 +24,7 @@ This registry begins with only rules evidenced by existing project documentation
 - Exact event spacing distances, priorities, trigger zones, and validation protocol: **[REQUIRES CANONICAL DEFINITION]**
 - Distinction between player-initiated manual close and forced hour-close result semantics: **[REQUIRES CANONICAL DEFINITION]**
 - Current Definition of Done for a production release: **[REQUIRES CANONICAL DEFINITION]**
+
+## INV-GUARDIAN-001 — Approved cinematic identity and lifecycle
+
+Founder-approved selection maps uniquely to Guardian1–11 and stage1–5. Stage1–4 are surviving-hit reactions scaled by remaining HP; stage5 is defeat. Root and website copies must match the audited release hashes in qa/guardian-media-release.json, including derivative provenance when size optimization is required. Every skip/error/timeout ends once and restores music. Gambler Journal gates and Eel glasses unlock order must remain intact. Retired clips and separate reaction audio must stay absent. Enforced by scripts/guardian-cinematics.test.js and the release media gate; evidence: qa/GUARDIAN_RELEASE_20261002.md.

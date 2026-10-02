@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "clips": 55,
+  "copies": 110,
+  "all_decoded": true,
+  "source_mirror_website_identical": true,
+  "html_sha256": "c9149f1d17edaaba52a42c73a89e25d68ee0d6c12cce8f478c3579bd0fbbff27",
+  "min_ssim": 0.962404,
+  "native_audio_payload_identical": true
+}

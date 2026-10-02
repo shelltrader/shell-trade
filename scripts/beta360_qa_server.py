@@ -271,10 +271,6 @@ def self_test():
     check(asset("/Market-maker-cinematic.mp4") is not None, "allow opening cinematic")
     for path in (
         "/bosses/sfx/boss1-polish-v1/intro.m4a",
-        "/bosses/sfx/boss1-polish-v1/flinch-1.m4a",
-        "/bosses/sfx/boss1-polish-v1/flinch-2.m4a",
-        "/bosses/sfx/boss1-polish-v1/flinch-3.m4a",
-        "/bosses/sfx/boss1-polish-v1/flinch-4.m4a",
     ):
         check(asset(path) is not None, "allow Boss 1 mix " + path)
     for path in (HARNESS, BRIDGE, SURVEY, *SURVEY_DEPENDENCIES.values()):

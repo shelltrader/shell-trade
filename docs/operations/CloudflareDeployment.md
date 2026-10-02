@@ -36,20 +36,22 @@
 | **Root directory** | `/` | — |
 | **Node version** | n/a | Only needed if the build step is re-enabled. |
 
-### 3. Output directory — the one thing to get right
-The game loads assets by **relative path**, and **falls back to the old procedural turtle if `finn/` is missing** (`FINN_SPRITES.ready` gate). Whatever Cloudflare serves as the output **must include**:
+### 3. Output directory and game route
+Cloudflare serves the tracked `website/` tree. `/` is its marketing landing page;
+`/game` resolves to `website/game.html`, and `/play` wraps that game in a same-origin iframe.
+The root `chart-quest.html` and `index.html` are development copies and must be byte-identical
+to `website/game.html` before release. The root game page is not the production landing page.
 
-```
-index.html  chart-quest.html  sw.js  manifest.json
-icon-192.png  icon-512.png  logo.png
-finn/        ← REQUIRED. Its omission ships the old-turtle regression.
-bosses/      (webp art + intro mp4s the game references)
-+ any top-level media referenced in chart-quest.html (e.g. Market-maker-cinematic.mp4)
-```
+Every runtime asset referenced by the game must exist and be tracked under `website/`,
+including `finn/`, the eleven Guardian portraits, four flinch clips per Guardian, eleven
+defeat clips, the Gambler Journal, and the four enabled Guardian intros. Creative source
+files and review harnesses under `content-assets/` are not deployment assets. Run
+`node scripts/verify.js`; gate 17 checks tracked deployment assets and gate 8 checks the
+root source mirror. The release-control gate checks all three game copies.
 
-- Serving the whole repo root (`/`) is the simplest and matches current Netlify config, but it also exposes `dashboard.html`, dev harnesses, and audit docs. Two safe options:
-  1. **Short term:** serve root, but gate non-product paths with `_redirects` (below) and put `dashboard.html` behind auth (already a tracked launch task).
-  2. **Target:** add a tiny assembly step that copies only the runtime set into `dist/`, and set output dir to `dist/`. Documented as Phase-Two; not required for beta.
+Do not change the output directory to the repository root: it would serve a different
+entry page and expose development material. This correction changes documentation only;
+it does not alter provider configuration.
 
 ## 4. Environment variables
 **None are required for the static client.** The Supabase URL and **anon key are hardcoded and intentionally public** (`SUPA_URL` / `SUPA_ANON` in `chart-quest.html`; every table is RLS-gated). Consequently:

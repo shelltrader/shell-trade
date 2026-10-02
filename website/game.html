@@ -64,7 +64,7 @@
 })();
 </script>
 <!-- CQOPS:BEGIN — generated from ops/cq-ops.js by scripts/sync_ops.py — DO NOT EDIT HERE -->
-<meta name="cq-build" content="8c858aabd2" data-built-at="2026-09-29T19:01:06Z">
+<meta name="cq-build" content="3910319005" data-built-at="2026-10-02T08:49:15Z">
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    CHARTQUEST — OPERATIONAL FOUNDATION                window.CQOPS            (v1.0.0 · Phase 1)
@@ -3796,7 +3796,7 @@ const COLOR = {
 const canvas = document.getElementById('game');
 const stageEl = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-const BUILD_TAG = 'build 376 - LOCKED CAMPAIGN MUSIC. Approved Core + Snare, Decision Point, Collision and Review choices follow gameplay, trades, Guardians, replay, Journal and reading in every level. One score transport preserves mute, foreground resume and cinematic ducking. - build 367 - BOSS 1 CINEMATIC AUDIO POLISH. Five versioned full-timeline mixes start from the first rendered video frame and follow media time through pause, stall, seek and rate changes. A generation token cancels skip, error, mute, replacement and arena arrival exactly once; only this Gambler path suppresses the old sting, random roar, synth bed and delayed impact. Videos, visuals, game rules and every other Guardian are unchanged. - build 366 - FOUNDER COSMETIC CLOSEOUT. Guardian 1 now uses the current cinematic Gambler portrait in both the Journal and defeat card; Journal mastery closes on one compact premium book-and-reward card using the existing canonical Journal asset; and the versioned Gambler-defeat cinematic restores Finn’s mandatory compass necklace for every front-facing victory frame. Cosmetic only: no trade, curriculum, reward, save or boss-state logic changed. - build 365 - FINAL BETA SEND STRIKE. Trade portals now own a reward-free corridor: every unreached box at or beyond the entrance is deferred and its quota restored after the trade. Replay and recap Finn now visibly cross the exact take-profit or stop-loss line in the correct direction. The first-trade score is a warmer hand-authored pulse instead of a dense sawtooth arpeggio, and ordinary center-screen feedback uses one premium non-blocking ChartQuest toast treatment. - build 364 - FINAL BETA BLOCKER STRIKE. Reward interaction now defers only while a real ticket/position owns the screen; boxes and Lost Wisdom pages share Finn\'s swept body-aware collision so visible overlap and fast shell-rolls cannot miss. FIRST WIN is one premium ChartQuest-native vector milestone with a bespoke trophy, disciplined copy hierarchy and earned reward badge instead of a system emoji/text pile. The first real trade owns a louder 112 BPM score and a four-act near-stop to profit-surge to hard-give-back to target run, while safe preview links no longer force or persist mute. - build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 362 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
+const BUILD_TAG = 'build 377 - APPROVED GUARDIAN CINEMATICS, RELEASE MEDIA PACKAGING. Prior baseline: - LOCKED CAMPAIGN MUSIC. Approved Core + Snare, Decision Point, Collision and Review choices follow gameplay, trades, Guardians, replay, Journal and reading in every level. One score transport preserves mute, foreground resume and cinematic ducking. - build 367 - BOSS 1 CINEMATIC AUDIO POLISH. Five versioned full-timeline mixes start from the first rendered video frame and follow media time through pause, stall, seek and rate changes. A generation token cancels skip, error, mute, replacement and arena arrival exactly once; only this Gambler path suppresses the old sting, random roar, synth bed and delayed impact. Videos, visuals, game rules and every other Guardian are unchanged. - build 366 - FOUNDER COSMETIC CLOSEOUT. Guardian 1 now uses the current cinematic Gambler portrait in both the Journal and defeat card; Journal mastery closes on one compact premium book-and-reward card using the existing canonical Journal asset; and the versioned Gambler-defeat cinematic restores Finn’s mandatory compass necklace for every front-facing victory frame. Cosmetic only: no trade, curriculum, reward, save or boss-state logic changed. - build 365 - FINAL BETA SEND STRIKE. Trade portals now own a reward-free corridor: every unreached box at or beyond the entrance is deferred and its quota restored after the trade. Replay and recap Finn now visibly cross the exact take-profit or stop-loss line in the correct direction. The first-trade score is a warmer hand-authored pulse instead of a dense sawtooth arpeggio, and ordinary center-screen feedback uses one premium non-blocking ChartQuest toast treatment. - build 364 - FINAL BETA BLOCKER STRIKE. Reward interaction now defers only while a real ticket/position owns the screen; boxes and Lost Wisdom pages share Finn\'s swept body-aware collision so visible overlap and fast shell-rolls cannot miss. FIRST WIN is one premium ChartQuest-native vector milestone with a bespoke trophy, disciplined copy hierarchy and earned reward badge instead of a system emoji/text pile. The first real trade owns a louder 112 BPM score and a four-act near-stop to profit-surge to hard-give-back to target run, while safe preview links no longer force or persist mute. - build 363 - MOBILE VIEWPORT SAFETY. One fail-closed CQVIEW owner reads CSS safe-area probes, first-session skip controls clear physical insets with stable zero-inset edge offsets and 44px touch targets, canvas backing resolution is capped at DPR 2, and viewport-height reflows shift Finn plus world-space anchors by the terrain-baseline delta. Focused deterministic coverage locks numeric parsing, shared draw/hit geometry, the DPR cap, and transactional re-anchoring. - build 363 - TRADE-3 REPLAY LIFECYCLE (INV-003). The exact third guided trade now owns a fail-closed post-trade review token from poller arm through visible replay/details and intentional central close; THE LIE/prove transition cannot spawn or auto-enter while that token is pending/open, and only explicit close or intro reset/abort releases it. Deterministic fake-timer coverage locks real ordering, summary blockers, both timeout ceilings, close pacing, and abort cleanup. - build 361 - BETA-360 READINESS REGRESSION CLOSEOUT. CQSAFE public entry points remain non-throwing for hostile input; review teardown now owns the sticky cfLegend release; executable gate #22 locks all four safe-area contracts plus replay and trade-focus lifecycles; persisted manual closes classify the inclusive |delta| ≤ 0.5 break-even band as neutral; trade-ticket/notice ordering and trade-time rewards remain fail-closed. - CANONICAL SAFE-AREA RULE (founder RC pass). window.CQSAFE is promoted from ONE published rect into a HUD OCCUPANCY REGISTRY - the single owner of where a piece of HUD text may legally sit - and the four text collisions found in the build-358/359 production playthrough are closed against it. Additive only: no trading logic, no curriculum, no save keys, no Finn, no bosses; gate #10 green. THE RULE: a surface that owns screen space PUBLISHES the rect it MEASURED (ctx.measureText / getBoundingClientRect), a surface that must keep clear ASKS, and every consumer falls back to its old literal when a zone is absent - so a missing zone is byte-identical to build 359. API: reserve(name, rect, sticky) / clear(name) / get(name) / hits(rect, exclude, pad) / place(rect, {dirs, step, max, pad, exclude, boundsW, boundsH}) / tick(); bounds are checked only on the axis being MOVED, so a banner already wider than the screen can still step down. ZONE PRIORITY: not all overlaps are equal, so zones carry SOFT(1)/NORMAL(2)/HARD(3) and place() runs one pass per tier, giving up SOFT before NORMAL and never touching HARD - because on a very short viewport MAX_ASPECT squeezes the stage to W197 and a strict solver would surrender to the literal and collide with everything. HARD = small live text destroyed by anything on it (market price, wallet column); SOFT = the near-opaque CURRENT LESSON card, drawn earlier in the frame, which a label can sit on and stay readable. STALENESS SWEEP: reserve() stamps the frame (tick() runs once, at the top of render()) and get/hits drop any non-sticky zone not republished within one frame. That is not a nicety - render() guards drawPersistentTeach with if (!trade), so the CURRENT LESSON card stops running its own clear() the instant a trade opens, and the open-trade chip added here draws ONLY while a trade is open; without the sweep it would have fled a card that was not on screen. One frame of staleness is deliberate and documented: drawPersistentTeach runs AFTER render(), and inside drawHUD the chip is drawn BEFORE the price readout it must avoid. (C2) OPEN-TRADE CHIP vs LIVE PRICE: subY = 82 gave the chip a glyph band of 74-84 while the market price prints its baseline at y87 (band 80-89) six pixels to the right - two top-left surfaces, two hand-fitted constants, no owner, and the price was unreadable for the whole trade. The chip now measures itself and place()s: it prefers to step RIGHT along its own line, beside the price, and drops DOWN only if the measured wallet column or the canvas edge leaves no room. (C3) THIS WAY vs THE PRICE LADDER: the movement compass label was pinned at (W - 32) and the price-axis labels are right-aligned at (W - 6) as wide as their widest string, so the first thing a new player is asked to read came out shredded. It now steps LEFT until it clears the reserved gutter - left is the only legal axis, because the ladder tiles the full chart height. (C1) REVIEW LEGEND vs TRADE SUMMARY: #cfLegend is a fixed z-82 bar at top:0 and the summary SVG lays out from y0, so the PULLBACK - SHORT headline and the TAKE PROFIT HIT badge were bisected by the bar background and its centred button pack. New cfTopInset() measures the live bar and converts CSS px to SVG user units by the render scale (the viewBox is 390 wide, the phone may not be); the inset is spent from the CHART height, never the document length, so no explanation text is pushed off the bottom of a short screen to pay for it. showReviewDetails now renders the bar BEFORE the chart so the measurement is real. (C4) TRADE INCOMING vs READ THE CANDLE: temporal, not spatial - showTradeIncoming already self-guards on _anyBlockingUI and retries, but nothing stopped the ticket opening over the NOTICE; the panel-open path now dismisses it, closing the loop at the one moment that matters. New producers: marketPrice, priceAxis, wallet, factionBadge, tradeBanner, thisWay, cfLegend (sticky). Migrated: lessonCard producer, qrRects floor, floater band solver - one regime, no direct property access left. - build 359 - DEAD CLOSE BUTTON ON THE TRADE REPLAY (P0i, found in the build-358 production playthrough). CSS ONLY - one scoped rule, no JS, no new handler, no behaviour change anywhere else. The universal top-right X on the full-screen trade replay/summary did nothing when tapped. #cfLegend is a full-width fixed bar at z-index 82 and a SIBLING of the .uxX button inside #chartFull stacking context, where .uxX sits at z-index 5 - so the legend painted over the X and elementFromPoint at the button centre returned DIV#cfLegend. #cfLegend also stops propagation on pointerdown, so the tap did not fall through to #chartFull own tap-anywhere close either: the control looked live and was inert. On a notched phone the safe-area inset pushes the X clear of the bar, which is why this never showed up in testing - it bites non-notch phones and narrow desktop. Fix is `#chartFull .uxX { z-index: 83 }`: the X is a CHILD of #chartFull, so once it wins the hit test its pointerdown bubbles into the EXISTING close handler. Verified: elementFromPoint at the button centre now returns BUTTON.uxX (was DIV#cfLegend) and the close handler is reached. Scoped to #chartFull so the global .uxX on every other pop-up is untouched; still below #cfPredict (90), which is bottom-anchored and cannot overlap a top-right button. NOT a hard softlock - #chartFull tap-anywhere close always worked - but the obvious exit was dead. - build 358 - RELEASE-BLOCKER STABILIZATION PASS (founder RC sprint). Five confirmed P0 defects, smallest correct change each; no refactor, no curriculum change, no pacing change, protected systems untouched (gate #10 green). (P0b) EXIT TRUTHFULNESS: tradeChartSVGFull "WHAT HAPPENED?" read the THREE-state t.result as two, so a MANUAL close fell into the else and told the player price "hit your Stop Loss" - while the badge above it said "CLOSED EARLY +42" in green. Headline is now three-state, the setup-quality verdict is skipped for a manual exit (the market never answered), colour follows resultCol, R:R won/lost keys off delta. (P0c) TRADE FOCUS: boxes and Lost Wisdom pages were placed ~15 candles AHEAD before the trade and then ENCOUNTERED during it - every guard lived at PLACEMENT time, none at EXPERIENCE time. New tradeInProgress() + two guards defer (never delete) the smash/refuse and the page reveal/collect. (P0d) EVERY TRADE ENDS ON ITS SUMMARY: replay now always exists (candleSnap fallback when a mid-air entry left setupSnap unset), the 12s give-up is 12s of IDLE waiting rather than wall clock (+120s ceiling), and an auto-opened replay advances into its details view - so intro trades 2 and 3 get the summary with no extra tap and SHOT 13 stands. (P0e) SAFE AREA: the CURRENT LESSON card now publishes the rect it already measures (window.CQSAFE.lessonCard); qrRects reads it instead of the literal 206 and applies the floor LAST so H*0.44 can no longer cap it on short viewports; the floater band solver reserves that band, fixing the vertical drift and the z-order occlusion together. (P0f) LOST CHAPTER: a vetoed HIDDEN page reset placed.easy, destroying the level hidden chapter and duplicating the easy one - the undo now reverses the key actually placed. (P0h) PORTAL SPACING: portals were reserved at Finn frontier while spawnPortal places them half a screen ahead (8-13 candle error, the page->boost->portal chain); they now claim their TRUE candle and are never vetoed - every caller is a one-shot introFlow beat, so optional content (box pri 9 / page pri 7) reschedules around them, per the founder priority order. (P0g) FAKE CANDLE: the Gambler confirm round had no scene key and degraded to a bare one-liner - the player was GRADED on reading a fake-out having never been shown one. One map entry re-points it at the authored SCENES.wait_close. - MOVEMENT TUTORIAL POLISH (founder), tutorial spec + teachCredit only (no trade / boss / lesson / movement-model / save-key change). (1) BANNER NOW IN LOCKSTEP WITH THE TERRAIN: each verb (boost, double-boost, smash) only counts once Finn has actually REACHED that verb reward zone, so a fast tapper can no longer race the banner ahead of the shells - fixes BOOST unlocking with nothing to boost for, and the double shells landing ~20 candles away. A mid-air boost shell now sits RIGHT where BOOST unlocks. (2) SMASH BANNER NAMES ITS TARGET: it renders the second line onto the BOX to SMASH it open (the t2 line was authored but currentTeach silently dropped it), so players know to dive on the boxes.';   // bump on each served change - lets a playtest confirm the loaded build (cache check)
 let W = 0, H = 0, groundY = 0;
 let stageX = 0, stageY = 0; // stage origin in viewport px (for pointer mapping)
 
@@ -14781,7 +14781,7 @@ function onRoundDone(score, passed) {
      stack. The clamp to the clip count means a weakness ×2 (which takes 2 HP and can end the
      fight early) can never index past the last clip. */
   const _flinchN = (passed && bfState.bossHP > 0 && BOSS_FLINCH_VIDEOS[bfState.level])
-    ? Math.min(bfState.idx, BOSS_FLINCH_VIDEOS[bfState.level].length) : 0;
+    ? Math.min(4, Math.max(1, 1 + Math.round(3 * (bfState.maxBossHP - bfState.bossHP - 1) / Math.max(1, bfState.maxBossHP - 2)))) : 0;
   /* FOUNDER (build 356) — THE LAST STRAY COIN ON THE DEFEAT CINEMATIC. Build 354 suppressed the
      TRIPLE bossBurst inside bossWin() when an outro clip is about to play, but the KILLING blow's
      OWN single bossBurst('hit') fires HERE, one line before bossWin() runs. On the fatal hit
@@ -15032,8 +15032,12 @@ function bossWin() {
        card reports the chapters the player recovered (see the module's finish()). */
     try { playBossOutroCinematic(1, function () {}); } catch (e) {}
   }
-  // BOSS 2 (the False Breakout Eel) → the Trading Glasses cinematic + lesson (shot 7).
-  else if (bfState.level === 2 && bfState._firstEverKill !== false) { try { setTimeout(playGlassesUnlock, 160); } catch (e) {} }
+  else {
+    const level = bfState.level;
+    const unlockGlasses = level === 2 && bfState._firstEverKill !== false;
+    const afterDefeat = function () { if (unlockGlasses) { try { setTimeout(playGlassesUnlock, 160); } catch (e) {} } };
+    try { playBossOutroCinematic(level, afterDefeat, { includeJournal: false }); } catch (e) { afterDefeat(); }
+  }
 }
 
 
@@ -15148,31 +15152,74 @@ function bossSkipForNow() {
      RENUMBERED ON MERGE: that branch forked before build 300 renumbered the roster, so the Gambler
      was level 0 there and is level 1 here. The key below is main's. */
 const BOSS_FLINCH_VIDEOS = {
-  // RENUMBERED ON MERGE (build 321): the ceremony branch forked before build 300 renumbered the
-  // roster, so the Gambler was level 0 there. On main he is level 1 — and BOSS_OUTRO_VIDEOS here is
-  // keyed 1, so leaving this at 0 would have made every flinch lookup miss and the cinematics would
-  // have silently never played. Caught by comparing the two rosters at runtime after the merge.
-  // Seconds into each clip at which the Gambler actually TAKES the hit — measured, not guessed
-  // (per-frame motion energy, peak). Used to schedule the impact sound; see playBossFlinch.
-  1: ['bosses/flinches/boss-1-flinch-1.mp4',   // THE GAMBLER is level 1 on main
-      'bosses/flinches/boss-1-flinch-2.mp4',
-      'bosses/flinches/boss-1-flinch-3.mp4',
-      'bosses/flinches/boss-1-flinch-4.mp4'],
+  1: ['bosses/flinches/boss-1-flinch-1.mp4', 'bosses/flinches/boss-1-flinch-2.mp4', 'bosses/flinches/boss-1-flinch-3.mp4', 'bosses/flinches/boss-1-flinch-4.mp4'],
+  2: ['bosses/flinches/boss-2-flinch-1.mp4', 'bosses/flinches/boss-2-flinch-2.mp4', 'bosses/flinches/boss-2-flinch-3.mp4', 'bosses/flinches/boss-2-flinch-4.mp4'],
+  3: ['bosses/flinches/boss-3-flinch-1.mp4', 'bosses/flinches/boss-3-flinch-2.mp4', 'bosses/flinches/boss-3-flinch-3.mp4', 'bosses/flinches/boss-3-flinch-4.mp4'],
+  4: ['bosses/flinches/boss-4-flinch-1.mp4', 'bosses/flinches/boss-4-flinch-2.mp4', 'bosses/flinches/boss-4-flinch-3.mp4', 'bosses/flinches/boss-4-flinch-4.mp4'],
+  5: ['bosses/flinches/boss-5-flinch-1.mp4', 'bosses/flinches/boss-5-flinch-2.mp4', 'bosses/flinches/boss-5-flinch-3.mp4', 'bosses/flinches/boss-5-flinch-4.mp4'],
+  6: ['bosses/flinches/boss-6-flinch-1.mp4', 'bosses/flinches/boss-6-flinch-2.mp4', 'bosses/flinches/boss-6-flinch-3.mp4', 'bosses/flinches/boss-6-flinch-4.mp4'],
+  7: ['bosses/flinches/boss-7-flinch-1.mp4', 'bosses/flinches/boss-7-flinch-2.mp4', 'bosses/flinches/boss-7-flinch-3.mp4', 'bosses/flinches/boss-7-flinch-4.mp4'],
+  8: ['bosses/flinches/boss-8-flinch-1.mp4', 'bosses/flinches/boss-8-flinch-2.mp4', 'bosses/flinches/boss-8-flinch-3.mp4', 'bosses/flinches/boss-8-flinch-4.mp4'],
+  9: ['bosses/flinches/boss-9-flinch-1.mp4', 'bosses/flinches/boss-9-flinch-2.mp4', 'bosses/flinches/boss-9-flinch-3.mp4', 'bosses/flinches/boss-9-flinch-4.mp4'],
+  10: ['bosses/flinches/boss-10-flinch-1.mp4', 'bosses/flinches/boss-10-flinch-2.mp4', 'bosses/flinches/boss-10-flinch-3.mp4', 'bosses/flinches/boss-10-flinch-4.mp4'],
+  11: ['bosses/flinches/boss-11-flinch-1.mp4', 'bosses/flinches/boss-11-flinch-2.mp4', 'bosses/flinches/boss-11-flinch-3.mp4', 'bosses/flinches/boss-11-flinch-4.mp4'],
 };
-/* Seconds into each flinch clip at which the Gambler actually TAKES the hit. MEASURED, not
-   guessed: per-frame motion energy (tblend=difference → signalstats YAVG) across each clip,
-   taking the peak. The clips do not open on the impact — each has its own wind-up, which is why
-   firing the sound at clip-start put it a full two seconds early. Re-measure these if a clip is
-   ever re-cut. */
-const BOSS_FLINCH_IMPACT = {
-  1: [2.47, 2.00, 0.62, 1.68],   // flinch 1..4 for THE GAMBLER
-};
-/* Clip lengths, measured with ffprobe (build 346). Needed to size the AFTERMATH bed to the real
-   tail: the silence after the impact runs 1.02s (flinch-2) to 3.50s (flinch-4), and guessing it
-   would either cut the rumble short or leave it droning over the next question. */
-const BOSS_FLINCH_DUR = {
-  1: [3.92, 3.02, 3.53, 5.18],   // flinch 1..4 for THE GAMBLER
-};
+
+// Approved Guardian cinematics carry their own synchronized impact audio.
+function bossCinematicAudioEnabled() {
+  try { return localStorage.getItem('cq_music') !== 'off'; } catch (e) { return true; }
+}
+function playBossFlinch(level, n, onDone) {
+  const list = BOSS_FLINCH_VIDEOS[level];
+  const src = list && list[n - 1];
+  const scene = document.getElementById('bfFlinchScene');
+  const vid = document.getElementById('bfFlinchVideo');
+  const token = {};
+  if (vid) vid._cqFlinchToken = token;
+  let finished = false, killT = 0;
+  function finish() {
+    if (finished) return;
+    finished = true;
+    clearTimeout(killT);
+    if (vid) {
+      vid.onended = null; vid.onerror = null;
+      try { vid.pause(); } catch (e) {}
+    }
+    if (scene) {
+      scene.onclick = null;
+      scene.classList.remove('vis'); scene.classList.add('out');
+      setTimeout(function () {
+        // A delayed cleanup must not clear a subsequent cinematic.
+        if (!vid || vid._cqFlinchToken !== token) return;
+        scene.classList.remove('on', 'out');
+        try { vid.removeAttribute('src'); vid.load(); } catch (e) {}
+      }, 280);
+    }
+    try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(1, 0.35); } catch (e) {}
+    try { onDone(); } catch (e) {}
+  }
+  if (!src || !scene || !vid) { finish(); return; }
+  vid.onended = finish; vid.onerror = finish; scene.onclick = finish;
+  scene.classList.remove('out'); scene.classList.add('on');
+  void scene.offsetWidth;
+  scene.classList.add('vis');
+  try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(0.25, 0.15); } catch (e) {}
+  vid.setAttribute('src', src);
+  try {
+    vid.loop = false; vid.muted = !bossCinematicAudioEnabled(); vid.defaultMuted = vid.muted;
+    vid.playsInline = true; vid.setAttribute('playsinline', ''); vid.load();
+  } catch (e) {}
+  killT = setTimeout(finish, 9000);
+  try {
+    const play = vid.play();
+    if (play && play.catch) play.catch(function () {
+      if (finished) return;
+      // Mobile may refuse audible autoplay after an asynchronous quiz result.
+      vid.muted = true; vid.defaultMuted = true;
+      try { const fallback = vid.play(); if (fallback && fallback.catch) fallback.catch(finish); } catch (e) { finish(); }
+    });
+  } catch (e) { finish(); }
+}
 
 /* ══ GUARDIAN 1 CINEMATIC AUDIO (build 367) ════════════════════════════════════
    The Gambler's intro and four reactions are authored as complete timeline mixes. A mix is
@@ -15186,11 +15233,7 @@ const BOSS_FLINCH_DUR = {
    load cannot make a sound while the page is booting. */
 const Boss1CineAudio = (() => {
   const ASSETS = Object.freeze({
-    intro:    'bosses/sfx/boss1-polish-v1/intro.m4a',
-    flinch1:  'bosses/sfx/boss1-polish-v1/flinch-1.m4a',
-    flinch2:  'bosses/sfx/boss1-polish-v1/flinch-2.m4a',
-    flinch3:  'bosses/sfx/boss1-polish-v1/flinch-3.m4a',
-    flinch4:  'bosses/sfx/boss1-polish-v1/flinch-4.m4a'
+    intro:    'bosses/sfx/boss1-polish-v1/intro.m4a'
   });
   const pool = Object.create(null);
   let active = null, generation = 0, muted = false;
@@ -15573,111 +15616,6 @@ try { if (typeof _CQ_DEV !== 'undefined' && _CQ_DEV && window.CQBoss1AudioQA) wi
    playBossOutroCinematic, with one deliberate difference: the outro ENDS a scene and so leaves the
    last frame up as a dimmed backdrop ('asbg'). A flinch happens MID-FIGHT, so it must clear the
    scene completely or the next question would render on top of a frozen video frame. */
-function playBossFlinch(level, n, onDone) {
-  const done1 = function () { try { onDone(); } catch (e) {} };
-  const list  = BOSS_FLINCH_VIDEOS[level];
-  const src   = list && list[n - 1];
-  const scene = document.getElementById('bfFlinchScene');
-  const vid   = document.getElementById('bfFlinchVideo');
-  if (!src || !scene || !vid) { done1(); return; }        // no clip for this round — carry on silently
-  let finished = false, killT = 0, _sfxT = 0, _polishedMix = false, _watch = null;
-  function finish() {
-    if (finished) return; finished = true;
-    clearTimeout(killT);
-    if (_watch) { _watch.stop(); _watch = null; }
-    clearTimeout(_sfxT);   // a skipped/stalled clip must never roar over the next question
-    if (_polishedMix) {
-      try { Boss1CineAudio.stop(vid, 'flinch-finish'); } catch (e) {}
-    } else {
-      try { if (typeof GameMusic !== 'undefined' && GameMusic.roarStop) GameMusic.roarStop(); } catch (e) {}   // …and cut one already screaming
-    }
-    vid.onended = null; vid.onerror = null; scene.onclick = null;
-    try { vid.pause(); } catch (e) {}
-    if (!_polishedMix) {
-      try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(1, 0.35); } catch (e) {}   // music back up
-    }
-    scene.classList.remove('vis'); scene.classList.add('out');    // fade out rather than cut
-    setTimeout(function () {
-      scene.classList.remove('on', 'out');                 // own layer → the video world underneath is untouched
-      try { vid.removeAttribute('src'); vid.load(); } catch (e) {}   // release the decoder between rounds
-    }, 280);
-    done1();
-  }
-  vid.onended = finish;
-  vid.onerror = finish;                                   // missing/corrupt clip must never block the fight
-  scene.onclick = finish;                                 // tap to skip
-  scene.classList.remove('out');
-  scene.classList.add('on');
-  void scene.offsetWidth;                                 // commit the display change before fading in
-  scene.classList.add('vis');
-  vid.setAttribute('src', src);
-  try { vid.loop = false; vid.muted = true; vid.playsInline = true; vid.setAttribute('playsinline',''); vid.load(); } catch (e) {}
-  /* Guardian 1 owns a pre-authored FULL timeline now. start() arms against the first rendered
-     video frame and follows mediaTime, so none of its vocal/impact/tail cues depend on main-thread
-     timers. Returning false means the asset/controller was unavailable; only then do we retain the
-     proven legacy path below as a fail-open audio fallback. A saved mute still returns true: mute
-     means deliberate silence, never permission to wake the legacy roar. */
-  try { _polishedMix = level === 1 && Boss1CineAudio.start('flinch' + n, vid); } catch (e) { _polishedMix = false; }
-  if (!_polishedMix) {
-  /* THE CLIPS CARRY NO AUDIO TRACK (that is what lets them autoplay on mobile), so the sound is
-     ours to make. Duck the music under the clip so the impact reads, and hit a sting on the frame
-     the Gambler takes it — escalating across the four so the fight builds instead of repeating. */
-  try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(0.25, 0.15); } catch (e) {}
-  /* FOUNDER (build 323) — THE SOUND HAS TO LAND WHEN HE ACTUALLY TAKES THE HIT.
-     Build 322 fired the hit + roar 90ms after the clip STARTED, so the founder heard the sound and
-     then watched the Gambler lurch a full two seconds later. The clips do not open on the impact —
-     each one has its own wind-up.
-     These offsets are MEASURED, not guessed: per-frame motion energy (tblend=difference →
-     signalstats YAVG) over each clip, taking the peak. flinch-1 peaks at 2.47s, flinch-2 at 2.00s,
-     flinch-3 at 0.62s (early because the 2s explosion was cut off the front), flinch-4 at 1.68s and
-     with by far the most energy — it is the last hit before he falls. Fired ~50ms AHEAD of the
-     peak, because a sound that lands fractionally early reads as synchronous while a late one
-     always reads as late.
-     If the clip is skipped, errors or stalls, finish() clears this timer so the roar of a boss the
-     player is no longer looking at never fires over the next question. */
-  /* FOUNDER (build 345) — SPLIT THE ROAR FROM THE STING. Both previous arrangements were wrong in
-     opposite directions, and both complaints were true:
-       build 322  roar at +90ms   → "I heard it, then watched him lurch two seconds later."
-       build 323  roar at +2.42s  → "he's moving and the sound comes two or three seconds after."
-     Re-measured the clips with the SAME method that produced BOSS_FLINCH_IMPACT (tblend=difference →
-     signalstats YAVG, per frame) but reading the ONSET rather than the peak. The peaks reproduced
-     exactly (2.47 / 2.00 / 0.62 / 1.68), which validates the table — and the profile shows the
-     Gambler is ALREADY MOVING from the first frames: flinch-1 carries YAVG 2.0 at 0.13s and never
-     goes quiet before its 10.8 peak; flinch-4 opens at 3.0 and climbs steadily to 20.8. There is no
-     silent wind-up to wait through.
-     So they are two different sounds with two different anchors:
-       ROAR  — a sustained vocalisation. It BEGINS when he begins. Fires at clip start.
-       STING — the percussive hit. It lands on the impact frame. Stays on the measured peak.
-     The nested +80ms on the roar is deleted outright; it was pure added lag.
-     Cancellation still holds: finish() clears _sfxT AND calls GameMusic.roarStop(), so a skipped or
-     stalled clip cannot roar over the next question — roarStop is now the load-bearing guard. */
-  const _impact = (BOSS_FLINCH_IMPACT[level] || [])[n - 1];
-  const _hitMs  = Math.max(0, Math.round(((typeof _impact === 'number') ? _impact : 0.1) * 1000) - 50);
-  try { if (typeof GameMusic !== 'undefined' && GameMusic.roar) GameMusic.roar(n); } catch (e) {}
-  /* build 346 — fill the dead air. The bed is scheduled on the AUDIO clock in one call, so the
-     wind-up, the impact weight and the aftermath rumble all stay locked to each other even if the
-     main thread stutters. Sized from the measured impact + clip length. */
-  const _clipDur = (BOSS_FLINCH_DUR[level] || [])[n - 1];
-  const _windup  = (typeof _impact === 'number') ? _impact : 1.0;
-  const _tail    = (typeof _clipDur === 'number' && typeof _impact === 'number') ? Math.max(0.3, _clipDur - _impact) : 1.2;
-  try { if (typeof GameMusic !== 'undefined' && GameMusic.bossFlinch) GameMusic.bossFlinch(_windup, _tail); } catch (e) {}
-  _sfxT = setTimeout(function () {
-    try { if (typeof GameMusic !== 'undefined' && GameMusic.sting) GameMusic.sting(n >= 4 ? 'bigwin' : 'hit'); } catch (e) {}
-    /* Release the duck ACROSS the tail instead of snapping it at clip end. The music was held at
-       0.25 through the entire post-impact tail — up to 3.5s of quiet music over silent picture.
-       Now the bed breathes back in while he is still reeling; finish() still guarantees full
-       volume if the clip is skipped or stalls. */
-    try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(1, Math.max(0.4, _tail * 0.8)); } catch (e) {}
-  }, _hitMs);
-  }
-  const pr = vid.play();
-  if (pr && pr.catch) pr.catch(finish);                   // autoplay refused → skip, never hang
-  if (level === 1) {
-    _watch = boss1MediaWatchdog(vid, finish, 45000);       // slow mobile may exceed 9s while progressing
-  } else {
-    killT = setTimeout(finish, 9000);                     // preserve every other Guardian's safety path
-  }
-}
 
 const BOSS_INTRO_VIDEOS = new Set([1, 2, 3, 11]);
 function bossIntroVideoSrc(level) { return 'bosses/intros/boss-' + level + '.mp4'; }
@@ -15755,15 +15693,24 @@ function playBossIntroCinematic(level, onArrive) {
 // needed to wire new outro clips. Reuses the intro's element + safety pattern (tap-to-skip,
 // onerror/onended fallbacks, stall timeout) so a missing or stalled clip can NEVER block a reward.
 const BOSS_OUTRO_VIDEOS = {
-  1: ['bosses/outros/boss-1-defeat-v2.mp4', 'bosses/outros/finn-journal.mp4'],
+  1: ['bosses/outros/boss-1-defeat.mp4', 'bosses/outros/finn-journal.mp4'],
+  2: ['bosses/outros/boss-2-defeat.mp4'],
+  3: ['bosses/outros/boss-3-defeat.mp4'],
+  4: ['bosses/outros/boss-4-defeat.mp4'],
+  5: ['bosses/outros/boss-5-defeat.mp4'],
+  6: ['bosses/outros/boss-6-defeat.mp4'],
+  7: ['bosses/outros/boss-7-defeat.mp4'],
+  8: ['bosses/outros/boss-8-defeat.mp4'],
+  9: ['bosses/outros/boss-9-defeat.mp4'],
+  10: ['bosses/outros/boss-10-defeat.mp4'],
+  11: ['bosses/outros/boss-11-defeat.mp4'],
 };
-function playBossOutroCinematic(level, onDone) {
-  const clips = BOSS_OUTRO_VIDEOS[level];
+function playBossOutroCinematic(level, onDone, options) {
+  const selected = BOSS_OUTRO_VIDEOS[level];
+  const clips = selected && selected.filter(function (src) { return !(options && options.includeJournal === false && src.endsWith('finn-journal.mp4')); });
   const scene = document.getElementById('bfPortalScene');
   const vid   = document.getElementById('bfIntroVideo');
   if (!clips || !clips.length || !scene || !vid) { onDone(); return; }
-  /* The intro controller must never survive a direct/out-of-order transition into an outro. */
-  try { Boss1CineAudio.stopAll('boss-outro-start'); } catch (e) {}
 
   let i = 0, finished = false, killT = 0;
   function finish() {                       // reveal the victory card underneath
@@ -15773,34 +15720,36 @@ function playBossOutroCinematic(level, onDone) {
     try { vid.pause(); } catch (e) {}
     scene.classList.remove('on');
     scene.classList.add('asbg');            // last frame stays as the dimmed living backdrop
+    try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(1, 0.35); } catch (e) {}
     onDone();
   }
   function playNext() {                     // one clip ends → the next begins (the transition)
     if (finished) return;
     if (i >= clips.length) { finish(); return; }
     const src = clips[i++];
+    const clipIndex = i;
+    const advance = function () { if (!finished && i === clipIndex) playNext(); };
     clearTimeout(killT);
-    vid.onended = playNext;
-    vid.onerror = playNext;                 // a missing clip skips to the next, never blocks
+    vid.onended = advance;
+    vid.onerror = advance;                 // a missing clip skips to the next, never blocks
     vid.setAttribute('src', src);
-    /* FOUNDER (build 323) — WHY THE BOSS-DEFEAT AND FINN-JOURNAL CLIPS NEVER PLAYED.
-       finn-journal.mp4 shipped with an AAC audio track, and this player — unlike the flinch
-       player — never muted the element. Mobile refuses to autoplay unmuted video, so play()
-       rejected, and the rejection was swallowed by an EMPTY catch: no clip, no error, no clue.
-       The player reached the Journal quest having never seen what the Journal was.
-       Belt AND braces now: the clips are re-encoded with no audio track at all, AND the element
-       is explicitly muted every time (the property beats the attribute and can outlive a src
-       swap). The catch also stops being silent — if playback is ever refused again we skip to
-       the next clip instead of sitting on a black screen for the 20s safety timer. */
+    // Defeats use native audio; the existing Journal clip keeps its muted behavior.
     try {
       vid.loop = false;
-      vid.muted = true; vid.defaultMuted = true; vid.setAttribute('muted', '');
-      vid.playsInline = true; vid.setAttribute('playsinline', '');
-      vid.load();
+      vid.muted = src.endsWith('finn-journal.mp4') || !bossCinematicAudioEnabled();
+      vid.defaultMuted = vid.muted;
+      if (vid.muted) vid.setAttribute('muted', ''); else vid.removeAttribute('muted');
+      vid.playsInline = true; vid.setAttribute('playsinline', ''); vid.load();
     } catch (e) {}
-    const pr = vid.play();
-    if (pr && pr.catch) pr.catch(function () { try { console.warn('[outro] playback refused:', src); } catch (e) {} playNext(); });
-    killT = setTimeout(playNext, 20000);    // safety: never get stuck on a stalled clip
+    killT = setTimeout(advance, 20000);
+    try {
+      const play = vid.play();
+      if (play && play.catch) play.catch(function () {
+        if (finished || i !== clipIndex) return;
+        vid.muted = true; vid.defaultMuted = true;
+        try { const fallback = vid.play(); if (fallback && fallback.catch) fallback.catch(advance); } catch (e) { advance(); }
+      });
+    } catch (e) { advance(); }
   }
 
   /* FOUNDER (build 323) — "the text that says ENTER THE HALL OF RISKS should not be present on the
@@ -15823,6 +15772,7 @@ function playBossOutroCinematic(level, onDone) {
   scene.classList.add('on');
   void scene.offsetWidth;                   // restart the warp-in
   try { if (typeof CineAudio !== 'undefined' && CineAudio.warp) CineAudio.warp(); } catch (e) {}
+  try { if (typeof GameMusic !== 'undefined' && GameMusic.duckTo) GameMusic.duckTo(0.25, 0.15); } catch (e) {}
   playNext();
 }
 
@@ -15876,7 +15826,7 @@ function openBoss(level) {
   if (level === 1) {
     try { Boss1CineAudio.warm(); } catch (e) {}
   } else {
-    try { if (GameMusic.roarWarm) GameMusic.roarWarm(); } catch (e) {}
+
   }
   // ── Content event: boss_encounter (schema #4) ──
   try {
@@ -26054,7 +26004,7 @@ const GameMusic = (() => {
   function setMuted(m) {
     muted = !!m;
     if(output) { output.gain.cancelScheduledValues(ac.currentTime); output.gain.setValueAtTime(muted || hidden ? 0 : .82,ac.currentTime); }
-    if(muted) { retire(true); silenceEffects(); roarStop(); }
+    if(muted) { retire(true); silenceEffects();  }
     else if(wanted) play(wanted);
     try { CineAudio.setMuted(muted); } catch(e) {}
   }
@@ -26116,7 +26066,7 @@ const GameMusic = (() => {
   function stop() { wanted=null; curName=null; retire(); }
   function visibility() {
     hidden=document.hidden;
-    if(hidden) { retire(true); silenceEffects(); roarStop(); }
+    if(hidden) { retire(true); silenceEffects();  }
     if(output) output.gain.setValueAtTime(hidden || muted ? 0 : .82,ac.currentTime);
     if(!hidden && !muted) {
       if(ac && ac.state==='suspended') { const p=ac.resume(); if(p && p.catch) p.catch(()=>{}); }
@@ -26124,7 +26074,7 @@ const GameMusic = (() => {
     }
   }
   document.addEventListener('visibilitychange',visibility);
-  window.addEventListener('pagehide',()=>{ hidden=true; retire(true); silenceEffects(); roarStop(); if(output) output.gain.setValueAtTime(0,ac.currentTime); });
+  window.addEventListener('pagehide',()=>{ hidden=true; retire(true); silenceEffects();  if(output) output.gain.setValueAtTime(0,ac.currentTime); });
   window.addEventListener('pageshow',visibility);
   const effectBuses=new Set();
   function effectBus() {
@@ -26244,163 +26194,6 @@ const GameMusic = (() => {
       if (i > 0.45) noiseBurst(s.t, 0.06 + 0.05 * i, 300, 0.02 + 0.03 * i, s.bus);
     },
   };
-  /* ══ BOSS ROAR (build 322 · founder: "when they flinch, just make them do a scary roar") ═══════
-     The flinch clips are encoded with NO AUDIO TRACK on purpose — that is what exempts them from
-     mobile autoplay blocking — so the Guardian was taking four cinematic hits in total silence with
-     only a thin 'hit' stab over them. The sound has to be ours to make.
-
-     There are no audio assets in this game; everything is synthesised. A roar that reads as a
-     CREATURE rather than a synth needs four things layered, and all four are here:
-       1. GROWL     — two detuned saws swept DOWNWARD (a falling pitch is what the ear hears as a
-                      throat). Detuning them a few Hz apart makes them beat against each other,
-                      which is the roughness of a real animal voice.
-       2. SATURATION— a waveshaper. Clean oscillators sound like a keyboard; clipping them adds the
-                      upper harmonics that read as strain and volume.
-       3. RASP      — band-passed noise on top, the breath moving through it.
-       4. WOBBLE    — an LFO on the pitch. Perfectly steady = machine; a little instability = alive.
-
-     It ESCALATES across the fight: each successive flinch is lower, longer and angrier, so four
-     hits build instead of repeating. Routed through fx() like every other SFX, so it shares the
-     stings' bus (never ducked by duckTo) and obeys `muted` — a ?mute=1 QA run stays silent. */
-  /* ══ REAL BOSS ROARS (build 324 · founder-supplied) ════════════════════════════════════════
-     The founder played the synthesised roar and said it "just sounds like a computer prompt", then
-     sent three recorded monster screams. He is right and it was never going to be fixable by
-     tuning: an oscillator stack has no throat in it. These are the real thing.
-
-     bosses/sfx/boss-roar-1..3.m4a — each trimmed so the scream starts on sample ZERO (the sources
-     had 0.2s, 0.2s and 0.7s of lead-in respectively, which would have re-introduced exactly the
-     late-sound problem we just fixed), level-matched, limited, and faded out at ~1.6s so a roar
-     never runs long into the next question. Mono 44.1k AAC, ~24KB each.
-
-     Used INTERCHANGEABLY across every boss, as instructed: pick() shuffles rather than random-picks
-     so the same scream never lands twice in a row inside one fight. playbackRate is nudged per
-     flinch so the fight still escalates — the 4th hit is pitched down and plays loudest, which is
-     the same escalation the synth version had, now applied to real audio.
-
-     The synth roar() below is KEPT as a fallback: if the files 404 or the device refuses to decode
-     them, the Guardian still makes a noise rather than flinching in silence. */
-  const ROAR_SRC = ['bosses/sfx/boss-roar-1.m4a', 'bosses/sfx/boss-roar-2.m4a', 'bosses/sfx/boss-roar-3.m4a'];
-  let _roarPool = null, _roarBag = [], _roarLive = null;
-  function roarPool() {
-    if (_roarPool) return _roarPool;
-    _roarPool = ROAR_SRC.map(function (src) {
-      try {
-        const a = new Audio(); a.src = src; a.preload = 'auto'; a.crossOrigin = 'anonymous';
-        a.load(); return a;
-      } catch (e) { return null; }
-    });
-    return _roarPool;
-  }
-  let _roarLast = -1;
-  function roarPick() {                       // shuffle-bag: never the same scream twice running
-    if (!_roarBag.length) {
-      _roarBag = ROAR_SRC.map(function (_, i) { return i; });
-      for (let i = _roarBag.length - 1; i > 0; i--) {
-        const j = (Math.random() * (i + 1)) | 0; const t = _roarBag[i]; _roarBag[i] = _roarBag[j]; _roarBag[j] = t;
-      }
-      /* A plain shuffle bag still repeats ACROSS the seam — the last scream of one bag and the
-         first of the next can be the same, which measured at 2 repeats in 15 draws. In a fight
-         with only four flinches that is very audible, so if the incoming bag would open on the
-         scream we just played, swap it with its neighbour. */
-      if (_roarBag.length > 1 && _roarBag[_roarBag.length - 1] === _roarLast) {
-        const t = _roarBag[_roarBag.length - 1];
-        _roarBag[_roarBag.length - 1] = _roarBag[0]; _roarBag[0] = t;
-      }
-    }
-    _roarLast = _roarBag.pop();
-    return _roarLast;
-  }
-  function roarStop() { try { if (_roarLive) { _roarLive.pause(); _roarLive.currentTime = 0; _roarLive = null; } } catch (e) {} }
-  function roarReal(tier) {
-    if (muted || hidden) return false;                  // ?mute=1 / the music toggle must silence this too
-    const pool = roarPool(); if (!pool) return false;
-    const el = pool[roarPick()]; if (!el) return false;
-    const i = Math.max(0, Math.min(3, (tier || 1) - 1));
-    try {
-      roarStop();
-      el.currentTime = 0;
-      el.volume = Math.min(1, 0.72 + 0.09 * i);     // each hit lands harder than the last
-      el.playbackRate = 1.06 - 0.06 * i;            // …and pitches DOWN: bigger, angrier animal
-      const pr = el.play();
-      if (pr && pr.catch) pr.catch(function () {});
-      _roarLive = el;
-      return true;
-    } catch (e) { return false; }
-  }
-
-  let _shaper = null;
-  function saturator(a, amount) {
-    if (_shaper) return _shaper;
-    const n = 1024, curve = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      const x = (i * 2) / n - 1;
-      curve[i] = ((1 + amount) * x) / (1 + amount * Math.abs(x));   // soft clip — warm, not fizzy
-    }
-    _shaper = a.createWaveShaper();
-    _shaper.curve = curve;
-    _shaper.oversample = '4x';
-    return _shaper;
-  }
-  function roar(tier) {
-    // The founder's recorded screams are the real voice; the synth below is only the safety net
-    // for a device that cannot load or decode them.
-    if (roarReal(tier)) return;
-    const s = fx(); if (!s) return;                       // null when muted — nothing is scheduled
-    const a = s.a, t = s.t;
-    const i   = Math.max(0, Math.min(3, (tier || 1) - 1));  // 0..3 across the four flinches
-    const dur = 0.85 + 0.22 * i;                            // each roar longer than the last
-    const f0  = 132 - 16 * i;                               // …and lower: angrier, bigger animal
-    const f1  = f0 * 0.42;                                  // the downward throat sweep
-    const vol = 0.16 + 0.035 * i;
-
-    /* shaped bus: growl → saturation → lowpass (chesty, not fizzy) → TRIM → out
-       The trim is not optional. A soft-clipper is a big gain stage: measured offline, the growl
-       alone came back at 0.987 peak — and the sub thump and two rasp layers are still to be summed
-       on top, plus the impact stab sharing this bus. Without makeup-gain reduction the whole thing
-       clips into digital fizz, which is the opposite of frightening. 0.34 leaves real headroom. */
-    const shaped = a.createGain(); shaped.gain.value = 1;
-    const lp = a.createBiquadFilter(); lp.type = 'lowpass';
-    lp.frequency.setValueAtTime(1900 + 300 * i, t);
-    lp.frequency.exponentialRampToValueAtTime(520, t + dur);   // closes as the breath runs out
-    const trim = a.createGain(); trim.gain.value = 0.34;
-    shaped.connect(saturator(a, 6 + 3 * i)).connect(lp).connect(trim).connect(s.bus);
-
-    // 1+2. the growl: two detuned saws, swept down, beating against each other
-    const env = a.createGain();
-    env.gain.setValueAtTime(0.0001, t);
-    env.gain.exponentialRampToValueAtTime(vol, t + 0.07);            // fast attack — it is a HIT
-    env.gain.setValueAtTime(vol, t + dur * 0.55);                    // hold: the sustain of a shout
-    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    env.connect(shaped);
-
-    // 4. wobble — a slow LFO on pitch so it never sits perfectly still
-    const lfo = a.createOscillator(), lfoAmt = a.createGain();
-    lfo.type = 'sine'; lfo.frequency.value = 5.5 + 1.5 * i;
-    lfoAmt.gain.value = 4 + 2 * i;
-    lfo.connect(lfoAmt);
-
-    [0, 4.5].forEach(function (detune, k) {
-      const o = a.createOscillator();
-      o.type = k === 0 ? 'sawtooth' : 'square';
-      o.frequency.setValueAtTime(f0 + detune, t);
-      o.frequency.exponentialRampToValueAtTime(Math.max(20, f1 + detune), t + dur);
-      lfoAmt.connect(o.frequency);                                   // the wobble rides the sweep
-      o.connect(env); o.start(t); o.stop(t + dur + 0.05);
-    });
-    lfo.start(t); lfo.stop(t + dur + 0.05);
-
-    // a sub thump underneath so it lands in the chest on a phone speaker
-    sweep('sine', f0 * 0.55, f0 * 0.28, t, dur * 0.7, 0.10 + 0.02 * i, s.bus);
-
-    // 3. rasp — breath through the throat, opening then closing with the roar
-    noiseBurst(t + 0.02, dur * 0.55, 850 + 150 * i, 0.030 + 0.010 * i, s.bus);
-    noiseBurst(t + dur * 0.42, dur * 0.42, 430, 0.022 + 0.008 * i, s.bus);
-  }
-
-  // PHASE 3 — MUSIC DUCK ("the silence before an important decision"): ramp the whole music BED down to
-  // a fraction of the current track's volume. Stings + move SFX route through their OWN bus to destination
-  // (see the sting/fx bus above), so the win/loss CONFIRM is NEVER ducked — only the bed steps back
-  // (TX-01 parity safe by construction). Idempotent (no per-frame ramp-spam) + muted-safe.
   let _duck = 1;
   function duckTo(level, ramp) {
     const a = ctx(); if (!a || !master) return;
@@ -26411,53 +26204,6 @@ const GameMusic = (() => {
     const base = curName ? curName.vol : 0.12;
     master.gain.cancelScheduledValues(a.currentTime);
     master.gain.linearRampToValueAtTime(base * level, a.currentTime + (ramp > 10 ? ramp/1000 : (ramp || 0.5)));
-  }
-  /* Build the roar pool WITHOUT playing it, so the .m4a files are buffered long before the first
-     flinch. They were previously created inside roarReal() microseconds before .play(), so the very
-     first roar of a fight waited on a cold network fetch — a second source of the lag the founder
-     heard, on top of the 2.4s scheduling delay. Never bypasses the `muted` gate: this only fetches. */
-  function roarWarm() { try { roarPool(); } catch (e) {} }
-
-  /* ══ BOSS FLINCH BED (build 346) — the dead air around the hit ════════════════════════════════
-     FOUNDER: "can you add something for the dead space between the start of the video and the roar,
-     and the end of the video after the flinch?"
-     Measured on the shipped clips (ffprobe + the same per-frame motion analysis used for the impact
-     table), the dead space is mostly at the BACK:
-         flinch-1  3.92s, impact 2.47  →  0.47s hole after the roar ends, then 1.45s of tail
-         flinch-2  3.02s, impact 2.00  →  1.02s of tail
-         flinch-3  3.53s, impact 0.62  →  2.91s of tail
-         flinch-4  5.18s, impact 1.68  →  3.50s of tail
-     …and for every one of those seconds the music is ALSO ducked to 0.25, so it was quiet music and
-     no sound at once. That is why the hit felt like it finished before the picture did.
-
-     Three layers, all synthesised on the existing bus — no new assets to ship, nothing to precache,
-     obeys `muted` like everything else — and all SCHEDULED ON THE AUDIO CLOCK rather than setTimeout,
-     so they cannot drift from the picture the way the old roar timer did:
-        WIND-UP    a sub growl climbing into the hit, so the impact is ARRIVED AT, not sprung
-        IMPACT     sub weight + a crack underneath the existing 'hit' sting
-        AFTERMATH  a rumble decaying across the REAL tail length, then dust settling
-     The caller also releases the music duck across the tail instead of snapping it at clip end, so
-     the bed breathes back in while he is still reeling. */
-  function bossFlinch(windupSec, tailSec) {
-    const a = ctx(); if (!a || muted || hidden) return;
-    const bus = effectBus();
-    const t = a.currentTime;
-    const wu = Math.max(0.25, Math.min(4, windupSec || 1.0));
-    const tl = Math.max(0.30, Math.min(5, tailSec || 1.2));
-    const it = t + wu;                                    // the impact instant
-
-    // WIND-UP — low, quiet, rising. Sits UNDER the roar rather than fighting it.
-    sweep('sawtooth', 46, 104, t, wu, 0.042, bus);
-    if (wu > 0.6) noiseBurst(t + wu * 0.50, wu * 0.50, 280, 0.020, bus);   // air dragged in before the swing
-
-    // IMPACT — weight beneath sting('hit'), which the caller still fires on the measured peak.
-    voice('sine', MIDI(29), it, 0.32, 0.12, bus);
-    noiseBurst(it, 0.26, 1500, 0.045, bus);
-
-    // AFTERMATH — he reels. The rumble falls away over the ACTUAL tail; dust settles behind it.
-    sweep('sine', 78, 30, it + 0.05, Math.min(tl, 2.2), 0.040, bus);
-    noiseBurst(it + 0.12, Math.min(tl * 0.70, 1.6), 380, 0.016, bus);
-    if (tl > 1.6) noiseBurst(it + tl * 0.55, Math.min(tl * 0.40, 1.2), 220, 0.010, bus);
   }
   function route(state) {
     if(state.journey) return 'explore';
@@ -26500,7 +26246,7 @@ const GameMusic = (() => {
     if(name!==wanted || (!scene && name!=='quiet' && !muted && !hidden)) play(name);
   }
   function snapshot() { return { selected:wanted, title:score && wanted ? score.scores[wanted].name:null, step:scene?scene.step:0, muted, hidden, unlocked, scheduling:!!sched }; }
-  return { unlock, setMuted, play, boss, stop, sting, roar, roarStop, roarWarm, bossFlinch, duckTo, sync, route, snapshot, isOn: () => started, move };
+  return { unlock, setMuted, play, boss, stop, sting, duckTo, sync, route, snapshot, isOn: () => started, move };
 })();
 
 window.GameMusic = GameMusic;

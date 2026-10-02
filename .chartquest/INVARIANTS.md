@@ -28,3 +28,5 @@ This registry begins with only rules evidenced by existing project documentation
 ## INV-GUARDIAN-001 — Approved cinematic identity and lifecycle
 
 Founder-approved selection maps uniquely to Guardian1–11 and stage1–5. Stage1–4 are surviving-hit reactions scaled by remaining HP; stage5 is defeat. Root and website copies must match the audited release hashes in qa/guardian-media-release.json, including derivative provenance when size optimization is required. Every skip/error/timeout ends once and restores music. Gambler Journal gates and Eel glasses unlock order must remain intact. Retired clips and separate reaction audio must stay absent. Enforced by scripts/guardian-cinematics.test.js and the release media gate; evidence: qa/GUARDIAN_RELEASE_20261002.md.
+
+INV-GUARDIAN-CACHE-001: replacing Guardian videos at unchanged URLs requires a service-worker cache-version update. Activation must purge the old cache and fetch the approved replacement, verified by scripts/guardian-cache.test.js. The production verification of build377 identified this returning-player gap; build378 closes it.

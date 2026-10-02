@@ -803,6 +803,11 @@ function run() {
     add('26', 'Approved Guardian cinematic player contracts', result.status === 0 ? 'PASS' : 'FAIL', (result.stdout || result.stderr).trim().slice(0,200));
   } catch(e) { add('26', 'Approved Guardian cinematic player contracts', 'FAIL', String(e)); }
 
+  try {
+    const result=cp.spawnSync(process.execPath,[path.join(__dirname,'guardian-cache.test.js')],{cwd:ROOT,encoding:'utf8'});
+    add('27','Returning-player Guardian cache update',result.status===0?'PASS':'FAIL',(result.stdout||result.stderr).trim().slice(0,200));
+  } catch(e) { add('27','Returning-player Guardian cache update','FAIL',String(e)); }
+
 }
 
 // 3b — optional real headless boot (only if puppeteer is installed)

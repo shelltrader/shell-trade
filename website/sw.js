@@ -33,7 +33,8 @@
    same miss as v12→v13. Bumping now so returning landing/play visitors get the new tracker.
    (The game itself is game.html, served network-first, so gameplay was never stale — only the
    precached assets/cq-track.js on the marketing pages were.) */
-const CACHE = 'chartquest-site-v14';
+// v15: approved Guardian replacements invalidate old cached clips for returning players.
+const CACHE = 'chartquest-site-v15';
 const OFFLINE_URL = './offline.html';
 const ASSETS = [
   './',

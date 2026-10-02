@@ -18,3 +18,7 @@ VERIFIED EXTERNAL: GitHub production-freeze ruleset20679373 reported enforcement
 [UNKNOWN — REQUIRES VERIFICATION]: production deployment and served fingerprint, fresh service-worker behavior on production, physical iOS audio policy and full reward/campaign flows. This candidate has not been deployed. Release Manager must reconcile the latest main, acquire its lock, produce exact manifest, pass main release gate, deploy through documented Git path and verify production. Do not use a provider dashboard/token bypass.
 
 Evidence: guardian-media-release.json (55-source provenance and exact removals), guardian-player-test-results.json, guardian-final-media-audit.json, guardian-browser-playback-results.json, guardian-release-gate.txt. Local visible proof and original encodes are retained under content-assets/guardian-animation-production/sol-20261002-release-preparation, outside website/.
+
+## Release Manager verification follow-up
+
+Founder explicitly assigned Codex Release Manager and authorized production deployment. Build377 passed main lock/gate and was pushed normally. Returning-player audit found unchanged service-worker cache v14 could retain old clips. Build378 increments it to v15 and adds a permanent activation/fetch regression. No video bytes changed. Final production evidence is maintained in the release manifest.

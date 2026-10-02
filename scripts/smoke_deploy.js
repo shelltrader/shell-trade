@@ -152,7 +152,7 @@ function fetchBody(urlStr, redirects = 0) {
   return new Promise(resolve => {
     const url = new URL(urlStr);
     const lib = url.protocol === 'http:' ? http : https;
-    const req = lib.get(url, { timeout: TIMEOUT_MS, headers: { 'user-agent': 'chartquest-smoke/1' } }, res => {
+    const req = lib.get(url, { timeout: TIMEOUT_MS, headers: { 'user-agent': 'chartquest-smoke/1', 'accept': '*/*' } }, res => {
       if ([301, 302, 307, 308].includes(res.statusCode) && res.headers.location && redirects < 5) {
         res.resume();
         return resolve(fetchBody(new URL(res.headers.location, url).href, redirects + 1));

@@ -22,3 +22,5 @@ Evidence: guardian-media-release.json (55-source provenance and exact removals),
 ## Release Manager verification follow-up
 
 Founder explicitly assigned Codex Release Manager and authorized production deployment. Build377 passed main lock/gate and was pushed normally. Returning-player audit found unchanged service-worker cache v14 could retain old clips. Build378 increments it to v15 and adds a permanent activation/fetch regression. No video bytes changed. Final production evidence is maintained in the release manifest.
+
+Production fingerprint transport finding: Cloudflare appends its analytics module to /game requests lacking Accept. The normal curl/Accept:*/* representation is byte-identical to the approved HTML. Smoke now supplies standard Accept:*/*; strict SHA validation is unchanged, with no injection stripping or provider change.
